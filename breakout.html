@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Breakout</title>
+
+<style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Segoe UI;
+}
+
+body{
+height:100vh;
+background:radial-gradient(circle at top,#0f172a,#020617);
+color:white;
+overflow:hidden;
+}
+
+/* SCREENS */
+.screen{
+position:absolute;
+width:100%;
+height:100%;
+display:none;
+justify-content:center;
+align-items:center;
+}
+
+.active{display:flex;}
+
+/* ===== MENU ===== */
+.menu{
+flex-direction:column;
+text-align:center;
+}
+
+/* TITLE */
+.title{
+font-size:70px;
+font-weight:900;
+margin-bottom:20px;
+background:linear-gradient(90deg,#6366f1,#22c55e);
+-webkit-background-clip:text;
+color:transparent;
+}
+
+/* CARD */
+.panel{
+background:rgba(255,255,255,0.05);
+backdrop-filter:blur(20px);
+padding:40px;
+border-radius:25px;
+box-shadow:0 0 40px rgba(99,102,241,0.3);
+}
+
+/* HIGHSCORE */
+.high{
+font-size:22px;
+margin-bottom:20px;
+opacity:0.8;
+}
+
+/* BUTTON */
+.btn{
+padding:18px 40px;
+border:none;
+border-radius:16px;
+background:linear-gradient(135deg,#6366f1,#4f46e5);
+color:white;
+font-size:18px;
+font-weight:900;
+cursor:pointer;
+transition:0.2s;
+}
+
+.btn:hover{
+transform:scale(1.08);
+box-shadow:0 0 20px #6366f1;
+}
+
+/* ===== GAME ===== */
+.game{
+flex-direction:column;
+}
+
+/* TOP BAR */
+.top{
+font-size:20px;
+margin-bottom:10px;
+}
+
+/* CANVAS */
+canvas{
+background:#020617;
+border-radius:16px;
+box-shadow:0 0 30px #6366f1;
+}
+
+/* OVERLAY */
+.overlay{
+position:absolute;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.85);
+display:none;
+justify-content:center;
+align-items:center;
+flex-direction:column;
+}
+
+.overlay h2{
+font-size:50px;
+margin-bottom:20px;
+}
+</style>
+</head>
+
+<body>
+
+<!-- MENU -->
+<div class="screen active menu" id="menu">
+
+<div class="title">🧱 Breakout</div>
+
+<div class="panel">
+<div class="high">🏆 Highscore: <span id="high">0</span></div>
+<button class="btn" onclick="startGame()">▶ Start Game</button>
+</div>
+
+</div>
+
+<!-- GAME -->
+<div class="screen game" id="gameScreen">
+
+<div class="top">
+Score: <span id="score">0</span>
+</div>
+
+<canvas id="canvas" width="600" height="400"></canvas>
+
+<button class="btn" onclick="goMenu()">⬅ Menü</button>
+
+</div>
+
+<!-- GAME OVER -->
+<div class="overlay" id="overlay">
+<h2>💥 Game Over</h2>
+<button class="btn" onclick="startGame()">🔄 Restart</button>
+</div>
+
+<script>
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
+
+const scoreEl=document.getElementById("score");
+const highEl=document.getElementById("high");
+
+let paddle,ball,bricks;
+let score=0;
+let high=localStorage.getItem("breakoutHigh")||0;
+let running=false;
+
+highEl.innerText=high;
+
+/* SCREEN */
+function show(id){
+document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+document.getElementById(id).classList.add("active");
+}
+
+/* MENU */
+function goMenu(){
+running=false;
+show("menu");
+}
+
+/* START */
+function startGame(){
+document.getElementById("overlay").style.display="none";
+show("gameScreen");
+
+init();
+running=true;
+requestAnimationFrame(loop);
+}
+
+/* INIT */
+function init(){
+paddle={x:250,y:360,w:100,h:10};
+ball={x:300,y:200,dx:4,dy:-4,r:8};
+
+score=0;
+scoreEl.innerText=0;
+
+bricks=[];
+for(let r=0;r<5;r++){
+for(let c=0;c<10;c++){
+bricks.push({
+x:20+c*56,
+y:30+r*25,
+w:50,
+h:15,
+hit:false
+});
+}
+}
+}
+
+/* CONTROL */
+document.addEventListener("mousemove",(e)=>{
+let rect=canvas.getBoundingClientRect();
+paddle.x=e.clientX-rect.left-paddle.w/2;
+});
+
+/* LOOP */
+function loop(){
+
+if(!running) return;
+
+ctx.clearRect(0,0,canvas.width,canvas.height);
+
+/* PADDLE */
+ctx.fillStyle="#6366f1";
+ctx.fillRect(paddle.x,paddle.y,paddle.w,paddle.h);
+
+/* BALL */
+ctx.beginPath();
+ctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2);
+ctx.fillStyle="#facc15";
+ctx.fill();
+
+/* BRICKS */
+bricks.forEach(b=>{
+if(!b.hit){
+ctx.fillStyle="#22c55e";
+ctx.fillRect(b.x,b.y,b.w,b.h);
+}
+});
+
+/* COLLISION */
+bricks.forEach(b=>{
+if(!b.hit &&
+ball.x>b.x &&
+ball.x<b.x+b.w &&
+ball.y>b.y &&
+ball.y<b.y+b.h){
+
+b.hit=true;
+ball.dy*=-1;
+
+score+=10;
+scoreEl.innerText=score;
+}
+});
+
+/* WALL */
+if(ball.x<0||ball.x>canvas.width) ball.dx*=-1;
+if(ball.y<0) ball.dy*=-1;
+
+/* PADDLE */
+if(
+ball.x>paddle.x &&
+ball.x<paddle.x+paddle.w &&
+ball.y>paddle.y
+){
+ball.dy*=-1;
+}
+
+/* MOVE */
+ball.x+=ball.dx;
+ball.y+=ball.dy;
+
+/* GAME OVER */
+if(ball.y>canvas.height){
+running=false;
+
+if(score>high){
+high=score;
+localStorage.setItem("breakoutHigh",high);
+highEl.innerText=high;
+}
+
+document.getElementById("overlay").style.display="flex";
+}
+
+requestAnimationFrame(loop);
+}
+</script>
+
+</body>
+</html>

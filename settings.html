@@ -1,0 +1,182 @@
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Settings</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Roboto&family=Poppins&display=swap" rel="stylesheet">
+
+<style>
+body{
+padding:60px;
+font-family:inherit;
+background:#ffffff;
+}
+
+.container{
+max-width:1200px;
+margin:auto;
+}
+
+h1{
+font-size:50px;
+font-weight:900;
+margin-bottom:40px;
+}
+
+.card{
+background:#f1f5f9;
+padding:40px;
+border-radius:25px;
+margin-bottom:30px;
+}
+
+.preview{
+font-size:32px;
+margin-top:20px;
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:15px;
+margin-top:20px;
+}
+
+.font{
+padding:20px;
+border-radius:12px;
+background:#e2e8f0;
+cursor:pointer;
+font-weight:900;
+text-align:center;
+}
+
+.actions{
+margin-top:30px;
+display:flex;
+align-items:center;
+}
+
+.btn{
+padding:16px 28px;
+border:none;
+border-radius:14px;
+cursor:pointer;
+font-weight:900;
+margin-right:10px;
+}
+
+.save{background:#6366f1;color:white;}
+.reset{background:red;color:white;}
+
+.check{
+font-size:24px;
+color:green;
+display:none;
+margin-left:10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>⚙ Einstellungen</h1>
+
+<div class="card">
+<h2>🎨 Farbe</h2><br>
+<input type="color" id="color" onchange="live()">
+</div>
+
+<div class="card">
+<h2>🔤 Schrift Vorschau</h2>
+
+<div class="preview" id="preview">
+So sieht deine Schrift aus
+</div>
+
+<div class="grid">
+<div class="font" onclick="setFont('Arial')">Arial</div>
+<div class="font" onclick="setFont('Verdana')">Verdana</div>
+<div class="font" onclick="setFont('Segoe UI')">Segoe UI</div>
+<div class="font" onclick="setFont('Tahoma')">Tahoma</div>
+<div class="font" onclick="setFont('Georgia')">Georgia</div>
+<div class="font" onclick="setFont('Courier New')">Courier</div>
+<div class="font" onclick="setFont('Poppins')">Poppins</div>
+<div class="font" onclick="setFont('Roboto')">Roboto</div>
+<div class="font" onclick="setFont('Impact')">Impact</div>
+</div>
+
+</div>
+
+<div class="actions">
+<button class="btn save" onclick="save()">Speichern</button>
+<button class="btn reset" onclick="reset()">Reset</button>
+<span id="check" class="check">✔</span>
+</div>
+
+</div>
+
+<script>
+let font="Segoe UI";
+
+function setFont(f){
+font=f;
+document.body.style.fontFamily=f;
+document.getElementById("preview").style.fontFamily=f;
+live();
+}
+
+function live(){
+const color=document.getElementById("color").value;
+
+document.body.style.background=color;
+
+window.parent.postMessage({
+type:"live",
+color:color,
+font:font
+},"*");
+}
+
+function save(){
+const color=document.getElementById("color").value;
+
+localStorage.setItem("bgColor",color);
+localStorage.setItem("font",font);
+
+window.parent.postMessage({type:"save"},"*");
+
+const check=document.getElementById("check");
+check.style.display="inline";
+
+setTimeout(()=>{check.style.display="none";},2000);
+}
+
+function reset(){
+localStorage.clear();
+location.reload();
+}
+
+window.onload=()=>{
+const c=localStorage.getItem("bgColor");
+const f=localStorage.getItem("font");
+
+if(c){
+document.getElementById("color").value=c;
+document.body.style.background=c;
+}
+
+if(f){
+font=f;
+document.body.style.fontFamily=f;
+document.getElementById("preview").style.fontFamily=f;
+}
+}
+</script>
+
+</body>
+</html>

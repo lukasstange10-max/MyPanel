@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Memory NEXT LEVEL</title>
+
+<style>
+:root{
+--main:#6366f1;
+--bg:#0f172a;
+--text:#fff;
+}
+
+body{
+margin:0;
+font-family:Segoe UI;
+background:linear-gradient(135deg,#0f172a,#020617);
+color:var(--text);
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+}
+
+/* SCREENS */
+.screen{
+display:none;
+flex-direction:column;
+align-items:center;
+text-align:center;
+width:100%;
+max-width:1000px;
+}
+
+.active{display:flex;}
+
+h1{
+font-size:60px;
+margin-bottom:10px;
+}
+
+/* ACTIVE DIFF TEXT */
+.selected{
+margin-top:10px;
+font-size:22px;
+color:#facc15;
+font-weight:bold;
+}
+
+/* BUTTON */
+button{
+padding:15px 30px;
+border:none;
+border-radius:14px;
+background:linear-gradient(135deg,var(--main),#4f46e5);
+color:white;
+font-weight:900;
+cursor:pointer;
+margin:8px;
+transition:0.2s;
+}
+
+button:hover{
+transform:scale(1.08);
+}
+
+/* ACTIVE BUTTON */
+.activeBtn{
+background:linear-gradient(135deg,#facc15,#f59e0b);
+color:black;
+}
+
+/* BOARD */
+.board{
+background:rgba(255,255,255,0.05);
+padding:20px;
+border-radius:16px;
+margin-bottom:20px;
+}
+
+/* GRID */
+.grid{
+display:grid;
+gap:10px;
+}
+
+.card{
+width:80px;
+height:80px;
+perspective:1000px;
+cursor:pointer;
+}
+
+.inner{
+width:100%;
+height:100%;
+transform-style:preserve-3d;
+transition:transform 0.4s;
+}
+
+.card.flip .inner{
+transform:rotateY(180deg);
+}
+
+.front,.back{
+position:absolute;
+width:100%;
+height:100%;
+border-radius:12px;
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:26px;
+backface-visibility:hidden;
+}
+
+.front{
+background:linear-gradient(135deg,var(--main),#4f46e5);
+}
+
+.back{
+background:#22c55e;
+transform:rotateY(180deg);
+}
+
+.card.match .back{
+background:#facc15;
+}
+
+/* WIN */
+.win{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.9);
+display:none;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+}
+</style>
+</head>
+
+<body>
+
+<!-- START -->
+<div class="screen active" id="start">
+<h1>🧠 Memory</h1>
+
+<div class="board" id="board"></div>
+
+<div>
+<button onclick="setDiff(4,this)">Easy</button>
+<button onclick="setDiff(6,this)">Medium</button>
+<button onclick="setDiff(8,this)">Hard</button>
+</div>
+
+<div class="selected" id="diffText">Schwierigkeit: Easy</div>
+
+<button onclick="toName()">▶ Start</button>
+</div>
+
+<!-- NAME -->
+<div class="screen" id="name">
+<h1>👤 Dein Name</h1>
+<input id="player" placeholder="Name">
+<button onclick="startGame()">Start</button>
+</div>
+
+<!-- GAME -->
+<div class="screen" id="game">
+<div>Züge: <b id="moves">0</b> | Zeit: <b id="time">0</b>s</div>
+<div class="grid" id="grid"></div>
+</div>
+
+<!-- WIN -->
+<div class="win" id="win">
+<h2>🎉 Gewonnen!</h2>
+<div id="result"></div>
+<button onclick="restart()">Nochmal</button>
+</div>
+
+<script>
+let size=4;
+const emojis=["🍎","🍌","🍇","🍉","🍓","🍍","🥝","🍒","🥑","🍑","🍋","🍊","🍈","🍏","🍐","🍅"];
+
+let cards=[],flipped=[],moves=0,matches=0,time=0,timer;
+
+/* DIFF */
+function setDiff(s,btn){
+size=s;
+
+/* BUTTON HIGHLIGHT */
+document.querySelectorAll("button").forEach(b=>b.classList.remove("activeBtn"));
+btn.classList.add("activeBtn");
+
+/* TEXT */
+let name = s===4 ? "Easy" : s===6 ? "Medium" : "Hard";
+document.getElementById("diffText").innerText="Schwierigkeit: "+name;
+}
+
+/* SCREEN */
+function show(id){
+document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+document.getElementById(id).classList.add("active");
+}
+
+function toName(){ show("name"); }
+
+/* START */
+function startGame(){
+const name=document.getElementById("player").value.trim();
+if(!name){alert("Name eingeben!");return;}
+
+show("game");
+
+moves=0;matches=0;time=0;flipped=[];
+document.getElementById("moves").innerText=0;
+document.getElementById("time").innerText=0;
+
+timer=setInterval(()=>{
+time++;
+document.getElementById("time").innerText=time;
+},1000);
+
+let total=size*size/2;
+let selected=emojis.slice(0,total);
+cards=[...selected,...selected].sort(()=>Math.random()-0.5);
+
+const grid=document.getElementById("grid");
+grid.style.gridTemplateColumns=`repeat(${size},80px)`;
+grid.innerHTML="";
+
+cards.forEach(e=>{
+const card=document.createElement("div");
+card.className="card";
+
+card.innerHTML=`
+<div class="inner">
+<div class="front">?</div>
+<div class="back">${e}</div>
+</div>`;
+
+card.onclick=()=>flip(card,e);
+grid.appendChild(card);
+});
+}
+
+/* FLIP */
+function flip(card,emoji){
+if(card.classList.contains("flip")||flipped.length===2)return;
+
+card.classList.add("flip");
+flipped.push({card,emoji});
+
+if(flipped.length===2){
+moves++;
+document.getElementById("moves").innerText=moves;
+setTimeout(check,400);
+}
+}
+
+/* CHECK */
+function check(){
+const[a,b]=flipped;
+
+if(a.emoji===b.emoji){
+a.card.classList.add("match");
+b.card.classList.add("match");
+matches++;
+
+if(matches===cards.length/2) win();
+}else{
+a.card.classList.remove("flip");
+b.card.classList.remove("flip");
+}
+
+flipped=[];
+}
+
+/* WIN */
+function win(){
+clearInterval(timer);
+
+const name=document.getElementById("player").value;
+saveScore(name,time);
+
+document.getElementById("result").innerText=`${name} - ${time}s`;
+document.getElementById("win").style.display="flex";
+
+renderBoard();
+}
+
+/* RESTART */
+function restart(){
+document.getElementById("win").style.display="none";
+show("start");
+renderBoard();
+}
+
+/* STORAGE (TOP 4) */
+function saveScore(name,time){
+let data=JSON.parse(localStorage.getItem("memoryGlobal")||"[]");
+data.push({name,time});
+data.sort((a,b)=>a.time-b.time);
+data=data.slice(0,4); // 🔥 NUR TOP 4
+localStorage.setItem("memoryGlobal",JSON.stringify(data));
+}
+
+/* BOARD */
+function renderBoard(){
+let data=JSON.parse(localStorage.getItem("memoryGlobal")||"[]");
+
+document.getElementById("board").innerHTML=
+"<b>🏆 Rekorde</b><br><br>"+
+(data.length
+? data.map((s,i)=>`#${i+1} ${s.name} - ${s.time}s`).join("<br>")
+: "Noch keine Rekorde");
+}
+
+/* INIT */
+renderBoard();
+</script>
+
+</body>
+</html>

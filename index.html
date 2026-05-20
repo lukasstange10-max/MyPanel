@@ -1,0 +1,1782 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>MyPanel</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Poppins,sans-serif;
+scroll-behavior:smooth;
+}
+
+body{
+background:#020617;
+color:white;
+overflow:hidden;
+height:100vh;
+}
+
+/* =========================================
+BACKGROUND
+========================================= */
+
+body::before{
+content:"";
+
+position:fixed;
+inset:0;
+
+background:
+linear-gradient(
+135deg,
+#020617,
+#0f172a,
+#111827
+);
+
+background-size:300% 300%;
+
+animation:bgMove 18s ease infinite;
+
+z-index:-20;
+}
+
+@keyframes bgMove{
+0%{
+background-position:0% 50%;
+}
+50%{
+background-position:100% 50%;
+}
+100%{
+background-position:0% 50%;
+}
+}
+
+/* =========================================
+PARTICLES
+========================================= */
+
+.particles{
+position:fixed;
+inset:0;
+overflow:hidden;
+z-index:-10;
+}
+
+.particle{
+position:absolute;
+
+border-radius:50%;
+
+background:white;
+
+opacity:.08;
+
+animation:particleFloat linear infinite;
+}
+
+@keyframes particleFloat{
+0%{
+transform:translateY(120vh);
+opacity:0;
+}
+10%{
+opacity:1;
+}
+100%{
+transform:translateY(-120vh);
+opacity:0;
+}
+}
+
+/* =========================================
+MOUSE GLOW
+========================================= */
+
+.mouseGlow{
+position:fixed;
+
+width:450px;
+height:450px;
+
+border-radius:50%;
+
+background:
+radial-gradient(
+circle,
+rgba(99,102,241,.14),
+transparent 70%
+);
+
+pointer-events:none;
+
+transform:translate(-50%,-50%);
+
+filter:blur(35px);
+
+z-index:-5;
+}
+
+/* =========================================
+LOADER
+========================================= */
+
+.loader{
+position:fixed;
+inset:0;
+
+display:flex;
+justify-content:center;
+align-items:center;
+flex-direction:column;
+
+background:
+radial-gradient(
+circle at center,
+#111827,
+#020617
+);
+
+z-index:999999999;
+
+overflow:hidden;
+
+transition:1s;
+}
+
+.loader::before{
+content:"";
+
+position:absolute;
+inset:-50%;
+
+background:
+conic-gradient(
+from 0deg,
+#6366f1,
+#06b6d4,
+#8b5cf6,
+#6366f1
+);
+
+opacity:.12;
+
+filter:blur(120px);
+
+animation:loaderRotate 14s linear infinite;
+}
+
+@keyframes loaderRotate{
+100%{
+transform:rotate(360deg);
+}
+}
+
+.loaderRing{
+position:absolute;
+
+border-radius:50%;
+
+border:3px solid transparent;
+}
+
+.loaderRing:nth-child(1){
+width:240px;
+height:240px;
+
+border-top:4px solid #6366f1;
+
+animation:spin 2s linear infinite;
+}
+
+.loaderRing:nth-child(2){
+width:400px;
+height:400px;
+
+border-right:4px solid #06b6d4;
+
+animation:spinReverse 5s linear infinite;
+}
+
+.loaderRing:nth-child(3){
+width:560px;
+height:560px;
+
+border-bottom:4px solid #8b5cf6;
+
+animation:spin 8s linear infinite;
+}
+
+@keyframes spin{
+100%{
+transform:rotate(360deg);
+}
+}
+
+@keyframes spinReverse{
+100%{
+transform:rotate(-360deg);
+}
+}
+
+.loaderLogo{
+font-size:160px;
+font-weight:900;
+
+z-index:5;
+
+background:
+linear-gradient(
+135deg,
+#818cf8,
+#06b6d4,
+#8b5cf6
+);
+
+background-size:400% 400%;
+
+animation:
+gradientMove 5s infinite,
+logoFloat 3s infinite;
+
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+}
+
+@keyframes gradientMove{
+0%{
+background-position:0% 50%;
+}
+50%{
+background-position:100% 50%;
+}
+100%{
+background-position:0% 50%;
+}
+}
+
+@keyframes logoFloat{
+50%{
+transform:
+translateY(-10px)
+scale(1.03);
+}
+}
+
+.loadingText{
+margin-top:35px;
+
+font-size:30px;
+font-weight:800;
+
+letter-spacing:2px;
+
+color:#e2e8f0;
+
+animation:textPulse 2s infinite;
+}
+
+@keyframes textPulse{
+50%{
+opacity:.4;
+}
+}
+
+.loadingBar{
+margin-top:35px;
+
+width:420px;
+height:16px;
+
+border-radius:30px;
+
+background:rgba(255,255,255,.08);
+
+overflow:hidden;
+}
+
+.loadingFill{
+height:100%;
+width:0%;
+
+border-radius:30px;
+
+background:
+linear-gradient(
+90deg,
+#6366f1,
+#06b6d4,
+#8b5cf6
+);
+
+animation:loadBar 4s linear forwards;
+}
+
+@keyframes loadBar{
+0%{
+width:0%;
+}
+100%{
+width:100%;
+}
+}
+
+/* =========================================
+WELCOME
+========================================= */
+
+.welcome{
+position:fixed;
+inset:0;
+
+display:none;
+justify-content:center;
+align-items:center;
+flex-direction:column;
+
+background:#020617;
+
+z-index:999998;
+
+opacity:0;
+transition:1s;
+}
+
+.welcome h1{
+font-size:100px;
+font-weight:900;
+
+background:
+linear-gradient(
+135deg,
+#818cf8,
+#06b6d4,
+#8b5cf6
+);
+
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+}
+
+.welcome h2{
+font-size:40px;
+margin-top:20px;
+color:#cbd5e1;
+}
+
+/* =========================================
+APP
+========================================= */
+
+.app{
+display:flex;
+height:100vh;
+opacity:0;
+transition:1s;
+}
+/* =========================================
+SIDEBAR
+========================================= */
+
+.sidebar{
+min-width:430px;
+
+padding:30px;
+
+background:rgba(255,255,255,.05);
+
+border-right:1px solid rgba(255,255,255,.08);
+
+backdrop-filter:blur(20px);
+
+display:flex;
+flex-direction:column;
+}
+
+/* =========================================
+LOGO
+========================================= */
+
+.logo{
+font-size:64px;
+font-weight:900;
+
+margin-bottom:50px;
+
+white-space:nowrap;
+
+background:
+linear-gradient(
+135deg,
+#818cf8,
+#06b6d4
+);
+
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+}
+
+/* =========================================
+LOGO
+========================================= */
+
+.logo{
+font-size:64px;
+font-weight:900;
+
+margin-bottom:50px;
+
+white-space:nowrap;
+
+background:
+linear-gradient(
+135deg,
+#818cf8,
+#06b6d4
+);
+
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+}
+/* =========================================
+MENU
+========================================= */
+
+.menu{
+display:flex;
+flex-direction:column;
+gap:18px;
+}
+
+.menu button{
+display:flex;
+align-items:center;
+gap:16px;
+
+padding:22px;
+
+border:none;
+border-radius:24px;
+
+background:rgba(255,255,255,.06);
+
+color:white;
+
+font-size:20px;
+font-weight:800;
+
+cursor:pointer;
+
+transition:.25s;
+}
+
+.menu button:hover{
+transform:translateX(6px);
+
+background:
+linear-gradient(
+135deg,
+#6366f1,
+#8b5cf6
+);
+}
+
+/* =========================================
+MAIN
+========================================= */
+
+.main{
+flex:1;
+overflow-y:auto;
+padding:40px;
+}
+
+/* =========================================
+HERO
+========================================= */
+
+.hero{
+position:relative;
+
+padding:40px;
+
+border-radius:40px;
+
+background:
+linear-gradient(
+135deg,
+rgba(99,102,241,.14),
+rgba(6,182,212,.08)
+);
+
+border:1px solid rgba(255,255,255,.08);
+
+margin-bottom:35px;
+}
+
+.hero h1{
+font-size:70px;
+font-weight:900;
+}
+
+.hero h2{
+font-size:28px;
+margin-top:10px;
+color:#94a3b8;
+}
+
+/* =========================================
+PROFILE
+========================================= */
+
+.profile{
+position:absolute;
+
+top:30px;
+right:30px;
+
+display:flex;
+align-items:center;
+gap:14px;
+
+background:rgba(255,255,255,.06);
+
+padding:16px 20px;
+
+border-radius:22px;
+
+border:1px solid rgba(255,255,255,.08);
+}
+
+.avatar{
+width:90px;
+height:90px;
+
+border-radius:50%;
+
+background:
+linear-gradient(
+135deg,
+#6366f1,
+#06b6d4
+);
+
+display:flex;
+justify-content:center;
+align-items:center;
+
+font-size:34px;
+font-weight:900;
+}
+
+.editBtn{
+margin-top:10px;
+
+padding:10px 16px;
+
+border:none;
+border-radius:16px;
+
+background:
+linear-gradient(
+135deg,
+#6366f1,
+#8b5cf6
+);
+
+color:white;
+
+font-weight:700;
+
+cursor:pointer;
+}
+
+/* =========================================
+CARDS
+========================================= */
+
+.card{
+padding:30px;
+
+border-radius:34px;
+
+background:rgba(255,255,255,.06);
+
+border:1px solid rgba(255,255,255,.08);
+
+margin-bottom:35px;
+}
+
+.cardTitle{
+font-size:38px;
+font-weight:900;
+margin-bottom:28px;
+}
+
+/* =========================================
+GAMES
+========================================= */
+
+.games{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+gap:24px;
+}
+
+.game{
+position:relative;
+
+padding:30px;
+
+border-radius:30px;
+
+background:rgba(255,255,255,.05);
+
+border:1px solid rgba(255,255,255,.08);
+
+cursor:pointer;
+
+overflow:hidden;
+
+transition:.25s;
+}
+
+.game:hover{
+transform:
+translateY(-10px)
+scale(1.03);
+
+box-shadow:
+0 0 35px rgba(99,102,241,.22);
+}
+
+.gameIcon{
+font-size:60px;
+margin-bottom:16px;
+}
+
+.gameTitle{
+font-size:30px;
+font-weight:900;
+margin-bottom:10px;
+}
+
+.gameDesc{
+color:#94a3b8;
+}
+
+/* =========================================
+FAVORITES
+========================================= */
+
+.favBtn{
+position:absolute;
+
+top:18px;
+right:18px;
+
+width:48px;
+height:48px;
+
+border-radius:50%;
+
+display:flex;
+justify-content:center;
+align-items:center;
+
+font-size:24px;
+
+background:rgba(255,255,255,.08);
+
+cursor:pointer;
+}
+
+.favActive{
+background:
+linear-gradient(
+135deg,
+#ef4444,
+#ec4899
+);
+}
+
+/* =========================================
+NEWS
+========================================= */
+
+.newsItem{
+padding:20px;
+
+border-radius:22px;
+
+background:rgba(99,102,241,.12);
+
+margin-bottom:16px;
+}
+
+/* =========================================
+OVERLAY
+========================================= */
+
+.overlay{
+position:fixed;
+inset:0;
+
+background:rgba(0,0,0,.95);
+
+display:none;
+
+justify-content:center;
+align-items:center;
+
+z-index:999999;
+}
+
+.overlayContent{
+width:94%;
+height:92%;
+
+background:black;
+
+border-radius:30px;
+
+overflow:hidden;
+
+position:relative;
+}
+
+iframe{
+width:100%;
+height:100%;
+border:none;
+}
+
+.closeBtn{
+position:absolute;
+
+top:20px;
+right:20px;
+
+padding:16px 22px;
+
+border:none;
+border-radius:18px;
+
+background:#ef4444;
+
+color:white;
+
+font-weight:900;
+
+cursor:pointer;
+
+z-index:999;
+}
+
+/* =========================================
+PROFILE MODAL
+========================================= */
+
+.profileModal{
+position:fixed;
+inset:0;
+
+background:rgba(0,0,0,.7);
+
+display:none;
+justify-content:center;
+align-items:center;
+
+z-index:999999;
+
+backdrop-filter:blur(10px);
+}
+
+.profileBox{
+width:500px;
+
+padding:40px;
+
+border-radius:34px;
+
+background:
+linear-gradient(
+135deg,
+#111827,
+#1e293b
+);
+
+border:1px solid rgba(255,255,255,.08);
+
+box-shadow:
+0 0 60px rgba(99,102,241,.3);
+}
+
+.profileTitle{
+font-size:40px;
+font-weight:900;
+
+margin-bottom:10px;
+}
+
+.profileText{
+color:#94a3b8;
+font-size:18px;
+
+margin-bottom:30px;
+}
+
+.profileInput{
+width:100%;
+
+padding:20px;
+
+border:none;
+outline:none;
+
+border-radius:20px;
+
+background:rgba(255,255,255,.08);
+
+color:white;
+
+font-size:20px;
+font-weight:700;
+
+margin-bottom:30px;
+}
+
+.profileButtons{
+display:flex;
+justify-content:flex-end;
+gap:14px;
+}
+
+.cancelBtn{
+padding:16px 26px;
+
+border:none;
+border-radius:18px;
+
+background:#334155;
+
+color:white;
+
+font-size:18px;
+font-weight:800;
+
+cursor:pointer;
+}
+
+.saveBtn{
+padding:16px 26px;
+
+border:none;
+border-radius:18px;
+
+background:
+linear-gradient(
+135deg,
+#6366f1,
+#8b5cf6
+);
+
+color:white;
+
+font-size:18px;
+font-weight:800;
+
+cursor:pointer;
+}
+
+/* =========================================
+UPDATE MODAL
+========================================= */
+
+.updateModal{
+position:fixed;
+inset:0;
+
+background:rgba(0,0,0,.75);
+
+display:none;
+justify-content:center;
+align-items:center;
+
+z-index:999999;
+
+backdrop-filter:blur(10px);
+}
+
+.updateBox{
+width:700px;
+max-height:85vh;
+
+overflow-y:auto;
+
+padding:40px;
+
+border-radius:35px;
+
+background:
+linear-gradient(
+135deg,
+#111827,
+#1e293b
+);
+
+border:1px solid rgba(255,255,255,.08);
+
+box-shadow:
+0 0 60px rgba(99,102,241,.35);
+}
+
+.updateTitle{
+font-size:48px;
+font-weight:900;
+
+margin-bottom:30px;
+
+background:
+linear-gradient(
+135deg,
+#818cf8,
+#06b6d4,
+#8b5cf6
+);
+
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+}
+
+.updateCard{
+padding:28px;
+
+border-radius:26px;
+
+background:rgba(255,255,255,.06);
+
+border:1px solid rgba(255,255,255,.08);
+
+margin-bottom:20px;
+}
+
+.updateHead{
+font-size:28px;
+font-weight:900;
+
+margin-bottom:12px;
+}
+
+.updateText{
+font-size:18px;
+line-height:1.6;
+
+color:#cbd5e1;
+}
+
+.closeUpdates{
+margin-top:15px;
+
+width:100%;
+
+padding:20px;
+
+border:none;
+border-radius:22px;
+
+background:
+linear-gradient(
+135deg,
+#6366f1,
+#8b5cf6
+);
+
+color:white;
+
+font-size:22px;
+font-weight:900;
+
+cursor:pointer;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="particles" id="particles"></div>
+<div class="mouseGlow" id="mouseGlow"></div>
+
+<!-- LOADER -->
+
+<div class="loader" id="loader">
+
+<div class="loaderRing"></div>
+<div class="loaderRing"></div>
+<div class="loaderRing"></div>
+
+<div class="loaderLogo">
+🎮 MyPanel
+</div>
+
+<div class="loadingText">
+LADE SYSTEM...
+</div>
+
+<div class="loadingBar">
+<div class="loadingFill"></div>
+</div>
+
+</div>
+
+<!-- WELCOME -->
+
+<div class="welcome" id="welcome">
+
+<h1>
+HERZLICH WILLKOMMEN
+</h1>
+
+<h2>
+Willkommen auf MyPanel 🚀
+</h2>
+
+</div>
+
+<!-- APP -->
+
+<div class="app" id="app">
+
+<!-- SIDEBAR -->
+
+<div class="sidebar">
+
+<div class="logo">
+🌐 MyPanel
+</div>
+
+<div class="menu">
+
+<button onclick="scrollToSection('dashboard')">
+🏠 Dashboard
+</button>
+
+<button onclick="scrollToSection('gamesSection')">
+🎮 Spiele
+</button>
+
+<button onclick="scrollToSection('favoritesSection')">
+❤️ Favoriten
+</button>
+
+<button onclick="scrollToSection('newsSection')">
+📰 News
+</button>
+
+<button onclick="openUpdates()">
+🚀 Updates
+</button>
+
+</div>
+
+</div>
+
+<!-- MAIN -->
+
+<div class="main">
+
+<!-- HERO -->
+
+<div class="hero" id="dashboard">
+
+<div class="profile">
+
+<div class="avatar"> 
+M
+</div>
+
+<div>
+
+<div
+id="username"
+style="
+font-size:24px;
+font-weight:900;
+">
+
+MyPanel User
+
+</div>
+
+<button
+class="editBtn"
+onclick="openProfileModal()">
+
+✏ Username ändern
+
+</button>
+
+</div>
+
+</div>
+
+<h1>
+Willkommen zurück 👋
+</h1>
+
+<h2>
+Dein Gaming Hub ist bereit 🔥
+</h2>
+
+</div>
+
+<!-- GAMES -->
+
+<div class="card" id="gamesSection">
+
+<div class="cardTitle">
+🎮 Spielebibliothek
+</div>
+
+<div class="games">
+
+<div class="game" onclick="playGame('snake.html')">
+<div class="favBtn" onclick="toggleFavorite(event,'Snake')" id="fav-Snake">🤍</div>
+<div class="gameIcon">🐍</div>
+<div class="gameTitle">Snake</div>
+<div class="gameDesc">Klassisches Snake Game.</div>
+</div>
+
+<div class="game" onclick="playGame('memory.html')">
+<div class="favBtn" onclick="toggleFavorite(event,'Memory')" id="fav-Memory">🤍</div>
+<div class="gameIcon">🧠</div>
+<div class="gameTitle">Memory</div>
+<div class="gameDesc">Teste dein Gedächtnis.</div>
+</div>
+
+<div class="game" onclick="playGame('geometrydash.html')">
+<div class="favBtn" onclick="toggleFavorite(event,'Geometry Dash')" id="fav-Geometry Dash">🤍</div>
+<div class="gameIcon">⚡</div>
+<div class="gameTitle">Geometry Dash</div>
+<div class="gameDesc">Springe durch Hindernisse.</div>
+</div>
+
+<div class="game" onclick="playGame('breakout.html')">
+<div class="favBtn" onclick="toggleFavorite(event,'Breakout')" id="fav-Breakout">🤍</div>
+<div class="gameIcon">🧱</div>
+<div class="gameTitle">Breakout</div>
+<div class="gameDesc">Zerstöre alle Blöcke.</div>
+</div>
+
+<div class="game" onclick="playGame('spaceshooter.html')">
+<div class="favBtn" onclick="toggleFavorite(event,'Space Shooter')" id="fav-Space Shooter">🤍</div>
+<div class="gameIcon">🚀</div>
+<div class="gameTitle">Space Shooter</div>
+<div class="gameDesc">Weltraum Action.</div>
+</div>
+
+<div class="game" onclick="playGame('zombie.html')">
+<div class="favBtn" onclick="toggleFavorite(event,'Zombie Survival')" id="fav-Zombie Survival">🤍</div>
+<div class="gameIcon">🧟</div>
+<div class="gameTitle">Zombie Survival</div>
+<div class="gameDesc">Überlebe Zombies.</div>
+</div>
+
+<div class="game" onclick="playGame('flappy.html')">
+<div class="favBtn" onclick="toggleFavorite(event,'Flappy')" id="fav-Flappy">🤍</div>
+<div class="gameIcon">🐦</div>
+<div class="gameTitle">Flappy</div>
+<div class="gameDesc">Fliege durch Hindernisse.</div>
+</div>
+<div class="game" onclick="playGame('ArcadeRacing.html')">
+
+<div
+class="favBtn"
+onclick="toggleFavorite(event,'Arcade Racing')"
+id="fav-Arcade Racing">
+
+🤍
+
+</div>
+
+<div class="gameIcon">
+🏎️
+</div>
+
+<div class="gameTitle">
+Arcade Racing
+</div>
+
+<div class="gameDesc">
+Arcade Racing mit smooth Controls.
+</div>
+
+</div>
+<div class="game" onclick="playGame('wordle.html')">
+
+<div
+class="favBtn"
+onclick="toggleFavorite(event,'Wordle')"
+id="fav-Wordle">
+
+🤍
+
+</div>
+
+<div class="gameIcon">
+🔤
+</div>
+
+<div class="gameTitle">
+Wordle
+</div>
+
+<div class="gameDesc">
+Errate das geheime deutsche Wort.
+</div>
+
+</div>
+</div>
+
+</div>
+
+<!-- FAVORITES -->
+
+<div class="card" id="favoritesSection">
+
+<div class="cardTitle">
+❤️ Favoriten
+</div>
+
+<div class="newsItem">
+Noch keine Favoriten gespeichert
+</div>
+
+</div>
+
+<!-- NEWS -->
+
+<div class="card" id="newsSection">
+
+<div class="cardTitle">
+📰 News
+</div>
+
+<div class="newsItem">
+🚀 Neue Neon Edition veröffentlicht
+</div>
+
+<div class="newsItem">
+✨ Profil System hinzugefügt
+</div>
+
+<div class="newsItem">
+🎮 Overlay Games verbessert
+</div>
+<div class="newsItem">
+🏎️Arcade Racing
+</div>
+<div class="newsItem">
+🔤 Neues Wordle Spiel hinzugefügt
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- OVERLAY -->
+
+<div class="overlay" id="overlay">
+
+<div class="overlayContent">
+
+<button
+class="closeBtn"
+onclick="closeGame()">
+
+✖ Schließen
+
+</button>
+
+<iframe id="gameFrame"></iframe>
+
+</div>
+
+</div>
+
+<!-- PROFILE MODAL -->
+
+<div class="profileModal" id="profileModal">
+
+<div class="profileBox">
+
+<div class="profileTitle">
+👤 Username ändern
+</div>
+
+<div class="profileText">
+Passe deinen MyPanel Namen an.
+</div>
+
+<input
+type="text"
+id="usernameInput"
+class="profileInput"
+placeholder="Neuen Username eingeben..."
+>
+
+<div class="profileButtons">
+
+<button
+class="cancelBtn"
+onclick="closeProfileModal()">
+
+Abbrechen
+
+</button>
+
+<button
+class="saveBtn"
+onclick="saveUsername()">
+
+Speichern
+
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- UPDATE MODAL -->
+
+<div class="updateModal" id="updateModal">
+
+<div class="updateBox">
+
+<div class="updateTitle">
+🚀 Neue Updates
+</div>
+
+<div class="updateCard">
+
+<div class="updateHead">
+✨ Neues Neon Design
+</div>
+
+<div class="updateText">
+Die komplette Website hat jetzt ein modernes Neon UI mit Glow Effekten und Animationen.
+</div>
+
+</div>
+
+<div class="updateCard">
+
+<div class="updateHead">
+❤️ Favoriten System
+</div>
+
+<div class="updateText">
+Du kannst jetzt einzelne Spiele favorisieren und speichern.(Außer nach einen Update)
+</div>
+
+</div>
+
+<div class="updateCard">
+
+<div class="updateHead">
+🎮 Overlay Games
+</div>
+
+<div class="updateText">
+Spiele öffnen sich direkt in einem Overlay Fenster.
+</div>
+
+</div>
+
+<div class="updateCard">
+
+<div class="updateHead">
+👤 Profil System
+</div>
+
+<div class="updateText">
+Username Änderungen werden gespeichert.(Außer nach einen Update)
+</div>
+
+</div>
+
+<div class="updateCard">
+
+<div class="updateHead">
+🏎️ Arcade Racing
+</div>
+
+<div class="updateText">
+Ein neues Arcade Racing Game wurde hinzugefügt.
+Fahre so weit wie möglich und vermeide Crashes.
+</div>
+
+</div>
+<div class="updateCard">
+
+<div class="updateHead">
+🔤 Wordle
+</div>
+
+<div class="updateText">
+Ein neues deutsches Wordle Spiel wurde hinzugefügt.
+Errate das richtige Wort in 6 Versuchen.
+</div>
+
+</div>
+<button
+class="closeUpdates"
+onclick="closeUpdates()">
+
+Schließen
+
+</button>
+
+</div>
+
+</div>
+
+<script>
+
+/* PARTICLES */
+
+const particles =
+document.getElementById("particles");
+
+for(let i=0;i<35;i++){
+
+const p =
+document.createElement("div");
+
+p.classList.add("particle");
+
+const size =
+Math.random()*6+2;
+
+p.style.width =
+size+"px";
+
+p.style.height =
+size+"px";
+
+p.style.left =
+Math.random()*100+"%";
+
+p.style.animationDuration =
+(Math.random()*12+10)+"s";
+
+particles.appendChild(p);
+
+}
+
+/* MOUSE GLOW */
+
+const glow =
+document.getElementById("mouseGlow");
+
+document.addEventListener("mousemove",(e)=>{
+
+glow.style.left =
+e.clientX+"px";
+
+glow.style.top =
+e.clientY+"px";
+
+});
+
+/* NAVIGATION */
+
+function scrollToSection(id){
+
+document
+.getElementById(id)
+.scrollIntoView({
+behavior:"smooth"
+});
+
+}
+
+/* PROFILE */
+
+function openProfileModal(){
+
+document.getElementById("profileModal")
+.style.display =
+"flex";
+
+document.getElementById("usernameInput")
+.value =
+localStorage.getItem("username")
+|| "MyPanel User";
+
+}
+
+function closeProfileModal(){
+
+document.getElementById("profileModal")
+.style.display =
+"none";
+
+}
+
+function saveUsername(){
+
+const input =
+document.getElementById("usernameInput")
+.value;
+
+if(input.trim() !== ""){
+
+localStorage.setItem(
+"username",
+input
+);
+
+document.getElementById("username")
+.innerText =
+input;
+
+closeProfileModal();
+
+}
+
+}
+
+function loadUser(){
+
+const saved =
+localStorage.getItem("username")
+|| "MyPanel User";
+
+document.getElementById("username")
+.innerText =
+saved;
+
+}
+
+loadUser();
+
+/* FAVORITES */
+
+function toggleFavorite(event,game){
+
+event.stopPropagation();
+
+let favorites =
+JSON.parse(
+localStorage.getItem("favorites")
+|| "[]"
+);
+
+const index =
+favorites.indexOf(game);
+
+if(index === -1){
+
+favorites.push(game);
+
+}else{
+
+favorites.splice(index,1);
+
+}
+
+localStorage.setItem(
+"favorites",
+JSON.stringify(favorites)
+);
+
+loadFavorites();
+
+}
+
+function loadFavorites(){
+
+const favorites =
+JSON.parse(
+localStorage.getItem("favorites")
+|| "[]"
+);
+
+document.querySelectorAll(".favBtn")
+.forEach(btn=>{
+
+btn.classList.remove("favActive");
+btn.innerHTML="🤍";
+
+});
+
+favorites.forEach(game=>{
+
+const btn =
+document.getElementById("fav-"+game);
+
+if(btn){
+
+btn.classList.add("favActive");
+btn.innerHTML="❤️";
+
+}
+
+});
+
+const section =
+document.getElementById("favoritesSection");
+
+section.innerHTML=`
+
+<div class="cardTitle">
+❤️ Favoriten
+</div>
+
+`;
+
+if(favorites.length===0){
+
+section.innerHTML+=`
+
+<div class="newsItem">
+Noch keine Favoriten gespeichert
+</div>
+
+`;
+
+}else{
+
+favorites.forEach(game=>{
+
+section.innerHTML+=`
+
+<div class="newsItem">
+❤️ ${game}
+</div>
+
+`;
+
+});
+
+}
+
+}
+
+loadFavorites();
+
+/* GAMES */
+
+function playGame(page){
+
+document.getElementById("overlay")
+.style.display =
+"flex";
+
+document.getElementById("gameFrame")
+.src =
+page;
+
+}
+
+function closeGame(){
+
+document.getElementById("overlay")
+.style.display =
+"none";
+
+document.getElementById("gameFrame")
+.src =
+"";
+
+}
+
+/* UPDATES */
+
+function openUpdates(){
+
+document.getElementById("updateModal")
+.style.display =
+"flex";
+
+}
+
+function closeUpdates(){
+
+document.getElementById("updateModal")
+.style.display =
+"none";
+
+}
+
+/* LOADER */
+
+const loader =
+document.getElementById("loader");
+
+const welcome =
+document.getElementById("welcome");
+
+const app =
+document.getElementById("app");
+
+window.onload = function(){
+
+setTimeout(()=>{
+
+loader.style.opacity="0";
+
+setTimeout(()=>{
+
+loader.style.display="none";
+
+welcome.style.display="flex";
+
+setTimeout(()=>{
+welcome.style.opacity="1";
+},100);
+
+setTimeout(()=>{
+
+welcome.style.opacity="0";
+
+setTimeout(()=>{
+
+welcome.style.display="none";
+
+app.style.display="flex";
+
+setTimeout(()=>{
+app.style.opacity="1";
+},100);
+
+},1000);
+
+},2500);
+
+},1000);
+
+},4000);
+
+};
+
+</script>
+
+</body>
+</html>

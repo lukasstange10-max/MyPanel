@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Flappy Deluxe</title>
+
+<style>
+body{
+margin:0;
+background:radial-gradient(circle at top,#0f172a,#020617);
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+font-family:Poppins;
+overflow:hidden;
+}
+
+canvas{
+border-radius:25px;
+box-shadow:0 0 80px rgba(99,102,241,.3);
+width:500px;
+height:750px;
+}
+
+.overlay{
+position:fixed;
+inset:0;
+display:flex;
+justify-content:center;
+align-items:center;
+flex-direction:column;
+background:rgba(0,0,0,.55);
+backdrop-filter:blur(18px);
+color:white;
+}
+
+.panel{
+background:rgba(255,255,255,.08);
+padding:40px;
+border-radius:25px;
+text-align:center;
+border:1px solid rgba(255,255,255,.1);
+}
+
+.btn{
+padding:14px 30px;
+margin:10px;
+border:none;
+border-radius:16px;
+background:rgba(255,255,255,.08);
+color:white;
+font-weight:600;
+cursor:pointer;
+transition:.3s;
+}
+
+.btn:hover{
+transform:scale(1.05);
+background:rgba(99,102,241,.3);
+}
+
+.hidden{display:none;}
+</style>
+</head>
+
+<body>
+
+<canvas id="game" width="400" height="600"></canvas>
+
+<!-- MENU -->
+<div class="overlay" id="menu">
+<div class="panel">
+<h1>🐦 Flappy Deluxe</h1>
+<p>🏆 Highscore: <span id="hs">0</span></p>
+<p>💎 Coins: <span id="coins">0</span></p>
+
+<button class="btn" onclick="startGame()">▶ Start</button>
+<button class="btn" onclick="openShop()">🛒 Shop</button>
+</div>
+</div>
+
+<!-- SHOP (ERWEITERT) -->
+<div class="overlay hidden" id="shop">
+<div class="panel">
+<h2>🛒 Shop</h2>
+
+<button class="btn" onclick="buy('shield')">🛡️ Shield (300)</button>
+<button class="btn" onclick="buy('slow')">💨 Slow Motion (250)</button>
+<button class="btn" onclick="buy('magnet')">🧲 Magnet (400)</button>
+<button class="btn" onclick="buy('double')">💎 Double Coins (500)</button>
+<button class="btn" onclick="buy('life')">❤️ Extra Life (600)</button>
+
+<button class="btn" onclick="backMenu()">⬅ Zurück</button>
+</div>
+</div>
+
+<script>
+const canvas=document.getElementById("game");
+const ctx=canvas.getContext("2d");
+
+let bird,pipes,coinsArr;
+let score=0,speed=3,game;
+
+let coins=+localStorage.getItem("coins")||0;
+let high=+localStorage.getItem("high")||0;
+
+hs.innerText=high;
+coinsDisplay=document.getElementById("coins");
+coinsDisplay.innerText=coins;
+
+/* START */
+function startGame(){
+bird={x:80,y:300,vy:0};
+pipes=[];coinsArr=[];
+score=0;
+
+menu.classList.add("hidden");
+clearInterval(game);
+game=setInterval(update,16);
+}
+
+/* INPUT */
+function jump(){ bird.vy=-8; }
+document.addEventListener("keydown",e=>{
+if(e.code==="Space") jump();
+});
+canvas.onclick=jump;
+
+/* UPDATE */
+function update(){
+
+ctx.clearRect(0,0,400,600);
+
+/* BACKGROUND */
+let g=ctx.createLinearGradient(0,0,0,600);
+g.addColorStop(0,"#38bdf8");
+g.addColorStop(1,"#0f172a");
+ctx.fillStyle=g;
+ctx.fillRect(0,0,400,600);
+
+/* PHYSICS */
+bird.vy+=0.5;
+bird.y+=bird.vy;
+
+/* 🐦 VOGEL DESIGN */
+let wingOffset=Math.sin(Date.now()/120)*3;
+
+ctx.fillStyle="#facc15";
+ctx.beginPath();
+ctx.arc(bird.x,bird.y,12,0,Math.PI*2);
+ctx.fill();
+
+/* WING */
+ctx.fillStyle="#f59e0b";
+ctx.beginPath();
+ctx.ellipse(bird.x-5,bird.y+wingOffset,7,5,0,0,Math.PI*2);
+ctx.fill();
+
+/* EYE */
+ctx.fillStyle="white";
+ctx.beginPath();
+ctx.arc(bird.x+5,bird.y-4,4,0,Math.PI*2);
+ctx.fill();
+
+ctx.fillStyle="black";
+ctx.beginPath();
+ctx.arc(bird.x+6,bird.y-4,2,0,Math.PI*2);
+ctx.fill();
+
+/* BEAK */
+ctx.fillStyle="#fb923c";
+ctx.beginPath();
+ctx.moveTo(bird.x+12,bird.y);
+ctx.lineTo(bird.x+18,bird.y+3);
+ctx.lineTo(bird.x+12,bird.y+6);
+ctx.closePath();
+ctx.fill();
+
+/* PIPES */
+if(pipes.length===0||pipes[pipes.length-1].x<180){
+
+let gap=140;
+let top=Math.random()*(600-gap-100)+50;
+
+pipes.push({x:400,top:top,bottom:top+gap,passed:false});
+coinsArr.push({x:400,y:top+gap/2});
+}
+
+pipes.forEach((p,i)=>{
+p.x-=speed;
+
+/* GRADIENT */
+let grad=ctx.createLinearGradient(p.x,0,p.x+50,0);
+grad.addColorStop(0,"#22c55e");
+grad.addColorStop(1,"#15803d");
+
+/* TOP */
+ctx.fillStyle=grad;
+ctx.fillRect(p.x,0,50,p.top);
+
+/* EDGE */
+ctx.fillStyle="#14532d";
+ctx.fillRect(p.x,p.top-10,50,10);
+
+/* BOTTOM */
+ctx.fillStyle=grad;
+ctx.fillRect(p.x,p.bottom,50,600);
+
+/* EDGE */
+ctx.fillStyle="#14532d";
+ctx.fillRect(p.x,p.bottom,50,10);
+
+if(!p.passed&&p.x<bird.x){
+p.passed=true;
+score++;
+}
+
+/* COLLISION */
+if(
+bird.x+12>p.x &&
+bird.x-12<p.x+50 &&
+(bird.y-12<p.top || bird.y+12>p.bottom)
+){
+gameOver();
+}
+
+if(p.x<-50) pipes.splice(i,1);
+});
+
+/* COINS */
+coinsArr.forEach((c,i)=>{
+c.x-=speed;
+
+ctx.fillStyle="gold";
+ctx.beginPath();
+ctx.arc(c.x,c.y,6,0,Math.PI*2);
+ctx.fill();
+
+if(Math.abs(bird.x-c.x)<15 && Math.abs(bird.y-c.y)<15){
+coins++;
+localStorage.setItem("coins",coins);
+coinsDisplay.innerText=coins;
+coinsArr.splice(i,1);
+}
+});
+
+/* SCORE */
+ctx.fillStyle="white";
+ctx.font="bold 28px Arial";
+ctx.fillText(score,180,50);
+
+/* BORDER */
+if(bird.y>600||bird.y<0){
+gameOver();
+}
+}
+
+/* GAME OVER */
+function gameOver(){
+clearInterval(game);
+
+if(score>high){
+high=score;
+localStorage.setItem("high",high);
+}
+
+hs.innerText=high;
+menu.classList.remove("hidden");
+}
+
+/* SHOP */
+function openShop(){
+shop.classList.remove("hidden");
+menu.classList.add("hidden");
+}
+
+function backMenu(){
+menu.classList.remove("hidden");
+shop.classList.add("hidden");
+}
+
+/* SHOP LOGIC */
+function buy(type){
+let prices={
+shield:300,
+slow:250,
+magnet:400,
+double:500,
+life:600
+};
+
+if(coins>=prices[type]){
+coins-=prices[type];
+localStorage.setItem("coins",coins);
+coinsDisplay.innerText=coins;
+alert("Gekauft: "+type);
+}else{
+alert("Zu wenig Coins!");
+}
+}
+</script>
+
+</body>
+</html>

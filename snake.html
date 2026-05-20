@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snake 2.0</title>
+
+<style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+}
+
+body{
+font-family:Arial,Helvetica,sans-serif;
+background:linear-gradient(135deg,#07111f,#0b1e36);
+color:#fff;
+min-height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+padding:20px;
+overflow:hidden;
+}
+
+.wrapper{
+width:100%;
+max-width:760px;
+background:#18253a;
+padding:28px;
+border-radius:28px;
+box-shadow:0 25px 60px rgba(0,0,0,.45);
+text-align:center;
+}
+
+h1{
+font-size:56px;
+font-weight:900;
+margin-bottom:12px;
+}
+
+.score{
+font-size:28px;
+font-weight:800;
+line-height:1.7;
+margin-bottom:16px;
+}
+
+.speed-buttons,
+.bottom{
+display:flex;
+justify-content:center;
+gap:12px;
+flex-wrap:wrap;
+margin-top:12px;
+}
+
+button{
+border:none;
+padding:14px 22px;
+border-radius:16px;
+cursor:pointer;
+font-size:16px;
+font-weight:800;
+color:#fff;
+background:linear-gradient(135deg,#6366f1,#4f46e5);
+box-shadow:0 10px 24px rgba(79,70,229,.35);
+transition:.2s;
+}
+
+button:hover{
+transform:translateY(-2px);
+}
+
+.back-btn{
+background:linear-gradient(135deg,#64748b,#475569);
+}
+
+canvas{
+background:#000;
+border-radius:24px;
+box-shadow:0 0 28px rgba(79,70,229,.35);
+margin-top:14px;
+}
+
+.pad{
+margin-top:22px;
+display:grid;
+grid-template-columns:70px 70px 70px;
+grid-template-rows:70px 70px;
+gap:12px;
+justify-content:center;
+}
+
+.pad button{
+width:70px;
+height:70px;
+font-size:28px;
+padding:0;
+display:flex;
+justify-content:center;
+align-items:center;
+}
+
+.up{grid-column:2;grid-row:1;}
+.left{grid-column:1;grid-row:2;}
+.down{grid-column:2;grid-row:2;}
+.right{grid-column:3;grid-row:2;}
+
+.overlay{
+position:fixed;
+inset:0;
+background:rgba(0,0,0,.78);
+display:flex;
+justify-content:center;
+align-items:center;
+padding:20px;
+z-index:999;
+}
+
+.modal{
+background:#18253a;
+padding:34px;
+border-radius:28px;
+max-width:560px;
+width:100%;
+text-align:center;
+box-shadow:0 25px 60px rgba(0,0,0,.45);
+}
+
+.modal h2{
+font-size:62px;
+font-weight:900;
+margin-bottom:14px;
+}
+
+.modal p{
+font-size:20px;
+margin-bottom:18px;
+opacity:.95;
+}
+
+.hidden{
+display:none;
+}
+
+small{
+display:block;
+margin-top:10px;
+opacity:.75;
+font-size:14px;
+}
+
+@media(max-width:700px){
+h1{font-size:42px;}
+.modal h2{font-size:46px;}
+canvas{width:100%;height:auto;}
+}
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+
+<h1>🎮 Snake 2.0</h1>
+
+<div class="score">
+Punkte: <span id="score">0</span><br>
+🐢 <span id="hsSlow">0</span> |
+⚡ <span id="hsMedium">0</span> |
+🚀 <span id="hsFast">0</span>
+</div>
+
+<canvas id="game" width="520" height="520"></canvas>
+
+<div class="bottom">
+<button onclick="restartGame()">🔄 Neustart</button>
+<button onclick="pauseGame()">⏸ Pause</button>
+
+
+<div class="pad">
+<button class="up" onclick="changeDir('UP')">⬆️</button>
+<button class="left" onclick="changeDir('LEFT')">⬅️</button>
+<button class="down" onclick="changeDir('DOWN')">⬇️</button>
+<button class="right" onclick="changeDir('RIGHT')">➡️</button>
+</div>
+
+</div>
+
+<!-- Start Overlay -->
+<div class="overlay" id="startBox">
+<div class="modal">
+
+<h2>Spiel starten</h2>
+<p>Welche Geschwindigkeit möchtest du spielen?</p>
+
+<div class="speed-buttons">
+<button onclick="startWith('slow')">🐢 Langsam</button>
+<button onclick="startWith('medium')">⚡ Mittel</button>
+<button onclick="startWith('fast')">🚀 Schnell</button>
+</div>
+
+<div class="speed-buttons" style="margin-top:18px;">
+
+</div>
+</div>
+
+<!-- Game Over -->
+<div class="overlay hidden" id="gameOverBox">
+<div class="modal">
+
+<h2>GAME OVER</h2>
+<p>Punkte: <span id="endScore">0</span></p>
+<p>Welche Geschwindigkeit als Nächstes?</p>
+
+<div class="speed-buttons">
+<button onclick="restartWith('slow')">🐢 Langsam</button>
+<button onclick="restartWith('medium')">⚡ Mittel</button>
+<button onclick="restartWith('fast')">🚀 Schnell</button>
+</div>
+
+<div class="speed-buttons" style="margin-top:18px;">
+<button class="back-btn" onclick="goHome()">⬅ Zurück zur Startseite</button>
+</div>
+
+<small id="recordText"></small>
+
+</div>
+</div>
+
+<script>
+const canvas=document.getElementById("game");
+const ctx=canvas.getContext("2d");
+
+const box=20;
+const size=26;
+
+let snake,food,dir,score;
+let game;
+let paused=false;
+let speed=145;
+let speedMode="medium";
+
+let hsSlow=parseInt(localStorage.getItem("hsSlow")||0);
+let hsMedium=parseInt(localStorage.getItem("hsMedium")||0);
+let hsFast=parseInt(localStorage.getItem("hsFast")||0);
+
+updateHighscores();
+
+function init(){
+snake=[{x:10*box,y:10*box}];
+food=randomFood();
+dir="RIGHT";
+score=0;
+paused=false;
+document.getElementById("score").innerText="0";
+}
+
+function randomFood(){
+return{
+x:Math.floor(Math.random()*size)*box,
+y:Math.floor(Math.random()*size)*box
+};
+}
+
+function startWith(mode){
+document.getElementById("startBox").classList.add("hidden");
+document.getElementById("gameOverBox").classList.add("hidden");
+
+speedMode=mode;
+
+if(mode==="slow") speed=230;
+if(mode==="medium") speed=145;
+if(mode==="fast") speed=85;
+
+restartGame();
+}
+
+function restartWith(mode){
+startWith(mode);
+}
+
+function restartGame(){
+clearInterval(game);
+init();
+game=setInterval(draw,speed);
+}
+
+function pauseGame(){
+paused=!paused;
+}
+
+function changeDir(newDir){
+if(newDir==="LEFT" && dir!=="RIGHT") dir="LEFT";
+if(newDir==="RIGHT" && dir!=="LEFT") dir="RIGHT";
+if(newDir==="UP" && dir!=="DOWN") dir="UP";
+if(newDir==="DOWN" && dir!=="UP") dir="DOWN";
+}
+
+document.addEventListener("keydown",e=>{
+if(e.key==="ArrowLeft") changeDir("LEFT");
+if(e.key==="ArrowRight") changeDir("RIGHT");
+if(e.key==="ArrowUp") changeDir("UP");
+if(e.key==="ArrowDown") changeDir("DOWN");
+});
+
+function draw(){
+
+if(paused) return;
+
+ctx.fillStyle="#000";
+ctx.fillRect(0,0,canvas.width,canvas.height);
+
+ctx.fillStyle="red";
+ctx.beginPath();
+ctx.arc(food.x+10,food.y+10,8,0,Math.PI*2);
+ctx.fill();
+
+for(let i=0;i<snake.length;i++){
+ctx.fillStyle=i===0 ? "#6366f1" : "#25186e";
+ctx.fillRect(snake[i].x,snake[i].y,18,18);
+}
+
+let headX=snake[0].x;
+let headY=snake[0].y;
+
+if(dir==="LEFT") headX-=box;
+if(dir==="RIGHT") headX+=box;
+if(dir==="UP") headY-=box;
+if(dir==="DOWN") headY+=box;
+
+if(
+headX<0 || headY<0 ||
+headX>=canvas.width ||
+headY>=canvas.height ||
+collision(headX,headY,snake)
+){
+gameOver();
+return;
+}
+
+if(headX===food.x && headY===food.y){
+
+score++;
+document.getElementById("score").innerText=score;
+saveHighscore();
+food=randomFood();
+
+}else{
+snake.pop();
+}
+
+snake.unshift({x:headX,y:headY});
+}
+
+function collision(x,y,array){
+for(let i=0;i<array.length;i++){
+if(x===array[i].x && y===array[i].y) return true;
+}
+return false;
+}
+
+function saveHighscore(){
+
+if(speedMode==="slow" && score>hsSlow){
+hsSlow=score;
+localStorage.setItem("hsSlow",hsSlow);
+}
+
+if(speedMode==="medium" && score>hsMedium){
+hsMedium=score;
+localStorage.setItem("hsMedium",hsMedium);
+}
+
+if(speedMode==="fast" && score>hsFast){
+hsFast=score;
+localStorage.setItem("hsFast",hsFast);
+}
+
+updateHighscores();
+}
+
+function updateHighscores(){
+document.getElementById("hsSlow").innerText=hsSlow;
+document.getElementById("hsMedium").innerText=hsMedium;
+document.getElementById("hsFast").innerText=hsFast;
+}
+
+function gameOver(){
+clearInterval(game);
+document.getElementById("endScore").innerText=score;
+document.getElementById("gameOverBox").classList.remove("hidden");
+}
+
+function goHome(){
+window.location.href="index.html";
+}
+</script>
+
+</body>
+</html>

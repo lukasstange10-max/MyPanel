@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Neon Wordle</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;800;900&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Poppins,sans-serif;
+}
+
+body{
+height:100vh;
+overflow:hidden;
+
+display:flex;
+justify-content:center;
+align-items:center;
+flex-direction:column;
+
+background:
+linear-gradient(
+135deg,
+#020617,
+#0f172a,
+#111827
+);
+
+color:white;
+}
+
+/* TITLE */
+
+.title{
+font-size:90px;
+font-weight:900;
+
+margin-bottom:30px;
+
+background:
+linear-gradient(
+135deg,
+#06b6d4,
+#6366f1,
+#8b5cf6
+);
+
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+
+text-shadow:
+0 0 30px rgba(99,102,241,.4);
+}
+
+/* BOARD */
+
+.board{
+display:grid;
+grid-template-columns:repeat(5,95px);
+gap:16px;
+
+margin-bottom:35px;
+}
+
+.tile{
+width:95px;
+height:95px;
+
+border-radius:24px;
+
+background:
+rgba(255,255,255,.05);
+
+border:2px solid rgba(255,255,255,.08);
+
+display:flex;
+justify-content:center;
+align-items:center;
+
+font-size:42px;
+font-weight:900;
+
+text-transform:uppercase;
+
+transition:.25s;
+
+backdrop-filter:blur(10px);
+}
+
+/* COLORS */
+
+.correct{
+background:#22c55e;
+box-shadow:
+0 0 35px #22c55e;
+}
+
+.present{
+background:#eab308;
+box-shadow:
+0 0 35px #eab308;
+}
+
+.wrong{
+background:#374151;
+}
+
+/* INPUT */
+
+.inputBox{
+display:flex;
+gap:18px;
+
+margin-bottom:25px;
+}
+
+input{
+width:270px;
+
+padding:20px;
+
+border:none;
+outline:none;
+
+border-radius:22px;
+
+background:
+rgba(255,255,255,.08);
+
+color:white;
+
+font-size:24px;
+font-weight:800;
+
+text-transform:uppercase;
+
+backdrop-filter:blur(10px);
+
+border:1px solid rgba(255,255,255,.08);
+}
+
+input::placeholder{
+color:#94a3b8;
+}
+
+/* BUTTON */
+
+button{
+padding:20px 36px;
+
+border:none;
+border-radius:22px;
+
+background:
+linear-gradient(
+135deg,
+#06b6d4,
+#6366f1,
+#8b5cf6
+);
+
+color:white;
+
+font-size:22px;
+font-weight:900;
+
+cursor:pointer;
+
+transition:.25s;
+
+box-shadow:
+0 0 25px rgba(99,102,241,.35);
+}
+
+button:hover{
+
+transform:
+translateY(-4px)
+scale(1.04);
+
+box-shadow:
+0 0 45px rgba(99,102,241,.6);
+
+}
+
+/* MESSAGE */
+
+.message{
+height:70px;
+
+font-size:34px;
+font-weight:900;
+
+display:flex;
+justify-content:center;
+align-items:center;
+
+text-align:center;
+
+margin-bottom:10px;
+}
+
+/* ATTEMPTS */
+
+.attempts{
+font-size:24px;
+color:#94a3b8;
+}
+
+/* SHAKE */
+
+.shake{
+animation:shake .3s;
+}
+
+@keyframes shake{
+
+0%{transform:translateX(0);}
+25%{transform:translateX(-8px);}
+50%{transform:translateX(8px);}
+75%{transform:translateX(-8px);}
+100%{transform:translateX(0);}
+
+}
+
+/* MOBILE */
+
+@media(max-width:700px){
+
+.title{
+font-size:60px;
+}
+
+.board{
+grid-template-columns:repeat(5,65px);
+gap:10px;
+}
+
+.tile{
+width:65px;
+height:65px;
+font-size:30px;
+}
+
+.inputBox{
+flex-direction:column;
+}
+
+input{
+width:100%;
+}
+
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="title">
+🟦 WORDLE
+</div>
+
+<div class="board" id="board"></div>
+
+<div class="inputBox">
+
+<input
+type="text"
+id="guessInput"
+maxlength="5"
+placeholder="WORT EINGEBEN"
+>
+
+<button onclick="checkGuess()">
+PRÜFEN
+</button>
+
+</div>
+
+<div class="message" id="message"></div>
+
+<div class="attempts" id="attempts">
+Versuche: 0 / 6
+</div>
+
+<script>
+
+/* DEUTSCHE WÖRTER */
+
+const words = [
+
+"APFEL",
+"TIGER",
+"HUNDE",
+"KATZE",
+"MAUER",
+"WOLKE",
+"BLUME",
+"KERZE",
+"TRAUM",
+"STERN",
+"ZEBRA",
+"FEUER",
+"LICHT",
+"SPIEL",
+"MUSIK",
+"FROST",
+"LASER",
+"WALDT",
+"BANAN",
+"GLASS"
+
+];
+
+let secretWord = "";
+let currentRow = 0;
+let gameOver = false;
+
+const board =
+document.getElementById("board");
+
+const message =
+document.getElementById("message");
+
+const attemptsText =
+document.getElementById("attempts");
+
+/* CREATE BOARD */
+
+function createBoard(){
+
+board.innerHTML = "";
+
+for(let i=0;i<30;i++){
+
+const tile =
+document.createElement("div");
+
+tile.classList.add("tile");
+
+board.appendChild(tile);
+
+}
+
+}
+
+/* NEW GAME */
+
+function newGame(){
+
+secretWord =
+words[Math.floor(Math.random()*words.length)];
+
+currentRow = 0;
+
+gameOver = false;
+
+message.innerText = "";
+
+attemptsText.innerText =
+"Versuche: 0 / 6";
+
+document.getElementById("guessInput").value = "";
+
+createBoard();
+
+}
+
+/* CHECK */
+
+function checkGuess(){
+
+if(gameOver) return;
+
+const input =
+document.getElementById("guessInput");
+
+const guess =
+input.value.toUpperCase();
+
+if(guess.length !== 5){
+
+message.innerText =
+"⚠️ Bitte 5 Buchstaben eingeben";
+
+input.classList.add("shake");
+
+setTimeout(()=>{
+
+input.classList.remove("shake");
+
+},300);
+
+return;
+
+}
+
+const tiles =
+document.querySelectorAll(".tile");
+
+/* WORD ARRAY */
+
+let wordArray =
+secretWord.split("");
+
+/* RESULT ARRAY */
+
+let result =
+["wrong","wrong","wrong","wrong","wrong"];
+
+/* FIRST PASS = GREEN */
+
+for(let i=0;i<5;i++){
+
+if(guess[i] === wordArray[i]){
+
+result[i] = "correct";
+
+wordArray[i] = null;
+
+}
+
+}
+
+/* SECOND PASS = YELLOW */
+
+for(let i=0;i<5;i++){
+
+if(result[i] === "correct") continue;
+
+const index =
+wordArray.indexOf(guess[i]);
+
+if(index !== -1){
+
+result[i] = "present";
+
+wordArray[index] = null;
+
+}
+
+}
+
+/* SHOW LETTERS */
+
+for(let i=0;i<5;i++){
+
+const tile =
+tiles[currentRow*5+i];
+
+tile.innerText =
+guess[i];
+
+setTimeout(()=>{
+
+tile.classList.add(result[i]);
+
+},i*150);
+
+}
+
+/* WIN */
+
+if(guess === secretWord){
+
+gameOver = true;
+
+setTimeout(()=>{
+
+message.innerText =
+"🎉 GEWONNEN";
+
+},900);
+
+setTimeout(()=>{
+
+newGame();
+
+},2500);
+
+return;
+
+}
+
+/* NEXT ROW */
+
+currentRow++;
+
+attemptsText.innerText =
+`Versuche: ${currentRow} / 6`;
+
+input.value = "";
+
+/* LOSE */
+
+if(currentRow >= 6){
+
+gameOver = true;
+
+setTimeout(()=>{
+
+message.innerText =
+"💀 Wort war: " + secretWord;
+
+},900);
+
+setTimeout(()=>{
+
+newGame();
+
+},3500);
+
+}
+
+}
+
+/* ENTER */
+
+document
+.getElementById("guessInput")
+.addEventListener("keydown",(e)=>{
+
+if(e.key === "Enter"){
+
+checkGuess();
+
+}
+
+});
+
+/* START */
+
+newGame();
+
+</script>
+
+</body>
+</html>

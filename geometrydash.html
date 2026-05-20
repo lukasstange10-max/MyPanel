@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Geometry Dash FINAL</title>
+
+<style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+}
+
+body{
+font-family:Arial,Helvetica,sans-serif;
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+background:linear-gradient(135deg,#0f172a,#1e3a8a,#312e81);
+overflow:hidden;
+color:#fff;
+}
+
+.game{
+width:1100px;
+max-width:95%;
+background:rgba(255,255,255,.08);
+padding:24px;
+border-radius:28px;
+backdrop-filter:blur(12px);
+box-shadow:0 25px 55px rgba(0,0,0,.35);
+}
+
+.top{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:18px;
+gap:10px;
+flex-wrap:wrap;
+}
+
+.title{
+font-size:42px;
+font-weight:900;
+}
+
+.stats{
+font-size:22px;
+font-weight:800;
+}
+
+.btn{
+border:none;
+padding:14px 24px;
+border-radius:16px;
+cursor:pointer;
+font-size:18px;
+font-weight:900;
+color:#fff;
+background:linear-gradient(135deg,#6366f1,#4f46e5);
+box-shadow:0 10px 24px rgba(79,70,229,.35);
+}
+
+canvas{
+width:100%;
+height:460px;
+display:block;
+border-radius:22px;
+background:linear-gradient(180deg,#38bdf8,#0f172a);
+}
+
+.overlay{
+position:fixed;
+inset:0;
+display:flex;
+justify-content:center;
+align-items:center;
+background:rgba(0,0,0,.45);
+}
+
+.popup{
+background:#0f172a;
+padding:34px;
+border-radius:24px;
+min-width:360px;
+text-align:center;
+}
+
+.popup h2{
+font-size:42px;
+margin-bottom:12px;
+}
+
+.popup p{
+font-size:22px;
+margin-bottom:14px;
+}
+
+.level-btn{
+display:block;
+width:100%;
+margin-top:12px;
+}
+
+.easy{background:linear-gradient(135deg,#22c55e,#16a34a);}
+.medium{background:linear-gradient(135deg,#f59e0b,#ea580c);}
+.hard{background:linear-gradient(135deg,#ef4444,#b91c1c);}
+
+.hide{display:none;}
+</style>
+</head>
+<body>
+
+<div class="game">
+
+<div class="top">
+<div class="title">⚡ Geometry Dash</div>
+
+<div class="stats">
+Level: <span id="lvl">-</span> |
+Fortschritt: <span id="percent">0</span>%
+</div>
+
+<button class="btn" onclick="menu()">▶ Start</button>
+</div>
+
+<canvas id="cv" width="1060" height="460"></canvas>
+
+</div>
+
+<div class="overlay" id="overlay">
+<div class="popup" id="popup"></div>
+</div>
+
+<script>
+const cv=document.getElementById("cv");
+const ctx=cv.getContext("2d");
+
+const W=cv.width;
+const H=cv.height;
+const ground=380;
+
+let run=false;
+let level="leicht";
+
+let speed=4;
+let progress=0;
+let progressAdd=.1;
+
+let timer=0;
+let next=320;
+let obs=[];
+let frame=0;
+
+/* Zielmodus */
+let goalMode=false;
+let goalX=W+250;
+
+const p={
+x:150,
+y:338,
+w:42,
+h:42,
+vy:0,
+jump:false,
+rot:0
+};
+
+const gravity=.72;
+const jumpPower=-13;
+
+/* MENU */
+function menu(){
+overlay.classList.remove("hide");
+
+popup.innerHTML=`
+<h2>⚡ Level wählen</h2>
+<p>Wähle Schwierigkeit</p>
+
+<button class="btn level-btn easy" onclick="start('leicht')">🟢 Leicht</button>
+<button class="btn level-btn medium" onclick="start('mittel')">🟠 Mittel</button>
+<button class="btn level-btn hard" onclick="start('schwer')">🔴 Schwer</button>
+`;
+}
+menu();
+
+/* START */
+function start(lv){
+
+level=lv;
+run=true;
+progress=0;
+timer=0;
+obs=[];
+frame=0;
+
+goalMode=false;
+goalX=W+250;
+
+p.y=338;
+p.vy=0;
+p.jump=false;
+p.rot=0;
+
+if(level==="leicht"){
+speed=3.6;
+progressAdd=.08;
+next=430;
+}
+
+if(level==="mittel"){
+speed=4.2;
+progressAdd=.11;
+next=360;
+}
+
+if(level==="schwer"){
+speed=4.5;
+progressAdd=.09;
+next=330;
+}
+
+lvl.innerText=level;
+percent.innerText="0";
+
+overlay.classList.add("hide");
+}
+
+/* random */
+function rnd(a,b){
+return Math.floor(Math.random()*(b-a+1))+a;
+}
+
+/* jump */
+function jump(){
+if(!run) return;
+
+if(!p.jump){
+p.vy=jumpPower;
+p.jump=true;
+}
+}
+
+document.addEventListener("keydown",e=>{
+if(e.code==="Space"){
+e.preventDefault();
+jump();
+}
+});
+
+cv.onclick=jump;
+
+/* obstacles */
+function spawn(){
+
+let count=1;
+let gap=220;
+let h=40;
+
+if(level==="leicht"){
+count=Math.random()<0.08?2:1;
+gap=rnd(230,330);
+h=rnd(30,38);
+}
+
+if(level==="mittel"){
+count=Math.random()<0.15?2:1;
+gap=rnd(190,270);
+h=rnd(34,44);
+}
+
+if(level==="schwer"){
+count=Math.random()<0.18?2:1;
+gap=rnd(180,245);
+h=rnd(36,46);
+}
+
+for(let i=0;i<count;i++){
+obs.push({
+x:W+(i*gap),
+y:ground-h,
+w:34,
+h:h
+});
+}
+}
+
+/* over */
+function over(){
+run=false;
+
+overlay.classList.remove("hide");
+
+popup.innerHTML=`
+<h2>💥 Game Over</h2>
+<p>${Math.floor(progress)}% geschafft</p>
+<button class="btn" onclick="menu()">🔁 Nochmal</button>
+`;
+}
+
+/* win */
+function win(){
+run=false;
+
+overlay.classList.remove("hide");
+
+popup.innerHTML=`
+<h2>🏆 Geschafft!</h2>
+<p>100% erreicht</p>
+<button class="btn" onclick="menu()">▶ Neues Spiel</button>
+`;
+}
+
+/* draw cube */
+function drawPlayer(){
+
+ctx.save();
+ctx.translate(p.x+21,p.y+21);
+ctx.rotate(p.rot);
+
+ctx.fillStyle="#facc15";
+ctx.fillRect(-21,-21,42,42);
+
+ctx.fillStyle="#111";
+ctx.fillRect(-10,-7,6,6);
+ctx.fillRect(5,-7,6,6);
+
+ctx.restore();
+}
+
+/* loop */
+function loop(){
+
+requestAnimationFrame(loop);
+ctx.clearRect(0,0,W,H);
+
+/* bg */
+for(let i=0;i<12;i++){
+ctx.fillStyle="rgba(255,255,255,.05)";
+ctx.fillRect((i*130)-(frame%130),80,70,170);
+}
+
+/* ground */
+ctx.fillStyle="#1e293b";
+ctx.fillRect(0,ground,W,H-ground);
+
+ctx.fillStyle="#334155";
+for(let i=0;i<W;i+=40){
+ctx.fillRect(i-(frame%40),ground,22,12);
+}
+
+/* progress bar */
+ctx.fillStyle="rgba(255,255,255,.2)";
+ctx.fillRect(20,20,320,16);
+
+ctx.fillStyle="#22c55e";
+ctx.fillRect(20,20,progress*3.2,16);
+
+if(run){
+
+frame+=speed;
+
+/* NORMAL GAME */
+if(!goalMode){
+
+progress+=progressAdd;
+if(progress>=100){
+progress=100;
+goalMode=true;
+obs=[];          /* alles frei */
+goalX=W+150;     /* Ziel kommt von rechts */
+}
+
+percent.innerText=Math.floor(progress);
+
+timer+=speed;
+if(timer>=next){
+spawn();
+timer=0;
+
+if(level==="leicht") next=rnd(430,560);
+if(level==="mittel") next=rnd(360,470);
+if(level==="schwer") next=rnd(330,430);
+}
+}
+
+/* physics */
+p.vy+=gravity;
+p.y+=p.vy;
+
+if(p.y>=338){
+p.y=338;
+p.vy=0;
+p.jump=false;
+p.rot=0;
+}else{
+p.rot+=0.11;
+}
+
+/* obstacles */
+for(let i=obs.length-1;i>=0;i--){
+
+let o=obs[i];
+o.x-=speed;
+
+ctx.fillStyle="#ef4444";
+ctx.beginPath();
+ctx.moveTo(o.x,o.y+o.h);
+ctx.lineTo(o.x+o.w/2,o.y);
+ctx.lineTo(o.x+o.w,o.y+o.h);
+ctx.fill();
+
+if(
+p.x<o.x+o.w &&
+p.x+p.w>o.x &&
+p.y<o.y+o.h &&
+p.y+p.h>o.y
+){
+over();
+}
+
+if(o.x+o.w<0) obs.splice(i,1);
+}
+
+/* FINAL ZIEL */
+if(goalMode){
+
+goalX-=speed; /* JETZT läuft Ziel zu dir */
+
+ctx.fillStyle="#22c55e";
+ctx.fillRect(goalX,240,18,140);
+
+ctx.fillStyle="#fff";
+ctx.fillRect(goalX+18,240,55,34);
+
+ctx.fillStyle="#111";
+ctx.font="bold 18px Arial";
+ctx.fillText("ZIEL",goalX+24,262);
+
+/* Sieg */
+if(p.x+p.w>=goalX){
+win();
+}
+}
+}
+
+drawPlayer();
+}
+
+loop();
+</script>
+
+</body>
+</html>

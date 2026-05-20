@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Zombie Survival</title>
+
+<style>
+body{
+margin:0;
+background:linear-gradient(135deg,#020617,#0f172a);
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+font-family:Segoe UI;
+color:white;
+overflow:hidden;
+}
+
+canvas{
+background:#020617;
+border-radius:20px;
+box-shadow:0 0 60px #6366f1;
+}
+
+#hud{
+position:absolute;
+top:15px;
+left:50%;
+transform:translateX(-50%);
+background:rgba(255,255,255,0.08);
+padding:8px 20px;
+border-radius:15px;
+backdrop-filter:blur(10px);
+font-weight:900;
+}
+
+.overlay{
+position:fixed;
+inset:0;
+display:flex;
+justify-content:center;
+align-items:center;
+background:rgba(0,0,0,0.9);
+flex-direction:column;
+}
+
+.hidden{display:none;}
+
+.panel{
+background:rgba(255,255,255,0.08);
+padding:25px;
+border-radius:20px;
+text-align:center;
+backdrop-filter:blur(15px);
+}
+
+button{
+padding:12px 25px;
+margin:8px;
+border:none;
+border-radius:12px;
+background:#6366f1;
+color:white;
+font-weight:bold;
+cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="game" width="500" height="600"></canvas>
+
+<div id="hud">
+❤️ <span id="hp">5</span> |
+💎 <span id="coins">0</span> |
+🎮 <span id="modeText">-</span>
+</div>
+
+<!-- MENU -->
+<div class="overlay" id="menu">
+<div class="panel">
+<h1>🧟 Zombie Survival</h1>
+<button onclick="chooseMode()">▶ Start</button>
+<button onclick="openShop()">🛒 Shop</button>
+</div>
+</div>
+
+<!-- MODE SELECT -->
+<div class="overlay hidden" id="modeSelect">
+<div class="panel">
+<h2>🎮 Steuerung wählen</h2>
+
+<button onclick="startGame('mouse')">🖱️ Maus bewegen + schießen</button>
+<button onclick="startGame('wasd')">⌨️ WASD bewegen + Maus schießen</button>
+
+</div>
+</div>
+
+<!-- SHOP -->
+<div class="overlay hidden" id="shop">
+<div class="panel">
+<h2>🛒 Shop</h2>
+
+<button onclick="buy('spread')">Spread (1200)</button>
+<button onclick="buy('damage')">Damage (1800)</button>
+<button onclick="buy('firerate')">Fire Rate (1500)</button>
+<button onclick="buy('hp')">+1 Leben (2000)</button>
+<button onclick="buy('multi')">Multishot (2500)</button>
+
+<br>
+<button onclick="backMenu()">⬅ Zurück</button>
+</div>
+</div>
+
+<!-- GAME OVER -->
+<div class="overlay hidden" id="gameOver">
+<div class="panel">
+<h2>💀 Game Over</h2>
+<button onclick="backMenu()">Zurück</button>
+</div>
+</div>
+
+<script>
+const canvas=document.getElementById("game");
+const ctx=canvas.getContext("2d");
+
+let player, bullets, zombies, effects;
+let keys={};
+let hp=5;
+let coins=+localStorage.getItem("zcoins")||0;
+let upgrades=JSON.parse(localStorage.getItem("zup")||"{}");
+
+let shooting=false;
+let game;
+let controlMode="wasd";
+
+let mouse={x:250,y:300};
+
+/* SAVE FUNCTION */
+function saveCoins(){
+localStorage.setItem("zcoins",coins);
+}
+
+/* INPUT */
+document.addEventListener("keydown",(e)=>keys[e.key.toLowerCase()]=true);
+document.addEventListener("keyup",(e)=>keys[e.key.toLowerCase()]=false);
+
+canvas.addEventListener("mousemove",(e)=>{
+let r=canvas.getBoundingClientRect();
+let mx=e.clientX-r.left;
+let my=e.clientY-r.top;
+
+mouse.x=mx;
+mouse.y=my;
+
+if(controlMode==="mouse"){
+player.x=mx;
+player.y=my;
+}
+});
+
+canvas.addEventListener("mousedown",()=>shooting=true);
+canvas.addEventListener("mouseup",()=>shooting=false);
+
+/* MENU */
+function chooseMode(){
+show("modeSelect");
+}
+
+function startGame(mode){
+
+controlMode=mode;
+
+document.getElementById("modeText").innerText =
+mode==="mouse" ? "Maus" : "WASD";
+
+player={x:250,y:300,speed:3};
+bullets=[];
+zombies=[];
+effects=[];
+hp=5+(upgrades.hp||0);
+
+document.getElementById("hp").innerText=hp;
+document.getElementById("coins").innerText=coins;
+
+hideAll();
+
+clearInterval(game);
+game=setInterval(update,16);
+}
+
+/* SHOOT */
+setInterval(()=>{
+if(!shooting) return;
+
+let dx=mouse.x-player.x;
+let dy=mouse.y-player.y;
+
+let dist=Math.sqrt(dx*dx+dy*dy);
+
+if(dist===0){
+dx=0;
+dy=-1;
+}else{
+dx/=dist;
+dy/=dist;
+}
+
+let shots = upgrades.multi ? 5 : 1;
+
+for(let i=0;i<shots;i++){
+let spread=(i-(shots-1)/2)*0.2;
+
+bullets.push({
+x:player.x,
+y:player.y,
+dx:dx+spread,
+dy:dy+spread
+});
+}
+
+},120);
+
+/* UPDATE */
+function update(){
+
+ctx.clearRect(0,0,500,600);
+
+/* MOVE */
+if(controlMode==="wasd"){
+if(keys["w"]) player.y-=player.speed;
+if(keys["s"]) player.y+=player.speed;
+if(keys["a"]) player.x-=player.speed;
+if(keys["d"]) player.x+=player.speed;
+}
+
+/* PLAYER */
+ctx.fillStyle="#6366f1";
+ctx.beginPath();
+ctx.arc(player.x,player.y,15,0,Math.PI*2);
+ctx.fill();
+
+/* BULLETS */
+ctx.fillStyle="yellow";
+bullets.forEach((b,i)=>{
+b.x+=b.dx*8;
+b.y+=b.dy*8;
+
+ctx.fillRect(b.x,b.y,5,5);
+
+if(b.x<0||b.x>500||b.y<0||b.y>600){
+bullets.splice(i,1);
+}
+});
+
+/* SPAWN */
+if(Math.random()<0.04){
+zombies.push({
+x:Math.random()*500,
+y:0,
+hp:2,
+speed:1.5,
+size:15
+});
+}
+
+/* ZOMBIES */
+zombies.forEach((z,i)=>{
+
+let dx=player.x-z.x;
+let dy=player.y-z.y;
+let dist=Math.sqrt(dx*dx+dy*dy);
+
+z.x+=dx/dist*z.speed;
+z.y+=dy/dist*z.speed;
+
+ctx.fillStyle="green";
+ctx.beginPath();
+ctx.arc(z.x,z.y,z.size,0,Math.PI*2);
+ctx.fill();
+
+/* HIT */
+bullets.forEach((b,bi)=>{
+if(Math.abs(b.x-z.x)<z.size && Math.abs(b.y-z.y)<z.size){
+
+bullets.splice(bi,1);
+
+let dmg = upgrades.damage ? 2 : 1;
+z.hp -= dmg;
+
+effects.push({x:z.x,y:z.y,size:5});
+
+if(z.hp<=0){
+zombies.splice(i,1);
+coins++;
+document.getElementById("coins").innerText=coins;
+
+/* SAVE HERE */
+saveCoins();
+}
+}
+});
+
+/* PLAYER HIT */
+if(dist<z.size+10){
+hp--;
+document.getElementById("hp").innerText=hp;
+zombies.splice(i,1);
+
+if(hp<=0){
+gameOver();
+}
+}
+});
+
+/* EFFECTS */
+effects.forEach((e,i)=>{
+ctx.fillStyle="orange";
+ctx.beginPath();
+ctx.arc(e.x,e.y,e.size,0,Math.PI*2);
+ctx.fill();
+
+e.size+=2;
+if(e.size>20) effects.splice(i,1);
+});
+}
+
+/* GAME OVER */
+function gameOver(){
+clearInterval(game);
+saveCoins();
+localStorage.setItem("zup",JSON.stringify(upgrades));
+show("gameOver");
+}
+
+/* SHOP */
+function openShop(){show("shop");}
+function backMenu(){show("menu");}
+
+function buy(type){
+
+if(type==="spread" && coins>=1200){coins-=1200;upgrades.spread=true;}
+if(type==="damage" && coins>=1800){coins-=1800;upgrades.damage=true;}
+if(type==="firerate" && coins>=1500){coins-=1500;upgrades.firerate=true;}
+if(type==="hp" && coins>=2000){coins-=2000;upgrades.hp=(upgrades.hp||0)+1;}
+if(type==="multi" && coins>=2500){coins-=2500;upgrades.multi=true;}
+
+document.getElementById("coins").innerText=coins;
+
+/* SAVE AFTER BUY */
+saveCoins();
+
+localStorage.setItem("zup",JSON.stringify(upgrades));
+}
+
+/* UI */
+function show(id){
+hideAll();
+document.getElementById(id).classList.remove("hidden");
+}
+
+function hideAll(){
+document.getElementById("menu").classList.add("hidden");
+document.getElementById("modeSelect").classList.add("hidden");
+document.getElementById("shop").classList.add("hidden");
+document.getElementById("gameOver").classList.add("hidden");
+}
+</script>
+
+</body>
+</html>
