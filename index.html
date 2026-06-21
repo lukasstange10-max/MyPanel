@@ -27,18 +27,10 @@ body{
   overflow-x:hidden;
   transition:background .4s,color .4s;
 }
-body::before{
-  content:"";position:fixed;inset:0;
-  background-image:linear-gradient(var(--dim) 1px,transparent 1px),linear-gradient(90deg,var(--dim) 1px,transparent 1px);
-  background-size:70px 70px;z-index:-20;pointer-events:none;
-  animation:gridMove 30s linear infinite;
-}
-@keyframes gridMove{0%{background-position:0 0}100%{background-position:70px 70px}}
-body::after{content:"";position:fixed;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.05),rgba(0,0,0,.05) 1px,transparent 1px,transparent 3px);z-index:9999;pointer-events:none;}
 
 /* ===== PARTICLES ===== */
 #particles{position:fixed;inset:0;z-index:-10;pointer-events:none;overflow:hidden;}
-.p{position:absolute;border-radius:50%;animation:pfloat linear infinite;}
+.p{position:absolute;border-radius:50%;animation:pfloat linear infinite;will-change:transform;}
 @keyframes pfloat{0%{transform:translateY(105vh);opacity:0}8%{opacity:.7}92%{opacity:.7}100%{transform:translateY(-105vh);opacity:0}}
 
 /* ===== NAV ===== */
@@ -46,7 +38,7 @@ nav{
   position:fixed;top:0;left:0;right:0;z-index:1000;
   display:flex;align-items:center;justify-content:space-between;
   padding:16px 48px;
-  background:rgba(3,6,8,.85);backdrop-filter:blur(12px);
+  background:rgba(3,6,8,.92);backdrop-filter:blur(6px);
   border-bottom:1px solid var(--dim);
 }
 .nav-logo{font-family:'Orbitron',sans-serif;font-size:20px;font-weight:900;color:var(--c);text-shadow:0 0 14px rgba(0,229,255,.5);letter-spacing:4px;}
@@ -230,15 +222,15 @@ footer{border-top:1px solid var(--dim);padding:26px 60px;display:flex;align-item
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Rajdhani',sans-serif;scroll-behavior:smooth;}
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--c);border-radius:4px}
 #page-panel{overflow:hidden;height:100vh;}
-body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:60px 60px;z-index:-30;animation:gdrift 60s linear infinite;pointer-events:none;}
-@keyframes gdrift{0%{background-position:0 0}100%{background-position:60px 60px}}
+body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:60px 60px;z-index:-30;pointer-events:none;}
+@keyframes gdrift{0%{transform:translate3d(0,0,0)}100%{transform:translate3d(60px,60px,0)}}
 body::after{content:"";position:fixed;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.04),rgba(0,0,0,.04) 1px,transparent 1px,transparent 3px);pointer-events:none;z-index:9999;}
 
 /* ===== PARTICLES ===== */
 #particles{position:fixed;inset:0;overflow:hidden;z-index:-10;pointer-events:none;}
-.pt{position:absolute;border-radius:50%;animation:pfloatP linear infinite;}
+.pt{position:absolute;border-radius:50%;animation:pfloatP linear infinite;will-change:transform;}
 @keyframes pfloatP{0%{transform:translateY(110vh);opacity:0}10%{opacity:.6}100%{transform:translateY(-110vh);opacity:0}}
-.mouseGlow{position:fixed;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(0,229,255,.07),transparent 70%);pointer-events:none;transform:translate(-50%,-50%);filter:blur(40px);z-index:-5;transition:left .08s,top .08s;}
+.mouseGlow{display:none;}
 
 /* ===== CORNER DECO ===== */
 .cdeco{position:fixed;width:160px;height:160px;pointer-events:none;z-index:5;}
@@ -953,12 +945,7 @@ function setTheme(t){
 /* PARTICLES */
 const pc=document.getElementById("particles");
 const cols=["#00e5ff","#00ff87","#bf00ff","#ff0080"];
-for(let i=0;i<50;i++){
-  const p=document.createElement("div");p.className="p";
-  const s=Math.random()*2.5+.5,c=cols[Math.floor(Math.random()*cols.length)];
-  p.style.cssText=`width:${s}px;height:${s}px;background:${c};box-shadow:0 0 ${s*5}px ${c};left:${Math.random()*100}%;animation-duration:${Math.random()*20+12}s;animation-delay:-${Math.random()*20}s;`;
-  pc.appendChild(p);
-}
+for(let i=0;i<0;i++){}
 
 /* STARS in space preview */
 const sp=document.getElementById("spacePreview");
@@ -1012,15 +999,9 @@ const FRIENDS = [
 /* ===== PARTICLES ===== */
 const pcPanel=document.getElementById('particlesPanel');
 ['#00e5ff','#00ff87','#bf00ff','#ff0080'].forEach(c=>{
-  for(let i=0;i<10;i++){
-    const p=document.createElement('div');p.className='pt';
-    const s=Math.random()*3+1;
-    p.style.cssText=`width:${s}px;height:${s}px;background:${c};box-shadow:0 0 ${s*4}px ${c};left:${Math.random()*100}%;animation-duration:${Math.random()*15+10}s;animation-delay:${Math.random()*10}s;`;
-    pcPanel.appendChild(p);
-  }
+  for(let i=0;i<0;i++){}
 });
 const mg=document.getElementById('mg');
-document.addEventListener('mousemove',e=>{mg.style.left=e.clientX+'px';mg.style.top=e.clientY+'px';});
 
 /* ===== SECTIONS ===== */
 function showSection(name){
