@@ -1142,54 +1142,108 @@ function renderFavorites(){
   el.innerHTML=favs.map(f=>`<div class="newsitem" onclick="playGame('${GAMES.find(g=>g.name===f)?.file||''}')" >◆ ${f}</div>`).join('');
 }
 
-/* ===== HIGHSCORES ===== */
-function getScores(){return JSON.parse(localStorage.getItem('highscores')||'[]');}
-function saveScores(s){localStorage.setItem('highscores',JSON.stringify(s));}
-function getBestScore(game){const s=getScores().filter(x=>x.game===game).sort((a,b)=>b.score-a.score);return s.length?s[0].score:0;}
+/* ===== HIGHSCORES — Firebase Global Leaderboard ===== */
 
-// Deduplicate: keep only best score per player+game combination
-(function cleanupScores(){
-  const all=getScores();
-  const best={};
-  all.forEach(s=>{
-    const key=s.player+'::'+s.game;
-    if(!best[key]||s.score>best[key].score)best[key]=s;
-  });
-  saveScores(Object.values(best).sort((a,b)=>b.score-a.score));
+// Firebase config
+const fbConfig={
+  apiKey:"AIzaSyDqVPdgGhRx6v__sx7pCe5mOre8XT7xRLg",
+  authDomain:"mypanel-41c90.firebaseapp.com",
+  databaseURL:"https://mypanel-41c90-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:"mypanel-41c90",
+  storageBucket:"mypanel-41c90.firebasestorage.app",
+  messagingSenderId:"69361490898",
+  appId:"1:69361490898:web:1fcec1264539c8e637060b"
+};
+
+// Load Firebase SDK
+(function loadFirebase(){
+  const s=document.createElement('script');
+  s.src='https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js';
+  s.onload=()=>{
+    const s2=document.createElement('script');
+    s2.src='https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js';
+    s2.onload=()=>{
+      firebase.initializeApp(fbConfig);
+      window.fbDB=firebase.database();
+      initFirebaseListeners();
+    };
+    document.head.appendChild(s2);
+  };
+  document.head.appendChild(s);
 })();
 
-// Called automatically by game files when the player dies/wins
-function autoSaveScore(gameName, score){
+// Local fallback (also used by game files via localStorage)
+function getScores(){return JSON.parse(localStorage.getItem('highscores')||'[]');}
+function saveScores(s){localStorage.setItem('highscores',JSON.stringify(s));}
+
+// Push score to Firebase — only if new personal best
+function pushScoreToFirebase(player,game,score){
+  if(!window.fbDB)return;
+  const key=player.replace(/[.#$\/\[\]]/g,'_')+'__'+game.replace(/[.#$\/\[\]]/g,'_');
+  const ref=window.fbDB.ref('highscores/'+key);
+  ref.once('value',snap=>{
+    const existing=snap.val();
+    if(!existing||score>existing.score){
+      ref.set({player,game,score:Math.floor(score),date:new Date().toLocaleDateString('de-DE')});
+    }
+  });
+}
+
+// Listen to Firebase for live updates
+function initFirebaseListeners(){
+  if(!window.fbDB)return;
+  window.fbDB.ref('highscores').on('value',snap=>{
+    const data=snap.val();
+    if(!data)return;
+    const scores=Object.values(data).sort((a,b)=>b.score-a.score);
+    // also sync into localStorage for offline fallback
+    saveScores(scores);
+    renderHsTable('all');renderDashHs();updateStats();
+  });
+}
+
+// Called by game files automatically on game over
+function autoSaveScore(gameName,score){
   if(!score||score<=0)return;
   const p=getProfile();
   const player=(p?p.username:localStorage.getItem('username')||'MYPANEL USER').toUpperCase();
+
+  // Local best check
   const scores=getScores();
-  // Only save if it's a new personal best for this game
   const prevBest=scores.filter(s=>s.player===player&&s.game===gameName).sort((a,b)=>b.score-a.score);
   if(prevBest.length>0&&Math.floor(score)<=prevBest[0].score)return;
-  // Remove old entry for this player+game, keep only the best
+
+  // Update local
   const filtered=scores.filter(s=>!(s.player===player&&s.game===gameName));
   filtered.push({player,game:gameName,score:Math.floor(score),date:new Date().toLocaleDateString('de-DE')});
   filtered.sort((a,b)=>b.score-a.score);
-  saveScores(filtered.slice(0,50));
+  saveScores(filtered.slice(0,100));
   renderHsTable('all');renderDashHs();updateStats();
+
+  // Push to Firebase
+  pushScoreToFirebase(player,gameName,Math.floor(score));
 }
 
-// Listen for scores saved by external game files (same origin localStorage)
-window.addEventListener('storage',e=>{
-  if(e.key==='highscores'){renderHsTable('all');renderDashHs();updateStats();}
+// When coming back from a game, sync scores from localStorage (written by game files)
+window.addEventListener('focus',()=>{
+  if(!window.fbDB){renderHsTable('all');renderDashHs();updateStats();return;}
+  // Check if game files wrote a new score
+  const local=getScores();
+  const p=getProfile();
+  const player=(p?p.username:'MYPANEL USER').toUpperCase();
+  local.forEach(s=>{
+    if(s.player===player)pushScoreToFirebase(s.player,s.game,s.score);
+  });
 });
-// Also refresh when tab regains focus (user came back from a game)
-window.addEventListener('focus',()=>{renderHsTable('all');renderDashHs();updateStats();});
 
 function renderHsTable(filter){
   let scores=getScores();
   if(filter!=='all')scores=scores.filter(s=>s.game===filter);
-  scores=scores.sort((a,b)=>b.score-a.score).slice(0,15);
+  scores=scores.sort((a,b)=>b.score-a.score).slice(0,20);
   const t=document.getElementById('hsTable');
   if(!t)return;
   t.innerHTML='<tr><th>#</th><th>SPIELER</th><th>SPIEL</th><th>SCORE</th><th>DATUM</th></tr>';
-  if(!scores.length){t.innerHTML+='<tr><td colspan="5" style="color:var(--di);font-family:Share Tech Mono,monospace;font-size:11px;letter-spacing:2px;padding:16px">NOCH KEINE SCORES EINGETRAGEN</td></tr>';return;}
+  if(!scores.length){t.innerHTML+='<tr><td colspan="5" style="color:var(--di);font-family:Share Tech Mono,monospace;font-size:11px;letter-spacing:2px;padding:16px">NOCH KEINE SCORES — SPIELE EIN SPIEL!</td></tr>';return;}
   scores.forEach((s,i)=>{
     const rc=i===0?'r1':i===1?'r2':i===2?'r3':'';
     t.innerHTML+=`<tr><td class="hs-rank ${rc}">${i+1}</td><td style="color:var(--tm)">${s.player}</td><td class="hs-game">${s.game}</td><td class="hs-score">${s.score.toLocaleString()}</td><td style="color:var(--di);font-family:Share Tech Mono,monospace;font-size:10px">${s.date||'-'}</td></tr>`;
