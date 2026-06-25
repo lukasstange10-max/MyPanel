@@ -1159,13 +1159,19 @@ const fbConfig={
 (function loadFirebase(){
   const s=document.createElement('script');
   s.src='https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js';
+  s.async=true;s.defer=true;
+  s.onerror=()=>console.warn('Firebase offline — running locally');
   s.onload=()=>{
     const s2=document.createElement('script');
     s2.src='https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js';
+    s2.async=true;s2.defer=true;
+    s2.onerror=()=>console.warn('Firebase DB offline');
     s2.onload=()=>{
-      firebase.initializeApp(fbConfig);
-      window.fbDB=firebase.database();
-      initFirebaseListeners();
+      try{
+        if(!firebase.apps.length)firebase.initializeApp(fbConfig);
+        window.fbDB=firebase.database();
+        initFirebaseListeners();
+      }catch(e){console.warn('Firebase init failed:',e);}
     };
     document.head.appendChild(s2);
   };
