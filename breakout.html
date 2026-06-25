@@ -181,9 +181,9 @@ show("menu");
 
 /* START */
 function startGame(){
+running=false; // stop any existing loop first
 document.getElementById("overlay").style.display="none";
 show("gameScreen");
-
 init();
 running=true;
 requestAnimationFrame(loop);
@@ -213,13 +213,13 @@ hit:false
 
 /* CONTROL */
 document.addEventListener("mousemove",(e)=>{
+if(!running||!paddle) return;
 let rect=canvas.getBoundingClientRect();
 paddle.x=e.clientX-rect.left-paddle.w/2;
 });
 
 /* LOOP */
 function loop(){
-
 if(!running) return;
 
 ctx.clearRect(0,0,canvas.width,canvas.height);
@@ -236,23 +236,20 @@ ctx.fill();
 
 /* BRICKS */
 bricks.forEach(b=>{
-if(!b.hit){
+if(!b||b.hit) return;
 ctx.fillStyle="#22c55e";
 ctx.fillRect(b.x,b.y,b.w,b.h);
-}
 });
 
 /* COLLISION */
 bricks.forEach(b=>{
-if(!b.hit &&
-ball.x>b.x &&
+if(!b||b.hit) return;
+if(ball.x>b.x &&
 ball.x<b.x+b.w &&
 ball.y>b.y &&
 ball.y<b.y+b.h){
-
 b.hit=true;
 ball.dy*=-1;
-
 score+=10;
 scoreEl.innerText=score;
 }
@@ -285,7 +282,23 @@ localStorage.setItem("breakoutHigh",high);
 highEl.innerText=high;
 }
 
+// Auto-save to MyPanel highscores — only if new personal best
+try{
+  const profRaw=localStorage.getItem('mpProfile');
+  const prof=profRaw?JSON.parse(profRaw):null;
+  const player=(prof?prof.username:localStorage.getItem('username')||'MYPANEL USER').toUpperCase();
+  const all=JSON.parse(localStorage.getItem('highscores')||'[]');
+  const prevBest=all.filter(s=>s.player===player&&s.game==='Breakout').sort((a,b)=>b.score-a.score);
+  if(prevBest.length===0||score>prevBest[0].score){
+    const filtered=all.filter(s=>!(s.player===player&&s.game==='Breakout'));
+    filtered.push({player,game:'Breakout',score:Math.floor(score),date:new Date().toLocaleDateString('de-DE')});
+    filtered.sort((a,b)=>b.score-a.score);
+    localStorage.setItem('highscores',JSON.stringify(filtered.slice(0,50)));
+  }
+}catch(e){}
+
 document.getElementById("overlay").style.display="flex";
+return; // stop loop immediately
 }
 
 requestAnimationFrame(loop);

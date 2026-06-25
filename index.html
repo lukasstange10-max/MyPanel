@@ -61,10 +61,10 @@ nav{
 .hero::before{content:"";position:absolute;width:700px;height:700px;border-radius:50%;background:radial-gradient(circle,rgba(0,229,255,.08),transparent 65%);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;animation:orb 6s ease-in-out infinite alternate;}
 @keyframes orb{0%{transform:translate(-50%,-50%) scale(1)}100%{transform:translate(-50%,-50%) scale(1.2)}}
 .eyebrow{font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:6px;color:var(--g);text-shadow:0 0 8px var(--g);margin-bottom:20px;animation:fadeUp .8s .2s both;}
-.hero-title{font-family:'Orbitron',sans-serif;font-size:clamp(52px,9vw,110px);font-weight:900;line-height:.95;margin-bottom:22px;animation:fadeUp .9s .4s both;}
-.hero-title .l1{display:block;color:var(--c);text-shadow:0 0 30px rgba(0,229,255,.5),0 0 80px rgba(0,229,255,.2);}
+.hero-title{font-family:'Orbitron',sans-serif;font-size:clamp(52px,9vw,110px);font-weight:900;line-height:.95;margin-bottom:22px;animation:fadeUp .9s .4s both;transform-style:preserve-3d;will-change:transform;}
+.hero-title .l1{display:block;color:var(--c);text-shadow:0 1px 0 rgba(0,229,255,.4),0 2px 0 rgba(0,229,255,.35),0 3px 0 rgba(0,229,255,.3),0 4px 0 rgba(0,229,255,.25),0 5px 0 rgba(0,229,255,.2),0 6px 10px rgba(0,0,0,.5),0 0 30px rgba(0,229,255,.5),0 0 80px rgba(0,229,255,.2);}
 .hero-title .l2{display:block;color:rgba(208,240,238,.08);-webkit-text-stroke:1px rgba(0,229,255,.3);}
-.hero-title .l3{display:block;background:linear-gradient(90deg,var(--g),var(--c));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.hero-title .l3{display:block;background:linear-gradient(90deg,var(--g),var(--c));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 4px 0 rgba(0,255,135,.25)) drop-shadow(0 8px 12px rgba(0,0,0,.5));}
 .hero-sub{font-size:17px;max-width:560px;line-height:1.7;color:var(--muted);letter-spacing:1px;margin-bottom:44px;animation:fadeUp .9s .6s both;}
 .hero-btns{display:flex;gap:16px;animation:fadeUp .8s .8s both;}
 .btn-primary{padding:16px 36px;border:none;border-radius:3px;background:linear-gradient(135deg,var(--c),var(--g));color:#000;font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;cursor:pointer;box-shadow:0 0 30px rgba(0,229,255,.3);transition:.25s;clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px));text-decoration:none;display:inline-flex;align-items:center;}
@@ -116,7 +116,8 @@ nav{
 
 /* ===== GAME CARDS ===== */
 .games-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
-.gcard{border:1px solid rgba(0,229,255,.1);border-radius:4px;background:var(--card);overflow:hidden;position:relative;opacity:0;transform:translateY(28px);transition:opacity .7s,transform .7s,border-color .25s,box-shadow .25s;clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,14px 100%,0 calc(100% - 14px));}
+.games-grid{perspective:1200px;}
+.gcard{border:1px solid rgba(0,229,255,.1);border-radius:4px;background:var(--card);overflow:hidden;position:relative;opacity:0;transform:translateY(28px);transition:opacity .7s,transform .7s,border-color .25s,box-shadow .25s;clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,14px 100%,0 calc(100% - 14px));will-change:transform;}
 .gcard.in-view{opacity:1;transform:translateY(0)}
 .gcard:hover{border-color:rgba(0,229,255,.4);box-shadow:0 8px 40px rgba(0,229,255,.12);}
 .gcard:hover .gprev{transform:scale(1.06)}
@@ -164,6 +165,10 @@ nav{
 .hptrack{width:56px;height:4px;background:rgba(255,255,255,.1);border-radius:2px;}
 .hpfill{width:75%;height:100%;background:var(--g);border-radius:2px;box-shadow:0 0 6px var(--g);}
 .p-flappy{background:radial-gradient(circle,#001a2a,#000)}
+.p-vortex{background:radial-gradient(circle,#0a0014,#000);}
+.p-vortex .vspin{position:absolute;width:120px;height:120px;border-radius:50%;border:3px solid transparent;border-top-color:#00e5ff;border-right-color:#ff2bd6;animation:vspin 1.6s linear infinite;}
+.p-vortex .vspin2{position:absolute;width:78px;height:78px;border-radius:50%;border:2px solid transparent;border-bottom-color:#00ff87;border-left-color:#00e5ff;animation:vspin 1.1s linear infinite reverse;}
+@keyframes vspin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
 .bird{position:absolute;font-size:22px;left:25%;animation:bflap .5s ease-in-out infinite alternate,bfly 2s ease-in-out infinite alternate;filter:drop-shadow(0 0 6px var(--c));}
 @keyframes bflap{0%{transform:rotate(-10deg)}100%{transform:rotate(10deg)}}
 @keyframes bfly{0%{top:30%}100%{top:60%}}
@@ -496,7 +501,7 @@ iframe{width:100%;height:100%;border:none;}
     <span class="l2">GAMING</span>
     <span class="l3">HUB</span>
   </h1>
-  <p class="hero-sub">Neun Spiele. Ein Interface. Neon Cyberpunk Design. Kein Download — direkt im Browser.</p>
+  <p class="hero-sub">Zehn Spiele. Ein Interface. Neon Cyberpunk Design. Kein Download — direkt im Browser.</p>
   <div class="hero-btns">
     <a href="javascript:void(0)" onclick="openPanel()" class="btn-primary">▶ JETZT SPIELEN</a>
     <a href="#games" class="btn-ghost">◈ SPIELE ANSEHEN</a>
@@ -541,7 +546,7 @@ iframe{width:100%;height:100%;border:none;}
 <!-- STATS -->
 <div class="stats-wrap">
   <div class="stats-inner">
-    <div class="stat reveal"><div class="stat-num" data-target="9">0</div><div class="stat-label">SPIELE</div></div>
+    <div class="stat reveal"><div class="stat-num" data-target="10">0</div><div class="stat-label">SPIELE</div></div>
     <div class="stat reveal"><div class="stat-num">0<span style="font-size:18px">MS</span></div><div class="stat-label">LADEZEIT</div></div>
     <div class="stat reveal"><div class="stat-num">2</div><div class="stat-label">HTML FILES</div></div>
     <div class="stat reveal"><div class="stat-num">∞</div><div class="stat-label">SPASS</div></div>
@@ -551,7 +556,7 @@ iframe{width:100%;height:100%;border:none;}
 <!-- GAMES -->
 <div class="section" id="games">
   <div class="stag">// SPIELEBIBLIOTHEK</div>
-  <div class="stitle">9 <span>SPIELE</span> BEREIT</div>
+  <div class="stitle">10 <span>SPIELE</span> BEREIT</div>
   <div class="games-grid">
 
     <div class="gcard reveal">
@@ -620,6 +625,12 @@ iframe{width:100%;height:100%;border:none;}
       <div class="ginfo"><div class="gtag">WORTSPIEL</div><div class="gname">WORDLE</div><div class="gdesc">Errate das Wort in 6 Versuchen.</div></div>
     </div>
 
+    <div class="gcard reveal">
+      <div class="gprev p-vortex"><div class="vspin"></div><div class="vspin2"></div>🌀</div>
+      <div class="govl"><a href="vortex.html" class="gplaybtn">▶ SPIELEN</a></div>
+      <div class="ginfo"><div class="gtag">NEU · REFLEX</div><div class="gname">NEON VORTEX</div><div class="gdesc">Weiche rotierenden Wänden aus — wie lange hältst du durch?</div></div>
+    </div>
+
   </div>
 </div>
 
@@ -629,7 +640,7 @@ iframe{width:100%;height:100%;border:none;}
   <div class="stitle">WAS <span>DRIN STECKT</span></div>
   <div class="feats">
     <div class="feat reveal"><span class="ficon">⚡</span><div class="ftitle">KEIN DOWNLOAD</div><div class="fdesc">Alles direkt im Browser. Kein Server, kein Setup — einfach öffnen und spielen.</div></div>
-    <div class="feat reveal"><span class="ficon">🎮</span><div class="ftitle">9 SPIELE</div><div class="fdesc">Snake, Memory, Geometry Dash, Space Shooter, Breakout, Zombie, Flappy, Racing, Wordle.</div></div>
+    <div class="feat reveal"><span class="ficon">🎮</span><div class="ftitle">10 SPIELE</div><div class="fdesc">Snake, Memory, Geometry Dash, Space Shooter, Breakout, Zombie, Flappy, Racing, Wordle, Neon Vortex.</div></div>
     <div class="feat reveal"><span class="ficon">🎨</span><div class="ftitle">4 FARBTHEMEN</div><div class="fdesc">Cyan, Pink, Gold oder Rot — Theme-Wechsel mit einem Klick, überall synchronisiert.</div></div>
     <div class="feat reveal"><span class="ficon">◆</span><div class="ftitle">FAVORITEN</div><div class="fdesc">Lieblingsspiele speichern — immer sofort griffbereit in der Sidebar.</div></div>
     <div class="feat reveal"><span class="ficon">👤</span><div class="ftitle">PROFIL SYSTEM</div><div class="fdesc">Eigener Username, lokal gespeichert. Beim nächsten Start automatisch geladen.</div></div>
@@ -749,7 +760,7 @@ iframe{width:100%;height:100%;border:none;}
           <div class="avatar" id="avatarLetter">M</div>
           <div>
             <div id="username">MYPANEL USER</div>
-            <button class="editbtn" onclick="openModal('profileModal')">⬡ USERNAME ÄNDERN</button>
+            <button class="editbtn" id="editUsernameBtn" onclick="openProfileModal()">⬡ USERNAME ÄNDERN</button>
           </div>
         </div>
         <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--g);letter-spacing:4px;margin-bottom:8px;">// STATUS REPORT</div>
@@ -758,7 +769,7 @@ iframe{width:100%;height:100%;border:none;}
       </div>
 
       <div class="stat-row">
-        <div class="stat-pill"><div class="sp-num" id="stat-games">9</div><div class="sp-label">SPIELE</div></div>
+        <div class="stat-pill"><div class="sp-num" id="stat-games">10</div><div class="sp-label">SPIELE</div></div>
         <div class="stat-pill"><div class="sp-num" id="stat-hs">0</div><div class="sp-label">HIGHSCORES</div></div>
         <div class="stat-pill"><div class="sp-num" id="stat-favs">0</div><div class="sp-label">FAVORITEN</div></div>
         <div class="stat-pill"><div class="sp-num" id="stat-online">3</div><div class="sp-label">FREUNDE ONLINE</div></div>
@@ -801,15 +812,13 @@ iframe{width:100%;height:100%;border:none;}
         </table>
       </div>
       <div class="card">
-        <div class="ctitle"><span>◈</span> SCORE EINTRAGEN</div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;">
-          <select id="hsGame" style="padding:10px 14px;border:1px solid var(--dim);border-radius:3px;background:var(--bg);color:var(--c);font-family:'Share Tech Mono',monospace;font-size:12px;outline:none;">
-            <option>Snake</option><option>Memory</option><option>Geometry Dash</option>
-            <option>Breakout</option><option>Space Shooter</option><option>Zombie Survival</option>
-            <option>Flappy</option><option>Arcade Racing</option><option>Wordle</option>
-          </select>
-          <input type="number" id="hsScore" placeholder="SCORE EINGEBEN..." style="padding:10px 14px;border:1px solid var(--dim);border-radius:3px;background:var(--bg);color:var(--c);font-family:'Share Tech Mono',monospace;font-size:12px;outline:none;flex:1;min-width:160px;">
-          <button onclick="submitScore()" style="padding:10px 20px;border:1px solid rgba(0,255,135,.4);border-radius:3px;background:rgba(0,255,135,.08);color:var(--g);font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;cursor:pointer;">▲ EINTRAGEN</button>
+        <div class="ctitle"><span>◈</span> HIGHSCORES</div>
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border:1px solid rgba(0,255,135,.2);border-radius:3px;background:rgba(0,255,135,.04);">
+          <span style="font-size:22px;">🏆</span>
+          <div>
+            <div style="font-family:'Orbitron',sans-serif;font-size:11px;color:var(--g);letter-spacing:2px;margin-bottom:4px;">AUTOMATISCHE SPEICHERUNG</div>
+            <div style="font-size:12px;color:var(--mu);">Highscores werden automatisch gespeichert, sobald du ein Spiel beendest. Dein Name wird aus deinem Profil übernommen.</div>
+          </div>
         </div>
       </div>
     </div>
@@ -843,10 +852,11 @@ iframe{width:100%;height:100%;border:none;}
 
       <div class="card">
         <div class="ctitle"><span>◉</span> NEWS & UPDATES</div>
-        <div class="newsitem"><span>▲ MEGA UPDATE v3.0 — Highscores, Musik, Freunde!</span><span class="news-tag">NEU</span></div>
-        <div class="newsitem"><span>🎵 Synthwave Audio Engine eingebaut</span><span class="news-tag">NEU</span></div>
-        <div class="newsitem"><span>🏆 Highscore Bestenliste für alle Spiele</span><span class="news-tag">NEU</span></div>
-        <div class="newsitem"><span>🌐 Freunde-System mit Online-Status</span><span class="news-tag">NEU</span></div>
+        <div class="newsitem"><span>🌀 Neues Spiel: NEON VORTEX ist da!</span><span class="news-tag">NEU</span></div>
+        <div class="newsitem"><span>▲ MEGA UPDATE v3.0 — Highscores, Musik, Freunde!</span><span class="news-tag">UPDATE</span></div>
+        <div class="newsitem"><span>🎵 Synthwave Audio Engine eingebaut</span><span class="news-tag">UPDATE</span></div>
+        <div class="newsitem"><span>🏆 Highscore Bestenliste für alle Spiele</span><span class="news-tag">UPDATE</span></div>
+        <div class="newsitem"><span>🌐 Freunde-System mit Online-Status</span><span class="news-tag">UPDATE</span></div>
         <div class="newsitem"><span>🎨 Theme Switcher — 4 Neon-Themen</span><span class="news-tag">UPDATE</span></div>
         <div class="newsitem"><span>🏎️ Arcade Racing + 🔤 Wordle hinzugefügt</span><span class="news-tag">UPDATE</span></div>
       </div>
@@ -865,13 +875,15 @@ iframe{width:100%;height:100%;border:none;}
 
 <!-- PROFILE MODAL -->
 <div class="modal" id="profileModal">
-  <div class="mbox" style="width:420px;">
-    <div class="mtitle">// USERNAME ÄNDERN</div>
-    <div class="msub">PASSE DEINEN MYPANEL NAMEN AN</div>
-    <input type="text" id="usernameInput" class="minput" placeholder="NEUEN USERNAME EINGEBEN...">
+  <div class="mbox" style="width:440px;">
+    <div class="mtitle" id="profileModalTitle">// USERNAME ÄNDERN</div>
+    <div class="msub" id="profileModalSub">PASSE DEINEN MYPANEL NAMEN AN</div>
+    <div id="profileLockInfo" style="display:none;margin-bottom:14px;padding:12px 14px;border:1px solid rgba(255,165,0,.3);border-radius:3px;background:rgba(255,165,0,.06);color:#ffa500;font-size:12px;font-family:'Share Tech Mono',monospace;letter-spacing:1px;line-height:1.6;"></div>
+    <input type="text" id="usernameInput" class="minput" placeholder="USERNAME EINGEBEN..." maxlength="20">
+    <div style="font-size:11px;color:var(--mu);margin-top:8px;letter-spacing:1px;">⚠ Der Name kann nach dem Setzen nur alle 30 Tage geändert werden.</div>
     <div class="mbtns">
-      <button class="mcancelbtn" onclick="closeModal('profileModal')">ABBRECHEN</button>
-      <button class="msavebtn" onclick="saveUsername()">SPEICHERN</button>
+      <button class="mcancelbtn" id="profileCancelBtn" onclick="closeModal('profileModal')">ABBRECHEN</button>
+      <button class="msavebtn" id="profileSaveBtn" onclick="saveUsername()">SPEICHERN</button>
     </div>
   </div>
 </div>
@@ -881,6 +893,10 @@ iframe{width:100%;height:100%;border:none;}
   <div class="mbox" style="width:580px;max-height:85vh;overflow-y:auto;">
     <div class="mtitle">// MEGA UPDATE v3.0</div>
     <div style="display:flex;flex-direction:column;gap:12px;margin-top:16px;">
+      <div style="padding:16px;border:1px solid var(--dim);border-left:2px solid var(--c);border-radius:3px;background:var(--card);">
+        <div style="font-family:'Orbitron',sans-serif;font-size:12px;color:var(--c);letter-spacing:2px;margin-bottom:8px;">🌀 NEUES SPIEL: NEON VORTEX</div>
+        <div style="font-size:13px;color:var(--mu);line-height:1.7;">Weiche rotierenden Wänden aus, sammle Combos und stell einen neuen Highscore auf. Jetzt im Spiele-Tab spielbar.</div>
+      </div>
       <div style="padding:16px;border:1px solid var(--dim);border-left:2px solid var(--g);border-radius:3px;background:var(--card);">
         <div style="font-family:'Orbitron',sans-serif;font-size:12px;color:var(--g);letter-spacing:2px;margin-bottom:8px;">🏆 HIGHSCORE SYSTEM</div>
         <div style="font-size:13px;color:var(--mu);line-height:1.7;">Trage deine Scores ein und sieh die Top-Bestenliste aller Spiele. Lokal gespeichert, jederzeit abrufbar.</div>
@@ -932,6 +948,18 @@ iframe{width:100%;height:100%;border:none;}
   </div>
 </div>
 </div>
+<!-- FIRST LOGIN MODAL — outside both page wrappers so it always shows -->
+<div id="firstLoginModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:2000000;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
+  <div class="mbox" style="width:460px;text-align:center;">
+    <div style="font-size:36px;margin-bottom:12px;">🎮</div>
+    <div class="mtitle">// WILLKOMMEN BEI MYPANEL</div>
+    <div class="msub" style="margin-bottom:20px;">Gib deinen Spielernamen ein, um zu starten.<br>Dieser Name erscheint in der Highscore-Tabelle.</div>
+    <input type="text" id="firstLoginInput" class="minput" placeholder="DEINEN USERNAME EINGEBEN..." maxlength="20" style="text-align:center;">
+    <div style="font-size:11px;color:var(--mu);margin-top:10px;margin-bottom:20px;letter-spacing:1px;">⚠ Der Name kann nach dem Setzen nur alle 30 Tage geändert werden.</div>
+    <button class="msavebtn" style="width:100%;padding:14px;" onclick="saveFirstLogin()">▶ LOSLEGEN</button>
+  </div>
+</div>
+
 <script>
 
 /* THEME */
@@ -942,10 +970,53 @@ function setTheme(t){
 }
 (()=>setTheme(localStorage.getItem("theme")||"cyan"))();
 
+/* ===== 3D CARD TILT ===== */
+document.querySelectorAll('.gcard').forEach(card=>{
+  let ticking=false,tx=0,ty=0;
+  card.addEventListener('mousemove',e=>{
+    const r=card.getBoundingClientRect();
+    tx=((e.clientX-r.left)/r.width-.5)*14;
+    ty=((e.clientY-r.top)/r.height-.5)*14;
+    if(!ticking){
+      ticking=true;
+      requestAnimationFrame(()=>{
+        card.style.transform=`rotateY(${tx}deg) rotateX(${-ty}deg) translateZ(6px) scale(1.015)`;
+        ticking=false;
+      });
+    }
+  });
+  card.addEventListener('mouseleave',()=>{card.style.transform='';});
+});
+
+/* ===== 3D TITLE PARALLAX ===== */
+(()=>{
+  const title=document.querySelector('.hero-title');
+  if(!title)return;
+  let ticking=false,tx=0,ty=0;
+  document.querySelector('.hero').addEventListener('mousemove',e=>{
+    const r=title.getBoundingClientRect();
+    tx=((e.clientX-(r.left+r.width/2))/r.width)*10;
+    ty=((e.clientY-(r.top+r.height/2))/r.height)*10;
+    if(!ticking){
+      ticking=true;
+      requestAnimationFrame(()=>{
+        title.style.transform=`rotateX(${-ty}deg) rotateY(${tx}deg)`;
+        ticking=false;
+      });
+    }
+  });
+  document.querySelector('.hero').addEventListener('mouseleave',()=>{title.style.transform='';});
+})();
+
 /* PARTICLES */
 const pc=document.getElementById("particles");
 const cols=["#00e5ff","#00ff87","#bf00ff","#ff0080"];
-for(let i=0;i<0;i++){}
+for(let i=0;i<0;i++){
+  const p=document.createElement("div");p.className="p";
+  const s=Math.random()*2.5+.5,c=cols[Math.floor(Math.random()*cols.length)];
+  p.style.cssText=`width:${s}px;height:${s}px;background:${c};box-shadow:0 0 ${s*2.5}px ${c};left:${Math.random()*100}%;animation-duration:${Math.random()*20+12}s;animation-delay:-${Math.random()*20}s;`;
+  pc.appendChild(p);
+}
 
 /* STARS in space preview */
 const sp=document.getElementById("spacePreview");
@@ -984,6 +1055,7 @@ const GAMES = [
   {id:'flappy',name:'FLAPPY',icon:'🐦',desc:'Fliege durch Hindernisse',file:'flappy.html'},
   {id:'racing',name:'ARCADE RACING',icon:'🏎️',desc:'Smooth Controls',file:'arcaderacing.html'},
   {id:'wordle',name:'WORDLE',icon:'🔤',desc:'Errate das geheime Wort',file:'wordle.html'},
+  {id:'vortex',name:'NEON VORTEX',icon:'🌀',desc:'Überlebe den Sog',file:'vortex.html'},
 ];
 
 const FRIENDS = [
@@ -999,9 +1071,13 @@ const FRIENDS = [
 /* ===== PARTICLES ===== */
 const pcPanel=document.getElementById('particlesPanel');
 ['#00e5ff','#00ff87','#bf00ff','#ff0080'].forEach(c=>{
-  for(let i=0;i<0;i++){}
+  for(let i=0;i<0;i++){
+    const p=document.createElement('div');p.className='pt';
+    const s=Math.random()*3+1;
+    p.style.cssText=`width:${s}px;height:${s}px;background:${c};box-shadow:0 0 ${s*2}px ${c};left:${Math.random()*100}%;animation-duration:${Math.random()*15+10}s;animation-delay:${Math.random()*10}s;`;
+    pcPanel.appendChild(p);
+  }
 });
-const mg=document.getElementById('mg');
 
 /* ===== SECTIONS ===== */
 function showSection(name){
@@ -1071,19 +1147,40 @@ function getScores(){return JSON.parse(localStorage.getItem('highscores')||'[]')
 function saveScores(s){localStorage.setItem('highscores',JSON.stringify(s));}
 function getBestScore(game){const s=getScores().filter(x=>x.game===game).sort((a,b)=>b.score-a.score);return s.length?s[0].score:0;}
 
-function submitScore(){
-  const game=document.getElementById('hsGame').value;
-  const score=parseInt(document.getElementById('hsScore').value);
-  const player=localStorage.getItem('username')||'MYPANEL USER';
-  if(!score||score<=0){showNotif('⚠ GÜLTIGEN SCORE EINGEBEN');return;}
+// Deduplicate: keep only best score per player+game combination
+(function cleanupScores(){
+  const all=getScores();
+  const best={};
+  all.forEach(s=>{
+    const key=s.player+'::'+s.game;
+    if(!best[key]||s.score>best[key].score)best[key]=s;
+  });
+  saveScores(Object.values(best).sort((a,b)=>b.score-a.score));
+})();
+
+// Called automatically by game files when the player dies/wins
+function autoSaveScore(gameName, score){
+  if(!score||score<=0)return;
+  const p=getProfile();
+  const player=(p?p.username:localStorage.getItem('username')||'MYPANEL USER').toUpperCase();
   const scores=getScores();
-  scores.push({player:player.toUpperCase(),game,score,date:new Date().toLocaleDateString('de-DE')});
-  scores.sort((a,b)=>b.score-a.score);
-  saveScores(scores.slice(0,50));
-  document.getElementById('hsScore').value='';
+  // Only save if it's a new personal best for this game
+  const prevBest=scores.filter(s=>s.player===player&&s.game===gameName).sort((a,b)=>b.score-a.score);
+  if(prevBest.length>0&&Math.floor(score)<=prevBest[0].score)return;
+  // Remove old entry for this player+game, keep only the best
+  const filtered=scores.filter(s=>!(s.player===player&&s.game===gameName));
+  filtered.push({player,game:gameName,score:Math.floor(score),date:new Date().toLocaleDateString('de-DE')});
+  filtered.sort((a,b)=>b.score-a.score);
+  saveScores(filtered.slice(0,50));
   renderHsTable('all');renderDashHs();updateStats();
-  showNotif(`🏆 SCORE ${score} FÜR ${game} EINGETRAGEN!`);
 }
+
+// Listen for scores saved by external game files (same origin localStorage)
+window.addEventListener('storage',e=>{
+  if(e.key==='highscores'){renderHsTable('all');renderDashHs();updateStats();}
+});
+// Also refresh when tab regains focus (user came back from a game)
+window.addEventListener('focus',()=>{renderHsTable('all');renderDashHs();updateStats();});
 
 function renderHsTable(filter){
   let scores=getScores();
@@ -1157,20 +1254,125 @@ function updateStats(){
 }
 updateStats();
 
-/* ===== PROFILE ===== */
+/* ===== PROFILE SYSTEM ===== */
+const PROFILE_KEY='mpProfile';
+const LOCK_DAYS=30;
+
+function setCookie(name,val,days){
+  const d=new Date();d.setTime(d.getTime()+days*864e5);
+  document.cookie=name+'='+encodeURIComponent(val)+';expires='+d.toUTCString()+';path=/;SameSite=Lax';
+}
+function getCookie(name){
+  const m=document.cookie.match('(?:^|; )'+name+'=([^;]*)');
+  return m?decodeURIComponent(m[1]):null;
+}
+function getProfile(){
+  try{
+    // Try localStorage first, fall back to cookie
+    const raw=localStorage.getItem(PROFILE_KEY)||getCookie(PROFILE_KEY);
+    return raw?JSON.parse(raw):null;
+  }catch(e){return null;}
+}
+function saveProfile(name){
+  const now=Date.now();
+  const existing=getProfile();
+  const profile={
+    username:name.toUpperCase().trim(),
+    createdAt:existing?existing.createdAt:now,
+    changedAt:now,
+  };
+  const json=JSON.stringify(profile);
+  try{localStorage.setItem(PROFILE_KEY,json);}catch(e){}
+  setCookie(PROFILE_KEY,json,365); // also save as cookie for 1 year
+  return profile;
+}
+function daysUntilUnlock(){
+  const p=getProfile();
+  if(!p||!p.changedAt)return 0;
+  const ms=LOCK_DAYS*24*60*60*1000-(Date.now()-p.changedAt);
+  return ms>0?Math.ceil(ms/(24*60*60*1000)):0;
+}
+function applyProfile(){
+  const p=getProfile();
+  const name=p?p.username:'MYPANEL USER';
+  document.getElementById('username').innerText=name;
+  document.getElementById('avatarLetter').innerText=name[0];
+  // Update edit button label
+  const days=daysUntilUnlock();
+  const btn=document.getElementById('editUsernameBtn');
+  if(btn){
+    if(days>0){btn.textContent='🔒 GESPERRT ('+days+'T)';btn.style.opacity='.6';}
+    else{btn.textContent='⬡ USERNAME ÄNDERN';btn.style.opacity='1';}
+  }
+}
+function openProfileModal(){
+  const days=daysUntilUnlock();
+  const locked=days>0;
+  const inp=document.getElementById('usernameInput');
+  const lockInfo=document.getElementById('profileLockInfo');
+  const saveBtn=document.getElementById('profileSaveBtn');
+  const cancelBtn=document.getElementById('profileCancelBtn');
+  inp.value=getProfile()?getProfile().username:'';
+  if(locked){
+    lockInfo.style.display='block';
+    lockInfo.innerHTML='🔒 NAME GESPERRT — noch <b style="color:#ffb700">'+days+' Tag'+(days===1?'':'e')+'</b> bis zur nächsten Änderung.';
+    inp.disabled=true;inp.style.opacity='.45';
+    saveBtn.style.display='none';
+    cancelBtn.textContent='SCHLIEẞEN';
+  }else{
+    lockInfo.style.display='none';
+    inp.disabled=false;inp.style.opacity='1';
+    saveBtn.style.display='';
+    cancelBtn.textContent='ABBRECHEN';
+  }
+  openModal('profileModal');
+}
 function saveUsername(){
   const v=document.getElementById('usernameInput').value.trim();
-  if(v){localStorage.setItem('username',v);document.getElementById('username').innerText=v.toUpperCase();document.getElementById('avatarLetter').innerText=v[0].toUpperCase();closeModal('profileModal');showNotif('✓ USERNAME GESPEICHERT');}
+  if(!v||v.length<2){showNotif('⚠ MINDESTENS 2 ZEICHEN EINGEBEN');return;}
+  if(daysUntilUnlock()>0){showNotif('🔒 NAME NOCH GESPERRT');return;}
+  saveProfile(v);
+  applyProfile();
+  closeModal('profileModal');
+  showNotif('✓ USERNAME GESPEICHERT');
 }
-function loadUser(){
-  const u=(localStorage.getItem('username')||'MYPANEL USER').toUpperCase();
-  document.getElementById('username').innerText=u;
-  document.getElementById('avatarLetter').innerText=u[0];
+function saveFirstLogin(){
+  const v=document.getElementById('firstLoginInput').value.trim();
+  if(!v||v.length<2){
+    document.getElementById('firstLoginInput').style.borderColor='#ff2b6d';
+    setTimeout(()=>document.getElementById('firstLoginInput').style.borderColor='',1000);
+    return;
+  }
+  saveProfile(v);
+  applyProfile();
+  document.getElementById('firstLoginModal').style.display='none';
+  showNotif('🎮 WILLKOMMEN, '+v.toUpperCase()+'!');
 }
-loadUser();
+
+// Boot: show first-login if no profile yet, else apply existing
+(function initProfileSystem(){
+  const p=getProfile();
+  // Migrate old username-only storage
+  if(!p){
+    const legacy=localStorage.getItem('username');
+    if(legacy&&legacy!=='MYPANEL USER'){
+      saveProfile(legacy);
+      applyProfile();
+      document.getElementById('firstLoginModal').style.display='none';
+    }else{
+      document.getElementById('firstLoginModal').style.display='flex';
+    }
+  }else{
+    applyProfile();
+    document.getElementById('firstLoginModal').style.display='none';
+  }
+  // Enter-key support for first login
+  document.getElementById('firstLoginInput').addEventListener('keydown',e=>{if(e.key==='Enter')saveFirstLogin();});
+  document.getElementById('usernameInput').addEventListener('keydown',e=>{if(e.key==='Enter')saveUsername();});
+})();
 
 /* ===== MODALS ===== */
-function openModal(id){document.getElementById(id).style.display='flex';if(id==='profileModal')document.getElementById('usernameInput').value=localStorage.getItem('username')||'';}
+function openModal(id){document.getElementById(id).style.display='flex';}
 function closeModal(id){document.getElementById(id).style.display='none';}
 document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)closeModal(m.id);}));
 

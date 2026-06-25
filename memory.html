@@ -287,6 +287,22 @@ clearInterval(timer);
 const name=document.getElementById("player").value;
 saveScore(name,time);
 
+// Auto-save to MyPanel highscores — score = 10000 / time (schneller = höher), only if new personal best
+try{
+  const profRaw=localStorage.getItem('mpProfile');
+  const prof=profRaw?JSON.parse(profRaw):null;
+  const player=(prof?prof.username:localStorage.getItem('username')||'MYPANEL USER').toUpperCase();
+  const mscore=Math.max(1,Math.floor(10000/time));
+  const all=JSON.parse(localStorage.getItem('highscores')||'[]');
+  const prevBest=all.filter(s=>s.player===player&&s.game==='Memory').sort((a,b)=>b.score-a.score);
+  if(prevBest.length===0||mscore>prevBest[0].score){
+    const filtered=all.filter(s=>!(s.player===player&&s.game==='Memory'));
+    filtered.push({player,game:'Memory',score:mscore,date:new Date().toLocaleDateString('de-DE')});
+    filtered.sort((a,b)=>b.score-a.score);
+    localStorage.setItem('highscores',JSON.stringify(filtered.slice(0,50)));
+  }
+}catch(e){}
+
 document.getElementById("result").innerText=`${name} - ${time}s`;
 document.getElementById("win").style.display="flex";
 

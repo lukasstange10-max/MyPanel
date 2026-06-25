@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<title>Ultra Tiktaktu</title>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Poppins,sans-serif;
+}
+
+body{
+
+height:100vh;
+
+display:flex;
+
+justify-content:center;
+
+align-items:center;
+
+overflow:hidden;
+
+background:
+linear-gradient(
+135deg,
+#020617,
+#111827,
+#312e81
+);
+
+color:white;
+
+animation:bg 8s infinite;
+}
+
+@keyframes bg{
+
+50%{
+
+filter:
+hue-rotate(20deg);
+
+}
+
+}
+
+.container{
+
+width:min(92vw,700px);
+
+text-align:center;
+
+animation:
+appear 1s;
+
+}
+
+@keyframes appear{
+
+from{
+
+opacity:0;
+
+transform:
+scale(.8);
+
+}
+
+}
+
+.title{
+
+font-size:70px;
+
+font-weight:900;
+
+margin-bottom:20px;
+
+background:
+linear-gradient(
+90deg,
+#06b6d4,
+#8b5cf6
+);
+
+-webkit-background-clip:text;
+
+-webkit-text-fill-color:transparent;
+
+animation:
+pulse 3s infinite;
+
+}
+
+@keyframes pulse{
+
+50%{
+
+transform:
+scale(1.05);
+
+}
+
+}
+
+.status{
+
+font-size:28px;
+
+margin-bottom:30px;
+
+min-height:50px;
+
+}
+
+.board{
+
+display:grid;
+
+grid-template-columns:
+repeat(3,1fr);
+
+gap:18px;
+
+}
+
+.cell{
+
+height:180px;
+
+display:flex;
+
+justify-content:center;
+
+align-items:center;
+
+font-size:95px;
+
+border-radius:35px;
+
+cursor:pointer;
+
+background:
+rgba(255,255,255,.06);
+
+border:
+1px solid
+rgba(255,255,255,.08);
+
+transition:.35s;
+
+animation:
+spawn .4s;
+
+}
+
+@keyframes spawn{
+
+from{
+
+opacity:0;
+
+transform:
+translateY(100px)
+rotate(
+30deg
+);
+
+}
+
+}
+
+.cell:hover{
+
+transform:
+scale(1.08);
+
+box-shadow:
+
+0 0 80px
+#6366f1;
+
+}
+
+.x{
+
+color:#06b6d4;
+
+animation:drop .3s;
+
+}
+
+.o{
+
+color:#a855f7;
+
+animation:drop .3s;
+
+}
+
+@keyframes drop{
+
+50%{
+
+transform:
+scale(1.4);
+
+}
+
+}
+
+.win{
+
+animation:
+winner .6s infinite;
+
+}
+
+@keyframes winner{
+
+50%{
+
+transform:
+scale(1.18);
+
+box-shadow:
+0 0 70px
+#22c55e;
+
+}
+
+}
+
+.shake{
+
+animation:
+shake .5s;
+}
+
+@keyframes shake{
+
+20%{transform:translateX(-10px);}
+40%{transform:translateX(10px);}
+60%{transform:translateX(-10px);}
+80%{transform:translateX(10px);}
+
+}
+
+.restart{
+
+margin-top:30px;
+
+padding:
+18px
+40px;
+
+border:none;
+
+border-radius:20px;
+
+font-size:24px;
+
+font-weight:900;
+
+cursor:pointer;
+
+background:
+linear-gradient(
+135deg,
+#6366f1,
+#8b5cf6
+);
+
+color:white;
+
+}
+
+@media(max-width:700px){
+
+.title{
+font-size:44px;
+}
+
+.cell{
+height:110px;
+font-size:60px;
+}
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="title">
+
+🤖 TIKTAKTU
+
+</div>
+
+<div
+id="status"
+class="status">
+
+Du startest
+
+</div>
+
+<div
+class="board"
+id="board">
+
+</div>
+
+<button
+class="restart"
+onclick="reset()">
+
+🔄 Neu
+
+</button>
+
+</div>
+
+<script>
+
+const board=
+document.getElementById(
+"board"
+);
+
+const status=
+document.getElementById(
+"status"
+);
+
+let game=
+Array(9)
+.fill("");
+
+let active=
+true;
+
+const wins=[
+
+[0,1,2],
+[3,4,5],
+[6,7,8],
+
+[0,3,6],
+[1,4,7],
+[2,5,8],
+
+[0,4,8],
+[2,4,6]
+
+];
+
+function render(){
+
+board.innerHTML="";
+
+game.forEach(
+(v,i)=>{
+
+const c=
+document.createElement(
+"div"
+);
+
+c.className=
+"cell";
+
+if(v){
+
+c.innerHTML=v;
+
+c.classList.add(
+v.toLowerCase()
+);
+
+}
+
+c.onclick=
+()=>move(i);
+
+board.appendChild(
+c
+);
+
+});
+
+}
+
+function move(i){
+
+if(
+game[i]
+||
+!active
+)return;
+
+game[i]="X";
+
+render();
+
+if(check())return;
+
+active=false;
+
+robot();
+
+}
+
+function robot(){
+
+status.innerHTML=
+"🤖 denkt...";
+
+setTimeout(()=>{
+
+let m=
+bestMove();
+
+game[m]="O";
+
+render();
+
+check();
+
+active=true;
+
+status.innerHTML=
+"Du bist dran";
+
+},800);
+
+}
+
+function bestMove(){
+
+if(game[4]==="")
+return 4;
+
+for(let s of ["O","X"]){
+
+for(let w of wins){
+
+let vals=
+w.map(
+i=>game[i]
+);
+
+if(
+vals.filter(
+v=>v===s
+).length===2
+){
+
+let empty=
+w.find(
+i=>game[i]===""
+);
+
+if(
+empty!==undefined
+)
+return empty;
+
+}
+
+}
+
+}
+
+const good=
+[0,2,6,8,1,3,5,7];
+
+for(let i of good){
+
+if(
+game[i]===""
+)
+return i;
+
+}
+
+}
+
+function check(){
+
+for(let w of wins){
+
+let[a,b,c]=w;
+
+if(
+
+game[a]
+
+&&
+
+game[a]
+===game[b]
+
+&&
+
+game[a]
+===game[c]
+
+){
+
+active=false;
+
+document
+.querySelectorAll(
+".cell"
+)
+.forEach(
+(
+e,
+i
+)=>{
+
+if(
+w.includes(i)
+)
+
+e.classList.add(
+"win"
+);
+
+}
+);
+
+if(
+game[a]==="X"
+){
+
+status.innerHTML=
+"🏆 DU GEWINNST";
+
+// Auto-save to MyPanel — tracks total wins as score
+try{
+  const profRaw=localStorage.getItem('mpProfile');
+  const prof=profRaw?JSON.parse(profRaw):null;
+  const player=(prof?prof.username:localStorage.getItem('username')||'MYPANEL USER').toUpperCase();
+  const all=JSON.parse(localStorage.getItem('highscores')||'[]');
+  const prev=all.filter(s=>s.player===player&&s.game==='Tik Tak Tu').sort((a,b)=>b.score-a.score);
+  const newScore=(prev.length>0?prev[0].score:0)+1;
+  const filtered=all.filter(s=>!(s.player===player&&s.game==='Tik Tak Tu'));
+  filtered.push({player,game:'Tik Tak Tu',score:newScore,date:new Date().toLocaleDateString('de-DE')});
+  filtered.sort((a,b)=>b.score-a.score);
+  localStorage.setItem('highscores',JSON.stringify(filtered.slice(0,50)));
+}catch(e){}
+
+}else{
+
+status.innerHTML=
+"🤖 BOT GEWINNT";
+
+document
+.body
+.classList
+.add(
+"shake"
+);
+
+setTimeout(
+
+()=>{
+
+document
+.body
+.classList
+.remove(
+"shake"
+);
+
+},
+
+500
+
+);
+
+}
+
+return true;
+
+}
+
+}
+
+if(
+!game.includes("")
+){
+
+status.innerHTML=
+"🤝 Unentschieden";
+
+active=false;
+
+return true;
+
+}
+
+}
+
+function reset(){
+
+game=
+Array(9)
+.fill("");
+
+active=true;
+
+status.innerHTML=
+"Du startest";
+
+render();
+
+}
+
+render();
+
+</script>
+
+</body>
+
+</html>

@@ -333,6 +333,21 @@ clearInterval(game);
 saveCoins();
 localStorage.setItem("zup",JSON.stringify(upgrades));
 show("gameOver");
+
+// Auto-save to MyPanel — coins earned = score, only if new personal best
+try{
+  const profRaw=localStorage.getItem('mpProfile');
+  const prof=profRaw?JSON.parse(profRaw):null;
+  const player=(prof?prof.username:localStorage.getItem('username')||'MYPANEL USER').toUpperCase();
+  const all=JSON.parse(localStorage.getItem('highscores')||'[]');
+  const prevBest=all.filter(s=>s.player===player&&s.game==='Zombie Survival').sort((a,b)=>b.score-a.score);
+  if(prevBest.length===0||coins>prevBest[0].score){
+    const filtered=all.filter(s=>!(s.player===player&&s.game==='Zombie Survival'));
+    filtered.push({player,game:'Zombie Survival',score:Math.floor(coins),date:new Date().toLocaleDateString('de-DE')});
+    filtered.sort((a,b)=>b.score-a.score);
+    localStorage.setItem('highscores',JSON.stringify(filtered.slice(0,50)));
+  }
+}catch(e){}
 }
 
 /* SHOP */
