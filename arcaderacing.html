@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Arcade Racing — MyPanel</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#000;display:flex;justify-content:center;align-items:center;height:100vh;font-family:'Orbitron',sans-serif;overflow:hidden;}
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap');
+canvas{display:block;border:1px solid #00e5ff;box-shadow:0 0 30px rgba(0,229,255,.3);}
+#ui{position:absolute;top:20px;left:50%;transform:translateX(-50%);display:flex;gap:40px;z-index:10;}
+.ui-box{background:rgba(0,0,0,.7);border:1px solid rgba(0,229,255,.3);border-radius:3px;padding:8px 18px;text-align:center;}
+.ui-label{font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(0,229,255,.5);letter-spacing:3px;}
+.ui-val{font-family:'Orbitron',monospace;font-size:20px;font-weight:900;color:#00e5ff;text-shadow:0 0 10px #00e5ff;}
+#overlay{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;background:rgba(0,0,0,.85);z-index:20;}
+#overlay h1{font-family:'Orbitron',sans-serif;font-size:48px;font-weight:900;color:#00e5ff;text-shadow:0 0 20px #00e5ff;letter-spacing:4px;margin-bottom:10px;}
+#overlay p{font-family:'Share Tech Mono',monospace;font-size:13px;color:rgba(0,229,255,.6);letter-spacing:3px;margin-bottom:30px;}
+#overlay button{padding:14px 36px;border:1px solid #00ff87;border-radius:3px;background:rgba(0,255,135,.1);color:#00ff87;font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700;letter-spacing:3px;cursor:pointer;}
+#overlay button:hover{background:rgba(0,255,135,.25);}
+#finalScore{font-family:'Share Tech Mono',monospace;font-size:16px;color:#ffc400;letter-spacing:2px;margin-bottom:20px;display:none;}
+</style>
+</head>
+<body>
+<div id="ui">
+  <div class="ui-box"><div class="ui-label">SCORE</div><div class="ui-val" id="scoreDisplay">0</div></div>
+  <div class="ui-box"><div class="ui-label">DISTANZ</div><div class="ui-val" id="distDisplay">0m</div></div>
+  <div class="ui-box"><div class="ui-label">SPEED</div><div class="ui-val" id="speedDisplay">0</div></div>
+</div>
+<canvas id="c"></canvas>
+<div id="overlay">
+  <h1>ARCADE RACING</h1>
+  <p>← → ODER A D ZUM LENKEN</p>
+  <div id="finalScore"></div>
+  <button onclick="startGame()">▶ STARTEN</button>
+</div>
+
+<script>
+const canvas=document.getElementById('c');
+const ctx=canvas.getContext('2d');
+canvas.width=480;canvas.height=640;
+
+let gameRunning=false,score=0,dist=0,speed=3,frame=0;
+let playerX=canvas.width/2,playerY=canvas.height-120;
+const playerW=36,playerH=60;
+let keys={};
+let obstacles=[],particles=[];
+let roadOffset=0,laneLines=[];
+let lives=3;
+
+// road params
+const roadLeft=80,roadRight=400,roadW=320;
+
+function startGame(){
+  document.getElementById('overlay').style.display='none';
+  document.getElementById('finalScore').style.display='none';
+  gameRunning=true;score=0;dist=0;speed=3;frame=0;lives=3;
+  playerX=canvas.width/2;
+  obstacles=[];particles=[];laneLines=[];roadOffset=0;
+  for(let i=0;i<8;i++)laneLines.push({y:i*100});
+  gameLoop();
+}
+
+function gameLoop(){
+  if(!gameRunning)return;
+  update();draw();
+  requestAnimationFrame(gameLoop);
+}
+
+function update(){
+  frame++;
+  speed=3+dist/800;
+  if(speed>14)speed=14;
+
+  // player movement
+  if((keys['ArrowLeft']||keys['a'])&&playerX>roadLeft+playerW/2)playerX-=5+(speed*.3);
+  if((keys['ArrowRight']||keys['d'])&&playerX<roadRight-playerW/2)playerX+=5+(speed*.3);
+
+  // road scroll
+  roadOffset=(roadOffset+speed)%100;
+
+  // lane lines
+  laneLines.forEach(l=>{l.y+=speed;if(l.y>canvas.height+50)l.y=-50;});
+
+  // obstacles
+  if(frame%Math.max(20,60-Math.floor(speed)*3)===0){
+    const lanes=[140,240,340];
+    const lx=lanes[Math.floor(Math.random()*lanes.length)];
+    obstacles.push({x:lx,y:-70,w:36,h:60,speed:Math.max(speed*0.85,4),color:randomColor()});
+  }
+  obstacles.forEach(o=>{o.y+=o.speed;});
+  obstacles=obstacles.filter(o=>o.y<canvas.height+80);
+
+  // collision
+  obstacles.forEach(o=>{
+    if(Math.abs(o.x-playerX)<30&&Math.abs(o.y-playerY)<50){
+      explode(o.x,o.y);
+      o.y=canvas.height+200;
+      lives--;
+      if(lives<=0){endGame();}
+    }
+  });
+
+  // particles
+  particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.life--;p.vy+=0.1;});
+  particles=particles.filter(p=>p.life>0);
+
+  score+=Math.floor(speed*.5);
+  dist+=speed*.05;
+  document.getElementById('scoreDisplay').textContent=score;
+  document.getElementById('distDisplay').textContent=Math.floor(dist)+'m';
+  document.getElementById('speedDisplay').textContent=Math.floor(speed*10);
+}
+
+function explode(x,y){
+  for(let i=0;i<20;i++)particles.push({x,y,vx:(Math.random()-0.5)*6,vy:(Math.random()-0.5)*6,life:30,color:Math.random()>.5?'#ff0080':'#ffc400'});
+}
+
+function randomColor(){const c=['#ff0080','#bf00ff','#ff6600','#ff2020'];return c[Math.floor(Math.random()*c.length)];}
+
+function draw(){
+  // sky
+  const sky=ctx.createLinearGradient(0,0,0,canvas.height);
+  sky.addColorStop(0,'#000510');sky.addColorStop(1,'#050a0e');
+  ctx.fillStyle=sky;ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  // grid bg
+  ctx.strokeStyle='rgba(0,229,255,.04)';ctx.lineWidth=1;
+  for(let x=0;x<canvas.width;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,canvas.height);ctx.stroke();}
+  for(let y=roadOffset%40;y<canvas.height;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(canvas.width,y);ctx.stroke();}
+
+  // road
+  ctx.fillStyle='#0a0a0a';ctx.fillRect(roadLeft,0,roadW,canvas.height);
+  ctx.strokeStyle='rgba(0,229,255,.15)';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(roadLeft,0);ctx.lineTo(roadLeft,canvas.height);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(roadRight,0);ctx.lineTo(roadRight,canvas.height);ctx.stroke();
+  // glow edges
+  const gl=ctx.createLinearGradient(roadLeft-20,0,roadLeft+20,0);
+  gl.addColorStop(0,'transparent');gl.addColorStop(1,'rgba(0,229,255,.08)');
+  ctx.fillStyle=gl;ctx.fillRect(roadLeft-20,0,40,canvas.height);
+  const gr=ctx.createLinearGradient(roadRight-20,0,roadRight+20,0);
+  gr.addColorStop(0,'rgba(0,229,255,.08)');gr.addColorStop(1,'transparent');
+  ctx.fillStyle=gr;ctx.fillRect(roadRight-20,0,40,canvas.height);
+
+  // lane dashes
+  ctx.setLineDash([30,30]);ctx.strokeStyle='rgba(255,255,255,.12)';ctx.lineWidth=2;
+  [240].forEach(lx=>{laneLines.forEach(l=>{ctx.beginPath();ctx.moveTo(lx,l.y);ctx.lineTo(lx,l.y+60);ctx.stroke();});});
+  ctx.setLineDash([]);
+
+  // obstacles (enemy cars)
+  obstacles.forEach(o=>drawCar(o.x,o.y,o.w,o.h,o.color,false));
+
+  // player car
+  drawCar(playerX,playerY,playerW,playerH,'#00e5ff',true);
+
+  // particles
+  particles.forEach(p=>{
+    ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);
+    ctx.fillStyle=p.color;ctx.globalAlpha=p.life/30;ctx.fill();ctx.globalAlpha=1;
+  });
+
+  // lives
+  for(let i=0;i<3;i++){
+    ctx.fillStyle=i<lives?'#00ff87':'rgba(255,255,255,.1)';
+    ctx.fillRect(20+i*18,20,12,18);
+  }
+}
+
+function drawCar(x,y,w,h,color,isPlayer){
+  const glow=ctx.createRadialGradient(x,y,0,x,y,h);
+  glow.addColorStop(0,color+'40');glow.addColorStop(1,'transparent');
+  ctx.fillStyle=glow;ctx.fillRect(x-h,y-h,h*2,h*2);
+
+  ctx.fillStyle=isPlayer?'#0d1b28':color+'22';
+  ctx.strokeStyle=color;ctx.lineWidth=isPlayer?2:1;
+  ctx.beginPath();
+  ctx.roundRect(x-w/2,y-h/2,w,h,4);
+  ctx.fill();ctx.stroke();
+
+  // windshield
+  ctx.fillStyle=isPlayer?'rgba(0,229,255,.3)':'rgba(255,255,255,.15)';
+  ctx.fillRect(x-w/2+4,y-h/2+8,w-8,h*.3);
+
+  // headlights
+  if(isPlayer){
+    ctx.fillStyle='#fff';
+    ctx.shadowColor='#00e5ff';ctx.shadowBlur=10;
+    ctx.fillRect(x-w/2+2,y+h/2-8,8,5);
+    ctx.fillRect(x+w/2-10,y+h/2-8,8,5);
+    ctx.shadowBlur=0;
+  }
+  // tail lights
+  ctx.fillStyle=isPlayer?'#ff2020':color;
+  ctx.shadowColor=isPlayer?'#ff2020':color;ctx.shadowBlur=8;
+  ctx.fillRect(x-w/2+2,y-h/2+2,7,4);
+  ctx.fillRect(x+w/2-9,y-h/2+2,7,4);
+  ctx.shadowBlur=0;
+}
+
+function endGame(){
+  gameRunning=false;
+  const ov=document.getElementById('overlay');
+  ov.style.display='flex';
+  ov.querySelector('h1').textContent='CRASH!';
+  ov.querySelector('p').textContent='DEIN SCORE';
+  const fs=document.getElementById('finalScore');
+  fs.style.display='block';
+  fs.textContent='▶ '+score.toLocaleString()+' PTS // '+Math.floor(dist)+'m';
+
+  // Auto-save to MyPanel highscores — only if new personal best
+  try{
+    const profRaw=localStorage.getItem('mpProfile');
+    const prof=profRaw?JSON.parse(profRaw):null;
+    const player=(prof?prof.username:localStorage.getItem('username')||'MYPANEL USER').toUpperCase();
+    const all=JSON.parse(localStorage.getItem('highscores')||'[]');
+    const prevBest=all.filter(s=>s.player===player&&s.game==='Arcade Racing').sort((a,b)=>b.score-a.score);
+    if(prevBest.length===0||score>prevBest[0].score){
+      const filtered=all.filter(s=>!(s.player===player&&s.game==='Arcade Racing'));
+      filtered.push({player,game:'Arcade Racing',score:Math.floor(score),date:new Date().toLocaleDateString('de-DE')});
+      filtered.sort((a,b)=>b.score-a.score);
+      localStorage.setItem('highscores',JSON.stringify(filtered.slice(0,50)));
+    }
+  }catch(e){}
+}
+
+document.addEventListener('keydown',e=>keys[e.key]=true);
+document.addEventListener('keyup',e=>keys[e.key]=false);
+</script>
+</body>
+</html>
