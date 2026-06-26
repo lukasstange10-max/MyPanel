@@ -768,12 +768,6 @@ iframe{width:100%;height:100%;border:none;}
 
     <!-- DASHBOARD -->
     <div id="sec-dashboard">
-      <!-- GLOBAL ANNOUNCEMENT BANNER -->
-      <div id="announcementBanner">
-        <div id="annInner" style="position:relative;">
-          <span id="annEmoji">📢</span><span id="annText"></span>
-        </div>
-      </div>
       <div class="herobar">
         <div class="profile-area">
           <div class="avatar" id="avatarLetter">M</div>
@@ -993,6 +987,13 @@ iframe{width:100%;height:100%;border:none;}
     <input type="text" id="firstLoginInput" class="minput" placeholder="DEINEN USERNAME EINGEBEN..." maxlength="20" style="text-align:center;">
     <div style="font-size:11px;color:var(--mu);margin-top:10px;margin-bottom:20px;letter-spacing:1px;">⚠ Der Name kann nach dem Setzen nur alle 30 Tage geändert werden.</div>
     <button class="msavebtn" style="width:100%;padding:14px;" onclick="saveFirstLogin()">▶ LOSLEGEN</button>
+  </div>
+</div>
+
+<!-- GLOBAL ANNOUNCEMENT BANNER — fixed position, always visible -->
+<div id="announcementBanner">
+  <div id="annInner" style="position:relative;">
+    <span id="annEmoji">📢</span><span id="annText"></span>
   </div>
 </div>
 
@@ -1495,25 +1496,30 @@ try{
 /* ===== ANNOUNCEMENT SYSTEM ===== */
 function initAnnouncement(){
   const p=getProfile();
-  if(p&&p.username===ADMIN_NAME){
-    const btn=document.getElementById('adminBtn');
-    if(btn)btn.style.display='';
+  const btn=document.getElementById('adminBtn');
+  if(btn){
+    if(p&&p.username===ADMIN_NAME)btn.style.display='';
+    else btn.style.display='none';
   }
-  // Listen for announcement in Firebase
+  function handleSnap(data){
+    showAnnouncementBanner(data);
+  }
   if(window.fbDB){
-    window.fbDB.ref('announcement').on('value',snap=>{
-      const data=snap.val();
-      showAnnouncementBanner(data);
-    });
+    window.fbDB.ref('announcement').on('value',snap=>handleSnap(snap.val()));
   } else {
-    // Retry after Firebase loads
+    // Poll every 5 seconds as fallback
+    const DB_URL='https://mypanel-41c90-default-rtdb.europe-west1.firebasedatabase.app';
+    let lastText='';
+    setInterval(()=>{
+      fetch(DB_URL+'/announcement.json?t='+Date.now())
+        .then(r=>r.json())
+        .then(d=>{
+          if(d&&d.text&&d.text!==lastText){lastText=d.text;showAnnouncementBanner(d);}
+        }).catch(()=>{});
+    },5000);
+    // Also try once Firebase loads
     setTimeout(()=>{
-      if(window.fbDB){
-        window.fbDB.ref('announcement').on('value',snap=>{
-          const data=snap.val();
-          showAnnouncementBanner(data);
-        });
-      }
+      if(window.fbDB)window.fbDB.ref('announcement').on('value',snap=>handleSnap(snap.val()));
     },5000);
   }
 }
