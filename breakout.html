@@ -307,21 +307,35 @@ requestAnimationFrame(loop);
 
 <!-- ANNOUNCEMENT SYSTEM -->
 <div id="annBanner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:99999;pointer-events:none;">
-  <div style="background:rgba(0,0,0,.85);padding:18px 40px 22px;text-align:center;border-top:3px solid #00e5ff;">
+  <div style="background:rgba(0,0,0,.85);padding:18px 40px 22px;text-align:center;border-top:3px solid #00e5ff;animation:annIn .4s cubic-bezier(.22,.61,.36,1) both;">
     <span style="font-family:Arial,sans-serif;font-size:clamp(16px,3vw,30px);font-weight:900;color:#fff;text-shadow:0 0 20px rgba(0,229,255,.8);letter-spacing:2px;">📢 <span id="annBannerText"></span></span>
   </div>
 </div>
+<style>@keyframes annIn{from{transform:translateY(100%);opacity:0;}to{transform:translateY(0);opacity:1;}}</style>
 <script>
 (function(){
-  const DB_URL='https://mypanel-41c90-default-rtdb.europe-west1.firebasedatabase.app/announcement.json';
+  const DB_URL='https://mypanel-41c90-default-rtdb.europe-west1.firebasedatabase.app';
+  let lastText='',annTimer=null;
   function showAnn(text){
+    if(!text||text===lastText)return;
+    lastText=text;
     const b=document.getElementById('annBanner');
     const t=document.getElementById('annBannerText');
-    if(!b||!t||!text)return;
-    t.textContent=text;b.style.display='block';
-    setTimeout(()=>{b.style.display='none';},10000);
+    if(!b||!t)return;
+    t.textContent=text;
+    b.style.display='block';
+    clearTimeout(annTimer);
+    annTimer=setTimeout(()=>{b.style.display='none';},10000);
   }
-  fetch(DB_URL).then(r=>r.json()).then(d=>{if(d&&d.text)showAnn(d.text);}).catch(()=>{});
+  function poll(){
+    fetch(DB_URL+'/announcement.json?t='+Date.now())
+      .then(r=>r.json())
+      .then(d=>{if(d&&d.text)showAnn(d.text);})
+      .catch(()=>{});
+  }
+  // Poll every 5 seconds for new announcements
+  poll();
+  setInterval(poll,5000);
 })();
 </script>
 </body>
