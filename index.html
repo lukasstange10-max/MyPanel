@@ -441,6 +441,15 @@ iframe{width:100%;height:100%;border:none;}
 /* highscore submit modal */
 #hsModal .mbox{width:420px;}
 
+/* ===== ANNOUNCEMENT ===== */
+#announcementBanner{display:none;background:linear-gradient(90deg,rgba(0,229,255,.08),rgba(0,255,135,.08));border-top:2px solid rgba(0,229,255,.4);border-bottom:1px solid rgba(0,229,255,.15);padding:10px 20px;font-family:'Share Tech Mono',monospace;font-size:12px;color:#00e5ff;letter-spacing:2px;position:relative;animation:annPulse 3s ease-in-out infinite;}
+@keyframes annPulse{0%,100%{border-top-color:rgba(0,229,255,.4);}50%{border-top-color:rgba(0,255,135,.6);}}
+#announcementBanner .ann-close{position:absolute;right:14px;top:50%;transform:translateY(-50%);cursor:pointer;color:rgba(255,255,255,.4);font-size:18px;}
+#announcementBanner .ann-close:hover{color:#fff;}
+.admin-btn{background:linear-gradient(90deg,rgba(255,43,109,.12),rgba(255,43,109,.06))!important;border:1px solid rgba(255,43,109,.35)!important;color:#ff2b6d!important;}
+.ann-input{width:100%;padding:10px 14px;border:1px solid var(--dim);border-radius:3px;background:var(--bg);color:var(--tm);font-family:'Share Tech Mono',monospace;font-size:12px;outline:none;margin-bottom:10px;letter-spacing:1px;}
+.ann-input:focus{border-color:rgba(0,229,255,.5);}
+
 /* ===== MUSIC PLAYER ===== */
 #musicPlayer{position:fixed;bottom:20px;right:20px;width:280px;background:var(--sf);border:1px solid var(--dim);border-radius:4px;padding:16px;z-index:9000;box-shadow:0 0 30px rgba(0,229,255,.1);}
 #musicPlayer::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--c),var(--g));}
@@ -719,6 +728,7 @@ iframe{width:100%;height:100%;border:none;}
       <button class="mbtn" onclick="showSection('news')"><span class="bico">◉</span>NEWS</button>
       <button class="mbtn" onclick="showSection('trailer')"><span class="bico">🎬</span>TRAILER</button>
       <button class="mbtn" onclick="openModal('updateModal')"><span class="bico">▲</span>UPDATES</button>
+      <button class="mbtn admin-btn" id="adminBtn" onclick="showSection('admin')" style="display:none"><span class="bico">🔐</span>ADMIN</button>
     </div>
     <div class="mdivider"></div>
     <div class="friends-mini">
@@ -755,6 +765,11 @@ iframe{width:100%;height:100%;border:none;}
 
     <!-- DASHBOARD -->
     <div id="sec-dashboard">
+      <!-- GLOBAL ANNOUNCEMENT BANNER -->
+      <div id="announcementBanner">
+        <span>📢</span> <span id="annText"></span>
+        <span class="ann-close" onclick="dismissAnnouncement()">✕</span>
+      </div>
       <div class="herobar">
         <div class="profile-area">
           <div class="avatar" id="avatarLetter">M</div>
@@ -846,6 +861,23 @@ iframe{width:100%;height:100%;border:none;}
         <div class="ctitle" style="justify-content:center;">SHOWCASE TRAILER ANSEHEN</div>
         <p style="color:var(--mu);margin:14px 0 24px;font-family:'Rajdhani',sans-serif;">Zurück zur Trailer-Startseite mit allen Spiel-Vorschauen.</p>
         <button onclick="backToTrailer()" style="padding:14px 32px;border:1px solid rgba(0,255,135,.4);border-radius:3px;background:rgba(0,255,135,.08);color:var(--g);font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;letter-spacing:2px;cursor:pointer;">▶ ZUM TRAILER</button>
+      </div>
+    </div>
+
+    <!-- ADMIN SECTION -->
+    <div id="sec-admin" style="display:none">
+      <div class="card" style="border-color:rgba(255,43,109,.25);">
+        <div class="ctitle" style="color:#ff2b6d;"><span>🔐</span> ADMIN — GLOBAL ANNOUNCEMENT</div>
+        <p style="color:var(--mu);font-size:12px;margin-bottom:16px;letter-spacing:1px;">Schreibe eine Nachricht die alle Spieler sofort sehen — auf allen Geräten.</p>
+        <textarea id="annInput" class="ann-input" rows="3" placeholder="ANNOUNCEMENT EINGEBEN..."></textarea>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button onclick="publishAnnouncement()" style="padding:10px 22px;border:1px solid rgba(255,43,109,.4);border-radius:3px;background:rgba(255,43,109,.1);color:#ff2b6d;font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;cursor:pointer;">📢 VERÖFFENTLICHEN</button>
+          <button onclick="clearAnnouncement()" style="padding:10px 22px;border:1px solid var(--dim);border-radius:3px;background:transparent;color:var(--mu);font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;cursor:pointer;">✕ LÖSCHEN</button>
+        </div>
+        <div id="annPreview" style="margin-top:16px;padding:12px 14px;border:1px solid rgba(0,229,255,.2);border-radius:3px;background:rgba(0,229,255,.04);font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--mu);display:none;">
+          <div style="font-size:10px;letter-spacing:2px;color:rgba(0,229,255,.5);margin-bottom:6px;">AKTUELLE NACHRICHT:</div>
+          <div id="annPreviewText" style="color:#00e5ff;"></div>
+        </div>
       </div>
     </div>
 
@@ -1325,6 +1357,7 @@ updateStats();
 /* ===== PROFILE SYSTEM ===== */
 const PROFILE_KEY='mpProfile';
 const LOCK_DAYS=30;
+const ADMIN_NAME='LUKAS';
 
 /* --- 3-layer storage: localStorage + cookie + sessionStorage --- */
 function _pSet(json){
@@ -1365,12 +1398,18 @@ function applyProfile(){
   const name=p?p.username:'MYPANEL USER';
   document.getElementById('username').innerText=name;
   document.getElementById('avatarLetter').innerText=name[0];
+  // Show admin button immediately if user is admin
+  const btn=document.getElementById('adminBtn');
+  if(btn){
+    if(name===ADMIN_NAME){btn.style.display='';}
+    else{btn.style.display='none';}
+  }
   // Update edit button label
   const days=daysUntilUnlock();
-  const btn=document.getElementById('editUsernameBtn');
-  if(btn){
-    if(days>0){btn.textContent='🔒 GESPERRT ('+days+'T)';btn.style.opacity='.6';}
-    else{btn.textContent='⬡ USERNAME ÄNDERN';btn.style.opacity='1';}
+  const editBtn=document.getElementById('editUsernameBtn');
+  if(editBtn){
+    if(days>0){editBtn.textContent='🔒 GESPERRT ('+days+'T)';editBtn.style.opacity='.6';}
+    else{editBtn.textContent='⬡ USERNAME ÄNDERN';editBtn.style.opacity='1';}
   }
 }
 function openProfileModal(){
@@ -1448,6 +1487,86 @@ try{
   document.getElementById('firstLoginInput').addEventListener('keydown',e=>{if(e.key==='Enter')saveFirstLogin();});
   document.getElementById('usernameInput').addEventListener('keydown',e=>{if(e.key==='Enter')saveUsername();});
 }catch(e){}
+
+/* ===== ANNOUNCEMENT SYSTEM ===== */
+function initAnnouncement(){
+  const p=getProfile();
+  if(p&&p.username===ADMIN_NAME){
+    const btn=document.getElementById('adminBtn');
+    if(btn)btn.style.display='';
+  }
+  // Listen for announcement in Firebase
+  if(window.fbDB){
+    window.fbDB.ref('announcement').on('value',snap=>{
+      const data=snap.val();
+      showAnnouncementBanner(data);
+    });
+  } else {
+    // Retry after Firebase loads
+    setTimeout(()=>{
+      if(window.fbDB){
+        window.fbDB.ref('announcement').on('value',snap=>{
+          const data=snap.val();
+          showAnnouncementBanner(data);
+        });
+      }
+    },5000);
+  }
+}
+
+function showAnnouncementBanner(data){
+  const banner=document.getElementById('announcementBanner');
+  const textEl=document.getElementById('annText');
+  if(!banner||!textEl)return;
+  if(data&&data.text&&data.text.trim()){
+    // Check if user dismissed this exact message
+    const dismissed=localStorage.getItem('annDismissed');
+    if(dismissed===data.text)return;
+    textEl.textContent=data.text;
+    banner.style.display='block';
+    // Update admin preview
+    const prev=document.getElementById('annPreview');
+    const prevText=document.getElementById('annPreviewText');
+    if(prev&&prevText){prev.style.display='block';prevText.textContent=data.text;}
+    const inp=document.getElementById('annInput');
+    if(inp)inp.value=data.text;
+  } else {
+    banner.style.display='none';
+    const prev=document.getElementById('annPreview');
+    if(prev)prev.style.display='none';
+  }
+}
+
+function dismissAnnouncement(){
+  const text=document.getElementById('annText').textContent;
+  localStorage.setItem('annDismissed',text);
+  document.getElementById('announcementBanner').style.display='none';
+}
+
+function publishAnnouncement(){
+  const text=document.getElementById('annInput').value.trim();
+  if(!text){showNotif('⚠ TEXT EINGEBEN');return;}
+  if(!window.fbDB){showNotif('⚠ FIREBASE NICHT VERBUNDEN');return;}
+  window.fbDB.ref('announcement').set({
+    text,
+    author:ADMIN_NAME,
+    timestamp:Date.now()
+  }).then(()=>{
+    showNotif('📢 ANNOUNCEMENT VERÖFFENTLICHT!');
+    localStorage.removeItem('annDismissed');
+  }).catch(()=>showNotif('⚠ FEHLER BEIM SPEICHERN'));
+}
+
+function clearAnnouncement(){
+  if(!window.fbDB){showNotif('⚠ FIREBASE NICHT VERBUNDEN');return;}
+  window.fbDB.ref('announcement').remove().then(()=>{
+    document.getElementById('annInput').value='';
+    showNotif('✓ ANNOUNCEMENT GELÖSCHT');
+  });
+}
+
+// Init after profile is set
+window.addEventListener('load',()=>setTimeout(initAnnouncement,1000));
 
 /* ===== MODALS ===== */
 function openModal(id){document.getElementById(id).style.display='flex';}
