@@ -772,7 +772,6 @@ iframe{width:100%;height:100%;border:none;}
       <div id="announcementBanner">
         <div id="annInner" style="position:relative;">
           <span id="annEmoji">📢</span><span id="annText"></span>
-          <span class="ann-close" onclick="dismissAnnouncement()">✕</span>
         </div>
       </div>
       <div class="herobar">
@@ -1524,11 +1523,13 @@ function showAnnouncementBanner(data){
   const textEl=document.getElementById('annText');
   if(!banner||!textEl)return;
   if(data&&data.text&&data.text.trim()){
-    // Check if user dismissed this exact message
     const dismissed=localStorage.getItem('annDismissed');
     if(dismissed===data.text)return;
     textEl.textContent=data.text;
     banner.style.display='block';
+    // Auto-dismiss after 10 seconds
+    clearTimeout(window._annTimer);
+    window._annTimer=setTimeout(()=>dismissAnnouncement(),10000);
     // Update admin preview
     const prev=document.getElementById('annPreview');
     const prevText=document.getElementById('annPreviewText');
