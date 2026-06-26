@@ -495,15 +495,16 @@ function render(){
     fetch(DB_URL+'/announcement.json?t='+Date.now())
       .then(r=>r.json())
       .then(d=>{
-        if(d&&d.text&&d.timestamp&&d.timestamp!==lastTs){
-          lastTs=d.timestamp;
-          showAnn(d.text);
+        if(d&&d.text){
+          const ts=d.timestamp||d.text;
+          if(ts!==lastTs){lastTs=ts;showAnn(d.text);}
         }
       })
       .catch(()=>{});
   }
-  poll();
-  setInterval(poll,5000);
+  // Poll immediately and every 3 seconds
+  setTimeout(poll,1000);
+  setInterval(poll,3000);
 })();
 </script>
 </body>
