@@ -898,7 +898,7 @@ iframe{width:100%;height:100%;border:none;}
         <div class="stat-pill"><div class="sp-num" id="stat-games">11</div><div class="sp-label">SPIELE</div></div>
         <div class="stat-pill"><div class="sp-num" id="stat-hs">0</div><div class="sp-label">HIGHSCORES</div></div>
         <div class="stat-pill"><div class="sp-num" id="stat-favs">0</div><div class="sp-label">FAVORITEN</div></div>
-        <div class="stat-pill"><div class="sp-num" id="stat-online">3</div><div class="sp-label">FREUNDE ONLINE</div></div>
+        <div class="stat-pill"><div class="sp-num" id="stat-online">0</div><div class="sp-label">FREUNDE ONLINE</div></div>
       </div>
 
       <div class="card">
@@ -1762,7 +1762,23 @@ function updateStats(){
   const scores=getScores();
   document.getElementById('stat-favs').textContent=favs.length;
   document.getElementById('stat-hs').textContent=scores.length;
-  document.getElementById('stat-online').textContent=FRIENDS.filter(f=>f.status==='online').length;
+  document.getElementById('stat-online').textContent='0';
+  // Count real online friends from Firebase
+  if(window.fbDB){
+    const me=getMyName();
+    window.fbDB.ref('friends/'+me).once('value',snap=>{
+      const friends=Object.values(snap.val()||{});
+      if(!friends.length){document.getElementById('stat-online').textContent='0';return;}
+      let onlineCount=0;let checked=0;
+      friends.forEach(f=>{
+        window.fbDB.ref('presence/'+f.name).once('value',pSnap=>{
+          if(pSnap.val()&&pSnap.val().online)onlineCount++;
+          checked++;
+          if(checked===friends.length)document.getElementById('stat-online').textContent=onlineCount;
+        });
+      });
+    });
+  }
 }
 updateStats();
 
