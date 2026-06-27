@@ -482,9 +482,91 @@ iframe{width:100%;height:100%;border:none;}
 .notif.show{transform:translateX(0)}
 .notif::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--c),var(--g));}
 
+/* ===== INTRO SCREEN ===== */
+#introScreen{position:fixed;inset:0;z-index:9999999;background:#030608;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;}
+#introScreen.fade-out{animation:introFadeOut .8s ease forwards;}
+@keyframes introFadeOut{to{opacity:0;visibility:hidden;}}
+.intro-logo{font-family:'Orbitron',sans-serif;font-weight:900;font-size:clamp(36px,8vw,80px);letter-spacing:4px;background:linear-gradient(90deg,#00e5ff,#00ff87,#00e5ff);background-size:200% 100%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:introLogo 1.5s ease both,introShine 2s linear infinite;}
+@keyframes introLogo{from{opacity:0;transform:scale(.8) translateY(20px);}to{opacity:1;transform:scale(1) translateY(0);}}
+@keyframes introShine{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.intro-sub{font-family:'Rajdhani',sans-serif;font-size:14px;letter-spacing:6px;color:rgba(0,229,255,.5);margin-top:10px;animation:introFadeIn .8s .6s both;}
+.intro-bar-wrap{width:200px;height:2px;background:rgba(255,255,255,.08);border-radius:2px;margin-top:32px;overflow:hidden;animation:introFadeIn .5s .8s both;}
+.intro-bar{height:100%;width:0%;background:linear-gradient(90deg,#00e5ff,#00ff87);animation:introBarFill 1.4s 1s cubic-bezier(.4,0,.2,1) forwards;}
+@keyframes introFadeIn{from{opacity:0;}to{opacity:1;}}
+@keyframes introBarFill{to{width:100%;}}
+
+/* ===== MOBILE RESPONSIVE ===== */
+
+/* Sidebar toggle button (mobile only) */
+#sidebarToggle{display:none;position:fixed;top:14px;left:14px;z-index:10000;background:var(--sf);border:1px solid var(--dim);color:var(--c);width:40px;height:40px;border-radius:6px;font-size:18px;cursor:pointer;align-items:center;justify-content:center;}
+#sidebarOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9998;}
+
+@media(max-width:900px){
+  /* Sidebar */
+  .sidebar{position:fixed!important;left:-280px;top:0;bottom:0;z-index:9999;transition:left .3s cubic-bezier(.4,0,.2,1)!important;width:260px!important;}
+  .sidebar.open{left:0!important;}
+  #sidebarToggle{display:flex;}
+  #sidebarOverlay.open{display:block;}
+  .main{padding:16px!important;}
+
+  /* Panel app takes full width */
+  .app{flex-direction:column;height:auto;min-height:100vh;}
+
+  /* Dashboard stats */
+  .stat-pills{grid-template-columns:repeat(2,1fr)!important;gap:10px!important;}
+  .sp-num{font-size:24px!important;}
+
+  /* Schnellstart grid */
+  .qs-grid{grid-template-columns:repeat(2,1fr)!important;}
+
+  /* Highscore table — hide date column */
+  .hs-table th:nth-child(5),.hs-table td:nth-child(5){display:none;}
+
+  /* Friend cards */
+  .friend-card{flex-wrap:wrap;}
+
+  /* Hero section */
+  .herobar h1{font-size:clamp(22px,6vw,36px)!important;}
+}
+
+@media(max-width:600px){
+  /* Stat pills single column */
+  .stat-pills{grid-template-columns:1fr 1fr!important;}
+
+  /* Games grid */
+  .qs-grid{grid-template-columns:1fr!important;}
+
+  /* Hide game column in hs table */
+  .hs-table th:nth-child(3),.hs-table td:nth-child(3){display:none;}
+
+  /* Chat messages */
+  #chatMessages{height:160px!important;}
+}
+
+/* Trailer responsive */
+@media(max-width:900px){
+  nav{padding:12px 18px!important;}
+  .hero{padding:80px 20px 40px!important;}
+  .hero-title{font-size:clamp(36px,11vw,80px)!important;}
+  .games-grid{grid-template-columns:repeat(2,1fr)!important;}
+  .stats-inner{grid-template-columns:repeat(2,1fr)!important;gap:20px!important;}
+  .section{padding:60px 20px!important;}
+  .nav-links{display:none;}
+  .nav-cta{font-size:10px!important;padding:8px 14px!important;}
+}
+@media(max-width:500px){
+  .games-grid{grid-template-columns:1fr!important;}
+  .stats-inner{grid-template-columns:repeat(2,1fr)!important;}
+  .hero-cta{flex-direction:column!important;align-items:center!important;}
+}
+
 </style>
 </head>
 <body>
+
+<!-- SIDEBAR TOGGLE (mobile) -->
+<button id="sidebarToggle" onclick="toggleSidebar()">☰</button>
+<div id="sidebarOverlay" onclick="closeSidebar()"></div>
 <div id="page-trailer">
 <div id="particles"></div>
 
@@ -513,7 +595,7 @@ iframe{width:100%;height:100%;border:none;}
     <span class="l2">GAMING</span>
     <span class="l3">HUB</span>
   </h1>
-  <p class="hero-sub">Zehn Spiele. Ein Interface. Neon Cyberpunk Design. Kein Download — direkt im Browser.</p>
+  <p class="hero-sub">Elf Spiele. Ein Interface. Neon Cyberpunk Design. Kein Download — direkt im Browser.</p>
   <div class="hero-btns">
     <a href="javascript:void(0)" onclick="openPanel()" class="btn-primary">▶ JETZT SPIELEN</a>
     <a href="#games" class="btn-ghost">◈ SPIELE ANSEHEN</a>
@@ -558,7 +640,7 @@ iframe{width:100%;height:100%;border:none;}
 <!-- STATS -->
 <div class="stats-wrap">
   <div class="stats-inner">
-    <div class="stat reveal"><div class="stat-num" data-target="10">0</div><div class="stat-label">SPIELE</div></div>
+    <div class="stat reveal"><div class="stat-num" data-target="11">0</div><div class="stat-label">SPIELE</div></div>
     <div class="stat reveal"><div class="stat-num">0<span style="font-size:18px">MS</span></div><div class="stat-label">LADEZEIT</div></div>
     <div class="stat reveal"><div class="stat-num">2</div><div class="stat-label">HTML FILES</div></div>
     <div class="stat reveal"><div class="stat-num">∞</div><div class="stat-label">SPASS</div></div>
@@ -652,7 +734,7 @@ iframe{width:100%;height:100%;border:none;}
   <div class="stitle">WAS <span>DRIN STECKT</span></div>
   <div class="feats">
     <div class="feat reveal"><span class="ficon">⚡</span><div class="ftitle">KEIN DOWNLOAD</div><div class="fdesc">Alles direkt im Browser. Kein Server, kein Setup — einfach öffnen und spielen.</div></div>
-    <div class="feat reveal"><span class="ficon">🎮</span><div class="ftitle">10 SPIELE</div><div class="fdesc">Snake, Memory, Geometry Dash, Space Shooter, Breakout, Zombie, Flappy, Racing, Wordle, Neon Vortex.</div></div>
+    <div class="feat reveal"><span class="ficon">🎮</span><div class="ftitle">11 SPIELE</div><div class="fdesc">Snake, Memory, Geometry Dash, Space Shooter, Breakout, Zombie, Flappy, Racing, Wordle, Neon Vortex.</div></div>
     <div class="feat reveal"><span class="ficon">🎨</span><div class="ftitle">4 FARBTHEMEN</div><div class="fdesc">Cyan, Pink, Gold oder Rot — Theme-Wechsel mit einem Klick, überall synchronisiert.</div></div>
     <div class="feat reveal"><span class="ficon">◆</span><div class="ftitle">FAVORITEN</div><div class="fdesc">Lieblingsspiele speichern — immer sofort griffbereit in der Sidebar.</div></div>
     <div class="feat reveal"><span class="ficon">👤</span><div class="ftitle">PROFIL SYSTEM</div><div class="fdesc">Eigener Username, lokal gespeichert. Beim nächsten Start automatisch geladen.</div></div>
@@ -782,7 +864,7 @@ iframe{width:100%;height:100%;border:none;}
       </div>
 
       <div class="stat-row">
-        <div class="stat-pill"><div class="sp-num" id="stat-games">10</div><div class="sp-label">SPIELE</div></div>
+        <div class="stat-pill"><div class="sp-num" id="stat-games">11</div><div class="sp-label">SPIELE</div></div>
         <div class="stat-pill"><div class="sp-num" id="stat-hs">0</div><div class="sp-label">HIGHSCORES</div></div>
         <div class="stat-pill"><div class="sp-num" id="stat-favs">0</div><div class="sp-label">FAVORITEN</div></div>
         <div class="stat-pill"><div class="sp-num" id="stat-online">3</div><div class="sp-label">FREUNDE ONLINE</div></div>
@@ -1123,6 +1205,7 @@ const GAMES = [
   {id:'racing',name:'ARCADE RACING',icon:'🏎️',desc:'Smooth Controls',file:'arcaderacing.html'},
   {id:'wordle',name:'WORDLE',icon:'🔤',desc:'Errate das geheime Wort',file:'wordle.html'},
   {id:'vortex',name:'NEON VORTEX',icon:'🌀',desc:'Überlebe den Sog',file:'vortex.html'},
+  {id:'pong',name:'NEON PONG',icon:'🏓',desc:'1v1 Online Multiplayer',file:'pong.html'},
 ];
 
 const FRIENDS = [
@@ -1153,7 +1236,14 @@ function showSection(name){
   document.querySelectorAll('.mbtn').forEach(b=>b.classList.remove('active'));
   event.currentTarget.classList.add('active');
   if(name==='highscores')renderHsTable('all');
-  if(name==='friends')renderFriends();
+  if(name==='friends'){
+    if(window.fbDB){
+      const me=getMyName();
+      window.fbDB.ref('friends/'+me).once('value',snap=>renderFriends(snap.val()||{}));
+    } else {
+      renderFriends({});
+    }
+  }
   if(name==='favorites')renderFavorites();
   if(name==='dashboard'){renderQuickGames();renderDashHs();}
   updateStats();
@@ -1357,7 +1447,7 @@ let activeChatFriend=null,chatListener=null;
 function getFriendKey(a,b){return [a,b].sort().join('__');}
 
 function initFriendsSystem(){
-  if(!window.fbDB)return setTimeout(initFriendsSystem,2000);
+  if(!window.fbDB)return setTimeout(initFriendsSystem,1000);
   const me=getMyName();
   if(!me||me==='MYPANEL USER')return;
 
@@ -1516,21 +1606,27 @@ function renderFriends(friendsObj){
   const g=document.getElementById('friendsGrid');
   const cnt=document.getElementById('friendCount');
   if(!g)return;
-  const friends=Object.values(friendsObj);
+  const friends=Object.values(friendsObj||{});
   if(cnt)cnt.textContent='('+friends.length+')';
   updateStats();
   if(!friends.length){
     g.innerHTML='<div style="color:var(--mu);font-size:12px;letter-spacing:2px;padding:16px;font-family:Share Tech Mono,monospace;">NOCH KEINE FREUNDE — SENDE EINE ANFRAGE!</div>';
     return;
   }
-  // Get online status for each friend
   g.innerHTML='';
   friends.forEach(f=>{
-    if(!window.fbDB)return;
+    if(!f||!f.name)return;
+    if(!window.fbDB){
+      const card=document.createElement('div');
+      card.className='friend-card';
+      card.innerHTML=`<div class="fa" style="background:rgba(0,0,0,.4);border-color:#555;color:#888">${f.name[0]}</div><div style="flex:1;"><div class="fn">${f.name}</div><div class="fg">● OFFLINE</div></div>`;
+      g.appendChild(card);
+      return;
+    }
     window.fbDB.ref('presence/'+f.name).once('value',snap=>{
       const online=snap.val()&&snap.val().online;
       const scores=getScores().filter(s=>s.player===f.name).sort((a,b)=>b.score-a.score);
-      const topScore=scores.length?scores[0]:'';
+      const topScore=scores.length?scores[0]:null;
       const card=document.createElement('div');
       card.className='friend-card';
       card.innerHTML=`
@@ -1584,7 +1680,21 @@ function updateStats(){
 }
 updateStats();
 
-/* ===== PROFILE SYSTEM ===== */
+/* ===== SIDEBAR TOGGLE (mobile) ===== */
+function toggleSidebar(){
+  document.querySelector('.sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('open');
+}
+function closeSidebar(){
+  document.querySelector('.sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('open');
+}
+// Close sidebar when a section is clicked on mobile
+document.querySelectorAll('.mbtn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    if(window.innerWidth<=900)closeSidebar();
+  });
+});
 const PROFILE_KEY='mpProfile';
 const LOCK_DAYS=30;
 const ADMIN_NAME='LUKAS123';
