@@ -1237,8 +1237,11 @@ function showSection(name){
   event.currentTarget.classList.add('active');
   if(name==='highscores')renderHsTable('all');
   if(name==='friends'){
+    // Generate invite link immediately
+    const me=getMyName();
+    const invEl=document.getElementById('inviteLink');
+    if(invEl)invEl.textContent=location.origin+location.pathname+'?invite='+encodeURIComponent(me);
     if(window.fbDB){
-      const me=getMyName();
       window.fbDB.ref('friends/'+me).once('value',snap=>renderFriends(snap.val()||{}));
     } else {
       renderFriends({});
@@ -1456,7 +1459,7 @@ function initFriendsSystem(){
   presRef.set({online:true,since:Date.now()});
   presRef.onDisconnect().remove();
 
-  // Generate invite link
+  // Generate invite link immediately
   const invEl=document.getElementById('inviteLink');
   if(invEl)invEl.textContent=location.origin+location.pathname+'?invite='+encodeURIComponent(me);
 
