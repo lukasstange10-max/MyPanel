@@ -838,9 +838,39 @@ iframe{width:100%;height:100%;border:none;}
 
     <!-- FRIENDS -->
     <div id="sec-friends" style="display:none">
+      <!-- Anfragen -->
+      <div class="card" id="friendReqCard" style="display:none;border-color:rgba(255,210,63,.25);">
+        <div class="ctitle"><span>🔔</span> FREUNDSCHAFTSANFRAGEN</div>
+        <div id="friendReqList"></div>
+      </div>
+      <!-- Suche + Invite -->
       <div class="card">
-        <div class="ctitle"><span>🌐</span> FREUNDE SYSTEM</div>
-        <div class="friends-grid" id="friendsGrid"></div>
+        <div class="ctitle"><span>🔍</span> FREUND HINZUFÜGEN</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+          <input id="friendSearchInput" class="minput" placeholder="BENUTZERNAME EINGEBEN..." maxlength="20" style="flex:1;min-width:160px;">
+          <button onclick="sendFriendRequest()" style="padding:10px 20px;border:1px solid rgba(0,229,255,.4);border-radius:3px;background:rgba(0,229,255,.08);color:var(--c);font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;cursor:pointer;">➕ ANFRAGE SENDEN</button>
+        </div>
+        <div style="border-top:1px solid var(--dim);padding-top:12px;">
+          <div style="font-size:11px;color:var(--mu);letter-spacing:2px;margin-bottom:8px;">ODER PER EINLADUNGSLINK TEILEN:</div>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+            <div id="inviteLink" style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--c);background:var(--surface);padding:8px 12px;border-radius:3px;border:1px solid var(--dim);flex:1;word-break:break-all;"></div>
+            <button onclick="copyInviteLink()" style="padding:8px 16px;border:1px solid rgba(0,255,135,.4);border-radius:3px;background:rgba(0,255,135,.08);color:var(--g);font-family:'Orbitron',sans-serif;font-size:11px;cursor:pointer;">📋 KOPIEREN</button>
+          </div>
+        </div>
+      </div>
+      <!-- Freundesliste -->
+      <div class="card">
+        <div class="ctitle"><span>👥</span> MEINE FREUNDE <span id="friendCount" style="color:var(--mu);font-size:11px;font-family:'Share Tech Mono',monospace;"></span></div>
+        <div id="friendsGrid"></div>
+      </div>
+      <!-- Chat -->
+      <div class="card" id="chatCard" style="display:none;">
+        <div class="ctitle"><span>💬</span> CHAT MIT <span id="chatPartnerName" style="color:var(--c);"></span></div>
+        <div id="chatMessages" style="height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:8px;background:var(--surface);border-radius:3px;margin-bottom:12px;"></div>
+        <div style="display:flex;gap:8px;">
+          <input id="chatInput" class="minput" placeholder="NACHRICHT..." maxlength="200" style="flex:1;">
+          <button onclick="sendChatMsg()" style="padding:10px 18px;border:1px solid rgba(0,229,255,.4);border-radius:3px;background:rgba(0,229,255,.08);color:var(--c);font-family:'Orbitron',sans-serif;font-size:11px;cursor:pointer;">▶</button>
+        </div>
       </div>
     </div>
 
@@ -1321,33 +1351,215 @@ function filterHs(f,btn){
 }
 
 /* ===== FRIENDS ===== */
-function renderFriends(){
+/* ===== REAL FRIENDS SYSTEM ===== */
+let activeChatFriend=null,chatListener=null;
+
+function getFriendKey(a,b){return [a,b].sort().join('__');}
+
+function initFriendsSystem(){
+  if(!window.fbDB)return setTimeout(initFriendsSystem,2000);
+  const me=getMyName();
+  if(!me||me==='MYPANEL USER')return;
+
+  // Set online presence
+  const presRef=window.fbDB.ref('presence/'+me);
+  presRef.set({online:true,since:Date.now()});
+  presRef.onDisconnect().remove();
+
+  // Generate invite link
+  const invEl=document.getElementById('inviteLink');
+  if(invEl)invEl.textContent=location.origin+location.pathname+'?invite='+encodeURIComponent(me);
+
+  // Check for invite in URL
+  const params=new URLSearchParams(location.search);
+  const inviteFrom=params.get('invite');
+  if(inviteFrom&&inviteFrom.toUpperCase()!==me){
+    setTimeout(()=>{
+      if(confirm('Freundschaftsanfrage von '+inviteFrom+' annehmen?'))acceptInvite(inviteFrom.toUpperCase());
+    },1500);
+  }
+
+  // Listen for friend requests
+  window.fbDB.ref('friendRequests/'+me).on('value',snap=>{
+    const reqs=snap.val()||{};
+    const pending=Object.values(reqs).filter(r=>r.status==='pending');
+    const card=document.getElementById('friendReqCard');
+    const list=document.getElementById('friendReqList');
+    if(!card||!list)return;
+    if(pending.length){
+      card.style.display='block';
+      list.innerHTML=pending.map(r=>`
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--dim);">
+          <div style="font-family:'Orbitron',sans-serif;font-size:12px;color:var(--tm);">👤 ${r.from}</div>
+          <div style="display:flex;gap:8px;">
+            <button onclick="respondFriendRequest('${r.from}','accept')" style="padding:6px 14px;border:1px solid rgba(0,255,135,.4);border-radius:3px;background:rgba(0,255,135,.08);color:var(--g);font-family:'Orbitron',sans-serif;font-size:10px;cursor:pointer;">✓ ANNEHMEN</button>
+            <button onclick="respondFriendRequest('${r.from}','decline')" style="padding:6px 14px;border:1px solid rgba(255,43,109,.3);border-radius:3px;background:rgba(255,43,109,.06);color:#ff2b6d;font-family:'Orbitron',sans-serif;font-size:10px;cursor:pointer;">✕ ABLEHNEN</button>
+          </div>
+        </div>`).join('');
+    } else {
+      card.style.display='none';
+      list.innerHTML='';
+    }
+  });
+
+  // Listen for friends list
+  window.fbDB.ref('friends/'+me).on('value',snap=>{
+    renderFriends(snap.val()||{});
+  });
+}
+
+function getMyName(){
+  const p=getProfile();
+  return p?p.username:'MYPANEL USER';
+}
+
+function sendFriendRequest(){
+  const inp=document.getElementById('friendSearchInput');
+  const target=(inp.value.trim()).toUpperCase();
+  const me=getMyName();
+  if(!target||target===me){showNotif('⚠ UNGÜLTIGER NAME');return;}
+  if(!window.fbDB){showNotif('⚠ FIREBASE NICHT VERBUNDEN');return;}
+  window.fbDB.ref('friendRequests/'+target+'/'+me).set({
+    from:me,to:target,status:'pending',ts:Date.now()
+  }).then(()=>{showNotif('📨 ANFRAGE AN '+target+' GESENDET!');inp.value='';})
+  .catch(()=>showNotif('⚠ FEHLER BEIM SENDEN'));
+}
+
+function acceptInvite(from){
+  const me=getMyName();
+  if(!window.fbDB)return;
+  const key=getFriendKey(me,from);
+  window.fbDB.ref('friends/'+me+'/'+from).set({name:from,since:Date.now()});
+  window.fbDB.ref('friends/'+from+'/'+me).set({name:me,since:Date.now()});
+  window.fbDB.ref('friendRequests/'+me+'/'+from).remove();
+  showNotif('✅ '+from+' ALS FREUND HINZUGEFÜGT!');
+}
+
+function respondFriendRequest(from,action){
+  const me=getMyName();
+  if(!window.fbDB)return;
+  if(action==='accept'){
+    window.fbDB.ref('friends/'+me+'/'+from).set({name:from,since:Date.now()});
+    window.fbDB.ref('friends/'+from+'/'+me).set({name:me,since:Date.now()});
+    showNotif('✅ '+from+' ALS FREUND HINZUGEFÜGT!');
+  } else {
+    showNotif('✕ ANFRAGE VON '+from+' ABGELEHNT');
+  }
+  window.fbDB.ref('friendRequests/'+me+'/'+from).remove();
+}
+
+function removeFriend(name){
+  const me=getMyName();
+  if(!window.fbDB||!confirm(name+' als Freund entfernen?'))return;
+  window.fbDB.ref('friends/'+me+'/'+name).remove();
+  window.fbDB.ref('friends/'+name+'/'+me).remove();
+  showNotif('✕ '+name+' ENTFERNT');
+}
+
+function copyInviteLink(){
+  const el=document.getElementById('inviteLink');
+  if(!el)return;
+  navigator.clipboard.writeText(el.textContent).then(()=>showNotif('📋 LINK KOPIERT!')).catch(()=>showNotif('⚠ KOPIEREN FEHLGESCHLAGEN'));
+}
+
+function openChat(friendName){
+  const me=getMyName();
+  activeChatFriend=friendName;
+  document.getElementById('chatCard').style.display='block';
+  document.getElementById('chatPartnerName').textContent=friendName;
+  if(chatListener)chatListener();
+  const chatKey=getFriendKey(me,friendName);
+  const msgRef=window.fbDB.ref('chats/'+chatKey).limitToLast(50);
+  chatListener=()=>msgRef.off();
+  msgRef.on('value',snap=>{
+    const msgs=snap.val()||{};
+    const el=document.getElementById('chatMessages');
+    if(!el)return;
+    el.innerHTML=Object.values(msgs).sort((a,b)=>a.ts-b.ts).map(m=>{
+      const isMe=m.from===me;
+      return `<div style="align-self:${isMe?'flex-end':'flex-start'};max-width:75%;background:${isMe?'rgba(0,229,255,.12)':'rgba(255,255,255,.06)'};border:1px solid ${isMe?'rgba(0,229,255,.3)':'var(--dim)'};border-radius:6px;padding:7px 12px;">
+        <div style="font-size:10px;color:var(--mu);letter-spacing:1px;margin-bottom:3px;">${m.from}</div>
+        <div style="font-size:13px;color:var(--tm);">${m.text}</div>
+      </div>`;
+    }).join('');
+    el.scrollTop=el.scrollHeight;
+  });
+  const inp=document.getElementById('chatInput');
+  if(inp){inp.focus();inp.onkeydown=e=>{if(e.key==='Enter')sendChatMsg();};}
+}
+
+function sendChatMsg(){
+  const me=getMyName();
+  const inp=document.getElementById('chatInput');
+  if(!inp||!activeChatFriend||!window.fbDB)return;
+  const text=inp.value.trim();
+  if(!text)return;
+  const chatKey=getFriendKey(me,activeChatFriend);
+  window.fbDB.ref('chats/'+chatKey).push({from:me,text,ts:Date.now()});
+  inp.value='';
+}
+
+function renderFriends(friendsObj){
   const g=document.getElementById('friendsGrid');
+  const cnt=document.getElementById('friendCount');
   if(!g)return;
-  g.innerHTML=FRIENDS.map(f=>`
-    <div class="friend-card">
-      <div class="fa" style="background:rgba(0,0,0,.4);border-color:${f.color};color:${f.color};box-shadow:0 0 8px ${f.color}40">${f.avatar}</div>
-      <div>
-        <div class="fn">${f.name}</div>
-        <div class="fg">${f.status==='online'?'🎮 '+f.game:f.status==='away'?'⏸ INAKTIV':'● OFFLINE'}</div>
-      </div>
-      <div class="fst ${f.status==='online'?'on':f.status==='away'?'aw':'off'}">${f.status==='online'?'● ONLINE':f.status==='away'?'● AWAY':'● OFFLINE'}</div>
-    </div>
-  `).join('');
+  const friends=Object.values(friendsObj);
+  if(cnt)cnt.textContent='('+friends.length+')';
+  updateStats();
+  if(!friends.length){
+    g.innerHTML='<div style="color:var(--mu);font-size:12px;letter-spacing:2px;padding:16px;font-family:Share Tech Mono,monospace;">NOCH KEINE FREUNDE — SENDE EINE ANFRAGE!</div>';
+    return;
+  }
+  // Get online status for each friend
+  g.innerHTML='';
+  friends.forEach(f=>{
+    if(!window.fbDB)return;
+    window.fbDB.ref('presence/'+f.name).once('value',snap=>{
+      const online=snap.val()&&snap.val().online;
+      const scores=getScores().filter(s=>s.player===f.name).sort((a,b)=>b.score-a.score);
+      const topScore=scores.length?scores[0]:'';
+      const card=document.createElement('div');
+      card.className='friend-card';
+      card.innerHTML=`
+        <div class="fa" style="background:rgba(0,0,0,.4);border-color:${online?'#00ff87':'#555'};color:${online?'#00ff87':'#888'};box-shadow:0 0 8px ${online?'#00ff8740':'transparent'}">${f.name[0]}</div>
+        <div style="flex:1;min-width:0;">
+          <div class="fn">${f.name}</div>
+          <div class="fg">${online?'● ONLINE':'● OFFLINE'}</div>
+          ${topScore?`<div style="font-size:10px;color:var(--mu);font-family:Share Tech Mono,monospace;margin-top:2px;">🏆 ${topScore.game}: ${topScore.score}</div>`:''}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:5px;">
+          <button onclick="openChat('${f.name}')" style="padding:5px 10px;border:1px solid rgba(0,229,255,.3);border-radius:3px;background:rgba(0,229,255,.06);color:var(--c);font-size:10px;cursor:pointer;font-family:'Orbitron',sans-serif;">💬</button>
+          <button onclick="removeFriend('${f.name}')" style="padding:5px 10px;border:1px solid rgba(255,43,109,.3);border-radius:3px;background:rgba(255,43,109,.05);color:#ff2b6d;font-size:10px;cursor:pointer;font-family:'Orbitron',sans-serif;">✕</button>
+        </div>`;
+      g.appendChild(card);
+    });
+  });
 }
 
 function renderFriendsMini(){
+  if(!window.fbDB)return;
+  const me=getMyName();
   const el=document.getElementById('fmList');
   if(!el)return;
-  el.innerHTML=FRIENDS.filter(f=>f.status!=='offline').map(f=>`
-    <div class="fm-user">
-      <div class="fm-avatar" style="background:rgba(0,0,0,.4);border-color:${f.color};color:${f.color}">${f.avatar}</div>
-      <div class="fm-name">${f.name}</div>
-      <div class="fm-status ${f.status}"></div>
-    </div>
-  `).join('');
+  window.fbDB.ref('friends/'+me).once('value',snap=>{
+    const friends=Object.values(snap.val()||{});
+    if(!friends.length){el.innerHTML='';return;}
+    el.innerHTML='';
+    friends.forEach(f=>{
+      window.fbDB.ref('presence/'+f.name).once('value',pSnap=>{
+        const online=pSnap.val()&&pSnap.val().online;
+        if(!online)return;
+        const div=document.createElement('div');
+        div.className='fm-user';
+        div.innerHTML=`<div class="fm-avatar" style="border-color:#00ff87;color:#00ff87">${f.name[0]}</div><div class="fm-name">${f.name}</div><div class="fm-status on"></div>`;
+        el.appendChild(div);
+      });
+    });
+  });
 }
-renderFriendsMini();
+
+// Init on load
+window.addEventListener('load',()=>setTimeout(initFriendsSystem,3500));
 
 /* ===== STATS ===== */
 function updateStats(){
