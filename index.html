@@ -706,7 +706,7 @@ iframe{width:100%;height:100%;border:none;}
 <div class="stats-wrap">
   <div class="stats-inner">
     <div class="stat reveal">
-      <div class="stat-num" data-target="12">0</div>
+      <div class="stat-num" data-target="13">0</div>
       <div class="stat-label">SPIELE</div>
     </div>
     <div class="stat reveal">
@@ -770,7 +770,7 @@ iframe{width:100%;height:100%;border:none;}
 <!-- GAMES -->
 <div class="section" id="games">
   <div class="stag">// SPIELEBIBLIOTHEK</div>
-  <div class="stitle">12 <span>SPIELE</span> BEREIT</div>
+  <div class="stitle">13 <span>SPIELE</span> BEREIT</div>
   <div class="games-grid">
 
     <div class="gcard reveal">
@@ -872,6 +872,17 @@ iframe{width:100%;height:100%;border:none;}
       <div class="ginfo"><div class="gtag">STRATEGIE</div><div class="gname">TIK TAK TU</div><div class="gdesc">Spiele gegen den unbesiegbaren Bot — kannst du ihn schlagen?</div></div>
     </div>
 
+    <div class="gcard reveal">
+      <div class="gprev" style="background:radial-gradient(circle,#040e08,#000);overflow:hidden;">
+        <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,#00e5ff,transparent);animation:rscr .4s linear infinite;"></div>
+        <div style="position:absolute;bottom:3px;left:0;right:0;height:44px;background:repeating-linear-gradient(90deg,rgba(0,229,255,.06) 0,rgba(0,229,255,.06) 10px,transparent 10px,transparent 30px);"></div>
+        <div style="position:absolute;font-size:44px;animation:rbst .4s ease-in-out infinite alternate;filter:drop-shadow(0 0 10px #00e5ff)">🏃</div>
+        <div style="position:absolute;top:16px;left:50%;transform:translateX(-50%);font-family:'Orbitron',sans-serif;font-size:9px;color:rgba(0,229,255,.5);letter-spacing:2px;white-space:nowrap;">CYBER RUN</div>
+      </div>
+      <div class="govl"><a href="cyberrun.html" class="gplaybtn">▶ SPIELEN</a></div>
+      <div class="ginfo"><div class="gtag">NEU · RUNNER</div><div class="gname">CYBER RUN</div><div class="gdesc">Sprinte durch die Cyberpunk-City. Spring, slide, weiche aus — so weit wie möglich!</div></div>
+    </div>
+
     <div class="gcard reveal" style="border-color:rgba(255,210,63,.2);background:rgba(255,210,63,.02);">
       <div class="gprev" style="background:radial-gradient(circle,#0a0800,#000)">
         <div style="font-size:14px;font-family:'Orbitron',sans-serif;color:rgba(255,210,63,.5);letter-spacing:3px;position:absolute;text-align:center;padding:0 10px;">MEHR<br>KOMMT<br>BALD</div>
@@ -889,7 +900,7 @@ iframe{width:100%;height:100%;border:none;}
   <div class="stitle">WAS <span>DRIN STECKT</span></div>
   <div class="feats">
     <div class="feat reveal"><span class="ficon">⚡</span><div class="ftitle">KEIN DOWNLOAD</div><div class="fdesc">Alles direkt im Browser. Kein Server, kein Setup — einfach öffnen und spielen.</div></div>
-    <div class="feat reveal"><span class="ficon">🎮</span><div class="ftitle">12 SPIELE</div><div class="fdesc">Snake, Memory, Geometry Dash, Space Shooter, Breakout, Zombie, Flappy, Racing, Wordle, Vortex, Pong & mehr.</div></div>
+    <div class="feat reveal"><span class="ficon">🎮</span><div class="ftitle">13 SPIELE</div><div class="fdesc">Snake, Memory, Geometry Dash, Space Shooter, Breakout, Zombie, Flappy, Racing, Wordle, Vortex, Pong & mehr.</div></div>
     <div class="feat reveal"><span class="ficon">🏓</span><div class="ftitle">MULTIPLAYER</div><div class="fdesc">Echtzeit 1v1 Pong — Raum erstellen, Freund einladen, sofort losspielen.</div></div>
     <div class="feat reveal"><span class="ficon">🌐</span><div class="ftitle">GLOBALE RANGLISTE</div><div class="fdesc">Firebase-powered Highscores — alle Spieler, ein Leaderboard, Echtzeit-Updates.</div></div>
     <div class="feat reveal"><span class="ficon">👥</span><div class="ftitle">SOCIAL SYSTEM</div><div class="fdesc">Freunde hinzufügen, Clans gründen, chatten — direkt im Panel.</div></div>
@@ -1060,7 +1071,7 @@ iframe{width:100%;height:100%;border:none;}
       </div>
 
       <div class="stat-row">
-        <div class="stat-pill"><div class="sp-num" id="stat-games">12</div><div class="sp-label">SPIELE</div></div>
+        <div class="stat-pill"><div class="sp-num" id="stat-games">13</div><div class="sp-label">SPIELE</div></div>
         <div class="stat-pill"><div class="sp-num" id="stat-hs">0</div><div class="sp-label">HIGHSCORES</div></div>
         <div class="stat-pill"><div class="sp-num" id="stat-favs">0</div><div class="sp-label">FAVORITEN</div></div>
         <div class="stat-pill"><div class="sp-num" id="stat-online">0</div><div class="sp-label">FREUNDE ONLINE</div></div>
@@ -1309,10 +1320,10 @@ iframe{width:100%;height:100%;border:none;}
 
 <!-- MUSIC PLAYER -->
 <div id="musicPlayer">
-  <button class="mp-min" onclick="toggleMusicPlayer()">_</button>
-  <div class="mp-title">// SYNTHWAVE RADIO</div>
-  <div class="mp-track" id="mpTrack">Neon City Drive</div>
-  <div class="mp-artist" id="mpArtist">MYPANEL SYNTHWAVE</div>
+  <button class="mp-min" onclick="toggleMusicPlayer()" id="mpMinBtn">_</button>
+  <div class="mp-title">// MUSIK PLAYER</div>
+  <div class="mp-track" id="mpTrack">Kein Song geladen</div>
+  <div class="mp-artist" id="mpArtist">Füge einen YouTube-Link hinzu ↓</div>
   <div class="mp-vis" id="mpVis">
     <div class="mp-vis-bar paused" style="height:60%"></div>
     <div class="mp-vis-bar paused" style="height:40%"></div>
@@ -1323,18 +1334,24 @@ iframe{width:100%;height:100%;border:none;}
     <div class="mp-vis-bar paused" style="height:70%"></div>
     <div class="mp-vis-bar paused" style="height:30%"></div>
   </div>
-  <div class="mp-progress" onclick="seekTrack(event)">
-    <div class="mp-bar" id="mpBar"></div>
-  </div>
   <div class="mp-controls">
-    <button class="mp-btn" onclick="prevTrack()">◀◀</button>
-    <button class="mp-btn" onclick="toggleMusic()" id="mpPlayBtn">▶ PLAY</button>
-    <button class="mp-btn" onclick="nextTrack()">▶▶</button>
+    <button class="mp-btn" onclick="ytPrev()">◀◀</button>
+    <button class="mp-btn" onclick="ytToggle()" id="mpPlayBtn">▶ PLAY</button>
+    <button class="mp-btn" onclick="ytNext()">▶▶</button>
   </div>
   <div class="mp-vol-row">
     <span class="mp-vol-label">VOL</span>
-    <input type="range" class="mp-vol" id="mpVol" min="0" max="100" value="60" oninput="setVol(this.value)">
+    <input type="range" class="mp-vol" id="mpVol" min="0" max="100" value="70" oninput="ytSetVol(this.value)">
   </div>
+  <!-- Playlist -->
+  <div id="mpPlaylist" style="max-height:120px;overflow-y:auto;margin-top:10px;border-top:1px solid var(--dim);padding-top:8px;"></div>
+  <!-- Add song -->
+  <div style="margin-top:8px;display:flex;gap:6px;">
+    <input id="ytUrlInput" placeholder="YouTube URL..." style="flex:1;padding:6px 8px;background:var(--bg);border:1px solid var(--dim);border-radius:3px;color:var(--tm);font-family:'Share Tech Mono',monospace;font-size:10px;outline:none;" onkeydown="if(event.key==='Enter')ytAddSong()">
+    <button onclick="ytAddSong()" style="padding:6px 10px;border:1px solid rgba(0,229,255,.4);border-radius:3px;background:rgba(0,229,255,.08);color:var(--c);font-family:'Orbitron',sans-serif;font-size:9px;cursor:pointer;white-space:nowrap;">+ ADD</button>
+  </div>
+  <!-- Hidden YouTube iframe -->
+  <div id="ytContainer" style="position:fixed;left:-9999px;top:-9999px;width:200px;height:200px;overflow:hidden;pointer-events:none;opacity:0;"></div>
 </div>
 </div>
 <!-- FIRST LOGIN MODAL — outside both page wrappers so it always shows -->
@@ -1454,6 +1471,7 @@ const GAMES = [
   {id:'vortex',name:'NEON VORTEX',icon:'🌀',desc:'Überlebe den Sog',file:'vortex.html'},
   {id:'pong',name:'NEON PONG',icon:'🏓',desc:'1v1 Online Multiplayer',file:'pong.html'},
   {id:'tiktaktu',name:'TIK TAK TU',icon:'🤖',desc:'Spiel gegen den Bot',file:'tiktaktu.html'},
+  {id:'cyberrun',name:'CYBER RUN',icon:'🏃',desc:'Endlos-Runner im Cyberpunk-Stil',file:'cyberrun.html'},
 ];
 
 const FRIENDS = [
@@ -2359,229 +2377,189 @@ function showNotif(msg){
   clearTimeout(n._t);n._t=setTimeout(()=>n.classList.remove('show'),2800);
 }
 
-/* ===== REAL SYNTHWAVE MUSIC (Web Audio API) ===== */
-let audioCtx=null,isPlaying=false,trackIdx=0,masterGain=null,currentNodes=[],animFrame=null;
+/* ===== YOUTUBE MUSIC PLAYER ===== */
+const YT_STORE='mpPlaylist';
+let ytPlayer=null,ytReady=false,ytList=[],ytIdx=0,ytPlaying=false,ytVolume=70;
 
-const TRACKS=[
-  {name:'Neon City Drive',artist:'MYPANEL SYNTHWAVE',
-   chords:[[130.81,164.81,196],[146.83,185,220],[110,138.59,164.81],[123.47,155.56,185]],
-   bassNotes:[65.41,73.42,55,61.74],bpm:120},
-  {name:'Cyberpunk Highway',artist:'MYPANEL SYNTHWAVE',
-   chords:[[138.59,174.61,207.65],[123.47,155.56,185],[146.83,185,220],[130.81,164.81,196]],
-   bassNotes:[69.30,61.74,73.42,65.41],bpm:130},
-  {name:'Electric Dreams',artist:'MYPANEL SYNTHWAVE',
-   chords:[[164.81,207.65,246.94],[146.83,185,220],[174.61,220,261.63],[155.56,196,233.08]],
-   bassNotes:[82.41,73.42,87.31,77.78],bpm:110},
-  {name:'Midnight Protocol',artist:'MYPANEL SYNTHWAVE',
-   chords:[[116.54,146.83,174.61],[130.81,164.81,196],[110,138.59,164.81],[123.47,155.56,185]],
-   bassNotes:[58.27,65.41,55,61.74],bpm:115},
-  {name:'Digital Rain',artist:'MYPANEL SYNTHWAVE',
-   chords:[[185,233.08,277.18],[207.65,261.63,311.13],[174.61,220,261.63],[196,246.94,293.66]],
-   bassNotes:[92.50,103.83,87.31,98],bpm:125},
-];
+// Load saved playlist
+(function loadYTPlaylist(){
+  try{
+    ytList=JSON.parse(localStorage.getItem(YT_STORE)||'[]');
+    if(ytList.length===0){
+      // Default tracks
+      ytList=[
+        {id:'5qap5aO4i9A',title:'Lofi Hip Hop Radio',artist:'Lofi Girl'},
+        {id:'DWcJFNfaw9c',title:'Synthwave Radio',artist:'Nightwave Plaza'},
+        {id:'jfKfPfyJRdk',title:'Lofi Beats',artist:'Lofi Hip Hop'},
+      ];
+    }
+  }catch(e){ytList=[];}
+  ytIdx=0;
+  renderPlaylist();
+})();
 
-let chordIdx=0,beatTimer=null,progVal=0,progInterval=null;
+function savePlaylist(){localStorage.setItem(YT_STORE,JSON.stringify(ytList));}
 
-function initAudio(){
-  if(audioCtx)return;
-  audioCtx=new(window.AudioContext||window.webkitAudioContext)();
-  masterGain=audioCtx.createGain();
-  masterGain.gain.value=0.18;
-  masterGain.connect(audioCtx.destination);
+function getYTId(url){
+  try{
+    const u=new URL(url);
+    if(u.hostname.includes('youtu.be'))return u.pathname.slice(1).split('?')[0];
+    return u.searchParams.get('v')||null;
+  }catch(e){
+    const m=url.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+    return m?m[1]:null;
+  }
 }
 
-function playChord(freqs,duration,time){
-  freqs.forEach(freq=>{
-    const osc=audioCtx.createOscillator();
-    const gain=audioCtx.createGain();
-    const filter=audioCtx.createBiquadFilter();
-    filter.type='lowpass';filter.frequency.value=2000;filter.Q.value=2;
-    osc.type='sawtooth';osc.frequency.value=freq;
-    gain.gain.setValueAtTime(0,time);
-    gain.gain.linearRampToValueAtTime(0.15,time+0.05);
-    gain.gain.exponentialRampToValueAtTime(0.001,time+duration-0.05);
-    osc.connect(filter);filter.connect(gain);gain.connect(masterGain);
-    osc.start(time);osc.stop(time+duration);
-    currentNodes.push(osc);
+function ytAddSong(){
+  const inp=document.getElementById('ytUrlInput');
+  const url=inp.value.trim();
+  if(!url){showNotif('⚠ URL EINGEBEN');return;}
+  const id=getYTId(url);
+  if(!id){showNotif('⚠ UNGÜLTIGE YOUTUBE URL');return;}
+  // Fetch title via noembed
+  fetch('https://noembed.com/embed?url=https://www.youtube.com/watch?v='+id)
+    .then(r=>r.json())
+    .then(d=>{
+      const title=d.title||'Unbekannter Song';
+      const artist=d.author_name||'YouTube';
+      ytList.push({id,title,artist});
+      savePlaylist();
+      renderPlaylist();
+      inp.value='';
+      showNotif('🎵 '+title+' HINZUGEFÜGT!');
+      if(ytList.length===1) ytLoad(0);
+    })
+    .catch(()=>{
+      ytList.push({id,title:'Song '+ytList.length,artist:'YouTube'});
+      savePlaylist();renderPlaylist();inp.value='';
+      showNotif('🎵 SONG HINZUGEFÜGT!');
+      if(ytList.length===1) ytLoad(0);
+    });
+}
+
+function renderPlaylist(){
+  const el=document.getElementById('mpPlaylist');
+  if(!el)return;
+  if(!ytList.length){el.innerHTML='<div style="color:var(--mu);font-size:10px;letter-spacing:1px;padding:4px;">Noch keine Songs — füge einen YouTube-Link hinzu!</div>';return;}
+  el.innerHTML=ytList.map((s,i)=>`
+    <div onclick="ytLoad(${i})" style="padding:5px 6px;border-radius:3px;cursor:pointer;display:flex;align-items:center;gap:6px;margin-bottom:2px;background:${i===ytIdx?'rgba(0,229,255,.1)':'transparent'};border:1px solid ${i===ytIdx?'rgba(0,229,255,.25)':'transparent'};">
+      <span style="font-size:10px;color:${i===ytIdx?'var(--c)':'var(--mu)'};">${i===ytIdx?'▶':String(i+1).padStart(2,'0')}</span>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:10px;color:var(--tm);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${s.title}</div>
+        <div style="font-size:9px;color:var(--mu);">${s.artist}</div>
+      </div>
+      <span onclick="event.stopPropagation();ytRemove(${i})" style="font-size:11px;color:var(--mu);padding:0 3px;cursor:pointer;" title="Entfernen">✕</span>
+    </div>`).join('');
+}
+
+function ytRemove(i){
+  ytList.splice(i,1);
+  if(ytIdx>=ytList.length)ytIdx=Math.max(0,ytList.length-1);
+  savePlaylist();renderPlaylist();
+  if(ytList.length===0){ytStop();document.getElementById('mpTrack').textContent='Kein Song';document.getElementById('mpArtist').textContent='Füge einen YouTube-Link hinzu ↓';}
+}
+
+// Load YouTube IFrame API once
+function loadYTAPI(){
+  if(window.YT||document.getElementById('ytApiScript'))return;
+  const s=document.createElement('script');
+  s.id='ytApiScript';
+  s.src='https://www.youtube.com/iframe_api';
+  document.head.appendChild(s);
+}
+window.onYouTubeIframeAPIReady=function(){
+  ytReady=true;
+  if(ytList.length>0) ytLoad(ytIdx);
+};
+
+function ytLoad(i){
+  ytIdx=i;
+  if(!ytList.length)return;
+  const song=ytList[i];
+  document.getElementById('mpTrack').textContent=song.title;
+  document.getElementById('mpArtist').textContent=song.artist;
+  renderPlaylist();
+  loadYTAPI();
+  if(!ytReady)return;
+  if(ytPlayer){
+    ytPlayer.cueVideoById(song.id);
+    if(ytPlaying) ytPlayer.playVideo();
+  } else {
+    const container=document.getElementById('ytContainer');
+    if(!container)return;
+    container.innerHTML='<div id="ytIframe"></div>';
+    ytPlayer=new YT.Player('ytIframe',{
+      height:'200',width:'200',
+      videoId:song.id,
+      playerVars:{autoplay:0,controls:0,disablekb:1,fs:0,rel:0,modestbranding:1,playsinline:1,origin:location.origin||'https://lukasstange10-max.github.io'},
+      events:{
+        onReady(e){
+          e.target.setVolume(ytVolume);
+          if(ytPlaying){try{e.target.playVideo();}catch(err){}}
+        },
+        onStateChange(e){
+          if(e.data===YT.PlayerState.ENDED) ytNext();
+          if(e.data===YT.PlayerState.PLAYING){ytPlaying=true;ytUpdateBtn();ytAnimVis(true);}
+          if(e.data===YT.PlayerState.PAUSED||e.data===YT.PlayerState.BUFFERING&&!ytPlaying){
+            if(e.data===YT.PlayerState.PAUSED){ytPlaying=false;ytUpdateBtn();ytAnimVis(false);}
+          }
+        },
+        onError(e){showNotif('⚠ VIDEO NICHT VERFÜGBAR — NÄCHSTER SONG');setTimeout(()=>ytNext(),1500);}
+      }
+    });
+  }
+}
+
+function ytToggle(){
+  if(!ytList.length){showNotif('⚠ KEIN SONG — FÜGE EINEN YOUTUBE-LINK HINZU');return;}
+  if(!ytReady){
+    loadYTAPI();
+    ytPlaying=true;ytUpdateBtn();
+    showNotif('🎵 YOUTUBE API LÄDT...');
+    // Retry after API loads
+    const wait=setInterval(()=>{if(ytReady){clearInterval(wait);ytLoad(ytIdx);setTimeout(()=>{if(ytPlayer)ytPlayer.playVideo();},500);}},300);
+    setTimeout(()=>clearInterval(wait),8000);
+    return;
+  }
+  if(!ytPlayer){ytPlaying=true;ytLoad(ytIdx);setTimeout(()=>{if(ytPlayer)ytPlayer.playVideo();},600);return;}
+  if(ytPlaying){ytPlayer.pauseVideo();}
+  else{ytPlayer.playVideo();}
+}
+
+function ytStop(){ytPlaying=false;if(ytPlayer)ytPlayer.pauseVideo();ytUpdateBtn();ytAnimVis(false);}
+function ytNext(){ytLoad((ytIdx+1)%Math.max(1,ytList.length));if(ytPlaying&&ytPlayer)setTimeout(()=>ytPlayer.playVideo(),300);}
+function ytPrev(){ytLoad((ytIdx-1+ytList.length)%Math.max(1,ytList.length));if(ytPlaying&&ytPlayer)setTimeout(()=>ytPlayer.playVideo(),300);}
+function ytSetVol(v){ytVolume=parseInt(v);if(ytPlayer)ytPlayer.setVolume(ytVolume);}
+
+function ytUpdateBtn(){
+  const btn=document.getElementById('mpPlayBtn');
+  if(btn)btn.textContent=ytPlaying?'⏸ PAUSE':'▶ PLAY';
+}
+
+function ytAnimVis(on){
+  document.querySelectorAll('.mp-vis-bar').forEach(b=>{
+    if(on)b.classList.remove('paused'); else b.classList.add('paused');
   });
 }
 
-function playBass(freq,duration,time){
-  const osc=audioCtx.createOscillator();
-  const gain=audioCtx.createGain();
-  const filter=audioCtx.createBiquadFilter();
-  filter.type='lowpass';filter.frequency.value=400;
-  osc.type='square';osc.frequency.value=freq;
-  gain.gain.setValueAtTime(0,time);
-  gain.gain.linearRampToValueAtTime(0.3,time+0.02);
-  gain.gain.exponentialRampToValueAtTime(0.001,time+duration*0.8);
-  osc.connect(filter);filter.connect(gain);gain.connect(masterGain);
-  osc.start(time);osc.stop(time+duration);
-  currentNodes.push(osc);
-}
+// Sidebar mini player
+function prevTrack(){ytPrev();}
+function nextTrack(){ytNext();}
+function toggleMusic(){ytToggle();}
+function setVol(v){ytSetVol(v);}
 
-function playKick(time){
-  const osc=audioCtx.createOscillator();
-  const gain=audioCtx.createGain();
-  osc.type='sine';osc.frequency.setValueAtTime(150,time);
-  osc.frequency.exponentialRampToValueAtTime(0.01,time+0.4);
-  gain.gain.setValueAtTime(0.8,time);
-  gain.gain.exponentialRampToValueAtTime(0.001,time+0.4);
-  osc.connect(gain);gain.connect(masterGain);
-  osc.start(time);osc.stop(time+0.4);
-}
-
-function playHihat(time){
-  const buf=audioCtx.createBuffer(1,audioCtx.sampleRate*0.05,audioCtx.sampleRate);
-  const data=buf.getChannelData(0);
-  for(let i=0;i<data.length;i++)data[i]=(Math.random()*2-1)*0.3;
-  const src=audioCtx.createBufferSource();
-  const gain=audioCtx.createGain();
-  const filter=audioCtx.createBiquadFilter();
-  filter.type='highpass';filter.frequency.value=8000;
-  src.buffer=buf;
-  gain.gain.setValueAtTime(0.2,time);
-  gain.gain.exponentialRampToValueAtTime(0.001,time+0.05);
-  src.connect(filter);filter.connect(gain);gain.connect(masterGain);
-  src.start(time);
-}
-
-function scheduleBeats(){
-  if(!audioCtx||!isPlaying)return;
-  const t=TRACKS[trackIdx];
-  const beatLen=60/t.bpm;
-  const barLen=beatLen*4;
-  const now=audioCtx.currentTime;
-
-  // chord every bar
-  playChord(t.chords[chordIdx%t.chords.length],barLen-0.05,now);
-  // bass hits on beat 1 and 3
-  playBass(t.bassNotes[chordIdx%t.bassNotes.length],beatLen*0.8,now);
-  playBass(t.bassNotes[chordIdx%t.bassNotes.length]*0.5,beatLen*0.8,now+beatLen*2);
-  // kicks on 1 and 3
-  playKick(now);playKick(now+beatLen*2);
-  // hihat every beat
-  for(let i=0;i<4;i++)playHihat(now+beatLen*i);
-  // hihat off-beats
-  for(let i=0;i<4;i++)playHihat(now+beatLen*i+beatLen*0.5);
-
-  chordIdx++;
-  beatTimer=setTimeout(scheduleBeats,barLen*1000-50);
-}
-
-function startMusic(){
-  initAudio();
-  if(audioCtx.state==='suspended')audioCtx.resume();
-  isPlaying=true;chordIdx=0;
-  scheduleBeats();
-  // progress bar
-  progVal=0;
-  clearInterval(progInterval);
-  const trackDur=240; // 4 min loop
-  progInterval=setInterval(()=>{
-    progVal+=100/trackDur;
-    if(progVal>=100){progVal=0;}
-    const b=document.getElementById('mpBar');if(b)b.style.width=progVal+'%';
-  },1000);
-  updateMusicUI(true);
-  showNotif('🎵 '+TRACKS[trackIdx].name);
-}
-
-function stopMusic(){
-  isPlaying=false;
-  clearTimeout(beatTimer);
-  clearInterval(progInterval);
-  currentNodes.forEach(n=>{try{n.stop();}catch(e){}});
-  currentNodes=[];
-  updateMusicUI(false);
-}
-
-function toggleMusic(){
-  if(!isPlaying){startMusic();}else{stopMusic();}
-}
-
-function nextTrack(){
-  stopMusic();
-  trackIdx=(trackIdx+1)%TRACKS.length;
-  renderTrack();
-  setTimeout(startMusic,100);
-}
-function prevTrack(){
-  stopMusic();
-  trackIdx=(trackIdx-1+TRACKS.length)%TRACKS.length;
-  renderTrack();
-  setTimeout(startMusic,100);
-}
-
-function setVol(v){
-  if(masterGain)masterGain.gain.value=v/100*0.35;
-}
-
-function renderTrack(){
-  const t=TRACKS[trackIdx];
-  const tn=document.getElementById('mpTrack');
-  const ta=document.getElementById('mpArtist');
-  const mm=document.getElementById('mmTrack');
-  if(tn)tn.textContent=t.name;
-  if(ta)ta.textContent=t.artist;
-  if(mm)mm.textContent=t.name;
-  const b=document.getElementById('mpBar');if(b)b.style.width='0%';
-  progVal=0;
-}
-
-function updateMusicUI(playing){
-  const pb=document.getElementById('mpPlayBtn');
-  const mb=document.getElementById('mmPlayBtn');
-  const bars=document.querySelectorAll('.mp-vis-bar');
-  if(pb)pb.textContent=playing?'⏸ PAUSE':'▶ PLAY';
-  if(mb)mb.textContent=playing?'⏸':'▶';
-  bars.forEach(b=>b.classList.toggle('paused',!playing));
-}
-
-function seekTrack(e){
-  const r=e.currentTarget.getBoundingClientRect();
-  progVal=((e.clientX-r.left)/r.width)*100;
-  const b=document.getElementById('mpBar');if(b)b.style.width=progVal+'%';
-}
-
+// Minimizer
 function toggleMusicPlayer(){
   const mp=document.getElementById('musicPlayer');
-  const mini=mp.dataset.mini==='1';
-  mp.dataset.mini=mini?'0':'1';
-  mp.style.height=mini?'auto':'42px';
-  mp.style.overflow=mini?'visible':'hidden';
-}
-renderTrack();
-
-/* ===== BOOT SEQUENCE ===== */
-const boots=[{id:'b0',d:300},{id:'b1',d:800},{id:'b2',d:1400},{id:'b3',d:2000},{id:'b4',d:2700},{id:'b5',d:3400}];
-function startBootLog(){
-boots.forEach(b=>setTimeout(()=>{
-  const el=document.getElementById(b.id);if(!el)return;
-  el.classList.add('vis','act');
-  setTimeout(()=>{el.classList.remove('act');el.classList.add('ok');el.querySelector('.bst').textContent='[ OK ]';},380);
-},b.d));
-}
-function startProgressBar(){
-let pv=0,ps=0;const pt=setInterval(()=>{ps++;const pr=ps/100,ea=1-Math.pow(1-pr,2);pv=Math.min(Math.round(ea*100),100);const pe=document.getElementById('loadpct');if(pe)pe.innerText=pv+'%';if(ps>=100)clearInterval(pt);},50);
+  const btn=document.getElementById('mpMinBtn');
+  const isMin=mp.classList.contains('minimized');
+  mp.classList.toggle('minimized');
+  btn.textContent=isMin?'_':'□';
 }
 
-function startPanelBoot(){
-  startBootLog();
-  startProgressBar();
-  setTimeout(()=>{
-    const ld=document.getElementById('loader');ld.style.opacity='0';
-    setTimeout(()=>{
-      ld.style.display='none';
-      const wl=document.getElementById('welcome');wl.style.display='flex';
-      setTimeout(()=>wl.style.opacity='1',100);
-      setTimeout(()=>{
-        wl.style.opacity='0';
-        setTimeout(()=>{wl.style.display='none';const ap=document.getElementById('app');ap.style.opacity='1';},1000);
-      },2500);
-    },1000);
-  },5200);
-}
+// Init
+loadYTAPI();
 
 /* ===== TRAILER <-> PANEL BRIDGE ===== */
 function openPanel(){
