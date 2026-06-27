@@ -560,6 +560,36 @@ iframe{width:100%;height:100%;border:none;}
   .hero-cta{flex-direction:column!important;align-items:center!important;}
 }
 
+/* ===== SOCIAL FEATURES ===== */
+.avatar-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:12px 0;}
+.avatar-opt{width:44px;height:44px;border-radius:50%;border:2px solid var(--dim);display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;transition:.2s;background:var(--surface);}
+.avatar-opt:hover,.avatar-opt.selected{border-color:var(--c);box-shadow:0 0 12px rgba(0,229,255,.4);transform:scale(1.1);}
+.avatar-emoji{font-size:22px;}
+
+.status-badge{display:inline-block;font-size:10px;letter-spacing:1px;padding:2px 8px;border-radius:10px;font-family:'Rajdhani',sans-serif;font-weight:700;}
+.status-playing{background:rgba(0,255,135,.15);color:#00ff87;border:1px solid rgba(0,255,135,.3);}
+.status-afk{background:rgba(255,196,0,.1);color:#ffc400;border:1px solid rgba(255,196,0,.25);}
+.status-tournament{background:rgba(191,0,255,.15);color:#bf00ff;border:1px solid rgba(191,0,255,.3);}
+.status-online{background:rgba(0,229,255,.1);color:#00e5ff;border:1px solid rgba(0,229,255,.25);}
+
+/* Player of month card */
+.potm-card{background:linear-gradient(135deg,rgba(255,210,63,.08),rgba(255,165,0,.04));border:1px solid rgba(255,210,63,.3);border-radius:4px;padding:20px;display:flex;align-items:center;gap:16px;}
+.potm-crown{font-size:40px;}
+.potm-name{font-family:'Orbitron',sans-serif;font-size:18px;font-weight:900;color:#ffd23f;text-shadow:0 0 14px rgba(255,210,63,.5);}
+.potm-score{font-size:12px;color:rgba(255,255,255,.5);letter-spacing:2px;margin-top:4px;}
+
+/* Clan card */
+.clan-card{background:var(--card);border:1px solid var(--dim);border-radius:4px;padding:16px;margin-bottom:8px;}
+.clan-name{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700;color:var(--c);}
+.clan-members{font-size:11px;color:var(--mu);letter-spacing:1px;margin-top:4px;}
+.clan-tag{display:inline-block;padding:2px 8px;background:rgba(0,229,255,.1);border:1px solid rgba(0,229,255,.3);border-radius:3px;font-family:'Orbitron',sans-serif;font-size:9px;color:var(--c);letter-spacing:2px;margin-right:6px;}
+
+/* Comments */
+.comment{padding:10px 14px;border-left:2px solid var(--dim);margin-bottom:8px;background:var(--surface);border-radius:0 4px 4px 0;}
+.comment-author{font-family:'Orbitron',sans-serif;font-size:10px;color:var(--c);letter-spacing:2px;}
+.comment-text{font-size:13px;color:var(--tm);margin-top:4px;}
+.comment-time{font-size:10px;color:var(--mu);margin-top:3px;font-family:'Share Tech Mono',monospace;}
+
 </style>
 </head>
 <body>
@@ -809,6 +839,7 @@ iframe{width:100%;height:100%;border:none;}
       <button class="mbtn" onclick="showSection('games')"><span class="bico">◈</span>SPIELE</button>
       <button class="mbtn" onclick="showSection('highscores')"><span class="bico">🏆</span>HIGHSCORES</button>
       <button class="mbtn" onclick="showSection('friends')"><span class="bico">🌐</span>FREUNDE<span id="friendBadge" style="display:none;background:#ff2b6d;color:#fff;font-family:'Orbitron',sans-serif;font-size:9px;font-weight:900;padding:2px 6px;border-radius:10px;margin-left:6px;"></span></button>
+      <button class="mbtn" onclick="showSection('clans')"><span class="bico">⚔️</span>CLANS</button>
       <button class="mbtn" onclick="showSection('favorites')"><span class="bico">◆</span>FAVORITEN</button>
       <button class="mbtn" onclick="showSection('news')"><span class="bico">◉</span>NEWS</button>
       <button class="mbtn" onclick="showSection('trailer')"><span class="bico">🎬</span>TRAILER</button>
@@ -893,6 +924,11 @@ iframe{width:100%;height:100%;border:none;}
 
     <!-- HIGHSCORES -->
     <div id="sec-highscores" style="display:none">
+      <!-- Player of the Month -->
+      <div class="card" id="potmCard">
+        <div class="ctitle"><span>👑</span> SPIELER DES MONATS</div>
+        <div id="potmContent"><div style="color:var(--mu);font-size:12px;letter-spacing:2px;padding:8px;">Wird berechnet...</div></div>
+      </div>
       <div class="card">
         <div class="ctitle"><span>🏆</span> HIGHSCORE BESTENLISTE</div>
         <div class="hs-tabs">
@@ -906,13 +942,22 @@ iframe{width:100%;height:100%;border:none;}
           <tr><th>#</th><th>SPIELER</th><th>SPIEL</th><th>SCORE</th><th>DATUM</th></tr>
         </table>
       </div>
+      <!-- Comments -->
+      <div class="card">
+        <div class="ctitle"><span>💬</span> KOMMENTARE</div>
+        <div style="display:flex;gap:8px;margin-bottom:14px;">
+          <input id="commentInput" class="minput" placeholder="KOMMENTAR SCHREIBEN..." maxlength="120" style="flex:1;">
+          <button onclick="postComment()" style="padding:10px 18px;border:1px solid rgba(0,229,255,.4);border-radius:3px;background:rgba(0,229,255,.08);color:var(--c);font-family:'Orbitron',sans-serif;font-size:11px;cursor:pointer;">▶ SENDEN</button>
+        </div>
+        <div id="commentsList"><div style="color:var(--mu);font-size:12px;letter-spacing:2px;">Noch keine Kommentare.</div></div>
+      </div>
       <div class="card">
         <div class="ctitle"><span>◈</span> HIGHSCORES</div>
         <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border:1px solid rgba(0,255,135,.2);border-radius:3px;background:rgba(0,255,135,.04);">
           <span style="font-size:22px;">🏆</span>
           <div>
             <div style="font-family:'Orbitron',sans-serif;font-size:11px;color:var(--g);letter-spacing:2px;margin-bottom:4px;">AUTOMATISCHE SPEICHERUNG</div>
-            <div style="font-size:12px;color:var(--mu);">Highscores werden automatisch gespeichert, sobald du ein Spiel beendest. Dein Name wird aus deinem Profil übernommen.</div>
+            <div style="font-size:12px;color:var(--mu);">Highscores werden automatisch gespeichert, sobald du ein Spiel beendest.</div>
           </div>
         </div>
       </div>
@@ -956,7 +1001,33 @@ iframe{width:100%;height:100%;border:none;}
       </div>
     </div>
 
-    <!-- FAVORITES -->
+    <!-- CLANS -->
+    <div id="sec-clans" style="display:none">
+      <div class="card" id="myClanCard" style="display:none;">
+        <div class="ctitle"><span>⚔️</span> MEIN CLAN</div>
+        <div id="myClanInfo"></div>
+        <button onclick="leaveClan()" style="margin-top:12px;padding:8px 18px;border:1px solid rgba(255,43,109,.3);border-radius:3px;background:rgba(255,43,109,.06);color:#ff2b6d;font-family:'Orbitron',sans-serif;font-size:10px;cursor:pointer;letter-spacing:2px;">✕ CLAN VERLASSEN</button>
+      </div>
+      <div class="card" id="noClanCard">
+        <div class="ctitle"><span>⚔️</span> CLAN ERSTELLEN / BEITRETEN</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
+          <input id="clanNameInput" class="minput" placeholder="CLAN NAME (MAX 12)..." maxlength="12" style="flex:1;min-width:160px;">
+          <input id="clanTagInput" class="minput" placeholder="TAG (3 ZCH)" maxlength="3" style="width:80px;text-transform:uppercase;">
+          <button onclick="createClan()" style="padding:10px 18px;border:1px solid rgba(0,229,255,.4);border-radius:3px;background:rgba(0,229,255,.08);color:var(--c);font-family:'Orbitron',sans-serif;font-size:11px;cursor:pointer;letter-spacing:2px;">⚔️ ERSTELLEN</button>
+        </div>
+        <div style="border-top:1px solid var(--dim);padding-top:14px;">
+          <div style="font-size:11px;color:var(--mu);letter-spacing:2px;margin-bottom:10px;">ODER CLAN BEITRETEN:</div>
+          <div style="display:flex;gap:10px;">
+            <input id="clanJoinInput" class="minput" placeholder="CLAN NAME..." maxlength="12" style="flex:1;">
+            <button onclick="joinClan()" style="padding:10px 18px;border:1px solid rgba(0,255,135,.4);border-radius:3px;background:rgba(0,255,135,.08);color:var(--g);font-family:'Orbitron',sans-serif;font-size:11px;cursor:pointer;letter-spacing:2px;">▶ BEITRETEN</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ctitle"><span>🏆</span> CLAN RANGLISTE</div>
+        <div id="clanLeaderboard"><div style="color:var(--mu);font-size:12px;letter-spacing:2px;padding:8px;">Wird geladen...</div></div>
+      </div>
+    </div>
     <div id="sec-favorites" style="display:none">
       <div class="card">
         <div class="ctitle"><span>◆</span> FAVORITEN</div>
@@ -1017,12 +1088,23 @@ iframe{width:100%;height:100%;border:none;}
 
 <!-- PROFILE MODAL -->
 <div class="modal" id="profileModal">
-  <div class="mbox" style="width:440px;">
-    <div class="mtitle" id="profileModalTitle">// USERNAME ÄNDERN</div>
-    <div class="msub" id="profileModalSub">PASSE DEINEN MYPANEL NAMEN AN</div>
+  <div class="mbox" style="width:480px;">
+    <div class="mtitle" id="profileModalTitle">// PROFIL BEARBEITEN</div>
+    <div class="msub" id="profileModalSub">USERNAME · AVATAR · STATUS</div>
     <div id="profileLockInfo" style="display:none;margin-bottom:14px;padding:12px 14px;border:1px solid rgba(255,165,0,.3);border-radius:3px;background:rgba(255,165,0,.06);color:#ffa500;font-size:12px;font-family:'Share Tech Mono',monospace;letter-spacing:1px;line-height:1.6;"></div>
+    <div style="font-size:11px;color:var(--mu);letter-spacing:2px;margin-bottom:8px;">USERNAME</div>
     <input type="text" id="usernameInput" class="minput" placeholder="USERNAME EINGEBEN..." maxlength="20">
-    <div style="font-size:11px;color:var(--mu);margin-top:8px;letter-spacing:1px;">⚠ Der Name kann nach dem Setzen nur alle 30 Tage geändert werden.</div>
+    <div style="font-size:11px;color:var(--mu);margin-top:14px;margin-bottom:8px;letter-spacing:2px;">AVATAR WÄHLEN</div>
+    <div class="avatar-grid" id="avatarGrid"></div>
+    <div style="font-size:11px;color:var(--mu);margin-top:14px;margin-bottom:8px;letter-spacing:2px;">STATUS</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;" id="statusPicker">
+      <button onclick="selectStatus('🎮 Spiele gerade')" class="status-btn" data-s="🎮 Spiele gerade" style="padding:7px 14px;border:1px solid rgba(0,255,135,.3);border-radius:3px;background:rgba(0,255,135,.06);color:#00ff87;font-size:11px;cursor:pointer;font-family:'Rajdhani',sans-serif;letter-spacing:1px;">🎮 Spiele gerade</button>
+      <button onclick="selectStatus('🏆 Im Turnier')" class="status-btn" data-s="🏆 Im Turnier" style="padding:7px 14px;border:1px solid rgba(191,0,255,.3);border-radius:3px;background:rgba(191,0,255,.06);color:#bf00ff;font-size:11px;cursor:pointer;font-family:'Rajdhani',sans-serif;letter-spacing:1px;">🏆 Im Turnier</button>
+      <button onclick="selectStatus('😴 AFK')" class="status-btn" data-s="😴 AFK" style="padding:7px 14px;border:1px solid rgba(255,196,0,.3);border-radius:3px;background:rgba(255,196,0,.06);color:#ffc400;font-size:11px;cursor:pointer;font-family:'Rajdhani',sans-serif;letter-spacing:1px;">😴 AFK</button>
+      <button onclick="selectStatus('🟢 Online')" class="status-btn" data-s="🟢 Online" style="padding:7px 14px;border:1px solid rgba(0,229,255,.3);border-radius:3px;background:rgba(0,229,255,.06);color:#00e5ff;font-size:11px;cursor:pointer;font-family:'Rajdhani',sans-serif;letter-spacing:1px;">🟢 Online</button>
+    </div>
+    <div style="font-size:11px;color:var(--mu);margin-top:4px;letter-spacing:1px;">Aktuell: <span id="currentStatusLabel" style="color:var(--c);">🟢 Online</span></div>
+    <div style="font-size:11px;color:var(--mu);margin-top:12px;letter-spacing:1px;">⚠ Username kann nur alle 30 Tage geändert werden.</div>
     <div class="mbtns">
       <button class="mcancelbtn" id="profileCancelBtn" onclick="closeModal('profileModal')">ABBRECHEN</button>
       <button class="msavebtn" id="profileSaveBtn" onclick="saveUsername()">SPEICHERN</button>
@@ -1235,7 +1317,8 @@ function showSection(name){
   document.getElementById('sec-'+name).style.display='block';
   document.querySelectorAll('.mbtn').forEach(b=>b.classList.remove('active'));
   event.currentTarget.classList.add('active');
-  if(name==='highscores')renderHsTable('all');
+  if(name==='highscores'){renderHsTable('all');renderPlayerOfMonth();loadComments();}
+  if(name==='clans')loadClans();
   if(name==='friends'){
     // Generate invite link immediately
     const me=getMyName();
@@ -1698,6 +1781,145 @@ document.querySelectorAll('.mbtn').forEach(btn=>{
     if(window.innerWidth<=900)closeSidebar();
   });
 });
+/* ===== AVATARS & STATUS ===== */
+const AVATARS=['🎮','🏆','⚡','🔥','💀','👾','🤖','🦊','🐉','🌀','💎','🎯','🚀','⚔️','🛡️','🎲'];
+let selectedAvatar='🎮',selectedStatus='🟢 Online';
+
+function initAvatarGrid(){
+  const grid=document.getElementById('avatarGrid');
+  if(!grid)return;
+  const p=getProfile();
+  const current=p&&p.avatar?p.avatar:'🎮';
+  selectedAvatar=current;
+  grid.innerHTML=AVATARS.map(a=>`<div class="avatar-opt ${a===current?'selected':''}" onclick="selectAvatar('${a}')" data-a="${a}">${a}</div>`).join('');
+}
+function selectAvatar(a){
+  selectedAvatar=a;
+  document.querySelectorAll('.avatar-opt').forEach(el=>el.classList.toggle('selected',el.dataset.a===a));
+}
+function selectStatus(s){
+  selectedStatus=s;
+  const lbl=document.getElementById('currentStatusLabel');
+  if(lbl)lbl.textContent=s;
+  document.querySelectorAll('.status-btn').forEach(b=>b.style.opacity=b.dataset.s===s?'1':'0.5');
+}
+
+/* ===== PLAYER OF THE MONTH ===== */
+function renderPlayerOfMonth(){
+  const el=document.getElementById('potmContent');
+  if(!el)return;
+  const scores=getScores();
+  if(!scores.length){el.innerHTML='<div style="color:var(--mu);font-size:12px;letter-spacing:2px;padding:8px;">Noch keine Scores.</div>';return;}
+  const totals={};
+  scores.forEach(s=>{if(!totals[s.player])totals[s.player]=0;totals[s.player]+=s.score;});
+  const sorted=Object.entries(totals).sort((a,b)=>b[1]-a[1]);
+  if(!sorted.length)return;
+  const [winner,pts]=sorted[0];
+  const now=new Date();
+  const month=now.toLocaleDateString('de-DE',{month:'long',year:'numeric'});
+  el.innerHTML=`<div class="potm-card"><div class="potm-crown">👑</div><div><div class="potm-name">${winner}</div><div class="potm-score">${pts.toLocaleString()} GESAMTPUNKTE · ${month}</div>${sorted.slice(1,3).map(([n,p],i)=>`<div style="font-size:11px;color:var(--mu);margin-top:4px;letter-spacing:1px;">${i===0?'🥈':'🥉'} ${n} — ${p.toLocaleString()}</div>`).join('')}</div></div>`;
+}
+
+/* ===== COMMENTS ===== */
+function postComment(){
+  const inp=document.getElementById('commentInput');
+  if(!inp)return;
+  const text=inp.value.trim();
+  if(!text){showNotif('⚠ TEXT EINGEBEN');return;}
+  if(!window.fbDB){showNotif('⚠ FIREBASE NICHT VERBUNDEN');return;}
+  const me=getMyName();
+  const p=getProfile();
+  const avatar=p&&p.avatar?p.avatar:'🎮';
+  window.fbDB.ref('comments').push({author:me,avatar,text,ts:Date.now(),date:new Date().toLocaleString('de-DE')})
+    .then(()=>{inp.value='';showNotif('💬 KOMMENTAR GEPOSTET!');}).catch(()=>showNotif('⚠ FEHLER'));
+}
+function loadComments(){
+  if(!window.fbDB)return;
+  window.fbDB.ref('comments').orderByChild('ts').limitToLast(20).on('value',snap=>{
+    const el=document.getElementById('commentsList');
+    if(!el)return;
+    const data=snap.val();
+    if(!data){el.innerHTML='<div style="color:var(--mu);font-size:12px;letter-spacing:2px;">Noch keine Kommentare.</div>';return;}
+    el.innerHTML=Object.values(data).reverse().map(c=>`<div class="comment"><div class="comment-author">${c.avatar||'🎮'} ${c.author}</div><div class="comment-text">${c.text}</div><div class="comment-time">${c.date||''}</div></div>`).join('');
+  });
+}
+
+/* ===== CLANS ===== */
+function loadClans(){
+  if(!window.fbDB)return;
+  const me=getMyName();
+  window.fbDB.ref('clans').once('value',snap=>{
+    const clans=snap.val()||{};
+    let myClan=null;
+    Object.entries(clans).forEach(([name,c])=>{if(c.members&&c.members[me])myClan={name,...c};});
+    const myCard=document.getElementById('myClanCard');
+    const noCard=document.getElementById('noClanCard');
+    if(myClan){
+      if(myCard)myCard.style.display='block';
+      if(noCard)noCard.style.display='none';
+      const info=document.getElementById('myClanInfo');
+      if(info){
+        const members=Object.keys(myClan.members||{});
+        info.innerHTML=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;"><span class="clan-tag">[${myClan.tag||'???'}]</span><span class="clan-name">${myClan.name}</span></div><div class="clan-members">👥 ${members.join(', ')}</div><div style="font-size:11px;color:var(--mu);margin-top:6px;letter-spacing:1px;">🏆 Gesamtpunkte: ${(myClan.score||0).toLocaleString()}</div>`;
+      }
+    }else{
+      if(myCard)myCard.style.display='none';
+      if(noCard)noCard.style.display='block';
+    }
+    const lb=document.getElementById('clanLeaderboard');
+    if(lb){
+      const sorted=Object.entries(clans).sort((a,b)=>(b[1].score||0)-(a[1].score||0));
+      if(!sorted.length){lb.innerHTML='<div style="color:var(--mu);font-size:12px;letter-spacing:2px;padding:8px;">Noch keine Clans.</div>';return;}
+      lb.innerHTML=sorted.map(([name,c],i)=>`<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--dim);"><div style="font-family:'Orbitron',sans-serif;font-size:13px;color:${i===0?'#ffd23f':i===1?'#c0c0c0':i===2?'#cd7f32':'var(--mu)'};">${i===0?'👑':i===1?'🥈':i===2?'🥉':'#'+(i+1)}</div><span class="clan-tag">[${c.tag||'???'}]</span><div style="flex:1;font-family:'Orbitron',sans-serif;font-size:12px;color:var(--tm);">${name}</div><div style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--c);">${(c.score||0).toLocaleString()}</div></div>`).join('');
+    }
+  });
+}
+function createClan(){
+  const name=document.getElementById('clanNameInput').value.trim().toUpperCase();
+  const tag=document.getElementById('clanTagInput').value.trim().toUpperCase();
+  const me=getMyName();
+  if(!name||name.length<2){showNotif('⚠ CLAN NAME EINGEBEN');return;}
+  if(!tag||tag.length<2){showNotif('⚠ CLAN TAG EINGEBEN');return;}
+  if(!window.fbDB){showNotif('⚠ FIREBASE NICHT VERBUNDEN');return;}
+  window.fbDB.ref('clans/'+name).once('value',snap=>{
+    if(snap.exists()){showNotif('⚠ CLAN EXISTIERT BEREITS');return;}
+    window.fbDB.ref('clans/'+name).set({tag,score:0,members:{[me]:true},created:Date.now()})
+      .then(()=>{showNotif('⚔️ CLAN ERSTELLT!');loadClans();}).catch(()=>showNotif('⚠ FEHLER'));
+  });
+}
+function joinClan(){
+  const name=document.getElementById('clanJoinInput').value.trim().toUpperCase();
+  const me=getMyName();
+  if(!name){showNotif('⚠ CLAN NAME EINGEBEN');return;}
+  if(!window.fbDB){showNotif('⚠ FIREBASE NICHT VERBUNDEN');return;}
+  window.fbDB.ref('clans/'+name).once('value',snap=>{
+    if(!snap.exists()){showNotif('⚠ CLAN NICHT GEFUNDEN');return;}
+    window.fbDB.ref('clans/'+name+'/members/'+me).set(true)
+      .then(()=>{showNotif('✅ CLAN BEIGETRETEN!');loadClans();}).catch(()=>showNotif('⚠ FEHLER'));
+  });
+}
+function leaveClan(){
+  const me=getMyName();
+  if(!window.fbDB||!confirm('Clan wirklich verlassen?'))return;
+  window.fbDB.ref('clans').once('value',snap=>{
+    const clans=snap.val()||{};
+    Object.entries(clans).forEach(([name,c])=>{
+      if(c.members&&c.members[me])window.fbDB.ref('clans/'+name+'/members/'+me).remove();
+    });
+    showNotif('✕ CLAN VERLASSEN');loadClans();
+  });
+}
+function updateClanScore(score){
+  if(!window.fbDB)return;
+  const me=getMyName();
+  window.fbDB.ref('clans').once('value',snap=>{
+    const clans=snap.val()||{};
+    Object.entries(clans).forEach(([name,c])=>{
+      if(c.members&&c.members[me])window.fbDB.ref('clans/'+name+'/score').transaction(cur=>(cur||0)+score);
+    });
+  });
+}
+
 const PROFILE_KEY='mpProfile';
 const LOCK_DAYS=30;
 const ADMIN_NAME='LUKAS123';
@@ -1739,20 +1961,31 @@ function daysUntilUnlock(){
 function applyProfile(){
   const p=getProfile();
   const name=p?p.username:'MYPANEL USER';
+  const avatar=p&&p.avatar?p.avatar:'🎮';
+  const status=p&&p.status?p.status:'🟢 Online';
   document.getElementById('username').innerText=name;
-  document.getElementById('avatarLetter').innerText=name[0];
-  // Show admin button immediately if user is admin
-  const btn=document.getElementById('adminBtn');
-  if(btn){
-    if(name===ADMIN_NAME){btn.style.display='';}
-    else{btn.style.display='none';}
+  const avEl=document.getElementById('avatarLetter');
+  if(avEl){avEl.textContent=avatar;avEl.style.fontSize='20px';}
+  // Show status under username
+  let stEl=document.getElementById('profileStatusDisplay');
+  if(!stEl){
+    stEl=document.createElement('div');
+    stEl.id='profileStatusDisplay';
+    stEl.style.cssText='font-size:11px;letter-spacing:1px;color:rgba(255,255,255,.45);margin-top:2px;';
+    document.getElementById('username').parentNode.insertBefore(stEl,document.getElementById('editUsernameBtn'));
   }
-  // Update edit button label
+  stEl.textContent=status;
+  const btn=document.getElementById('adminBtn');
+  if(btn){btn.style.display=name===ADMIN_NAME?'':'none';}
   const days=daysUntilUnlock();
   const editBtn=document.getElementById('editUsernameBtn');
   if(editBtn){
     if(days>0){editBtn.textContent='🔒 GESPERRT ('+days+'T)';editBtn.style.opacity='.6';}
-    else{editBtn.textContent='⬡ USERNAME ÄNDERN';editBtn.style.opacity='1';}
+    else{editBtn.textContent='⬡ PROFIL BEARBEITEN';editBtn.style.opacity='1';}
+  }
+  // Sync to Firebase
+  if(window.fbDB&&name!=='MYPANEL USER'){
+    window.fbDB.ref('presence/'+name).update({status,avatar,online:true});
   }
 }
 function openProfileModal(){
@@ -1762,7 +1995,13 @@ function openProfileModal(){
   const lockInfo=document.getElementById('profileLockInfo');
   const saveBtn=document.getElementById('profileSaveBtn');
   const cancelBtn=document.getElementById('profileCancelBtn');
-  inp.value=getProfile()?getProfile().username:'';
+  const p=getProfile();
+  inp.value=p?p.username:'';
+  selectedStatus=p&&p.status?p.status:'🟢 Online';
+  const lbl=document.getElementById('currentStatusLabel');
+  if(lbl)lbl.textContent=selectedStatus;
+  document.querySelectorAll('.status-btn').forEach(b=>b.style.opacity=b.dataset.s===selectedStatus?'1':'0.5');
+  initAvatarGrid();
   if(locked){
     lockInfo.style.display='block';
     lockInfo.innerHTML='🔒 NAME GESPERRT — noch <b style="color:#ffb700">'+days+' Tag'+(days===1?'':'e')+'</b> bis zur nächsten Änderung.';
@@ -1781,10 +2020,12 @@ function saveUsername(){
   const v=document.getElementById('usernameInput').value.trim();
   if(!v||v.length<2){showNotif('⚠ MINDESTENS 2 ZEICHEN EINGEBEN');return;}
   if(daysUntilUnlock()>0){showNotif('🔒 NAME NOCH GESPERRT');return;}
-  saveProfile(v);
+  const p=getProfile();
+  const profile={username:v.toUpperCase(),avatar:selectedAvatar||'🎮',status:selectedStatus||'🟢 Online',createdAt:p?p.createdAt:Date.now(),changedAt:Date.now()};
+  _pSet(JSON.stringify(profile));
   applyProfile();
   closeModal('profileModal');
-  showNotif('✓ USERNAME GESPEICHERT');
+  showNotif('✓ PROFIL GESPEICHERT');
 }
 function saveFirstLogin(){
   const v=document.getElementById('firstLoginInput').value.trim();
