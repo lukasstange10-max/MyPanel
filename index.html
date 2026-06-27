@@ -482,6 +482,48 @@ iframe{width:100%;height:100%;border:none;}
 .notif.show{transform:translateX(0)}
 .notif::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--c),var(--g));}
 
+/* ===== UPGRADED TRAILER STYLES ===== */
+.hero-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(0,229,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,.04) 1px,transparent 1px);background-size:60px 60px;pointer-events:none;}
+.orb{position:absolute;border-radius:50%;filter:blur(60px);pointer-events:none;animation:orbFloat 8s ease-in-out infinite;}
+.orb1{width:300px;height:300px;background:rgba(0,229,255,.08);top:10%;left:5%;animation-delay:0s;}
+.orb2{width:200px;height:200px;background:rgba(191,0,255,.07);top:30%;right:8%;animation-delay:-3s;}
+.orb3{width:250px;height:250px;background:rgba(0,255,135,.06);bottom:15%;left:15%;animation-delay:-5s;}
+@keyframes orbFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-30px);}}
+
+.btn-primary{position:relative;overflow:hidden;}
+.btn-glow{position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.2),transparent);transform:translateX(-100%);animation:btnShine 3s linear infinite;}
+@keyframes btnShine{0%{transform:translateX(-100%);}100%{transform:translateX(100%);}}
+
+.live-bar{display:flex;align-items:center;gap:16px;margin-top:28px;padding:10px 20px;background:rgba(0,229,255,.04);border:1px solid rgba(0,229,255,.12);border-radius:30px;font-size:11px;letter-spacing:2px;color:rgba(255,255,255,.5);flex-wrap:wrap;justify-content:center;}
+.live-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#00ff87;margin-right:6px;animation:blink 1s ease-in-out infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
+.live-item{display:flex;align-items:center;}
+.live-sep{color:rgba(255,255,255,.2);}
+
+.mock-profile{display:flex;flex-direction:column;align-items:center;gap:3px;}
+.mock-avatar{width:32px;height:32px;background:rgba(0,229,255,.1);border:1px solid rgba(0,229,255,.3);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;}
+.mock-stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0;}
+.mock-stat{background:rgba(0,229,255,.04);border:1px solid var(--dim);border-radius:3px;padding:8px;text-align:center;}
+.mstat-num{font-family:'Orbitron',sans-serif;font-size:16px;font-weight:900;}
+.mstat-label{font-size:8px;letter-spacing:2px;color:var(--mu);margin-top:2px;}
+
+.social-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:20px;margin-top:40px;}
+.social-card{background:var(--card);border:1px solid var(--dim);border-radius:6px;padding:28px 22px;text-align:center;transition:.3s;clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,14px 100%,0 calc(100% - 14px));}
+.social-card:hover{border-color:var(--c);transform:translateY(-4px);background:rgba(0,229,255,.04);}
+.sc-icon{font-size:40px;margin-bottom:14px;}
+.sc-title{font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700;color:var(--c);letter-spacing:2px;margin-bottom:10px;}
+.sc-desc{font-size:13px;color:var(--mu);line-height:1.6;}
+
+.cta{position:relative;overflow:hidden;}
+.cta-glow{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(0,229,255,.06),transparent 70%);pointer-events:none;}
+
+@media(max-width:600px){
+  .live-bar{gap:8px;font-size:9px;}
+  .live-sep{display:none;}
+  .social-cards{grid-template-columns:1fr 1fr;}
+  .mock-stats-row{grid-template-columns:repeat(2,1fr);}
+}
+
 /* ===== INTRO SCREEN ===== */
 #introScreen{position:fixed;inset:0;z-index:9999999;background:#030608;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;}
 #introScreen.fade-out{animation:introFadeOut .8s ease forwards;}
@@ -602,11 +644,12 @@ iframe{width:100%;height:100%;border:none;}
 
 <!-- NAV -->
 <nav>
-  <div class="nav-logo">MYPANEL</div>
+  <div class="nav-logo">MY<span style="color:var(--g)">PANEL</span></div>
   <div class="nav-links">
     <a href="#preview">PANEL</a>
     <a href="#games">SPIELE</a>
     <a href="#features">FEATURES</a>
+    <a href="#social">COMMUNITY</a>
   </div>
   <div class="nav-right">
     <div class="tdot" data-t="cyan" onclick="setTheme('cyan')"></div>
@@ -619,24 +662,67 @@ iframe{width:100%;height:100%;border:none;}
 
 <!-- HERO -->
 <section class="hero">
-  <div class="eyebrow">// DEIN GAMING HUB — SHOWCASE v2.0 //</div>
+  <!-- Animated grid lines -->
+  <div class="hero-grid"></div>
+  <!-- Floating orbs -->
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="orb orb3"></div>
+
+  <div class="eyebrow">// DEIN GAMING HUB — v3.0 // JETZT MIT MULTIPLAYER //</div>
   <h1 class="hero-title">
     <span class="l1">MYPANEL</span>
     <span class="l2">GAMING</span>
     <span class="l3">HUB</span>
   </h1>
-  <p class="hero-sub">Elf Spiele. Ein Interface. Neon Cyberpunk Design. Kein Download — direkt im Browser.</p>
+  <p class="hero-sub">12 Spiele · Echtzeit-Multiplayer · Globale Highscores · Clans · Chat</p>
   <div class="hero-btns">
-    <a href="javascript:void(0)" onclick="openPanel()" class="btn-primary">▶ JETZT SPIELEN</a>
+    <a href="javascript:void(0)" onclick="openPanel()" class="btn-primary">
+      <span class="btn-glow"></span>▶ JETZT SPIELEN
+    </a>
     <a href="#games" class="btn-ghost">◈ SPIELE ANSEHEN</a>
   </div>
+
+  <!-- Live stats bar -->
+  <div class="live-bar">
+    <div class="live-item"><span class="live-dot"></span>SYSTEM ONLINE</div>
+    <div class="live-sep">·</div>
+    <div class="live-item">🎮 12 SPIELE</div>
+    <div class="live-sep">·</div>
+    <div class="live-item">🏆 GLOBALE RANGLISTE</div>
+    <div class="live-sep">·</div>
+    <div class="live-item">⚡ KEIN DOWNLOAD</div>
+  </div>
+
   <div class="ticker-wrap">
     <div class="ticker">
-      <span>◈ SNAKE</span><span class="ac">⬡ MEMORY</span><span>◆ GEOMETRY DASH</span><span class="ac">▲ SPACE SHOOTER</span><span>◉ BREAKOUT</span><span class="ac">⬡ ZOMBIE SURVIVAL</span><span>◈ FLAPPY</span><span class="ac">◆ ARCADE RACING</span><span>▲ WORDLE</span>
-      <span>◈ SNAKE</span><span class="ac">⬡ MEMORY</span><span>◆ GEOMETRY DASH</span><span class="ac">▲ SPACE SHOOTER</span><span>◉ BREAKOUT</span><span class="ac">⬡ ZOMBIE SURVIVAL</span><span>◈ FLAPPY</span><span class="ac">◆ ARCADE RACING</span><span>▲ WORDLE</span>
+      <span>◈ SNAKE</span><span class="ac">⬡ MEMORY</span><span>◆ GEOMETRY DASH</span><span class="ac">▲ SPACE SHOOTER</span><span>◉ BREAKOUT</span><span class="ac">⬡ ZOMBIE SURVIVAL</span><span>◈ FLAPPY</span><span class="ac">◆ ARCADE RACING</span><span>▲ WORDLE</span><span class="ac">🌀 NEON VORTEX</span><span>🏓 NEON PONG</span><span class="ac">🎮 MEHR KOMMT</span>
+      <span>◈ SNAKE</span><span class="ac">⬡ MEMORY</span><span>◆ GEOMETRY DASH</span><span class="ac">▲ SPACE SHOOTER</span><span>◉ BREAKOUT</span><span class="ac">⬡ ZOMBIE SURVIVAL</span><span>◈ FLAPPY</span><span class="ac">◆ ARCADE RACING</span><span>▲ WORDLE</span><span class="ac">🌀 NEON VORTEX</span><span>🏓 NEON PONG</span><span class="ac">🎮 MEHR KOMMT</span>
     </div>
   </div>
 </section>
+
+<!-- STATS -->
+<div class="stats-wrap">
+  <div class="stats-inner">
+    <div class="stat reveal">
+      <div class="stat-num" data-target="12">0</div>
+      <div class="stat-label">SPIELE</div>
+    </div>
+    <div class="stat reveal">
+      <div class="stat-num">∞</div>
+      <div class="stat-label">HIGHSCORES</div>
+    </div>
+    <div class="stat reveal">
+      <div class="stat-num">1v1</div>
+      <div class="stat-label">MULTIPLAYER</div>
+    </div>
+    <div class="stat reveal">
+      <div class="stat-num">100%</div>
+      <div class="stat-label">KOSTENLOS</div>
+    </div>
+  </div>
+</div>
 
 <!-- PANEL PREVIEW -->
 <div class="section" id="preview">
@@ -644,43 +730,47 @@ iframe{width:100%;height:100%;border:none;}
   <div class="stitle">DAS <span>PANEL</span> IM ÜBERBLICK</div>
   <div class="panel-mockup reveal">
     <div class="mock-sidebar">
-      <div class="mock-logo">MYPANEL</div>
+      <div class="mock-logo">MY<span style="color:var(--g)">PANEL</span></div>
       <div class="mock-btn active">⬡ DASHBOARD</div>
       <div class="mock-btn">◈ SPIELE</div>
-      <div class="mock-btn">◆ FAVORITEN</div>
-      <div class="mock-btn">◉ NEWS</div>
+      <div class="mock-btn">🏆 HIGHSCORES</div>
+      <div class="mock-btn">🌐 FREUNDE</div>
+      <div class="mock-btn">⚔️ CLANS</div>
       <div class="mock-btn">▲ UPDATES</div>
     </div>
     <div class="mock-main">
-      <div class="mock-hbar"><h2>WILLKOMMEN ZURÜCK</h2><p>DEIN GAMING HUB IST BEREIT · SYSTEM ONLINE</p></div>
+      <div class="mock-hbar">
+        <div>
+          <h2>WILLKOMMEN ZURÜCK</h2>
+          <p>MEGA UPDATE v3.0 · SYSTEM ONLINE</p>
+        </div>
+        <div class="mock-profile">
+          <div class="mock-avatar">🎮</div>
+          <div style="font-size:9px;color:var(--c);font-family:'Orbitron',sans-serif;letter-spacing:1px;">LUKAS123</div>
+        </div>
+      </div>
+      <div class="mock-stats-row">
+        <div class="mock-stat"><div class="mstat-num" style="color:var(--c)">12</div><div class="mstat-label">SPIELE</div></div>
+        <div class="mock-stat"><div class="mstat-num" style="color:var(--g)">247</div><div class="mstat-label">HIGHSCORES</div></div>
+        <div class="mock-stat"><div class="mstat-num" style="color:var(--pk,#ff0080)">3</div><div class="mstat-label">FREUNDE</div></div>
+        <div class="mock-stat"><div class="mstat-num" style="color:#ffd23f">1</div><div class="mstat-label">ONLINE</div></div>
+      </div>
       <div class="mock-games">
         <div class="mock-game">🐍<div class="mock-game-label">SNAKE</div></div>
         <div class="mock-game">🧠<div class="mock-game-label">MEMORY</div></div>
         <div class="mock-game">⚡<div class="mock-game-label">GEO DASH</div></div>
         <div class="mock-game">🚀<div class="mock-game-label">SPACE</div></div>
         <div class="mock-game">🧱<div class="mock-game-label">BREAKOUT</div></div>
-        <div class="mock-game">🧟<div class="mock-game-label">ZOMBIE</div></div>
-        <div class="mock-game">🐦<div class="mock-game-label">FLAPPY</div></div>
-        <div class="mock-game">🏎️<div class="mock-game-label">RACING</div></div>
+        <div class="mock-game">🌀<div class="mock-game-label">VORTEX</div></div>
       </div>
     </div>
-  </div>
-</div>
-
-<!-- STATS -->
-<div class="stats-wrap">
-  <div class="stats-inner">
-    <div class="stat reveal"><div class="stat-num" data-target="11">0</div><div class="stat-label">SPIELE</div></div>
-    <div class="stat reveal"><div class="stat-num">0<span style="font-size:18px">MS</span></div><div class="stat-label">LADEZEIT</div></div>
-    <div class="stat reveal"><div class="stat-num">2</div><div class="stat-label">HTML FILES</div></div>
-    <div class="stat reveal"><div class="stat-num">∞</div><div class="stat-label">SPASS</div></div>
   </div>
 </div>
 
 <!-- GAMES -->
 <div class="section" id="games">
   <div class="stag">// SPIELEBIBLIOTHEK</div>
-  <div class="stitle">10 <span>SPIELE</span> BEREIT</div>
+  <div class="stitle">12 <span>SPIELE</span> BEREIT</div>
   <div class="games-grid">
 
     <div class="gcard reveal">
@@ -743,7 +833,6 @@ iframe{width:100%;height:100%;border:none;}
           <div style="aspect-ratio:1;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);border-radius:3px;display:flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;font-size:13px;color:rgba(208,240,238,.3);font-weight:900">D</div>
           <div style="aspect-ratio:1;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);border-radius:3px;display:flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;font-size:13px;color:rgba(208,240,238,.3);font-weight:900">L</div>
         </div>
-        <div style="position:absolute;bottom:12px;font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(208,240,238,.3);letter-spacing:3px">VERSUCH 3 / 6</div>
       </div>
       <div class="govl"><a href="wordle.html" class="gplaybtn">▶ SPIELEN</a></div>
       <div class="ginfo"><div class="gtag">WORTSPIEL</div><div class="gname">WORDLE</div><div class="gdesc">Errate das Wort in 6 Versuchen.</div></div>
@@ -752,7 +841,25 @@ iframe{width:100%;height:100%;border:none;}
     <div class="gcard reveal">
       <div class="gprev p-vortex"><div class="vspin"></div><div class="vspin2"></div>🌀</div>
       <div class="govl"><a href="vortex.html" class="gplaybtn">▶ SPIELEN</a></div>
-      <div class="ginfo"><div class="gtag">NEU · REFLEX</div><div class="gname">NEON VORTEX</div><div class="gdesc">Weiche rotierenden Wänden aus — wie lange hältst du durch?</div></div>
+      <div class="ginfo"><div class="gtag">REFLEX</div><div class="gname">NEON VORTEX</div><div class="gdesc">Weiche rotierenden Wänden aus — wie lange hältst du durch?</div></div>
+    </div>
+
+    <div class="gcard reveal">
+      <div class="gprev" style="background:radial-gradient(circle,#080010,#000)">
+        <div style="position:absolute;width:70%;aspect-ratio:1;border-radius:50%;border:3px solid transparent;border-top-color:#00e5ff;border-right-color:#ff2bd6;animation:vspin 1.4s linear infinite;"></div>
+        <div style="position:absolute;width:44%;aspect-ratio:1;border-radius:50%;border:2px solid transparent;border-bottom-color:#00ff87;animation:vspin 0.9s linear infinite reverse;"></div>
+        <div style="font-size:36px;position:absolute;">🏓</div>
+      </div>
+      <div class="govl"><a href="pong.html" class="gplaybtn">▶ SPIELEN</a></div>
+      <div class="ginfo"><div class="gtag">MULTIPLAYER</div><div class="gname">NEON PONG</div><div class="gdesc">1v1 Online — fordere deine Freunde heraus.</div></div>
+    </div>
+
+    <div class="gcard reveal" style="border-color:rgba(255,210,63,.2);background:rgba(255,210,63,.02);">
+      <div class="gprev" style="background:radial-gradient(circle,#0a0800,#000)">
+        <div style="font-size:14px;font-family:'Orbitron',sans-serif;color:rgba(255,210,63,.5);letter-spacing:3px;position:absolute;text-align:center;padding:0 10px;">MEHR<br>KOMMT<br>BALD</div>
+        <div style="position:absolute;font-size:40px;animation:pulse 2s ease-in-out infinite">⚡</div>
+      </div>
+      <div class="ginfo"><div class="gtag" style="color:rgba(255,210,63,.7);border-color:rgba(255,210,63,.3);">COMING SOON</div><div class="gname" style="color:rgba(255,210,63,.8);">???</div><div class="gdesc">Neues Spiel in Entwicklung. Stay tuned!</div></div>
     </div>
 
   </div>
@@ -764,27 +871,67 @@ iframe{width:100%;height:100%;border:none;}
   <div class="stitle">WAS <span>DRIN STECKT</span></div>
   <div class="feats">
     <div class="feat reveal"><span class="ficon">⚡</span><div class="ftitle">KEIN DOWNLOAD</div><div class="fdesc">Alles direkt im Browser. Kein Server, kein Setup — einfach öffnen und spielen.</div></div>
-    <div class="feat reveal"><span class="ficon">🎮</span><div class="ftitle">11 SPIELE</div><div class="fdesc">Snake, Memory, Geometry Dash, Space Shooter, Breakout, Zombie, Flappy, Racing, Wordle, Neon Vortex.</div></div>
-    <div class="feat reveal"><span class="ficon">🎨</span><div class="ftitle">4 FARBTHEMEN</div><div class="fdesc">Cyan, Pink, Gold oder Rot — Theme-Wechsel mit einem Klick, überall synchronisiert.</div></div>
-    <div class="feat reveal"><span class="ficon">◆</span><div class="ftitle">FAVORITEN</div><div class="fdesc">Lieblingsspiele speichern — immer sofort griffbereit in der Sidebar.</div></div>
-    <div class="feat reveal"><span class="ficon">👤</span><div class="ftitle">PROFIL SYSTEM</div><div class="fdesc">Eigener Username, lokal gespeichert. Beim nächsten Start automatisch geladen.</div></div>
-    <div class="feat reveal"><span class="ficon">🖥️</span><div class="ftitle">OVERLAY GAMES</div><div class="fdesc">Spiele öffnen sich eingebettet — kein Seitenwechsel nötig.</div></div>
+    <div class="feat reveal"><span class="ficon">🎮</span><div class="ftitle">12 SPIELE</div><div class="fdesc">Snake, Memory, Geometry Dash, Space Shooter, Breakout, Zombie, Flappy, Racing, Wordle, Vortex, Pong & mehr.</div></div>
+    <div class="feat reveal"><span class="ficon">🏓</span><div class="ftitle">MULTIPLAYER</div><div class="fdesc">Echtzeit 1v1 Pong — Raum erstellen, Freund einladen, sofort losspielen.</div></div>
+    <div class="feat reveal"><span class="ficon">🌐</span><div class="ftitle">GLOBALE RANGLISTE</div><div class="fdesc">Firebase-powered Highscores — alle Spieler, ein Leaderboard, Echtzeit-Updates.</div></div>
+    <div class="feat reveal"><span class="ficon">👥</span><div class="ftitle">SOCIAL SYSTEM</div><div class="fdesc">Freunde hinzufügen, Clans gründen, chatten — direkt im Panel.</div></div>
+    <div class="feat reveal"><span class="ficon">🎨</span><div class="ftitle">4 FARBTHEMEN</div><div class="fdesc">Cyan, Pink, Gold oder Rot — Theme-Wechsel mit einem Klick.</div></div>
+    <div class="feat reveal"><span class="ficon">👑</span><div class="ftitle">ADMIN SYSTEM</div><div class="fdesc">Global Announcements, Spieler-Management — alles in Echtzeit via Firebase.</div></div>
+    <div class="feat reveal"><span class="ficon">🏆</span><div class="ftitle">ACHIEVEMENTS</div><div class="fdesc">Spieler des Monats, Clan-Ranglisten, Highscore-Kommentare.</div></div>
+    <div class="feat reveal"><span class="ficon">📱</span><div class="ftitle">MOBIL-READY</div><div class="fdesc">Vollständig responsiv — auf Handy, Tablet und Desktop.</div></div>
+  </div>
+</div>
+
+<!-- SOCIAL SECTION -->
+<div class="section" id="social">
+  <div class="stag">// COMMUNITY</div>
+  <div class="stitle">SPIELEN · <span>VERBINDEN</span> · GEWINNEN</div>
+  <div class="social-cards">
+    <div class="social-card reveal">
+      <div class="sc-icon">👥</div>
+      <div class="sc-title">FREUNDE</div>
+      <div class="sc-desc">Füge Freunde per Username oder Einladungslink hinzu. Sieh wer online ist und vergleiche Scores.</div>
+    </div>
+    <div class="social-card reveal">
+      <div class="sc-icon">⚔️</div>
+      <div class="sc-title">CLANS</div>
+      <div class="sc-desc">Gründe oder tritt einem Clan bei. Gemeinsam auf die Clan-Rangliste — wer dominiert?</div>
+    </div>
+    <div class="social-card reveal">
+      <div class="sc-icon">💬</div>
+      <div class="sc-title">CHAT</div>
+      <div class="sc-desc">Echtzeit-Chat mit Freunden direkt im Panel. Auch während du spielst erreichbar.</div>
+    </div>
+    <div class="social-card reveal">
+      <div class="sc-icon">👑</div>
+      <div class="sc-title">SPIELER DES MONATS</div>
+      <div class="sc-desc">Wer sammelt die meisten Punkte? Jeden Monat wird der beste Spieler gekürt.</div>
+    </div>
   </div>
 </div>
 
 <!-- CTA -->
 <div class="cta">
+  <div class="cta-glow"></div>
   <div class="ctag">// BEREIT?</div>
   <h2 class="ctitle">STARTE <span>JETZT</span></h2>
   <p class="csub">Dein Gaming Hub wartet. Kein Login. Kein Download. Einfach spielen.</p>
-  <a href="javascript:void(0)" onclick="openPanel()" class="btn-primary" style="font-size:15px;padding:20px 50px;margin:0 auto;">▶ MYPANEL ÖFFNEN</a>
+  <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
+    <a href="javascript:void(0)" onclick="openPanel()" class="btn-primary" style="font-size:15px;padding:20px 50px;">▶ MYPANEL ÖFFNEN</a>
+    <a href="#games" class="btn-ghost" style="font-size:13px;padding:20px 30px;">◈ SPIELE ANSEHEN</a>
+  </div>
 </div>
 
 <!-- FOOTER -->
 <footer>
-  <div class="flogo">MYPANEL</div>
-  <div class="fcopy">CYBERPUNK EDITION // v2.0</div>
-  <a href="javascript:void(0)" onclick="openPanel()" class="btn-ghost" style="font-size:10px;padding:10px 20px;">▶ ZUM PANEL</a>
+  <div class="flogo">MY<span style="color:var(--g)">PANEL</span></div>
+  <div style="display:flex;gap:28px;justify-content:center;flex-wrap:wrap;margin:14px 0;">
+    <a href="#preview" style="color:var(--mu);text-decoration:none;font-size:11px;letter-spacing:2px;">PANEL</a>
+    <a href="#games" style="color:var(--mu);text-decoration:none;font-size:11px;letter-spacing:2px;">SPIELE</a>
+    <a href="#features" style="color:var(--mu);text-decoration:none;font-size:11px;letter-spacing:2px;">FEATURES</a>
+    <a href="#social" style="color:var(--mu);text-decoration:none;font-size:11px;letter-spacing:2px;">COMMUNITY</a>
+  </div>
+  <div class="fcopy">MYPANEL · CYBERPUNK EDITION · v3.0 · MADE WITH ⚡</div>
 </footer>
 </div>
 
