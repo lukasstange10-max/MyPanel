@@ -726,7 +726,7 @@ iframe{width:100%;height:100%;border:none;}
       <button class="mbtn active" onclick="showSection('dashboard')"><span class="bico">⬡</span>DASHBOARD</button>
       <button class="mbtn" onclick="showSection('games')"><span class="bico">◈</span>SPIELE</button>
       <button class="mbtn" onclick="showSection('highscores')"><span class="bico">🏆</span>HIGHSCORES</button>
-      <button class="mbtn" onclick="showSection('friends')"><span class="bico">🌐</span>FREUNDE</button>
+      <button class="mbtn" onclick="showSection('friends')"><span class="bico">🌐</span>FREUNDE<span id="friendBadge" style="display:none;background:#ff2b6d;color:#fff;font-family:'Orbitron',sans-serif;font-size:9px;font-weight:900;padding:2px 6px;border-radius:10px;margin-left:6px;"></span></button>
       <button class="mbtn" onclick="showSection('favorites')"><span class="bico">◆</span>FAVORITEN</button>
       <button class="mbtn" onclick="showSection('news')"><span class="bico">◉</span>NEWS</button>
       <button class="mbtn" onclick="showSection('trailer')"><span class="bico">🎬</span>TRAILER</button>
@@ -1380,11 +1380,24 @@ function initFriendsSystem(){
   }
 
   // Listen for friend requests
+  let prevReqCount=0;
   window.fbDB.ref('friendRequests/'+me).on('value',snap=>{
     const reqs=snap.val()||{};
     const pending=Object.values(reqs).filter(r=>r.status==='pending');
     const card=document.getElementById('friendReqCard');
     const list=document.getElementById('friendReqList');
+    // Update badge
+    const badge=document.getElementById('friendBadge');
+    if(badge){
+      if(pending.length){badge.style.display='';badge.textContent=pending.length;}
+      else{badge.style.display='none';}
+    }
+    // Show toast notification for new requests
+    if(pending.length>prevReqCount&&prevReqCount>=0){
+      const newReq=pending[pending.length-1];
+      showNotif('👤 '+newReq.from+' hat dir eine Freundschaftsanfrage gesendet!');
+    }
+    prevReqCount=pending.length;
     if(!card||!list)return;
     if(pending.length){
       card.style.display='block';
