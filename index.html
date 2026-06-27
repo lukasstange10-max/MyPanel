@@ -2022,26 +2022,32 @@ function openProfileModal(){
     lockInfo.style.display='block';
     lockInfo.innerHTML='🔒 NAME GESPERRT — noch <b style="color:#ffb700">'+days+' Tag'+(days===1?'':'e')+'</b> bis zur nächsten Änderung.';
     inp.disabled=true;inp.style.opacity='.45';
-    saveBtn.style.display='none';
+    saveBtn.style.display='';
+    saveBtn.textContent='💾 AVATAR & STATUS SPEICHERN';
     cancelBtn.textContent='SCHLIEẞEN';
   }else{
     lockInfo.style.display='none';
     inp.disabled=false;inp.style.opacity='1';
     saveBtn.style.display='';
+    saveBtn.textContent='💾 SPEICHERN';
     cancelBtn.textContent='ABBRECHEN';
   }
   openModal('profileModal');
 }
 function saveUsername(){
   const v=document.getElementById('usernameInput').value.trim();
-  if(!v||v.length<2){showNotif('⚠ MINDESTENS 2 ZEICHEN EINGEBEN');return;}
-  if(daysUntilUnlock()>0){showNotif('🔒 NAME NOCH GESPERRT');return;}
+  const locked=daysUntilUnlock()>0;
   const p=getProfile();
-  const profile={username:v.toUpperCase(),avatar:selectedAvatar||'🎮',status:selectedStatus||'🟢 Online',createdAt:p?p.createdAt:Date.now(),changedAt:Date.now()};
+  let username=p?p.username:'MYPANEL USER';
+  if(!locked){
+    if(!v||v.length<2){showNotif('⚠ MINDESTENS 2 ZEICHEN EINGEBEN');return;}
+    username=v.toUpperCase();
+  }
+  const profile={username,avatar:selectedAvatar||p&&p.avatar||'🎮',status:selectedStatus||'🟢 Online',createdAt:p?p.createdAt:Date.now(),changedAt:locked?(p?p.changedAt:Date.now()):Date.now()};
   _pSet(JSON.stringify(profile));
   applyProfile();
   closeModal('profileModal');
-  showNotif('✓ PROFIL GESPEICHERT');
+  showNotif(locked?'✓ AVATAR & STATUS GESPEICHERT':'✓ PROFIL GESPEICHERT');
 }
 function saveFirstLogin(){
   const v=document.getElementById('firstLoginInput').value.trim();
