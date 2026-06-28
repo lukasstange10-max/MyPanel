@@ -2808,32 +2808,44 @@ function applyEvent(event){
   // Save event to localStorage as backup
   localStorage.setItem('mpActiveEvent', JSON.stringify(event));
 
-  // Timer — use startedAt + duration to avoid Firebase timestamp issues
+  // Timer
   clearInterval(eventTimerInterval);
   const startedAt=Number(event.startedAt)||Date.now();
   const durationMs=(Number(event.duration)||30)*60*1000;
   const endsAt=startedAt+durationMs;
 
-  const timerEl=document.getElementById('eventTimer');
-  try{if(timerEl)timerEl.style.display='block';}catch(e){}
+  try{document.getElementById('eventTimer').style.display='block';}catch(e){}
 
   function updateTimer(){
-    try{
-      const rem=endsAt-Date.now();
-      const countEl=document.getElementById('eventTimerCount');
-      const adminEl=document.getElementById('activeEventTimer');
-      if(rem<=0){
-        clearInterval(eventTimerInterval);
-        if(countEl)countEl.textContent='00:00';
-        stopEvent();
-        return;
-      }
-      const m=Math.floor(rem/60000);
-      const s=Math.floor((rem%60000)/1000);
-      const fmt=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
-      if(countEl)countEl.textContent=fmt;
-      if(adminEl)adminEl.textContent='NOCH '+fmt+' · '+event.xpMultiplier+'x XP';
-    }catch(e){}
+    const rem=endsAt-Date.now();
+    const countEl=document.getElementById('eventTimerCount');
+    const adminEl=document.getElementById('activeEventTimer');
+    if(rem<=0){
+      clearInterval(eventTimerInterval);
+      try{if(countEl)countEl.textContent='00:00';}catch(e){}
+      // Only remove from Firebase, don't call stopEvent() to avoid race condition
+      try{
+        document.body.classList.remove('disco-mode','cyber-mode');
+        ['discoBall','discoString','discoFlash','eventBanner','eventTimer','tacoContainer','cyberContainer'].forEach(id=>{
+          const el=document.getElementById(id);if(el)el.style.display='none';
+        });
+        document.getElementById('eventStopBtn').style.display='none';
+        localStorage.removeItem(XP_MULTIPLIER_KEY);
+        localStorage.removeItem('mpActiveEvent');
+        try{stopDiscoMusic();}catch(e){}
+        try{stopTacoMusic();}catch(e){}
+        try{stopTacoRain();}catch(e){}
+        try{stopCyberMusic();}catch(e){}
+        try{stopCyberUniverse();}catch(e){}
+        if(window.fbDB)window.fbDB.ref('activeEvent').remove();
+      }catch(e){}
+      return;
+    }
+    const m=Math.floor(rem/60000);
+    const s=Math.floor((rem%60000)/1000);
+    const fmt=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+    try{if(countEl)countEl.textContent=fmt;}catch(e){}
+    try{if(adminEl)adminEl.textContent='NOCH '+fmt+' · '+event.xpMultiplier+'x XP';}catch(e){}
   }
   updateTimer();
   eventTimerInterval=setInterval(updateTimer,1000);
@@ -2843,7 +2855,12 @@ function initEventSystem(){
   if(!window.fbDB)return setTimeout(initEventSystem,2000);
   window.fbDB.ref('activeEvent').on('value',snap=>{
     const event=snap.val();
-    if(event&&Number(event.endsAt)<Date.now()){
+    if(!event){applyEvent(null);return;}
+    // Check if expired (using startedAt + duration)
+    const startedAt=Number(event.startedAt)||0;
+    const durationMs=(Number(event.duration)||0)*60*1000;
+    const endsAt=startedAt+durationMs;
+    if(endsAt>0&&endsAt<Date.now()){
       window.fbDB.ref('activeEvent').remove();
       applyEvent(null);
       return;
