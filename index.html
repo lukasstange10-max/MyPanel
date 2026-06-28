@@ -2290,7 +2290,6 @@ function initAnnouncement(){
   if(window.fbDB){
     window.fbDB.ref('announcement').on('value',snap=>handleSnap(snap.val()));
   } else {
-    // Poll every 5 seconds as fallback
     const DB_URL='https://mypanel-41c90-default-rtdb.europe-west1.firebasedatabase.app';
     let lastText='';
     setInterval(()=>{
@@ -2299,10 +2298,6 @@ function initAnnouncement(){
         .then(d=>{
           if(d&&d.text&&d.text!==lastText){lastText=d.text;showAnnouncementBanner(d);}
         }).catch(()=>{});
-    },5000);
-    // Also try once Firebase loads
-    setTimeout(()=>{
-      if(window.fbDB)window.fbDB.ref('announcement').on('value',snap=>handleSnap(snap.val()));
     },5000);
   }
 }
@@ -2382,7 +2377,7 @@ function clearAnnouncement(){
 }
 
 // Init after profile is set
-window.addEventListener('load',()=>setTimeout(initAnnouncement,1000));
+// initAnnouncement is called from startPanelBoot only
 
 /* ===== MODALS ===== */
 function openModal(id){document.getElementById(id).style.display='flex';}
