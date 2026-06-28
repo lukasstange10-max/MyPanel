@@ -2606,6 +2606,25 @@ function stopTacoMusic(){
   if(tacoYTPlayer){try{tacoYTPlayer.pauseVideo();}catch(e){}}
 }
 
+function startCuckMusic(){
+  cuckShouldPlay=true;
+  if(cuckYTPlayer&&cuckYTReady){try{cuckYTPlayer.seekTo(CUCK_YT_START,true);cuckYTPlayer.playVideo();}catch(e){}return;}
+  if(window.YT&&window.YT.Player&&!cuckYTPlayer){
+    const ckw=document.getElementById('ytCuckWrap');
+    if(ckw){ckw.innerHTML='<div id="ytCuckIframe2"></div>';
+      cuckYTPlayer=new YT.Player('ytCuckIframe2',{height:'200',width:'200',videoId:CUCK_YT_ID,
+        playerVars:{autoplay:1,start:CUCK_YT_START,controls:0,rel:0,playsinline:1,origin:location.origin||'https://lukasstange10-max.github.io'},
+        events:{onReady(e){cuckYTReady=true;e.target.setVolume(85);e.target.playVideo();},
+          onStateChange(e){if(e.data===YT.PlayerState.ENDED){e.target.seekTo(CUCK_YT_START,true);e.target.playVideo();}}}});
+    }
+  }
+}
+
+function stopCuckMusic(){
+  cuckShouldPlay=false;
+  if(cuckYTPlayer){try{cuckYTPlayer.pauseVideo();}catch(e){}}
+}
+
 function startTacoRain(){
   const container=document.getElementById('tacoContainer');
   if(!container)return;
