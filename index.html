@@ -2561,16 +2561,6 @@ function toggleMusic(){
 function nextTrack(){
   trackIdx=(trackIdx+1)%TRACKS.length;
   updateTrackDisplay();
-// Render track list
-(function renderMPPlaylist(){
-  const el=document.getElementById('mpPlaylist');
-  if(!el)return;
-  el.innerHTML=TRACKS.map((t,i)=>
-    '<div onclick="trackIdx='+i+';updateTrackDisplay();if(isPlaying)playTrack('+i+');" style="padding:4px 6px;border-radius:3px;cursor:pointer;font-size:10px;color:'+(0===i?'var(--c)':'var(--mu)')+';display:flex;gap:6px;align-items:center;" id="mpTrackItem'+i+'">'+(0===i?'▶':'  ')+' '+t.name+'</div>'
-  ).join('');
-  // Update active track highlighting
-  window._mpUpdateList=function(){TRACKS.forEach((_,i)=>{const el2=document.getElementById('mpTrackItem'+i);if(el2){el2.style.color=i===trackIdx?'var(--c)':'var(--mu)';el2.childNodes[0].textContent=i===trackIdx?' ▶':' '+(i+1);}});};
-})();
   if(isPlaying) playTrack(trackIdx);
 }
 
@@ -2584,9 +2574,31 @@ function updateTrackDisplay(){
   const t=TRACKS[trackIdx];
   const tn=document.getElementById('mpTrack');
   const ta=document.getElementById('mpArtist');
+  const mm=document.getElementById('mmTrack');
   if(tn) tn.textContent=t.name;
   if(ta) ta.textContent=t.artist;
+  if(mm) mm.textContent=t.name;
+  // Update playlist highlight
+  TRACKS.forEach((_,i)=>{
+    const el=document.getElementById('mpTrackItem'+i);
+    if(!el)return;
+    el.style.color=i===trackIdx?'var(--c)':'rgba(255,255,255,.4)';
+    el.style.background=i===trackIdx?'rgba(0,229,255,.08)':'transparent';
+    el.querySelector('.mpti')&&(el.querySelector('.mpti').textContent=i===trackIdx?'▶':(i+1));
+  });
 }
+
+function renderMPPlaylist(){
+  const el=document.getElementById('mpPlaylist');
+  if(!el)return;
+  el.innerHTML=TRACKS.map((t,i)=>`
+    <div id="mpTrackItem${i}" onclick="trackIdx=${i};updateTrackDisplay();if(isPlaying)playTrack(${i});"
+      style="padding:4px 6px;border-radius:3px;cursor:pointer;font-size:10px;display:flex;gap:6px;align-items:center;color:${i===trackIdx?'var(--c)':'rgba(255,255,255,.4)'};background:${i===trackIdx?'rgba(0,229,255,.08)':'transparent'};">
+      <span class="mpti" style="width:14px;font-size:9px;">${i===trackIdx?'▶':(i+1)}</span>
+      <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.name}</span>
+    </div>`).join('');
+}
+renderMPPlaylist();
 
 function setVol(v){
   if(masterGain) masterGain.gain.value=parseFloat(v)/100;
