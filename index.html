@@ -642,22 +642,20 @@ iframe{width:100%;height:100%;border:none;}
 .comment-text{font-size:13px;color:var(--tm);margin-top:4px;}
 .comment-time{font-size:10px;color:var(--mu);margin-top:3px;font-family:'Share Tech Mono',monospace;}
 /* ===== DISCO EVENT ===== */
-@keyframes discoHue{0%{filter:hue-rotate(0deg) brightness(1.1);}100%{filter:hue-rotate(360deg) brightness(1.1);}}
-@keyframes discoBg{0%,100%{background:rgba(255,0,200,.06);}25%{background:rgba(255,150,0,.06);}50%{background:rgba(0,255,150,.06);}75%{background:rgba(0,150,255,.06);}}
-@keyframes discoText{0%{color:#ff00cc;text-shadow:0 0 20px #ff00cc;}25%{color:#ffaa00;text-shadow:0 0 20px #ffaa00;}50%{color:#00ff88;text-shadow:0 0 20px #00ff88;}75%{color:#00ccff;text-shadow:0 0 20px #00ccff;}100%{color:#ff00cc;text-shadow:0 0 20px #ff00cc;}}
+@keyframes discoRainbow{0%{background:rgba(255,0,150,.12);}17%{background:rgba(255,100,0,.12);}34%{background:rgba(255,220,0,.12);}50%{background:rgba(0,200,100,.12);}67%{background:rgba(0,100,255,.12);}84%{background:rgba(180,0,255,.12);}100%{background:rgba(255,0,150,.12);}}
+@keyframes discoTextRain{0%{color:#ff0099;text-shadow:0 0 15px #ff0099;}17%{color:#ff6600;}34%{color:#ffdd00;}50%{color:#00dd66;}67%{color:#0099ff;}84%{color:#cc00ff;}100%{color:#ff0099;text-shadow:0 0 15px #ff0099;}}
 @keyframes discoBall{0%{transform:translateX(-50%) rotate(0deg);}100%{transform:translateX(-50%) rotate(360deg);}}
-@keyframes discoSwing{0%,100%{left:48%;}50%{left:52%;}}
-@keyframes discoFlash{0%,100%{opacity:0;}50%{opacity:.08;}}
-body.disco-mode{animation:discoHue 4s linear infinite;}
-body.disco-mode .nav-logo,body.disco-mode .ctitle span,body.disco-mode #username{animation:discoText 1s linear infinite;}
-body.disco-mode .card{animation:discoBg 2s ease-in-out infinite;}
-#discoBall{display:none;position:fixed;top:0;left:50%;transform:translateX(-50%);font-size:60px;z-index:99990;pointer-events:none;animation:discoBall 3s linear infinite,discoSwing 4s ease-in-out infinite;filter:drop-shadow(0 0 20px #ff00cc) drop-shadow(0 0 40px #bf00ff);}
-#discoString{display:none;position:fixed;top:0;left:50%;transform:translateX(-50%);width:2px;height:70px;background:linear-gradient(to bottom,rgba(255,255,255,.5),transparent);z-index:99989;pointer-events:none;}
-#discoFlash{display:none;position:fixed;inset:0;z-index:99988;pointer-events:none;animation:discoFlash .5s ease-in-out infinite;background:radial-gradient(circle at 50% 0%,rgba(255,0,200,.18),transparent 60%);}
-#eventBanner{display:none;position:fixed;bottom:0;left:0;right:0;z-index:99992;pointer-events:none;text-align:center;padding:10px;font-family:'Orbitron',sans-serif;font-size:clamp(12px,2vw,16px);font-weight:900;letter-spacing:3px;border-top:2px solid;}
-#eventTimer{display:none;position:fixed;bottom:60px;right:16px;z-index:99993;pointer-events:none;background:rgba(0,0,0,.8);border:1px solid rgba(255,0,200,.5);border-radius:8px;padding:10px 14px;text-align:center;}
-#eventTimerLabel{font-size:8px;color:rgba(255,0,200,.8);letter-spacing:2px;margin-bottom:4px;font-family:'Orbitron',sans-serif;}
-#eventTimerCount{font-size:20px;font-weight:900;color:#fff;font-family:'Orbitron',sans-serif;text-shadow:0 0 12px #ff00cc;}
+@keyframes discoSwingX{0%,100%{left:48%;}50%{left:52%;}}
+@keyframes discoFlash{0%,100%{opacity:0;}50%{opacity:.15;}}
+body.disco-mode .card{animation:discoRainbow 1.5s ease-in-out infinite!important;}
+body.disco-mode .nav-logo,body.disco-mode .ctitle,body.disco-mode #username{animation:discoTextRain 1s linear infinite!important;}
+#discoBall{display:none;position:fixed;top:-5px;left:50%;transform:translateX(-50%);font-size:90px;z-index:99990;pointer-events:none;animation:discoBall 4s linear infinite,discoSwingX 3s ease-in-out infinite;filter:drop-shadow(0 0 30px #ff00cc) drop-shadow(0 0 60px #bf00ff);}
+#discoString{display:none;position:fixed;top:0;left:calc(50% - 1px);width:2px;height:95px;background:linear-gradient(to bottom,rgba(255,255,255,.7),transparent);z-index:99989;pointer-events:none;}
+#discoFlash{display:none;position:fixed;inset:0;z-index:99988;pointer-events:none;animation:discoFlash .5s ease-in-out infinite;background:radial-gradient(ellipse at 50% 0%,rgba(255,0,200,.3),transparent 55%);}
+#eventBanner{display:none;position:fixed;bottom:0;left:0;right:0;z-index:99992;pointer-events:none;text-align:center;padding:12px 20px;font-family:'Orbitron',sans-serif;font-size:clamp(13px,2vw,18px);font-weight:900;letter-spacing:3px;border-top:3px solid #ff00cc;background:linear-gradient(90deg,rgba(255,0,150,.2),rgba(100,0,255,.2),rgba(0,150,255,.2));animation:discoTextRain 1s linear infinite;}
+#eventTimer{display:none;position:fixed;bottom:60px;right:16px;z-index:99993;pointer-events:none;background:rgba(0,0,0,.88);border:2px solid #ff00cc;border-radius:10px;padding:12px 18px;text-align:center;box-shadow:0 0 25px rgba(255,0,200,.5);}
+#eventTimerLabel{font-size:9px;color:#ff00cc;letter-spacing:2px;margin-bottom:6px;font-family:'Orbitron',sans-serif;}
+#eventTimerCount{font-size:26px;font-weight:900;color:#fff;font-family:'Orbitron',sans-serif;text-shadow:0 0 20px #ff00cc;animation:discoTextRain 2s linear infinite;}
 
 </style>
 <body>
@@ -2477,39 +2475,51 @@ function stopEvent(){
 }
 
 const DISCO_YT_ID='cE0wfjsybIQ';
-const DISCO_YT_START=30; // seconds
-let discoYTPlayer=null,discoYTReady=false;
+const DISCO_YT_START=30;
+let discoYTPlayer=null,discoYTReady=false,discoShouldPlay=false;
 
-function loadDiscoYTAPI(){
-  if(window.YT||document.getElementById('_ytDiscApi'))return;
+// Load YouTube API immediately on page load
+(function(){
+  if(document.getElementById('_ytDiscApi'))return;
   const s=document.createElement('script');s.id='_ytDiscApi';
   s.src='https://www.youtube.com/iframe_api';
   document.head.appendChild(s);
-}
+})();
 
-function startDiscoMusic(){
-  loadDiscoYTAPI();
+window.onYouTubeIframeAPIReady=function(){
   const wrap=document.getElementById('ytDiscoWrap');
   if(!wrap)return;
-  if(discoYTPlayer){
-    discoYTPlayer.seekTo(DISCO_YT_START,true);
-    discoYTPlayer.playVideo();
-    return;
-  }
   wrap.innerHTML='<div id="ytDiscoIframe"></div>';
   discoYTPlayer=new YT.Player('ytDiscoIframe',{
-    height:'1',width:'1',
+    height:'200',width:'200',
     videoId:DISCO_YT_ID,
-    playerVars:{autoplay:1,start:DISCO_YT_START,controls:0,rel:0,playsinline:1,loop:1,playlist:DISCO_YT_ID},
+    playerVars:{autoplay:0,start:DISCO_YT_START,controls:0,rel:0,playsinline:1,loop:1,playlist:DISCO_YT_ID,origin:location.origin||'https://lukasstange10-max.github.io'},
     events:{
-      onReady(e){e.target.setVolume(70);e.target.playVideo();},
-      onError(){} // silently ignore
+      onReady(e){
+        discoYTReady=true;
+        e.target.setVolume(80);
+        if(discoShouldPlay) e.target.playVideo();
+      },
+      onStateChange(e){
+        if(e.data===YT.PlayerState.ENDED){
+          e.target.seekTo(DISCO_YT_START,true);
+          e.target.playVideo();
+        }
+      }
     }
   });
+};
+
+function startDiscoMusic(){
+  discoShouldPlay=true;
+  if(discoYTReady&&discoYTPlayer){
+    try{discoYTPlayer.seekTo(DISCO_YT_START,true);discoYTPlayer.playVideo();}catch(e){}
+  }
 }
 
 function stopDiscoMusic(){
-  if(discoYTPlayer){try{discoYTPlayer.stopVideo();}catch(e){}}
+  discoShouldPlay=false;
+  if(discoYTPlayer){try{discoYTPlayer.pauseVideo();}catch(e){}}
 }
 
 
@@ -2556,20 +2566,22 @@ function applyEvent(event){
 
   clearInterval(eventTimerInterval);
   eventTimerInterval=setInterval(()=>{
-    const remaining=event.endsAt-Date.now();
+    const remaining=parseInt(event.endsAt)-Date.now();
     const countEl=document.getElementById('eventTimerCount');
     const adminTimerEl=document.getElementById('activeEventTimer');
     if(remaining<=0){
       clearInterval(eventTimerInterval);
       if(countEl)countEl.textContent='00:00';
       if(adminTimerEl)adminTimerEl.textContent='EVENT BEENDET';
+      applyEvent(null);
+      if(window.fbDB)window.fbDB.ref('activeEvent').remove();
       return;
     }
     const m=Math.floor(remaining/60000);
     const s=Math.floor((remaining%60000)/1000);
     const fmt=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
     if(countEl)countEl.textContent=fmt;
-    if(adminTimerEl)adminTimerEl.textContent='NOCH '+fmt+' · 2x XP AKTIV';
+    if(adminTimerEl)adminTimerEl.textContent='NOCH '+fmt+' · 2x XP';
   },1000);
 }
 
