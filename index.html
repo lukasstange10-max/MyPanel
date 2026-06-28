@@ -698,6 +698,13 @@ body.disco-mode .nav-logo,body.disco-mode .ctitle,body.disco-mode #username{anim
 <div id="ytDiscoWrap" style="position:fixed;left:-9999px;top:-9999px;width:200px;height:200px;overflow:hidden;opacity:0;"></div>
 <div id="ytTacoWrap" style="position:fixed;left:-9999px;top:-9999px;width:200px;height:200px;overflow:hidden;opacity:0;"></div>
 <div id="ytCuckWrap" style="position:fixed;left:-9999px;top:-9999px;width:200px;height:200px;overflow:hidden;opacity:0;"></div>
+
+<!-- COUNTDOWN WIDGET -->
+<div id="cdWidget" style="display:none;position:fixed;top:60px;right:16px;z-index:99990;background:rgba(0,0,0,.88);border:2px solid #ffd23f;border-radius:10px;padding:14px 18px;text-align:center;box-shadow:0 0 25px rgba(255,210,63,.35);pointer-events:none;min-width:160px;">
+  <div id="cdWidgetTitle" style="font-family:'Orbitron',sans-serif;font-size:10px;color:#ffd23f;letter-spacing:2px;margin-bottom:6px;"></div>
+  <div id="cdWidgetTime" style="font-family:'Orbitron',sans-serif;font-size:22px;font-weight:900;color:#fff;text-shadow:0 0 15px #ffd23f;letter-spacing:2px;">00:00:00</div>
+  <div style="font-size:8px;color:rgba(255,210,63,.5);letter-spacing:2px;margin-top:4px;">BIS ZUM EVENT</div>
+</div>
 <div id="eventStopBtn" onclick="stopEvent()" style="display:none;position:fixed;top:16px;right:16px;z-index:99997;padding:10px 18px;font-family:'Orbitron',sans-serif;font-size:11px;font-weight:900;letter-spacing:2px;color:#fff;background:rgba(255,43,109,.85);border:2px solid #ff2b6d;border-radius:8px;cursor:pointer;box-shadow:0 0 20px rgba(255,43,109,.5);pointer-events:auto;">⏹ EVENT STOPPEN</div>
 <div id="page-trailer">
 <div id="particles"></div>
@@ -1338,6 +1345,41 @@ body.disco-mode .nav-logo,body.disco-mode .ctitle,body.disco-mode #username{anim
 
     </div>
 
+      <!-- COUNTDOWN TIMER ADMIN -->
+      <div class="card" style="border-color:rgba(255,210,63,.2);">
+        <div class="ctitle" style="color:#ffd23f;"><span>⏳</span> ADMIN — COUNTDOWN TIMER</div>
+        <p style="color:var(--mu);font-size:12px;margin-bottom:14px;letter-spacing:1px;">Zeige allen Spielern einen Countdown — z.B. für Updates, Events oder Turniere.</p>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div>
+            <div style="font-size:10px;color:var(--mu);letter-spacing:2px;margin-bottom:4px;">ÜBERSCHRIFT</div>
+            <input id="cdTitle" placeholder="z.B. 🚀 MEGA UPDATE v4.0" style="width:100%;padding:8px 12px;background:var(--bg);border:1px solid var(--dim);border-radius:4px;color:var(--tm);font-family:'Share Tech Mono',monospace;font-size:12px;outline:none;box-sizing:border-box;">
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--mu);letter-spacing:2px;margin-bottom:4px;">DAUER</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+              <div>
+                <input id="cdHour" type="number" min="0" max="99" value="0" style="width:100%;padding:10px;background:var(--bg);border:1px solid var(--dim);border-radius:4px;color:var(--tm);font-family:'Orbitron',sans-serif;font-size:16px;outline:none;text-align:center;box-sizing:border-box;">
+                <div style="font-size:9px;color:var(--mu);text-align:center;margin-top:4px;letter-spacing:2px;">STUNDEN</div>
+              </div>
+              <div>
+                <input id="cdMin" type="number" min="0" max="59" value="0" style="width:100%;padding:10px;background:var(--bg);border:1px solid var(--dim);border-radius:4px;color:var(--tm);font-family:'Orbitron',sans-serif;font-size:16px;outline:none;text-align:center;box-sizing:border-box;">
+                <div style="font-size:9px;color:var(--mu);text-align:center;margin-top:4px;letter-spacing:2px;">MINUTEN</div>
+              </div>
+              <div>
+                <input id="cdSec" type="number" min="0" max="59" value="0" style="width:100%;padding:10px;background:var(--bg);border:1px solid var(--dim);border-radius:4px;color:var(--tm);font-family:'Orbitron',sans-serif;font-size:16px;outline:none;text-align:center;box-sizing:border-box;">
+                <div style="font-size:9px;color:var(--mu);text-align:center;margin-top:4px;letter-spacing:2px;">SEKUNDEN</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;">
+          <button onclick="publishCountdown()" style="padding:10px 22px;border:1px solid rgba(255,210,63,.4);border-radius:4px;background:rgba(255,210,63,.1);color:#ffd23f;font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;cursor:pointer;">⏳ VERÖFFENTLICHEN</button>
+          <button onclick="clearCountdown()" style="padding:10px 22px;border:1px solid var(--dim);border-radius:4px;background:transparent;color:var(--mu);font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;cursor:pointer;">✕ ENTFERNEN</button>
+        </div>
+        <div id="cdPreview" style="display:none;margin-top:12px;padding:10px;border:1px solid rgba(255,210,63,.2);border-radius:4px;background:rgba(255,210,63,.04);font-size:11px;color:var(--mu);letter-spacing:1px;">
+          Aktiv: <span id="cdPreviewText" style="color:#ffd23f;"></span>
+        </div>
+      </div>
 
       <div class="card">
         <div class="ctitle"><span>◉</span> NEWS & UPDATES</div>
@@ -2461,7 +2503,72 @@ function showNotif(msg){
   clearTimeout(n._t);n._t=setTimeout(()=>n.classList.remove('show'),2800);
 }
 
-/* ===== EVENT SYSTEM ===== */
+/* ===== COUNTDOWN TIMER ===== */
+let cdInterval=null;
+
+function publishCountdown(){
+  const title=document.getElementById('cdTitle').value.trim();
+  const h=parseInt(document.getElementById('cdHour').value)||0;
+  const m=parseInt(document.getElementById('cdMin').value)||0;
+  const s=parseInt(document.getElementById('cdSec').value)||0;
+  const totalMs=(h*3600+m*60+s)*1000;
+  if(!title){showNotif('⚠ BITTE ÜBERSCHRIFT EINGEBEN');return;}
+  if(totalMs<=0){showNotif('⚠ BITTE ZEIT EINGEBEN');return;}
+  if(!window.fbDB){showNotif('⚠ FIREBASE NICHT VERBUNDEN');return;}
+  const endsAt=Date.now()+totalMs;
+  window.fbDB.ref('countdown').set({title,endsAt})
+    .then(()=>{
+      const fmt=String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+      showNotif('⏳ COUNTDOWN GESTARTET! '+fmt);
+      document.getElementById('cdPreview').style.display='block';
+      document.getElementById('cdPreviewText').textContent=title+' · '+fmt;
+    });
+}
+
+function clearCountdown(){
+  if(!window.fbDB)return;
+  window.fbDB.ref('countdown').remove().then(()=>{
+    showNotif('✕ COUNTDOWN ENTFERNT');
+    document.getElementById('cdPreview').style.display='none';
+  });
+}
+
+function initCountdown(){
+  if(!window.fbDB)return setTimeout(initCountdown,2000);
+  window.fbDB.ref('countdown').on('value',snap=>{
+    const data=snap.val();
+    clearInterval(cdInterval);
+    const widget=document.getElementById('cdWidget');
+    if(!data||!data.endsAt){if(widget)widget.style.display='none';return;}
+    if(widget){
+      widget.style.display='block';
+      document.getElementById('cdWidgetTitle').textContent=data.title||'';
+    }
+    // Update admin preview
+    const prev=document.getElementById('cdPreview');
+    if(prev){prev.style.display='block';document.getElementById('cdPreviewText').textContent=data.title+' → '+new Date(data.endsAt).toLocaleString('de-DE');}
+
+    function tick(){
+      const rem=Number(data.endsAt)-Date.now();
+      const el=document.getElementById('cdWidgetTime');
+      if(rem<=0){
+        clearInterval(cdInterval);
+        if(el)el.textContent='00:00:00';
+        if(widget)widget.style.display='none';
+        if(window.fbDB)window.fbDB.ref('countdown').remove();
+        return;
+      }
+      const h=Math.floor(rem/3600000);
+      const m=Math.floor((rem%3600000)/60000);
+      const s=Math.floor((rem%60000)/1000);
+      if(el)el.textContent=String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+    }
+    tick();
+    cdInterval=setInterval(tick,1000);
+  });
+}
+
+
 let activeEvent=null, eventTimerInterval=null;
 const XP_MULTIPLIER_KEY='mpXpMultiplier';
 
@@ -3127,6 +3234,7 @@ function startPanelBoot(){
     renderQuickGames();renderDashHs();updateStats();
     initFriendsSystem();
     initEventSystem();
+    initCountdown();
     setTimeout(()=>initAnnouncement(),3000);
   }
   // Animate progress bar
@@ -3162,6 +3270,7 @@ function startPanelBoot(){
           renderQuickGames();renderDashHs();updateStats();
           initFriendsSystem();
           initEventSystem();
+          initCountdown();
           setTimeout(()=>initAnnouncement(),3000);
         },700);
       },400);
