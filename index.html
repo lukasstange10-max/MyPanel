@@ -1343,8 +1343,6 @@ body.disco-mode .nav-logo,body.disco-mode .ctitle,body.disco-mode #username{anim
         </div>
       </div>
 
-    </div>
-
       <!-- COUNTDOWN TIMER ADMIN -->
       <div class="card" style="border-color:rgba(255,210,63,.2);">
         <div class="ctitle" style="color:#ffd23f;"><span>⏳</span> ADMIN — COUNTDOWN TIMER</div>
@@ -1381,6 +1379,10 @@ body.disco-mode .nav-logo,body.disco-mode .ctitle,body.disco-mode #username{anim
         </div>
       </div>
 
+    </div>
+
+    <!-- NEWS SECTION -->
+    <div id="sec-news" style="display:none;">
       <div class="card">
         <div class="ctitle"><span>◉</span> NEWS & UPDATES</div>
         <div class="newsitem"><span>🌀 Neues Spiel: NEON VORTEX ist da!</span><span class="news-tag">NEU</span></div>
@@ -1390,13 +1392,15 @@ body.disco-mode .nav-logo,body.disco-mode .ctitle,body.disco-mode #username{anim
         <div class="newsitem"><span>🌐 Freunde-System mit Online-Status</span><span class="news-tag">UPDATE</span></div>
         <div class="newsitem"><span>🎨 Theme Switcher — 4 Neon-Themen</span><span class="news-tag">UPDATE</span></div>
         <div class="newsitem"><span>🏎️ Arcade Racing + 🔤 Wordle hinzugefügt</span><span class="news-tag">UPDATE</span></div>
+        <div class="newsitem"><span>🪳 LA CUCARACHA Event hinzugefügt</span><span class="news-tag">NEU</span></div>
+        <div class="newsitem"><span>⏳ Countdown Timer für Admins</span><span class="news-tag">NEU</span></div>
       </div>
     </div>
 
   </div>
 </div>
 
-<!-- GAME OVERLAY -->
+
 <div class="overlay" id="gameOverlay">
   <div class="ov-content">
     <button class="closebtn" onclick="closeGame()">✕ SCHLIESSEN</button>
@@ -2873,7 +2877,7 @@ function applyEvent(event){
   if(box){box.style.display='block';box.style.pointerEvents='auto';}
   if(nameEl)nameEl.textContent=event.name;
   const stopBtn=document.getElementById('eventStopBtn');
-  if(stopBtn)stopBtn.style.display='block';
+  if(stopBtn){const p=getProfile();const name=(p?p.username:'').toUpperCase();stopBtn.style.display=name===ADMIN_NAME?'block':'none';}
 
   // Save event to localStorage as backup
   localStorage.setItem('mpActiveEvent', JSON.stringify(event));
