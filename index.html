@@ -2830,6 +2830,26 @@ function initEventSystem(){
     }
     applyEvent(event);
   });
+
+  // 🪩 AUTO-DISCO: every hour at :00 for 10 minutes
+  function checkAutoDisco(){
+    if(!window.fbDB)return;
+    window.fbDB.ref('activeEvent').once('value',snap=>{
+      if(snap.val())return; // don't override manual events
+      if(new Date().getMinutes()===0){
+        const now=Date.now();
+        window.fbDB.ref('activeEvent').set({
+          type:'disco',name:'🪩 DISCO MODE',
+          startedAt:now,duration:10,
+          endsAt:now+10*60*1000,
+          xpMultiplier:2,startedBy:'AUTO'
+        });
+        showNotif('🪩 AUTO-DISCO! 10 Minuten · 2x XP!');
+      }
+    });
+  }
+  setInterval(checkAutoDisco,60*1000);
+  checkAutoDisco();
 }
 
 // Patch autoSaveScore to apply XP multiplier to every score
