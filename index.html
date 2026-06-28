@@ -2606,6 +2606,36 @@ function stopTacoMusic(){
   if(tacoYTPlayer){try{tacoYTPlayer.pauseVideo();}catch(e){}}
 }
 
+function startCucaracha(){
+  const c=document.getElementById('cuckContainer');
+  if(!c)return;
+  c.style.display='block';c.innerHTML='';
+  const sides=['left','right','top','bottom'];
+  const anims={left:'cuckFromLeft',right:'cuckFromRight',top:'cuckFromTop',bottom:'cuckFromBot'};
+  function spawnCuck(){
+    const side=sides[Math.floor(Math.random()*4)];
+    const el=document.createElement('div');
+    el.className='cuck';
+    const size=20+Math.random()*30;
+    const dur=2+Math.random()*4;
+    let posStyle='';
+    if(side==='left'||side==='right') posStyle=`top:${Math.random()*90}vh`;
+    else posStyle=`left:${Math.random()*90}vw`;
+    el.style.cssText=`font-size:${size}px;${posStyle};animation-name:${anims[side]};animation-duration:${dur}s;`;
+    el.textContent='🪳';
+    c.appendChild(el);
+    setTimeout(()=>el.remove(),dur*1000+200);
+  }
+  for(let i=0;i<12;i++)setTimeout(spawnCuck,i*150);
+  cuckInterval=setInterval(spawnCuck,400);
+}
+
+function stopCucaracha(){
+  clearInterval(cuckInterval);cuckInterval=null;
+  const c=document.getElementById('cuckContainer');
+  if(c){c.style.display='none';c.innerHTML='';}
+}
+
 function startCuckMusic(){
   cuckShouldPlay=true;
   if(cuckYTPlayer&&cuckYTReady){try{cuckYTPlayer.seekTo(CUCK_YT_START,true);cuckYTPlayer.playVideo();}catch(e){}return;}
