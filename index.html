@@ -2589,8 +2589,7 @@ function initEventSystem(){
   if(!window.fbDB)return setTimeout(initEventSystem,2000);
   window.fbDB.ref('activeEvent').on('value',snap=>{
     const event=snap.val();
-    if(event&&event.endsAt<Date.now()){
-      // Auto-clean expired events
+    if(event&&parseInt(event.endsAt)<Date.now()){
       window.fbDB.ref('activeEvent').remove();
       applyEvent(null);
       return;
