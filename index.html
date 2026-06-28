@@ -641,14 +641,30 @@ iframe{width:100%;height:100%;border:none;}
 .comment-author{font-family:'Orbitron',sans-serif;font-size:10px;color:var(--c);letter-spacing:2px;}
 .comment-text{font-size:13px;color:var(--tm);margin-top:4px;}
 .comment-time{font-size:10px;color:var(--mu);margin-top:3px;font-family:'Share Tech Mono',monospace;}
+/* ===== DISCO EVENT ===== */
+@keyframes discoHue{0%{filter:hue-rotate(0deg) brightness(1.1);}100%{filter:hue-rotate(360deg) brightness(1.1);}}
+@keyframes discoBg{0%,100%{background:rgba(255,0,200,.06);}25%{background:rgba(255,150,0,.06);}50%{background:rgba(0,255,150,.06);}75%{background:rgba(0,150,255,.06);}}
+@keyframes discoText{0%{color:#ff00cc;text-shadow:0 0 20px #ff00cc;}25%{color:#ffaa00;text-shadow:0 0 20px #ffaa00;}50%{color:#00ff88;text-shadow:0 0 20px #00ff88;}75%{color:#00ccff;text-shadow:0 0 20px #00ccff;}100%{color:#ff00cc;text-shadow:0 0 20px #ff00cc;}}
+@keyframes discoBall{0%,100%{transform:translate(-50%,-50%) scale(1) rotate(0deg);}50%{transform:translate(-50%,-50%) scale(1.15) rotate(180deg);}}
+@keyframes discoFlash{0%,100%{opacity:0;}50%{opacity:.08;}}
+body.disco-mode{animation:discoHue 4s linear infinite;}
+body.disco-mode .nav-logo,body.disco-mode .ctitle span,body.disco-mode #username{animation:discoText 1s linear infinite;}
+body.disco-mode .card{animation:discoBg 2s ease-in-out infinite;}
+#discoBall{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);font-size:100px;z-index:99990;pointer-events:none;animation:discoBall 3s ease-in-out infinite;}
+#discoFlash{display:none;position:fixed;inset:0;z-index:99989;pointer-events:none;animation:discoFlash .4s ease-in-out infinite;background:radial-gradient(circle at 50% 30%,rgba(255,0,200,.25),transparent 60%);}
+#eventBanner{display:none;position:fixed;bottom:0;left:0;right:0;z-index:99992;pointer-events:none;text-align:center;padding:10px;font-family:'Orbitron',sans-serif;font-size:clamp(12px,2vw,16px);font-weight:900;letter-spacing:3px;border-top:2px solid;}
 
 </style>
-</head>
 <body>
 
 <!-- SIDEBAR TOGGLE (mobile) -->
 <button id="sidebarToggle" onclick="toggleSidebar()">☰</button>
 <div id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<!-- EVENT ELEMENTS -->
+<div id="discoBall">🪩</div>
+<div id="discoFlash"></div>
+<div id="eventBanner"></div>
 <div id="page-trailer">
 <div id="particles"></div>
 
@@ -1236,6 +1252,35 @@ iframe{width:100%;height:100%;border:none;}
           <div id="annPreviewText" style="color:#00e5ff;"></div>
         </div>
       </div>
+
+      <!-- EVENTS -->
+      <div class="card" style="border-color:rgba(191,0,255,.25);">
+        <div class="ctitle" style="color:#bf00ff;"><span>🎉</span> ADMIN — EVENTS</div>
+        <p style="color:var(--mu);font-size:12px;margin-bottom:16px;letter-spacing:1px;">Starte globale Events für alle Spieler. Events geben Boni und verändern das Aussehen der Web.</p>
+
+        <!-- Active Event Display -->
+        <div id="activeEventBox" style="display:none;padding:14px;border:1px solid rgba(191,0,255,.4);border-radius:4px;background:rgba(191,0,255,.08);margin-bottom:16px;">
+          <div style="font-family:'Orbitron',sans-serif;font-size:11px;color:#bf00ff;letter-spacing:2px;margin-bottom:6px;">🟢 AKTIVES EVENT</div>
+          <div id="activeEventName" style="font-family:'Orbitron',sans-serif;font-size:18px;font-weight:900;color:#fff;"></div>
+          <div id="activeEventTimer" style="font-size:12px;color:var(--mu);margin-top:4px;letter-spacing:1px;"></div>
+          <button onclick="stopEvent()" style="margin-top:10px;padding:7px 16px;border:1px solid rgba(255,43,109,.4);border-radius:3px;background:rgba(255,43,109,.08);color:#ff2b6d;font-family:'Orbitron',sans-serif;font-size:10px;cursor:pointer;letter-spacing:2px;">⏹ EVENT STOPPEN</button>
+        </div>
+
+        <!-- Event Buttons -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="event-card" onclick="startEvent('disco')" style="padding:20px;border:2px solid rgba(255,0,200,.4);border-radius:6px;background:linear-gradient(135deg,rgba(255,0,200,.08),rgba(100,0,255,.08));cursor:pointer;text-align:center;transition:.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform=''">
+            <div style="font-size:40px;margin-bottom:8px;">🪩</div>
+            <div style="font-family:'Orbitron',sans-serif;font-size:13px;font-weight:900;color:#ff00cc;letter-spacing:2px;">DISCO</div>
+            <div style="font-size:11px;color:var(--mu);margin-top:6px;line-height:1.5;">Regenbogen-Farben · Disco-Ball · <span style="color:#ffd23f;font-weight:700;">2x XP</span></div>
+          </div>
+          <div class="event-card" style="padding:20px;border:2px dashed rgba(255,255,255,.1);border-radius:6px;background:rgba(255,255,255,.02);cursor:not-allowed;text-align:center;opacity:.4;">
+            <div style="font-size:40px;margin-bottom:8px;">⚡</div>
+            <div style="font-family:'Orbitron',sans-serif;font-size:13px;font-weight:900;color:var(--mu);letter-spacing:2px;">MEHR KOMMT</div>
+            <div style="font-size:11px;color:var(--mu);margin-top:6px;">In Entwicklung...</div>
+          </div>
+        </div>
+      </div>
+
     </div>
 
 
@@ -2391,7 +2436,127 @@ function showNotif(msg){
   clearTimeout(n._t);n._t=setTimeout(()=>n.classList.remove('show'),2800);
 }
 
-/* ===== SYNTHWAVE MUSIC PLAYER (Web Audio API) ===== */
+/* ===== EVENT SYSTEM ===== */
+let activeEvent=null, eventTimerInterval=null;
+const XP_MULTIPLIER_KEY='mpXpMultiplier';
+
+function startEvent(type){
+  if(!window.fbDB){showNotif('⚠ FIREBASE NICHT VERBUNDEN');return;}
+  const durInput=prompt('⏱ WIE LANGE SOLL DAS EVENT DAUERN?\n(Minuten eingeben, z.B. 30)');
+  if(!durInput||isNaN(durInput))return;
+  const minutes=parseInt(durInput);
+  if(minutes<1||minutes>1440){showNotif('⚠ ZWISCHEN 1 UND 1440 MINUTEN');return;}
+  const now=Date.now();
+  const event={
+    type,
+    name:type==='disco'?'🪩 DISCO MODE':'EVENT',
+    startedAt:now,
+    duration:minutes,
+    endsAt:now+minutes*60*1000,
+    xpMultiplier:2,
+    startedBy:getMyName()
+  };
+  window.fbDB.ref('activeEvent').set(event)
+    .then(()=>showNotif('🎉 '+event.name+' GESTARTET für '+minutes+' Minuten!'))
+    .catch(()=>showNotif('⚠ FEHLER'));
+}
+
+function stopEvent(){
+  if(!window.fbDB)return;
+  window.fbDB.ref('activeEvent').remove()
+    .then(()=>{showNotif('⏹ EVENT GESTOPPT');})
+    .catch(()=>showNotif('⚠ FEHLER'));
+}
+
+function applyEvent(event){
+  activeEvent=event;
+  if(!event){
+    // No event — reset
+    document.body.classList.remove('disco-mode');
+    document.getElementById('discoBall').style.display='none';
+    document.getElementById('discoFlash').style.display='none';
+    document.getElementById('eventBanner').style.display='none';
+    localStorage.removeItem(XP_MULTIPLIER_KEY);
+    clearInterval(eventTimerInterval);
+    // Update admin UI
+    const box=document.getElementById('activeEventBox');
+    if(box)box.style.display='none';
+    return;
+  }
+
+  // Store XP multiplier for games
+  localStorage.setItem(XP_MULTIPLIER_KEY, String(event.xpMultiplier||2));
+
+  if(event.type==='disco'){
+    document.body.classList.add('disco-mode');
+    document.getElementById('discoBall').style.display='block';
+    document.getElementById('discoFlash').style.display='block';
+    const banner=document.getElementById('eventBanner');
+    banner.style.display='block';
+    banner.style.background='linear-gradient(90deg,rgba(255,0,200,.15),rgba(100,0,255,.15),rgba(0,200,255,.15))';
+    banner.style.borderColor='#ff00cc';
+    banner.style.color='#fff';
+    banner.textContent='🪩 DISCO MODE AKTIV · 2x XP · 🎉';
+  }
+
+  // Update admin UI
+  const box=document.getElementById('activeEventBox');
+  const nameEl=document.getElementById('activeEventName');
+  const timerEl=document.getElementById('activeEventTimer');
+  if(box)box.style.display='block';
+  if(nameEl)nameEl.textContent=event.name;
+
+  // Countdown timer
+  clearInterval(eventTimerInterval);
+  eventTimerInterval=setInterval(()=>{
+    const remaining=event.endsAt-Date.now();
+    if(remaining<=0){
+      clearInterval(eventTimerInterval);
+      if(timerEl)timerEl.textContent='EVENT BEENDET';
+      return;
+    }
+    const m=Math.floor(remaining/60000);
+    const s=Math.floor((remaining%60000)/1000);
+    if(timerEl)timerEl.textContent='NOCH '+m+'m '+s+'s · 2x XP AKTIV';
+  },1000);
+}
+
+function initEventSystem(){
+  if(!window.fbDB)return setTimeout(initEventSystem,2000);
+  window.fbDB.ref('activeEvent').on('value',snap=>{
+    const event=snap.val();
+    if(event&&event.endsAt<Date.now()){
+      // Auto-clean expired events
+      window.fbDB.ref('activeEvent').remove();
+      applyEvent(null);
+      return;
+    }
+    applyEvent(event);
+  });
+}
+
+// Patch autoSaveScore to apply XP multiplier
+const _origAutoSave=window.autoSaveScore||null;
+function autoSaveScore(gameName,score){
+  const mult=parseFloat(localStorage.getItem(XP_MULTIPLIER_KEY)||'1');
+  const boostedScore=Math.floor(score*mult);
+  if(mult>1) showNotif('🎉 2x XP! '+Math.floor(score)+' → '+boostedScore+' PUNKTE!');
+  // Call original logic with boosted score
+  const p=getProfile();
+  const player=(p?p.username:localStorage.getItem('username')||'MYPANEL USER').toUpperCase();
+  if(!boostedScore||boostedScore<=0)return;
+  const scores=getScores();
+  const prevBest=scores.filter(s=>s.player===player&&s.game===gameName).sort((a,b)=>b.score-a.score);
+  if(prevBest.length>0&&boostedScore<=prevBest[0].score)return;
+  const filtered=scores.filter(s=>!(s.player===player&&s.game===gameName));
+  filtered.push({player,game:gameName,score:boostedScore,date:new Date().toLocaleDateString('de-DE')});
+  filtered.sort((a,b)=>b.score-a.score);
+  saveScores(filtered.slice(0,100));
+  renderHsTable('all');renderDashHs();updateStats();
+  pushScoreToFirebase(player,gameName,boostedScore);
+}
+
+
 let audioCtx=null, masterGain=null, isPlaying=false, trackIdx=0;
 let currentNodes=[], animFrame=null;
 
@@ -2644,33 +2809,34 @@ function startPanelBoot(){
     checkAndInitProfile();
     renderQuickGames();renderDashHs();updateStats();
     initFriendsSystem();
+    initEventSystem();
     setTimeout(()=>initAnnouncement(),3000);
-    return;
   }
   // Animate progress bar
   const barfill=loader.querySelector('.barfill');
   const pct=document.getElementById('loadpct');
   const blines=loader.querySelectorAll('.bline');
   let p=0, lineIdx=0;
-  // Show boot lines one by one
   blines.forEach(l=>l.style.opacity='0');
   const lineInterval=setInterval(()=>{
     if(lineIdx<blines.length){
       blines[lineIdx].style.opacity='1';
-      blines[lineIdx].style.transition='opacity .4s';
+      blines[lineIdx].style.transition='opacity .5s';
       lineIdx++;
     }
-  },500);
-  // Animate progress — slow and dramatic
+  },800);
   const pInterval=setInterval(()=>{
-    p=Math.min(100,p+Math.random()*2.5+0.8);
+    p=Math.min(100, p + Math.random()*2.5+1.5);
     if(barfill)barfill.style.width=p+'%';
     if(pct)pct.textContent=Math.floor(p)+'%';
     if(p>=100){
       clearInterval(pInterval);
       clearInterval(lineInterval);
+      blines.forEach(l=>l.style.opacity='1');
+      if(barfill)barfill.style.width='100%';
+      if(pct)pct.textContent='100%';
       setTimeout(()=>{
-        loader.style.transition='opacity .8s';
+        loader.style.transition='opacity .7s';
         loader.style.opacity='0';
         setTimeout(()=>{
           loader.style.display='none';
@@ -2678,15 +2844,37 @@ function startPanelBoot(){
           checkAndInitProfile();
           renderQuickGames();renderDashHs();updateStats();
           initFriendsSystem();
+          initEventSystem();
           setTimeout(()=>initAnnouncement(),3000);
-        },800);
-      },800);
+        },700);
+      },400);
     }
-  },120);
+  },150);
 }
 
-function startBootLog(){} // handled inside startPanelBoot
-function startProgressBar(){} // handled inside startPanelBoot
+function saveBootSpeed(v){
+  localStorage.setItem('mpBootSpeed',v);
+  document.getElementById('bootSpeedLabel').textContent='GESCHWINDIGKEIT: '+v;
+}
+function testBoot(){
+  const loader=document.getElementById('loader');
+  const app=document.getElementById('app');
+  if(loader){loader.style.opacity='1';loader.style.display='flex';}
+  if(app)app.style.opacity='0';
+  startPanelBoot();
+}
+// Init slider value
+(function(){
+  const saved=localStorage.getItem('mpBootSpeed')||'5';
+  const sl=document.getElementById('bootSpeedSlider');
+  if(sl)sl.value=saved;
+  const lb=document.getElementById('bootSpeedLabel');
+  if(lb)lb.textContent='GESCHWINDIGKEIT: '+saved;
+})();
+
+function getBootSpeed(){return parseInt(localStorage.getItem('mpBootSpeed')||'5');}
+
+
 
 </script>
 </body>
