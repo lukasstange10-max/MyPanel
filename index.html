@@ -2462,6 +2462,13 @@ function startEvent(type){
     xpMultiplier:2,
     startedBy:getMyName()
   };
+  // Pre-trigger music here (user interaction context = no autoplay block)
+  if(type==='disco'){
+    discoShouldPlay=true;
+    if(discoYTReady&&discoYTPlayer){
+      try{discoYTPlayer.seekTo(DISCO_YT_START,true);discoYTPlayer.playVideo();}catch(e){}
+    }
+  }
   window.fbDB.ref('activeEvent').set(event)
     .then(()=>showNotif('🎉 '+event.name+' GESTARTET für '+minutes+' Minuten!'))
     .catch(()=>showNotif('⚠ FEHLER'));
@@ -2556,13 +2563,23 @@ function applyEvent(event){
     const timer=document.getElementById('eventTimer');
     if(timer)timer.style.display='block';
     // Start disco music
-    if(!discoMusicCtx)startDiscoMusic();
+    startDiscoMusic();
   }
 
   const box=document.getElementById('activeEventBox');
   const nameEl=document.getElementById('activeEventName');
-  if(box)box.style.display='block';
+  if(box){box.style.display='block';box.style.pointerEvents='auto';}
   if(nameEl)nameEl.textContent=event.name;
+
+  // Show timer immediately
+  const countElNow=document.getElementById('eventTimerCount');
+  if(countElNow){
+    const rem=parseInt(event.endsAt)-Date.now();
+    if(rem>0){
+      const mn=Math.floor(rem/60000),sn=Math.floor((rem%60000)/1000);
+      countElNow.textContent=String(mn).padStart(2,'0')+':'+String(sn).padStart(2,'0');
+    }
+  }
 
   clearInterval(eventTimerInterval);
   eventTimerInterval=setInterval(()=>{
