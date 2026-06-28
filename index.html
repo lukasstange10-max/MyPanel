@@ -669,19 +669,16 @@ body.disco-mode .nav-logo,body.disco-mode .ctitle,body.disco-mode #username{anim
 .taco-drop{position:fixed;top:0;z-index:99985;pointer-events:none;font-size:40px;animation:tacoFall linear infinite, tacoSway ease-in-out infinite;user-select:none;}
 #tacoContainer{display:none;position:fixed;inset:0;z-index:99985;pointer-events:none;overflow:hidden;}
 
-/* ===== CYBER UNIVERSUM EVENT ===== */
-@keyframes starFloat{0%{transform:translateY(0) scale(1);opacity:.8;}50%{opacity:1;}100%{transform:translateY(-100vh) scale(.3);opacity:0;}}
-@keyframes galaxySpin{0%{transform:translate(-50%,-50%) rotate(0deg) scale(1);}100%{transform:translate(-50%,-50%) rotate(360deg) scale(1);}}
-@keyframes shootingStar{0%{transform:translate(0,0) rotate(-45deg);opacity:1;width:0;}100%{transform:translate(-300px,300px) rotate(-45deg);opacity:0;width:200px;}}
-@keyframes cyberPulse{0%,100%{background:rgba(0,30,80,.92);}50%{background:rgba(20,0,80,.92);}}
-@keyframes cyberText{0%{color:#6699ff;text-shadow:0 0 15px #6699ff;}50%{color:#aa44ff;text-shadow:0 0 15px #aa44ff;}100%{color:#6699ff;text-shadow:0 0 15px #6699ff;}}
-body.cyber-mode{background:radial-gradient(ellipse at center,#000820,#000)!important;animation:cyberPulse 4s ease-in-out infinite;}
-body.cyber-mode .card{background:rgba(0,10,40,.8)!important;border-color:rgba(100,150,255,.2)!important;}
-body.cyber-mode .nav-logo,body.cyber-mode .ctitle,body.cyber-mode #username{animation:cyberText 2s linear infinite!important;}
-#cyberContainer{display:none;position:fixed;inset:0;z-index:99984;pointer-events:none;overflow:hidden;}
-.cyber-star{position:absolute;border-radius:50%;pointer-events:none;animation:starFloat linear infinite;}
-.cyber-galaxy{position:absolute;pointer-events:none;font-size:60px;animation:galaxySpin 8s linear infinite;opacity:.5;}
-.cyber-shooting{position:fixed;height:2px;background:linear-gradient(90deg,transparent,#fff,#6699ff);border-radius:2px;pointer-events:none;animation:shootingStar 1.5s ease-in forwards;}
+
+/* ===== LA CUCARACHA EVENT ===== */
+@keyframes cuckFromLeft{0%{transform:translateX(-120px) rotate(0deg);}100%{transform:translateX(110vw) rotate(720deg);}}
+@keyframes cuckFromRight{0%{transform:translateX(110vw) rotate(0deg);}100%{transform:translateX(-120px) rotate(-720deg);}}
+@keyframes cuckFromTop{0%{transform:translateY(-120px) rotate(0deg);}100%{transform:translateY(110vh) rotate(540deg);}}
+@keyframes cuckFromBot{0%{transform:translateY(110vh) rotate(0deg);}100%{transform:translateY(-120px) rotate(-540deg);}}
+@keyframes cuckWiggle{0%,100%{margin-top:-10px;}50%{margin-top:10px;}}
+.cuck{position:fixed;z-index:99986;pointer-events:none;font-size:32px;user-select:none;animation-timing-function:linear;animation-iteration-count:1;}
+#cuckContainer{display:none;position:fixed;inset:0;z-index:99986;pointer-events:none;overflow:hidden;}
+
 
 </style>
 <body>
@@ -695,11 +692,12 @@ body.cyber-mode .nav-logo,body.cyber-mode .ctitle,body.cyber-mode #username{anim
 <div id="discoString"></div>
 <div id="discoFlash"></div>
 <div id="tacoContainer"></div>
-<div id="cyberContainer"></div>
+<div id="cuckContainer"></div>
 <div id="eventBanner"></div>
 <div id="eventTimer"><div id="eventTimerLabel">🎉 EVENT ENDET IN</div><div id="eventTimerCount">--:--</div></div>
-<div id="ytDiscoWrap" style="position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;overflow:hidden;"></div>
-<div id="ytTacoWrap" style="position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;overflow:hidden;"></div>
+<div id="ytDiscoWrap" style="position:fixed;left:-9999px;top:-9999px;width:200px;height:200px;overflow:hidden;opacity:0;"></div>
+<div id="ytTacoWrap" style="position:fixed;left:-9999px;top:-9999px;width:200px;height:200px;overflow:hidden;opacity:0;"></div>
+<div id="ytCuckWrap" style="position:fixed;left:-9999px;top:-9999px;width:200px;height:200px;overflow:hidden;opacity:0;"></div>
 <div id="eventStopBtn" onclick="stopEvent()" style="display:none;position:fixed;top:16px;right:16px;z-index:99997;padding:10px 18px;font-family:'Orbitron',sans-serif;font-size:11px;font-weight:900;letter-spacing:2px;color:#fff;background:rgba(255,43,109,.85);border:2px solid #ff2b6d;border-radius:8px;cursor:pointer;box-shadow:0 0 20px rgba(255,43,109,.5);pointer-events:auto;">⏹ EVENT STOPPEN</div>
 <div id="page-trailer">
 <div id="particles"></div>
@@ -1329,10 +1327,11 @@ body.cyber-mode .nav-logo,body.cyber-mode .ctitle,body.cyber-mode #username{anim
             <div style="font-family:'Orbitron',sans-serif;font-size:13px;font-weight:900;color:#ffb400;letter-spacing:2px;">TACO RAIN</div>
             <div style="font-size:11px;color:var(--mu);margin-top:6px;line-height:1.5;">Tacos fallen vom Himmel · <span style="color:#ffd23f;font-weight:700;">3x XP</span></div>
           </div>
-          <div class="event-card" onclick="startEvent('cyber')" style="padding:20px;border:2px solid rgba(0,150,255,.5);border-radius:6px;background:linear-gradient(135deg,rgba(0,50,150,.15),rgba(100,0,255,.1));cursor:pointer;text-align:center;transition:.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform=''">
-            <div style="font-size:40px;margin-bottom:8px;">🌌</div>
-            <div style="font-family:'Orbitron',sans-serif;font-size:13px;font-weight:900;color:#6699ff;letter-spacing:2px;">CYBER UNIVERSUM</div>
-            <div style="font-size:11px;color:var(--mu);margin-top:6px;line-height:1.5;">Galaxien & Sterne · <span style="color:#ffd23f;font-weight:700;">4x XP</span></div>
+
+          <div class="event-card" onclick="startEvent('cucaracha')" style="padding:20px;border:2px solid rgba(100,80,20,.6);border-radius:6px;background:linear-gradient(135deg,rgba(80,60,10,.2),rgba(40,30,5,.15));cursor:pointer;text-align:center;transition:.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform=''">
+            <div style="font-size:40px;margin-bottom:8px;">🪳</div>
+            <div style="font-family:'Orbitron',sans-serif;font-size:13px;font-weight:900;color:#c8a020;letter-spacing:2px;">LA CUCARACHA</div>
+            <div style="font-size:11px;color:var(--mu);margin-top:6px;line-height:1.5;">Kakerlaken überall · <span style="color:#ffd23f;font-weight:700;">4x XP</span></div>
           </div>
         </div>
       </div>
@@ -2475,14 +2474,14 @@ function startEvent(type){
   const now=Date.now();
   const event={
     type,
-    name:type==='disco'?'🪩 DISCO MODE':type==='taco'?'🌮 TACO RAIN':type==='cyber'?'🌌 CYBER UNIVERSUM':'EVENT',
+    name:type==='disco'?'🪩 DISCO MODE':type==='taco'?'🌮 TACO RAIN':type==='cucaracha'?'🪳 LA CUCARACHA':'EVENT',
     startedAt:now,duration:minutes,endsAt:now+minutes*60*1000,
-    xpMultiplier:type==='taco'?3:type==='cyber'?4:2,
+    xpMultiplier:type==='taco'?3:type==='cucaracha'?4:2,
     startedBy:getMyName()
   };
   if(type==='disco'){discoShouldPlay=true;if(discoYTReady&&discoYTPlayer){try{discoYTPlayer.seekTo(DISCO_YT_START,true);discoYTPlayer.playVideo();}catch(e){}}}
   if(type==='taco'){tacoShouldPlay=true;if(tacoYTReady&&tacoYTPlayer){try{tacoYTPlayer.seekTo(TACO_YT_START,true);tacoYTPlayer.playVideo();}catch(e){}}}
-  if(type==='cyber'){cyberShouldPlay=true;if(cyberYTReady&&cyberYTPlayer){try{cyberYTPlayer.seekTo(CYBER_YT_START,true);cyberYTPlayer.playVideo();}catch(e){}}}
+  if(type==='cucaracha'){cuckShouldPlay=true;if(cuckYTReady&&cuckYTPlayer){try{cuckYTPlayer.seekTo(CUCK_YT_START,true);cuckYTPlayer.playVideo();}catch(e){}}}
   window.fbDB.ref('activeEvent').set(event)
     .then(()=>showNotif('🎉 '+event.name+' GESTARTET für '+minutes+' Minuten!'))
     .catch(()=>showNotif('⚠ FEHLER'));
@@ -2504,12 +2503,12 @@ const DISCO_YT_ID='cE0wfjsybIQ';
 const DISCO_YT_START=30;
 const TACO_YT_ID='W-3DWBv0CvU';
 const TACO_YT_START=0;
-const CYBER_YT_ID='eNS4BlsrYVc';
-const CYBER_YT_START=0;
+const CUCK_YT_ID='SHYUkAthMN0';
+const CUCK_YT_START=0;
 let discoYTPlayer=null,discoYTReady=false,discoShouldPlay=false;
 let tacoYTPlayer=null,tacoYTReady=false,tacoShouldPlay=false;
-let cyberYTPlayer=null,cyberYTReady=false,cyberShouldPlay=false;
-let tacoInterval=null,cyberInterval=null;
+let cuckYTPlayer=null,cuckYTReady=false,cuckShouldPlay=false;
+let tacoInterval=null,cuckInterval=null;
 
 // Load YouTube API on page load
 (function(){
@@ -2556,16 +2555,16 @@ window.onYouTubeIframeAPIReady=function(){
       }
     });
   }
-  // Cyber player
-  const cw=document.getElementById('ytCyberWrap');
-  if(cw){
-    cw.innerHTML='<div id="ytCyberIframe"></div>';
-    cyberYTPlayer=new YT.Player('ytCyberIframe',{
-      height:'200',width:'200',videoId:CYBER_YT_ID,
-      playerVars:{autoplay:0,start:CYBER_YT_START,controls:0,rel:0,playsinline:1,origin:location.origin||'https://lukasstange10-max.github.io'},
+  // Cucaracha player
+  const ckw=document.getElementById('ytCuckWrap');
+  if(ckw){
+    ckw.innerHTML='<div id="ytCuckIframe"></div>';
+    cuckYTPlayer=new YT.Player('ytCuckIframe',{
+      height:'200',width:'200',videoId:CUCK_YT_ID,
+      playerVars:{autoplay:0,start:CUCK_YT_START,controls:0,rel:0,playsinline:1,origin:location.origin||'https://lukasstange10-max.github.io'},
       events:{
-        onReady(e){cyberYTReady=true;e.target.setVolume(80);if(cyberShouldPlay)e.target.playVideo();},
-        onStateChange(e){if(e.data===YT.PlayerState.ENDED){e.target.seekTo(CYBER_YT_START,true);e.target.playVideo();}}
+        onReady(e){cuckYTReady=true;e.target.setVolume(85);if(cuckShouldPlay)e.target.playVideo();},
+        onStateChange(e){if(e.data===YT.PlayerState.ENDED){e.target.seekTo(CUCK_YT_START,true);e.target.playVideo();}}
       }
     });
   }
@@ -2587,85 +2586,6 @@ function startDiscoMusic(){
 function stopDiscoMusic(){
   discoShouldPlay=false;
   if(discoYTPlayer){try{discoYTPlayer.pauseVideo();}catch(e){}}
-}
-function startCyberMusic(){
-  cyberShouldPlay=true;
-  if(cyberYTPlayer&&cyberYTReady){
-    try{cyberYTPlayer.seekTo(CYBER_YT_START,true);cyberYTPlayer.playVideo();}catch(e){}
-    return;
-  }
-  // If YT API already loaded, create player now
-  if(window.YT&&window.YT.Player){
-    const cw=document.getElementById('ytCyberWrap');
-    if(cw&&!cyberYTPlayer){
-      cw.innerHTML='<div id="ytCyberIframe2"></div>';
-      cyberYTPlayer=new YT.Player('ytCyberIframe2',{
-        height:'200',width:'200',videoId:CYBER_YT_ID,
-        playerVars:{autoplay:1,start:CYBER_YT_START,controls:0,rel:0,playsinline:1,origin:location.origin||'https://lukasstange10-max.github.io'},
-        events:{
-          onReady(e){cyberYTReady=true;e.target.setVolume(80);e.target.playVideo();},
-          onStateChange(e){if(e.data===YT.PlayerState.ENDED){e.target.seekTo(CYBER_YT_START,true);e.target.playVideo();}}
-        }
-      });
-    }
-  }
-}
-function stopCyberMusic(){
-  cyberShouldPlay=false;
-  if(cyberYTPlayer){try{cyberYTPlayer.pauseVideo();}catch(e){}}
-}
-
-function startCyberUniverse(){
-  const c=document.getElementById('cyberContainer');
-  if(!c)return;
-  c.style.display='block';c.innerHTML='';
-  const colors=['#6699ff','#aa44ff','#00ccff','#ff44aa','#44ffcc','#ffaa00'];
-  // Spawn stars
-  function spawnStar(){
-    const s=document.createElement('div');
-    s.className='cyber-star';
-    const size=1+Math.random()*4;
-    const col=colors[Math.floor(Math.random()*colors.length)];
-    const dur=3+Math.random()*8;
-    s.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*100}%;width:${size}px;height:${size}px;background:${col};box-shadow:0 0 ${size*3}px ${col};animation-duration:${dur}s;animation-delay:-${Math.random()*dur}s;`;
-    c.appendChild(s);
-    setTimeout(()=>s.remove(),dur*1000);
-  }
-  // Spawn galaxies
-  function spawnGalaxy(){
-    const g=document.createElement('div');
-    g.className='cyber-galaxy';
-    const emojis=['🌌','✨','⭐','🌟','💫','🪐','☄️'];
-    g.textContent=emojis[Math.floor(Math.random()*emojis.length)];
-    g.style.cssText=`left:${Math.random()*90}%;top:${Math.random()*90}%;animation-duration:${6+Math.random()*8}s;font-size:${30+Math.random()*50}px;`;
-    c.appendChild(g);
-    setTimeout(()=>g.remove(),12000);
-  }
-  // Spawn shooting stars
-  function spawnShooting(){
-    const s=document.createElement('div');
-    s.className='cyber-shooting';
-    s.style.cssText=`top:${Math.random()*60}%;left:${20+Math.random()*60}%;`;
-    document.body.appendChild(s);
-    setTimeout(()=>s.remove(),1500);
-  }
-  // Initial burst
-  for(let i=0;i<40;i++)setTimeout(spawnStar,i*50);
-  for(let i=0;i<6;i++)setTimeout(spawnGalaxy,i*300);
-  // Continuous
-  cyberInterval=setInterval(()=>{
-    spawnStar();
-    if(Math.random()>.6)spawnGalaxy();
-    if(Math.random()>.7)spawnShooting();
-  },200);
-}
-
-function stopCyberUniverse(){
-  clearInterval(cyberInterval);cyberInterval=null;
-  const c=document.getElementById('cyberContainer');
-  if(c){c.style.display='none';c.innerHTML='';}
-  // Remove any shooting stars
-  document.querySelectorAll('.cyber-shooting').forEach(s=>s.remove());
 }
 
 function startTacoMusic(){
@@ -2719,8 +2639,8 @@ function stopTacoRain(){
 function applyEvent(event){
   activeEvent=event;
   if(!event){
-    try{document.body.classList.remove('disco-mode','cyber-mode');}catch(e){}
-    ['discoBall','discoString','discoFlash','eventBanner','eventTimer','tacoContainer','cyberContainer'].forEach(id=>{
+    try{document.body.classList.remove('disco-mode');}catch(e){}
+    ['discoBall','discoString','discoFlash','eventBanner','eventTimer','tacoContainer'].forEach(id=>{
       try{const el=document.getElementById(id);if(el)el.style.display='none';}catch(e){}
     });
     localStorage.removeItem(XP_MULTIPLIER_KEY);
@@ -2729,8 +2649,8 @@ function applyEvent(event){
     try{stopDiscoMusic();}catch(e){}
     try{stopTacoMusic();}catch(e){}
     try{stopTacoRain();}catch(e){}
-    try{stopCyberMusic();}catch(e){}
-    try{stopCyberUniverse();}catch(e){}
+    try{stopCuckMusic();}catch(e){}
+    try{stopCucaracha();}catch(e){}
     try{document.getElementById('activeEventBox').style.display='none';}catch(e){}
     try{document.getElementById('eventStopBtn').style.display='none';}catch(e){}
     return;
@@ -2747,9 +2667,8 @@ function applyEvent(event){
     if(banner){
       banner.style.display='block';
       banner.style.background='linear-gradient(90deg,rgba(255,0,200,.15),rgba(100,0,255,.15),rgba(0,200,255,.15))';
-      banner.style.borderColor='#ff00cc';
-      banner.style.color='#fff';
-      banner.textContent='🪩 DISCO MODE AKTIV · 2x XP · 🎉';
+      banner.style.pointerEvents='auto';
+      banner.innerHTML='🪩 DISCO MODE AKTIV · 2x XP · 🎉 &nbsp;<button onclick="startDiscoMusic()" style="padding:3px 10px;font-family:Orbitron,sans-serif;font-size:10px;background:rgba(255,0,200,.2);border:1px solid #ff00cc;color:#fff;border-radius:4px;cursor:pointer;">🎵 MUSIK AN</button>';
     }
     const timer=document.getElementById('eventTimer');
     if(timer)timer.style.display='block';
@@ -2765,7 +2684,8 @@ function applyEvent(event){
       banner.style.borderColor='#ffb400';
       banner.style.color='#ffdd00';
       banner.style.animation='none';
-      banner.textContent='🌮 TACO RAIN AKTIV · 3x XP · 🌮';
+      banner.style.pointerEvents='auto';
+      banner.innerHTML='🌮 TACO RAIN AKTIV · 3x XP · 🌮 &nbsp;<button onclick="startTacoMusic()" style="padding:3px 10px;font-family:Orbitron,sans-serif;font-size:10px;background:rgba(255,180,0,.2);border:1px solid #ffb400;color:#fff;border-radius:4px;cursor:pointer;">🎵 MUSIK AN</button>';
     }
     const timer=document.getElementById('eventTimer');
     if(timer){timer.style.display='block';timer.style.borderColor='#ffb400';timer.style.boxShadow='0 0 20px rgba(255,180,0,.5)';}
@@ -2774,31 +2694,25 @@ function applyEvent(event){
     try{startTacoMusic();}catch(e){}
   }
 
-  if(event.type==='cyber'){
-    document.body.classList.add('cyber-mode');
-    try{startCyberUniverse();}catch(e){}
+  if(event.type==='cucaracha'){
+    try{startCucaracha();}catch(e){}
     const banner=document.getElementById('eventBanner');
     if(banner){
       banner.style.display='block';
-      banner.style.background='linear-gradient(90deg,rgba(0,50,150,.3),rgba(100,0,255,.2),rgba(0,50,150,.3))';
-      banner.style.borderColor='#6699ff';
-      banner.style.color='#aaccff';
-      banner.style.animation='cyberText 2s linear infinite';
-      banner.textContent='🌌 CYBER UNIVERSUM AKTIV · 4x XP · ✨';
+      banner.style.background='linear-gradient(90deg,rgba(80,60,10,.4),rgba(120,90,15,.3),rgba(80,60,10,.4))';
+      banner.style.borderColor='#c8a020';
+      banner.style.color='#ffd23f';
+      banner.style.animation='none';
+      banner.style.pointerEvents='auto';
+      banner.innerHTML='🪳 LA CUCARACHA AKTIV · 4x XP · 🪳 &nbsp;<button onclick="startCuckMusic()" style="padding:3px 10px;font-family:Orbitron,sans-serif;font-size:10px;background:rgba(200,160,30,.2);border:1px solid #c8a020;color:#fff;border-radius:4px;cursor:pointer;">🎵 MUSIK AN</button>';
     }
     const timer=document.getElementById('eventTimer');
-    if(timer){
-      timer.style.display='block';
-      timer.style.borderColor='#6699ff';
-      timer.style.boxShadow='0 0 20px rgba(100,150,255,.5)';
-      timer.style.pointerEvents='none';
-    }
-    const tc=document.getElementById('eventTimerCount');
-    if(tc){tc.style.textShadow='0 0 15px #6699ff';tc.style.animation='cyberText 2s linear infinite';}
-    const tl=document.getElementById('eventTimerLabel');
-    if(tl)tl.style.color='#6699ff';
-    try{startCyberMusic();}catch(e){}
+    if(timer){timer.style.display='block';timer.style.borderColor='#c8a020';timer.style.boxShadow='0 0 20px rgba(200,160,30,.4)';}
+    const tc=document.getElementById('eventTimerCount');if(tc){tc.style.textShadow='0 0 12px #c8a020';tc.style.animation='none';}
+    const tl=document.getElementById('eventTimerLabel');if(tl)tl.style.color='#c8a020';
+    if(cuckShouldPlay)try{startCuckMusic();}catch(e){}
   }
+  const box=document.getElementById('activeEventBox');
   const nameEl=document.getElementById('activeEventName');
   if(box){box.style.display='block';box.style.pointerEvents='auto';}
   if(nameEl)nameEl.textContent=event.name;
@@ -2825,8 +2739,8 @@ function applyEvent(event){
       try{if(countEl)countEl.textContent='00:00';}catch(e){}
       // Only remove from Firebase, don't call stopEvent() to avoid race condition
       try{
-        document.body.classList.remove('disco-mode','cyber-mode');
-        ['discoBall','discoString','discoFlash','eventBanner','eventTimer','tacoContainer','cyberContainer'].forEach(id=>{
+        document.body.classList.remove('disco-mode');
+        ['discoBall','discoString','discoFlash','eventBanner','eventTimer','tacoContainer'].forEach(id=>{
           const el=document.getElementById(id);if(el)el.style.display='none';
         });
         document.getElementById('eventStopBtn').style.display='none';
