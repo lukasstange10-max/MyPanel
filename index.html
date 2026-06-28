@@ -656,6 +656,11 @@ body.disco-mode .nav-logo,body.disco-mode .ctitle,body.disco-mode #username{anim
 #eventTimer{display:none;position:fixed;bottom:60px;right:16px;z-index:99993;pointer-events:none;background:rgba(0,0,0,.88);border:2px solid #ff00cc;border-radius:10px;padding:12px 18px;text-align:center;box-shadow:0 0 25px rgba(255,0,200,.5);}
 #eventTimerLabel{font-size:9px;color:#ff00cc;letter-spacing:2px;margin-bottom:6px;font-family:'Orbitron',sans-serif;}
 #eventTimerCount{font-size:26px;font-weight:900;color:#fff;font-family:'Orbitron',sans-serif;text-shadow:0 0 20px #ff00cc;animation:discoTextRain 2s linear infinite;}
+/* ===== TACO EVENT ===== */
+@keyframes tacoFall{0%{transform:translateY(-100px) rotate(0deg);opacity:1;}100%{transform:translateY(110vh) rotate(720deg);opacity:.5;}}
+@keyframes tacoSway{0%,100%{margin-left:-30px;}50%{margin-left:30px;}}
+.taco-drop{position:fixed;top:0;z-index:99985;pointer-events:none;font-size:40px;animation:tacoFall linear infinite, tacoSway ease-in-out infinite;user-select:none;}
+#tacoContainer{display:none;position:fixed;inset:0;z-index:99985;pointer-events:none;overflow:hidden;}
 
 </style>
 <body>
@@ -668,9 +673,11 @@ body.disco-mode .nav-logo,body.disco-mode .ctitle,body.disco-mode #username{anim
 <div id="discoBall">🪩</div>
 <div id="discoString"></div>
 <div id="discoFlash"></div>
+<div id="tacoContainer"></div>
 <div id="eventBanner"></div>
 <div id="eventTimer"><div id="eventTimerLabel">🎉 EVENT ENDET IN</div><div id="eventTimerCount">--:--</div></div>
 <div id="ytDiscoWrap" style="position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;overflow:hidden;"></div>
+<div id="ytTacoWrap" style="position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;overflow:hidden;"></div>
 <div id="page-trailer">
 <div id="particles"></div>
 
@@ -1279,10 +1286,10 @@ body.disco-mode .nav-logo,body.disco-mode .ctitle,body.disco-mode #username{anim
             <div style="font-family:'Orbitron',sans-serif;font-size:13px;font-weight:900;color:#ff00cc;letter-spacing:2px;">DISCO</div>
             <div style="font-size:11px;color:var(--mu);margin-top:6px;line-height:1.5;">Regenbogen-Farben · Disco-Ball · <span style="color:#ffd23f;font-weight:700;">2x XP</span></div>
           </div>
-          <div class="event-card" style="padding:20px;border:2px dashed rgba(255,255,255,.1);border-radius:6px;background:rgba(255,255,255,.02);cursor:not-allowed;text-align:center;opacity:.4;">
-            <div style="font-size:40px;margin-bottom:8px;">⚡</div>
-            <div style="font-family:'Orbitron',sans-serif;font-size:13px;font-weight:900;color:var(--mu);letter-spacing:2px;">MEHR KOMMT</div>
-            <div style="font-size:11px;color:var(--mu);margin-top:6px;">In Entwicklung...</div>
+          <div class="event-card" onclick="startEvent('taco')" style="padding:20px;border:2px solid rgba(255,180,0,.5);border-radius:6px;background:linear-gradient(135deg,rgba(255,180,0,.1),rgba(255,80,0,.08));cursor:pointer;text-align:center;transition:.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform=''">
+            <div style="font-size:40px;margin-bottom:8px;">🌮</div>
+            <div style="font-family:'Orbitron',sans-serif;font-size:13px;font-weight:900;color:#ffb400;letter-spacing:2px;">TACO RAIN</div>
+            <div style="font-size:11px;color:var(--mu);margin-top:6px;line-height:1.5;">Tacos fallen vom Himmel · <span style="color:#ffd23f;font-weight:700;">3x XP</span></div>
           </div>
         </div>
       </div>
@@ -2455,20 +2462,16 @@ function startEvent(type){
   const now=Date.now();
   const event={
     type,
-    name:type==='disco'?'🪩 DISCO MODE':'EVENT',
+    name:type==='disco'?'🪩 DISCO MODE':type==='taco'?'🌮 TACO RAIN':'EVENT',
     startedAt:now,
     duration:minutes,
     endsAt:now+minutes*60*1000,
-    xpMultiplier:2,
+    xpMultiplier:type==='taco'?3:2,
     startedBy:getMyName()
   };
-  // Pre-trigger music here (user interaction context = no autoplay block)
-  if(type==='disco'){
-    discoShouldPlay=true;
-    if(discoYTReady&&discoYTPlayer){
-      try{discoYTPlayer.seekTo(DISCO_YT_START,true);discoYTPlayer.playVideo();}catch(e){}
-    }
-  }
+  // Pre-trigger music (user interaction context)
+  if(type==='disco'){discoShouldPlay=true;if(discoYTReady&&discoYTPlayer){try{discoYTPlayer.seekTo(DISCO_YT_START,true);discoYTPlayer.playVideo();}catch(e){}}}
+  if(type==='taco'){tacoShouldPlay=true;if(tacoYTReady&&tacoYTPlayer){try{tacoYTPlayer.seekTo(TACO_YT_START,true);tacoYTPlayer.playVideo();}catch(e){}}}
   window.fbDB.ref('activeEvent').set(event)
     .then(()=>showNotif('🎉 '+event.name+' GESTARTET für '+minutes+' Minuten!'))
     .catch(()=>showNotif('⚠ FEHLER'));
@@ -2483,9 +2486,13 @@ function stopEvent(){
 
 const DISCO_YT_ID='cE0wfjsybIQ';
 const DISCO_YT_START=30;
+const TACO_YT_ID='W-3DWBv0CvU';
+const TACO_YT_START=0;
 let discoYTPlayer=null,discoYTReady=false,discoShouldPlay=false;
+let tacoYTPlayer=null,tacoYTReady=false,tacoShouldPlay=false;
+let tacoInterval=null;
 
-// Load YouTube API immediately on page load
+// Load YouTube API on page load
 (function(){
   if(document.getElementById('_ytDiscApi'))return;
   const s=document.createElement('script');s.id='_ytDiscApi';
@@ -2494,39 +2501,78 @@ let discoYTPlayer=null,discoYTReady=false,discoShouldPlay=false;
 })();
 
 window.onYouTubeIframeAPIReady=function(){
-  const wrap=document.getElementById('ytDiscoWrap');
-  if(!wrap)return;
-  wrap.innerHTML='<div id="ytDiscoIframe"></div>';
-  discoYTPlayer=new YT.Player('ytDiscoIframe',{
-    height:'200',width:'200',
-    videoId:DISCO_YT_ID,
-    playerVars:{autoplay:0,start:DISCO_YT_START,controls:0,rel:0,playsinline:1,loop:1,playlist:DISCO_YT_ID,origin:location.origin||'https://lukasstange10-max.github.io'},
-    events:{
-      onReady(e){
-        discoYTReady=true;
-        e.target.setVolume(80);
-        if(discoShouldPlay) e.target.playVideo();
-      },
-      onStateChange(e){
-        if(e.data===YT.PlayerState.ENDED){
-          e.target.seekTo(DISCO_YT_START,true);
-          e.target.playVideo();
-        }
+  // Disco player
+  const dw=document.getElementById('ytDiscoWrap');
+  if(dw){
+    dw.innerHTML='<div id="ytDiscoIframe"></div>';
+    discoYTPlayer=new YT.Player('ytDiscoIframe',{
+      height:'200',width:'200',videoId:DISCO_YT_ID,
+      playerVars:{autoplay:0,start:DISCO_YT_START,controls:0,rel:0,playsinline:1,loop:1,playlist:DISCO_YT_ID,origin:location.origin||'https://lukasstange10-max.github.io'},
+      events:{
+        onReady(e){discoYTReady=true;e.target.setVolume(80);if(discoShouldPlay)e.target.playVideo();},
+        onStateChange(e){if(e.data===YT.PlayerState.ENDED){e.target.seekTo(DISCO_YT_START,true);e.target.playVideo();}}
       }
-    }
-  });
+    });
+  }
+  // Taco player
+  const tw=document.getElementById('ytTacoWrap');
+  if(tw){
+    tw.innerHTML='<div id="ytTacoIframe"></div>';
+    tacoYTPlayer=new YT.Player('ytTacoIframe',{
+      height:'200',width:'200',videoId:TACO_YT_ID,
+      playerVars:{autoplay:0,start:TACO_YT_START,controls:0,rel:0,playsinline:1,loop:1,playlist:TACO_YT_ID,origin:location.origin||'https://lukasstange10-max.github.io'},
+      events:{
+        onReady(e){tacoYTReady=true;e.target.setVolume(80);if(tacoShouldPlay)e.target.playVideo();},
+        onStateChange(e){if(e.data===YT.PlayerState.ENDED){e.target.seekTo(TACO_YT_START,true);e.target.playVideo();}}
+      }
+    });
+  }
 };
 
 function startDiscoMusic(){
   discoShouldPlay=true;
-  if(discoYTReady&&discoYTPlayer){
-    try{discoYTPlayer.seekTo(DISCO_YT_START,true);discoYTPlayer.playVideo();}catch(e){}
-  }
+  if(discoYTReady&&discoYTPlayer){try{discoYTPlayer.seekTo(DISCO_YT_START,true);discoYTPlayer.playVideo();}catch(e){}}
 }
-
 function stopDiscoMusic(){
   discoShouldPlay=false;
   if(discoYTPlayer){try{discoYTPlayer.pauseVideo();}catch(e){}}
+}
+function startTacoMusic(){
+  tacoShouldPlay=true;
+  if(tacoYTReady&&tacoYTPlayer){try{tacoYTPlayer.seekTo(TACO_YT_START,true);tacoYTPlayer.playVideo();}catch(e){}}
+}
+function stopTacoMusic(){
+  tacoShouldPlay=false;
+  if(tacoYTPlayer){try{tacoYTPlayer.pauseVideo();}catch(e){}}
+}
+
+function startTacoRain(){
+  const container=document.getElementById('tacoContainer');
+  if(!container)return;
+  container.style.display='block';
+  container.innerHTML='';
+  function spawnTaco(){
+    const t=document.createElement('div');
+    t.className='taco-drop';
+    t.textContent='🌮';
+    const left=5+Math.random()*90;
+    const dur=2+Math.random()*3;
+    const swayDur=1+Math.random()*2;
+    const size=24+Math.random()*30;
+    t.style.cssText=`left:${left}%;font-size:${size}px;animation-duration:${dur}s,${swayDur}s;animation-delay:-${Math.random()*dur}s,0s;`;
+    container.appendChild(t);
+    setTimeout(()=>t.remove(),dur*1000);
+  }
+  // Spawn tacos continuously
+  tacoInterval=setInterval(spawnTaco,300);
+  // Initial burst
+  for(let i=0;i<8;i++)setTimeout(spawnTaco,i*100);
+}
+
+function stopTacoRain(){
+  clearInterval(tacoInterval);tacoInterval=null;
+  const container=document.getElementById('tacoContainer');
+  if(container){container.style.display='none';container.innerHTML='';}
 }
 
 
@@ -2534,12 +2580,12 @@ function applyEvent(event){
   activeEvent=event;
   if(!event){
     document.body.classList.remove('disco-mode');
-    ['discoBall','discoString','discoFlash','eventBanner','eventTimer'].forEach(id=>{
+    ['discoBall','discoString','discoFlash','eventBanner','eventTimer','tacoContainer'].forEach(id=>{
       const el=document.getElementById(id); if(el)el.style.display='none';
     });
     localStorage.removeItem(XP_MULTIPLIER_KEY);
     clearInterval(eventTimerInterval);
-    stopDiscoMusic();
+    stopDiscoMusic();stopTacoMusic();stopTacoRain();
     const box=document.getElementById('activeEventBox');
     if(box)box.style.display='none';
     return;
@@ -2562,8 +2608,25 @@ function applyEvent(event){
     }
     const timer=document.getElementById('eventTimer');
     if(timer)timer.style.display='block';
-    // Start disco music
     startDiscoMusic();
+  }
+
+  if(event.type==='taco'){
+    startTacoRain();
+    const banner=document.getElementById('eventBanner');
+    if(banner){
+      banner.style.display='block';
+      banner.style.background='linear-gradient(90deg,rgba(255,180,0,.2),rgba(255,80,0,.15),rgba(255,180,0,.2))';
+      banner.style.borderColor='#ffb400';
+      banner.style.color='#ffdd00';
+      banner.style.animation='none';
+      banner.textContent='🌮 TACO RAIN AKTIV · 3x XP · 🌮';
+    }
+    const timer=document.getElementById('eventTimer');
+    if(timer){timer.style.display='block';timer.style.borderColor='#ffb400';timer.style.boxShadow='0 0 20px rgba(255,180,0,.5)';}
+    const tc=document.getElementById('eventTimerCount');if(tc){tc.style.textShadow='0 0 15px #ffb400';tc.style.animation='none';}
+    const tl=document.getElementById('eventTimerLabel');if(tl)tl.style.color='#ffb400';
+    startTacoMusic();
   }
 
   const box=document.getElementById('activeEventBox');
