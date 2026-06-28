@@ -2678,25 +2678,25 @@ function initEventSystem(){
   });
 }
 
-// Patch autoSaveScore to apply XP multiplier
-const _origAutoSave=window.autoSaveScore||null;
+// Patch autoSaveScore to apply XP multiplier to every score
 function autoSaveScore(gameName,score){
+  if(!score||score<=0)return;
   const mult=parseFloat(localStorage.getItem(XP_MULTIPLIER_KEY)||'1');
   const boostedScore=Math.floor(score*mult);
-  if(mult>1) showNotif('🎉 2x XP! '+Math.floor(score)+' → '+boostedScore+' PUNKTE!');
-  // Call original logic with boosted score
+  if(mult>1) showNotif('🎉 '+mult+'x XP! '+Math.floor(score)+' → '+boostedScore+' PUNKTE!');
   const p=getProfile();
   const player=(p?p.username:localStorage.getItem('username')||'MYPANEL USER').toUpperCase();
-  if(!boostedScore||boostedScore<=0)return;
+  // Always save every score (not just personal bests)
   const scores=getScores();
-  const prevBest=scores.filter(s=>s.player===player&&s.game===gameName).sort((a,b)=>b.score-a.score);
-  if(prevBest.length>0&&boostedScore<=prevBest[0].score)return;
   const filtered=scores.filter(s=>!(s.player===player&&s.game===gameName));
-  filtered.push({player,game:gameName,score:boostedScore,date:new Date().toLocaleDateString('de-DE')});
+  const prev=scores.filter(s=>s.player===player&&s.game===gameName).sort((a,b)=>b.score-a.score);
+  const best=prev.length>0?Math.max(prev[0].score,boostedScore):boostedScore;
+  filtered.push({player,game:gameName,score:best,date:new Date().toLocaleDateString('de-DE')});
   filtered.sort((a,b)=>b.score-a.score);
   saveScores(filtered.slice(0,100));
   renderHsTable('all');renderDashHs();updateStats();
-  pushScoreToFirebase(player,gameName,boostedScore);
+  pushScoreToFirebase(player,gameName,best);
+  updateClanScore(boostedScore);
 }
 
 
