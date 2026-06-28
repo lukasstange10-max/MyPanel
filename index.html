@@ -3027,13 +3027,13 @@ function playTrack(idx){
 function toggleMusic(){
   if(!isPlaying){
     isPlaying=true;
-    document.getElementById('mpPlayBtn').textContent='⏸ PAUSE';
-    document.getElementById('mmPlayBtn').textContent='⏸';
+    const pb=document.getElementById('mmPlayBtn');
+    if(pb)pb.textContent='⏸';
     playTrack(trackIdx);
   } else {
     isPlaying=false;
-    document.getElementById('mpPlayBtn').textContent='▶ PLAY';
-    document.getElementById('mmPlayBtn').textContent='▶';
+    const pb=document.getElementById('mmPlayBtn');
+    if(pb)pb.textContent='▶';
     stopAllNodes();
     document.querySelectorAll('.mp-vis-bar').forEach(b=>b.classList.add('paused'));
     if(audioCtx) audioCtx.suspend();
