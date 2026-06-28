@@ -215,7 +215,7 @@ function endGame(){
     const prevBest=all.filter(s=>s.player===player&&s.game==='Arcade Racing').sort((a,b)=>b.score-a.score);
     if(prevBest.length===0||score>prevBest[0].score){
       const filtered=all.filter(s=>!(s.player===player&&s.game==='Arcade Racing'));
-      filtered.push({player,game:'Arcade Racing',score:Math.floor(score),date:new Date().toLocaleDateString('de-DE')});
+      filtered.push({player,game:'Arcade Racing',score:Math.floor(score*(_mult||1)),date:new Date().toLocaleDateString('de-DE')});
       filtered.sort((a,b)=>b.score-a.score);
       localStorage.setItem('highscores',JSON.stringify(filtered.slice(0,50)));
     }

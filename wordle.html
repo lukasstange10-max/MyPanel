@@ -181,6 +181,7 @@ function submitGuess(){
         const profRaw=localStorage.getItem('mpProfile');
         const prof=profRaw?JSON.parse(profRaw):null;
         const player=(prof?prof.username:localStorage.getItem('username')||'MYPANEL USER').toUpperCase();
+        const _mult=parseFloat(localStorage.getItem('mpXpMultiplier')||'1');
         const all=JSON.parse(localStorage.getItem('highscores')||'[]');
         // Score: each win adds points, fewer guesses = more points (max 600 for 1 guess, min 100 for 6 guesses)
         const pts=(ROWS-currentRow)*100+100;

@@ -453,7 +453,8 @@ function showWin(d){
       const prev=all.filter(s=>s.player===myName&&s.game==='Neon Pong').sort((a,b)=>b.score-a.score);
       const wins=(prev.length>0?prev[0].score:0)+1;
       const filtered=all.filter(s=>!(s.player===myName&&s.game==='Neon Pong'));
-      filtered.push({player:myName,game:'Neon Pong',score:wins,date:new Date().toLocaleDateString('de-DE')});
+      filtered.push({player:myName,const _mult=parseFloat(localStorage.getItem('mpXpMultiplier')||'1');
+        game:'Neon Pong',score:Math.floor(wins*_mult),date:new Date().toLocaleDateString('de-DE')});
       filtered.sort((a,b)=>b.score-a.score);
       localStorage.setItem('highscores',JSON.stringify(filtered.slice(0,50)));
       // Firebase

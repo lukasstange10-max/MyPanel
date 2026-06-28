@@ -559,7 +559,8 @@ try{
   const player=(prof?prof.username:localStorage.getItem('username')||'MYPANEL USER').toUpperCase();
   const all=JSON.parse(localStorage.getItem('highscores')||'[]');
   const prev=all.filter(s=>s.player===player&&s.game==='Tik Tak Tu').sort((a,b)=>b.score-a.score);
-  const newScore=(prev.length>0?prev[0].score:0)+1;
+  const _mult=parseFloat(localStorage.getItem('mpXpMultiplier')||'1');
+  const newScore=Math.floor(((prev.length>0?prev[0].score:0)+1)*_mult);
   const filtered=all.filter(s=>!(s.player===player&&s.game==='Tik Tak Tu'));
   filtered.push({player,game:'Tik Tak Tu',score:newScore,date:new Date().toLocaleDateString('de-DE')});
   filtered.sort((a,b)=>b.score-a.score);

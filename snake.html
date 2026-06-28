@@ -401,7 +401,7 @@ try{
   const prevBest=all.filter(s=>s.player===player&&s.game==='Snake').sort((a,b)=>b.score-a.score);
   if(prevBest.length===0||score>prevBest[0].score){
     const filtered=all.filter(s=>!(s.player===player&&s.game==='Snake'));
-    filtered.push({player,game:'Snake',score:Math.floor(score),date:new Date().toLocaleDateString('de-DE')});
+    filtered.push({player,game:'Snake',score:Math.floor(score*(_mult||1)),date:new Date().toLocaleDateString('de-DE')});
     filtered.sort((a,b)=>b.score-a.score);
     localStorage.setItem('highscores',JSON.stringify(filtered.slice(0,50)));
   }
