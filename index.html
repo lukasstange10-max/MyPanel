@@ -2497,15 +2497,15 @@ function startEvent(type){
 }
 
 function stopEvent(){
-  // Stop visuals immediately
   applyEvent(null);
-  // Remove from Firebase
+  localStorage.removeItem('mpActiveEvent');
   if(window.fbDB){
     window.fbDB.ref('activeEvent').remove()
       .then(()=>showNotif('⏹ EVENT GESTOPPT'))
-      .catch(()=>showNotif('⏹ EVENT GESTOPPT'));
+      .catch(()=>{});
+  } else {
+    showNotif('⏹ EVENT GESTOPPT');
   }
-  showNotif('⏹ EVENT GESTOPPT');
 }
 
 const DISCO_YT_ID='cE0wfjsybIQ';
@@ -2810,35 +2810,33 @@ function applyEvent(event){
   const stopBtn=document.getElementById('eventStopBtn');
   if(stopBtn)stopBtn.style.display='block';
 
-  // Show timer immediately
-  const countElNow=document.getElementById('eventTimerCount');
-  if(countElNow){
-    const rem=Number(event.endsAt)-Date.now();
-    if(rem>0){
-      const mn=Math.floor(rem/60000),sn=Math.floor((rem%60000)/1000);
-      countElNow.textContent=String(mn).padStart(2,'0')+':'+String(sn).padStart(2,'0');
-    }
-  }
+  // Save event to localStorage as backup
+  localStorage.setItem('mpActiveEvent', JSON.stringify(event));
 
+  // Timer — robust version
   clearInterval(eventTimerInterval);
-  eventTimerInterval=setInterval(()=>{
-    const remaining=Number(event.endsAt)-Date.now();
+  const endsAt=Number(event.endsAt)||0;
+  const timerEl=document.getElementById('eventTimer');
+  if(timerEl)timerEl.style.display='block';
+
+  function updateTimer(){
+    const rem=endsAt-Date.now();
     const countEl=document.getElementById('eventTimerCount');
-    const adminTimerEl=document.getElementById('activeEventTimer');
-    if(remaining<=0){
+    const adminEl=document.getElementById('activeEventTimer');
+    if(rem<=0){
       clearInterval(eventTimerInterval);
       if(countEl)countEl.textContent='00:00';
-      if(adminTimerEl)adminTimerEl.textContent='EVENT BEENDET';
-      applyEvent(null);
-      if(window.fbDB)window.fbDB.ref('activeEvent').remove();
+      stopEvent();
       return;
     }
-    const m=Math.floor(remaining/60000);
-    const s=Math.floor((remaining%60000)/1000);
+    const m=Math.floor(rem/60000);
+    const s=Math.floor((rem%60000)/1000);
     const fmt=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
     if(countEl)countEl.textContent=fmt;
-    if(adminTimerEl)adminTimerEl.textContent='NOCH '+fmt+' · 2x XP';
-  },1000);
+    if(adminEl)adminEl.textContent='NOCH '+fmt+' · '+event.xpMultiplier+'x XP';
+  }
+  updateTimer(); // run immediately
+  eventTimerInterval=setInterval(updateTimer,1000);
 }
 
 function initEventSystem(){
