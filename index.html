@@ -480,10 +480,17 @@ iframe{width:100%;height:100%;border:none;}
 .mp-vol{flex:1;height:3px;background:rgba(0,229,255,.1);border-radius:2px;cursor:pointer;-webkit-appearance:none;}
 .mp-vol::-webkit-slider-thumb{-webkit-appearance:none;width:10px;height:10px;border-radius:50%;background:var(--c);box-shadow:0 0 6px var(--c);}
 .mp-vis{display:flex;align-items:flex-end;gap:2px;height:20px;margin-bottom:8px;}
-.mp-vis-bar{width:4px;background:var(--c);border-radius:2px;box-shadow:0 0 4px var(--c);animation:mpviz 0.8s ease-in-out infinite alternate;}
-.mp-vis-bar:nth-child(2){animation-delay:.1s;height:40%}.mp-vis-bar:nth-child(3){animation-delay:.2s;height:80%}.mp-vis-bar:nth-child(4){animation-delay:.15s;height:60%}.mp-vis-bar:nth-child(5){animation-delay:.05s;height:90%}.mp-vis-bar:nth-child(6){animation-delay:.25s;height:50%}.mp-vis-bar:nth-child(7){animation-delay:.12s;height:70%}.mp-vis-bar:nth-child(8){animation-delay:.3s;height:30%}
+.mp-vis-bar{width:4px;background:var(--c);border-radius:2px;box-shadow:0 0 4px var(--c);height:30%;animation:mpviz 0.8s ease-in-out infinite alternate;}
+.mp-vis-bar:nth-child(1){animation-delay:0s;height:40%}
+.mp-vis-bar:nth-child(2){animation-delay:.1s;height:70%}
+.mp-vis-bar:nth-child(3){animation-delay:.2s;height:50%}
+.mp-vis-bar:nth-child(4){animation-delay:.15s;height:90%}
+.mp-vis-bar:nth-child(5){animation-delay:.05s;height:60%}
+.mp-vis-bar:nth-child(6){animation-delay:.25s;height:80%}
+.mp-vis-bar:nth-child(7){animation-delay:.12s;height:45%}
+.mp-vis-bar:nth-child(8){animation-delay:.3s;height:65%}
 @keyframes mpviz{0%{transform:scaleY(.3)}100%{transform:scaleY(1)}}
-.mp-vis-bar.paused{animation:none;transform:scaleY(.1);}
+.mp-vis-bar.paused{animation:none;height:15%!important;opacity:.4;}
 .mp-min{position:absolute;top:10px;right:10px;background:transparent;border:none;color:var(--di);cursor:pointer;font-size:14px;padding:2px 6px;}
 .mp-min:hover{color:var(--c);}
 
@@ -1071,8 +1078,19 @@ body.cyber-mode .nav-logo,body.cyber-mode .ctitle,body.cyber-mode #username{anim
     </div>
     <div class="mdivider"></div>
     <div class="music-mini">
-      <div class="mm-title">// MUSIK</div>
-      <div class="mm-track" id="mmTrack">Synthwave Neon City</div>
+      <div class="mm-title">// SYNTHWAVE RADIO</div>
+      <div class="mm-track" id="mpTrack" style="color:var(--c);font-size:11px;font-family:'Orbitron',sans-serif;margin-bottom:2px;">Neon City Drive</div>
+      <div id="mpArtist" style="font-size:9px;color:var(--mu);margin-bottom:8px;">MYPANEL SYNTHWAVE</div>
+      <div class="mp-vis" id="mpVis">
+        <div class="mp-vis-bar paused"></div>
+        <div class="mp-vis-bar paused"></div>
+        <div class="mp-vis-bar paused"></div>
+        <div class="mp-vis-bar paused"></div>
+        <div class="mp-vis-bar paused"></div>
+        <div class="mp-vis-bar paused"></div>
+        <div class="mp-vis-bar paused"></div>
+        <div class="mp-vis-bar paused"></div>
+      </div>
       <div class="mm-controls">
         <button class="mm-btn" onclick="prevTrack()">◀◀</button>
         <button class="mm-btn" onclick="toggleMusic()" id="mmPlayBtn">▶</button>
@@ -1080,7 +1098,11 @@ body.cyber-mode .nav-logo,body.cyber-mode .ctitle,body.cyber-mode #username{anim
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-top:6px;">
         <span style="font-size:9px;color:var(--mu);letter-spacing:1px;">VOL</span>
-        <input type="range" min="0" max="100" value="60" oninput="setVol(this.value);document.getElementById('mpVol').value=this.value;" style="flex:1;accent-color:#00e5ff;cursor:pointer;">
+        <input type="range" min="0" max="100" value="60" id="mpVol" oninput="setVol(this.value);" style="flex:1;accent-color:#00e5ff;cursor:pointer;">
+      </div>
+      <div style="margin-top:8px;border-top:1px solid var(--dim);padding-top:6px;">
+        <div style="font-size:8px;color:var(--mu);letter-spacing:2px;margin-bottom:4px;">TRACKS (8)</div>
+        <div id="mpPlaylist" style="max-height:100px;overflow-y:auto;"></div>
       </div>
     </div>
     <div class="sidebar-bottom">
@@ -1397,36 +1419,6 @@ body.cyber-mode .nav-logo,body.cyber-mode .ctitle,body.cyber-mode #username{anim
   </div>
 </div>
 
-<!-- MUSIC PLAYER -->
-<div id="musicPlayer">
-  <button class="mp-min" onclick="toggleMusicPlayer()" id="mpMinBtn">_</button>
-  <div class="mp-title">// SYNTHWAVE RADIO</div>
-  <div class="mp-track" id="mpTrack">Neon City Drive</div>
-  <div class="mp-artist" id="mpArtist">MYPANEL SYNTHWAVE</div>
-  <div class="mp-vis" id="mpVis">
-    <div class="mp-vis-bar paused" style="height:60%"></div>
-    <div class="mp-vis-bar paused" style="height:40%"></div>
-    <div class="mp-vis-bar paused" style="height:80%"></div>
-    <div class="mp-vis-bar paused" style="height:60%"></div>
-    <div class="mp-vis-bar paused" style="height:90%"></div>
-    <div class="mp-vis-bar paused" style="height:50%"></div>
-    <div class="mp-vis-bar paused" style="height:70%"></div>
-    <div class="mp-vis-bar paused" style="height:30%"></div>
-  </div>
-  <div class="mp-controls">
-    <button class="mp-btn" onclick="prevTrack()">◀◀</button>
-    <button class="mp-btn" onclick="toggleMusic()" id="mpPlayBtn">▶ PLAY</button>
-    <button class="mp-btn" onclick="nextTrack()">▶▶</button>
-  </div>
-  <div class="mp-vol-row">
-    <span class="mp-vol-label">VOL</span>
-    <input type="range" class="mp-vol" id="mpVol" min="0" max="100" value="60" oninput="setVol(this.value)">
-  </div>
-  <div style="margin-top:6px;border-top:1px solid var(--dim);padding-top:6px;">
-    <div style="font-size:8px;color:var(--mu);letter-spacing:2px;margin-bottom:4px;">TRACKS (8)</div>
-    <div id="mpPlaylist" style="max-height:80px;overflow-y:auto;"></div>
-  </div>
-</div>
 <!-- FIRST LOGIN MODAL — outside both page wrappers so it always shows -->
 <div id="firstLoginModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:2000000;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
   <div class="mbox" style="width:460px;text-align:center;">
