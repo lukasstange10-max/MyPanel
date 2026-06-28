@@ -645,14 +645,19 @@ iframe{width:100%;height:100%;border:none;}
 @keyframes discoHue{0%{filter:hue-rotate(0deg) brightness(1.1);}100%{filter:hue-rotate(360deg) brightness(1.1);}}
 @keyframes discoBg{0%,100%{background:rgba(255,0,200,.06);}25%{background:rgba(255,150,0,.06);}50%{background:rgba(0,255,150,.06);}75%{background:rgba(0,150,255,.06);}}
 @keyframes discoText{0%{color:#ff00cc;text-shadow:0 0 20px #ff00cc;}25%{color:#ffaa00;text-shadow:0 0 20px #ffaa00;}50%{color:#00ff88;text-shadow:0 0 20px #00ff88;}75%{color:#00ccff;text-shadow:0 0 20px #00ccff;}100%{color:#ff00cc;text-shadow:0 0 20px #ff00cc;}}
-@keyframes discoBall{0%,100%{transform:translate(-50%,-50%) scale(1) rotate(0deg);}50%{transform:translate(-50%,-50%) scale(1.15) rotate(180deg);}}
+@keyframes discoBall{0%{transform:translateX(-50%) rotate(0deg);}100%{transform:translateX(-50%) rotate(360deg);}}
+@keyframes discoSwing{0%,100%{left:48%;}50%{left:52%;}}
 @keyframes discoFlash{0%,100%{opacity:0;}50%{opacity:.08;}}
 body.disco-mode{animation:discoHue 4s linear infinite;}
 body.disco-mode .nav-logo,body.disco-mode .ctitle span,body.disco-mode #username{animation:discoText 1s linear infinite;}
 body.disco-mode .card{animation:discoBg 2s ease-in-out infinite;}
-#discoBall{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);font-size:100px;z-index:99990;pointer-events:none;animation:discoBall 3s ease-in-out infinite;}
-#discoFlash{display:none;position:fixed;inset:0;z-index:99989;pointer-events:none;animation:discoFlash .4s ease-in-out infinite;background:radial-gradient(circle at 50% 30%,rgba(255,0,200,.25),transparent 60%);}
+#discoBall{display:none;position:fixed;top:0;left:50%;transform:translateX(-50%);font-size:60px;z-index:99990;pointer-events:none;animation:discoBall 3s linear infinite,discoSwing 4s ease-in-out infinite;filter:drop-shadow(0 0 20px #ff00cc) drop-shadow(0 0 40px #bf00ff);}
+#discoString{display:none;position:fixed;top:0;left:50%;transform:translateX(-50%);width:2px;height:70px;background:linear-gradient(to bottom,rgba(255,255,255,.5),transparent);z-index:99989;pointer-events:none;}
+#discoFlash{display:none;position:fixed;inset:0;z-index:99988;pointer-events:none;animation:discoFlash .5s ease-in-out infinite;background:radial-gradient(circle at 50% 0%,rgba(255,0,200,.18),transparent 60%);}
 #eventBanner{display:none;position:fixed;bottom:0;left:0;right:0;z-index:99992;pointer-events:none;text-align:center;padding:10px;font-family:'Orbitron',sans-serif;font-size:clamp(12px,2vw,16px);font-weight:900;letter-spacing:3px;border-top:2px solid;}
+#eventTimer{display:none;position:fixed;bottom:60px;right:16px;z-index:99993;pointer-events:none;background:rgba(0,0,0,.8);border:1px solid rgba(255,0,200,.5);border-radius:8px;padding:10px 14px;text-align:center;}
+#eventTimerLabel{font-size:8px;color:rgba(255,0,200,.8);letter-spacing:2px;margin-bottom:4px;font-family:'Orbitron',sans-serif;}
+#eventTimerCount{font-size:20px;font-weight:900;color:#fff;font-family:'Orbitron',sans-serif;text-shadow:0 0 12px #ff00cc;}
 
 </style>
 <body>
@@ -663,8 +668,10 @@ body.disco-mode .card{animation:discoBg 2s ease-in-out infinite;}
 
 <!-- EVENT ELEMENTS -->
 <div id="discoBall">🪩</div>
+<div id="discoString"></div>
 <div id="discoFlash"></div>
 <div id="eventBanner"></div>
+<div id="eventTimer"><div id="eventTimerLabel">🎉 EVENT ENDET IN</div><div id="eventTimerCount">--:--</div></div>
 <div id="page-trailer">
 <div id="particles"></div>
 
@@ -2468,56 +2475,97 @@ function stopEvent(){
     .catch(()=>showNotif('⚠ FEHLER'));
 }
 
+let discoMusicNodes=[],discoMusicCtx=null;
+
+function startDiscoMusic(){
+  try{
+    discoMusicCtx=new(window.AudioContext||window.webkitAudioContext)();
+    const ac=discoMusicCtx;
+    const mg=ac.createGain(); mg.gain.value=0.18; mg.connect(ac.destination);
+    const bpm=128, beat=60/bpm;
+    function kick(t){const o=ac.createOscillator(),g=ac.createGain();o.frequency.setValueAtTime(150,t);o.frequency.exponentialRampToValueAtTime(0.01,t+0.3);g.gain.setValueAtTime(1,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.3);o.connect(g);g.connect(mg);o.start(t);o.stop(t+0.3);discoMusicNodes.push(o);}
+    function hihat(t,v=0.06){const b=ac.createBuffer(1,ac.sampleRate*0.05,ac.sampleRate);const d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1);const s=ac.createBufferSource(),f=ac.createBiquadFilter(),g=ac.createGain();f.type='highpass';f.frequency.value=8000;g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.05);s.buffer=b;s.connect(f);f.connect(g);g.connect(mg);s.start(t);discoMusicNodes.push(s);}
+    function bass(t,freq,dur){const o=ac.createOscillator(),g=ac.createGain();o.type='sawtooth';o.frequency.value=freq;g.gain.setValueAtTime(0.3,t);g.gain.exponentialRampToValueAtTime(0.001,t+dur);o.connect(g);g.connect(mg);o.start(t);o.stop(t+dur);discoMusicNodes.push(o);}
+    const bassLine=[55,55,65,55,50,55,65,73];
+    function loop(start){
+      for(let bar=0;bar<8;bar++){
+        const bs=start+bar*beat*4;
+        kick(bs);kick(bs+beat*2);
+        for(let h=0;h<8;h++)hihat(bs+h*beat*0.5);
+        bass(bs,bassLine[bar%bassLine.length],beat*0.45);
+        bass(bs+beat*2,bassLine[(bar+1)%bassLine.length],beat*0.45);
+      }
+      // Schedule next loop
+      const loopTimer=setTimeout(()=>{if(discoMusicCtx)loop(ac.currentTime);},8*beat*4*1000-200);
+      discoMusicNodes.push({stop:()=>clearTimeout(loopTimer)});
+    }
+    loop(ac.currentTime+0.1);
+  }catch(e){}
+}
+
+function stopDiscoMusic(){
+  discoMusicNodes.forEach(n=>{try{n.stop();}catch(e){}});
+  discoMusicNodes=[];
+  if(discoMusicCtx){try{discoMusicCtx.close();}catch(e){}discoMusicCtx=null;}
+}
+
 function applyEvent(event){
   activeEvent=event;
   if(!event){
-    // No event — reset
     document.body.classList.remove('disco-mode');
-    document.getElementById('discoBall').style.display='none';
-    document.getElementById('discoFlash').style.display='none';
-    document.getElementById('eventBanner').style.display='none';
+    ['discoBall','discoString','discoFlash','eventBanner','eventTimer'].forEach(id=>{
+      const el=document.getElementById(id); if(el)el.style.display='none';
+    });
     localStorage.removeItem(XP_MULTIPLIER_KEY);
     clearInterval(eventTimerInterval);
-    // Update admin UI
+    stopDiscoMusic();
     const box=document.getElementById('activeEventBox');
     if(box)box.style.display='none';
     return;
   }
 
-  // Store XP multiplier for games
   localStorage.setItem(XP_MULTIPLIER_KEY, String(event.xpMultiplier||2));
 
   if(event.type==='disco'){
     document.body.classList.add('disco-mode');
-    document.getElementById('discoBall').style.display='block';
-    document.getElementById('discoFlash').style.display='block';
+    ['discoBall','discoString','discoFlash'].forEach(id=>{
+      const el=document.getElementById(id); if(el)el.style.display='block';
+    });
     const banner=document.getElementById('eventBanner');
-    banner.style.display='block';
-    banner.style.background='linear-gradient(90deg,rgba(255,0,200,.15),rgba(100,0,255,.15),rgba(0,200,255,.15))';
-    banner.style.borderColor='#ff00cc';
-    banner.style.color='#fff';
-    banner.textContent='🪩 DISCO MODE AKTIV · 2x XP · 🎉';
+    if(banner){
+      banner.style.display='block';
+      banner.style.background='linear-gradient(90deg,rgba(255,0,200,.15),rgba(100,0,255,.15),rgba(0,200,255,.15))';
+      banner.style.borderColor='#ff00cc';
+      banner.style.color='#fff';
+      banner.textContent='🪩 DISCO MODE AKTIV · 2x XP · 🎉';
+    }
+    const timer=document.getElementById('eventTimer');
+    if(timer)timer.style.display='block';
+    // Start disco music
+    if(!discoMusicCtx)startDiscoMusic();
   }
 
-  // Update admin UI
   const box=document.getElementById('activeEventBox');
   const nameEl=document.getElementById('activeEventName');
-  const timerEl=document.getElementById('activeEventTimer');
   if(box)box.style.display='block';
   if(nameEl)nameEl.textContent=event.name;
 
-  // Countdown timer
   clearInterval(eventTimerInterval);
   eventTimerInterval=setInterval(()=>{
     const remaining=event.endsAt-Date.now();
+    const countEl=document.getElementById('eventTimerCount');
+    const adminTimerEl=document.getElementById('activeEventTimer');
     if(remaining<=0){
       clearInterval(eventTimerInterval);
-      if(timerEl)timerEl.textContent='EVENT BEENDET';
+      if(countEl)countEl.textContent='00:00';
+      if(adminTimerEl)adminTimerEl.textContent='EVENT BEENDET';
       return;
     }
     const m=Math.floor(remaining/60000);
     const s=Math.floor((remaining%60000)/1000);
-    if(timerEl)timerEl.textContent='NOCH '+m+'m '+s+'s · 2x XP AKTIV';
+    const fmt=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+    if(countEl)countEl.textContent=fmt;
+    if(adminTimerEl)adminTimerEl.textContent='NOCH '+fmt+' · 2x XP AKTIV';
   },1000);
 }
 
