@@ -2497,10 +2497,15 @@ function startEvent(type){
 }
 
 function stopEvent(){
-  if(!window.fbDB)return;
-  window.fbDB.ref('activeEvent').remove()
-    .then(()=>{showNotif('⏹ EVENT GESTOPPT');})
-    .catch(()=>showNotif('⚠ FEHLER'));
+  // Stop visuals immediately
+  applyEvent(null);
+  // Remove from Firebase
+  if(window.fbDB){
+    window.fbDB.ref('activeEvent').remove()
+      .then(()=>showNotif('⏹ EVENT GESTOPPT'))
+      .catch(()=>showNotif('⏹ EVENT GESTOPPT'));
+  }
+  showNotif('⏹ EVENT GESTOPPT');
 }
 
 const DISCO_YT_ID='cE0wfjsybIQ';
@@ -2761,7 +2766,7 @@ function applyEvent(event){
   // Show timer immediately
   const countElNow=document.getElementById('eventTimerCount');
   if(countElNow){
-    const rem=parseInt(event.endsAt)-Date.now();
+    const rem=Number(event.endsAt)-Date.now();
     if(rem>0){
       const mn=Math.floor(rem/60000),sn=Math.floor((rem%60000)/1000);
       countElNow.textContent=String(mn).padStart(2,'0')+':'+String(sn).padStart(2,'0');
@@ -2770,7 +2775,7 @@ function applyEvent(event){
 
   clearInterval(eventTimerInterval);
   eventTimerInterval=setInterval(()=>{
-    const remaining=parseInt(event.endsAt)-Date.now();
+    const remaining=Number(event.endsAt)-Date.now();
     const countEl=document.getElementById('eventTimerCount');
     const adminTimerEl=document.getElementById('activeEventTimer');
     if(remaining<=0){
@@ -2793,7 +2798,7 @@ function initEventSystem(){
   if(!window.fbDB)return setTimeout(initEventSystem,2000);
   window.fbDB.ref('activeEvent').on('value',snap=>{
     const event=snap.val();
-    if(event&&parseInt(event.endsAt)<Date.now()){
+    if(event&&Number(event.endsAt)<Date.now()){
       window.fbDB.ref('activeEvent').remove();
       applyEvent(null);
       return;
