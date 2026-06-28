@@ -2727,17 +2727,20 @@ function stopTacoRain(){
 function applyEvent(event){
   activeEvent=event;
   if(!event){
-    document.body.classList.remove('disco-mode','cyber-mode');
+    try{document.body.classList.remove('disco-mode','cyber-mode');}catch(e){}
     ['discoBall','discoString','discoFlash','eventBanner','eventTimer','tacoContainer','cyberContainer'].forEach(id=>{
-      const el=document.getElementById(id); if(el)el.style.display='none';
+      try{const el=document.getElementById(id);if(el)el.style.display='none';}catch(e){}
     });
     localStorage.removeItem(XP_MULTIPLIER_KEY);
+    localStorage.removeItem('mpActiveEvent');
     clearInterval(eventTimerInterval);
-    stopDiscoMusic();stopTacoMusic();stopTacoRain();stopCyberMusic();stopCyberUniverse();
-    const box=document.getElementById('activeEventBox');
-    if(box)box.style.display='none';
-    const stopBtn=document.getElementById('eventStopBtn');
-    if(stopBtn)stopBtn.style.display='none';
+    try{stopDiscoMusic();}catch(e){}
+    try{stopTacoMusic();}catch(e){}
+    try{stopTacoRain();}catch(e){}
+    try{stopCyberMusic();}catch(e){}
+    try{stopCyberUniverse();}catch(e){}
+    try{document.getElementById('activeEventBox').style.display='none';}catch(e){}
+    try{document.getElementById('eventStopBtn').style.display='none';}catch(e){}
     return;
   }
 
@@ -2758,11 +2761,11 @@ function applyEvent(event){
     }
     const timer=document.getElementById('eventTimer');
     if(timer)timer.style.display='block';
-    startDiscoMusic();
+    try{startDiscoMusic();}catch(e){}
   }
 
   if(event.type==='taco'){
-    startTacoRain();
+    try{startTacoRain();}catch(e){}
     const banner=document.getElementById('eventBanner');
     if(banner){
       banner.style.display='block';
@@ -2776,12 +2779,12 @@ function applyEvent(event){
     if(timer){timer.style.display='block';timer.style.borderColor='#ffb400';timer.style.boxShadow='0 0 20px rgba(255,180,0,.5)';}
     const tc=document.getElementById('eventTimerCount');if(tc){tc.style.textShadow='0 0 15px #ffb400';tc.style.animation='none';}
     const tl=document.getElementById('eventTimerLabel');if(tl)tl.style.color='#ffb400';
-    startTacoMusic();
+    try{startTacoMusic();}catch(e){}
   }
 
   if(event.type==='cyber'){
     document.body.classList.add('cyber-mode');
-    startCyberUniverse();
+    try{startCyberUniverse();}catch(e){}
     const banner=document.getElementById('eventBanner');
     if(banner){
       banner.style.display='block';
@@ -2802,7 +2805,7 @@ function applyEvent(event){
     if(tc){tc.style.textShadow='0 0 15px #6699ff';tc.style.animation='cyberText 2s linear infinite';}
     const tl=document.getElementById('eventTimerLabel');
     if(tl)tl.style.color='#6699ff';
-    startCyberMusic();
+    try{startCyberMusic();}catch(e){}
   }
   const nameEl=document.getElementById('activeEventName');
   if(box){box.style.display='block';box.style.pointerEvents='auto';}
@@ -2813,29 +2816,34 @@ function applyEvent(event){
   // Save event to localStorage as backup
   localStorage.setItem('mpActiveEvent', JSON.stringify(event));
 
-  // Timer — robust version
+  // Timer — use startedAt + duration to avoid Firebase timestamp issues
   clearInterval(eventTimerInterval);
-  const endsAt=Number(event.endsAt)||0;
+  const startedAt=Number(event.startedAt)||Date.now();
+  const durationMs=(Number(event.duration)||30)*60*1000;
+  const endsAt=startedAt+durationMs;
+
   const timerEl=document.getElementById('eventTimer');
-  if(timerEl)timerEl.style.display='block';
+  try{if(timerEl)timerEl.style.display='block';}catch(e){}
 
   function updateTimer(){
-    const rem=endsAt-Date.now();
-    const countEl=document.getElementById('eventTimerCount');
-    const adminEl=document.getElementById('activeEventTimer');
-    if(rem<=0){
-      clearInterval(eventTimerInterval);
-      if(countEl)countEl.textContent='00:00';
-      stopEvent();
-      return;
-    }
-    const m=Math.floor(rem/60000);
-    const s=Math.floor((rem%60000)/1000);
-    const fmt=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
-    if(countEl)countEl.textContent=fmt;
-    if(adminEl)adminEl.textContent='NOCH '+fmt+' · '+event.xpMultiplier+'x XP';
+    try{
+      const rem=endsAt-Date.now();
+      const countEl=document.getElementById('eventTimerCount');
+      const adminEl=document.getElementById('activeEventTimer');
+      if(rem<=0){
+        clearInterval(eventTimerInterval);
+        if(countEl)countEl.textContent='00:00';
+        stopEvent();
+        return;
+      }
+      const m=Math.floor(rem/60000);
+      const s=Math.floor((rem%60000)/1000);
+      const fmt=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+      if(countEl)countEl.textContent=fmt;
+      if(adminEl)adminEl.textContent='NOCH '+fmt+' · '+event.xpMultiplier+'x XP';
+    }catch(e){}
   }
-  updateTimer(); // run immediately
+  updateTimer();
   eventTimerInterval=setInterval(updateTimer,1000);
 }
 
