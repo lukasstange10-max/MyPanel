@@ -442,10 +442,20 @@ iframe{width:100%;height:100%;border:none;}
 #hsModal .mbox{width:420px;}
 
 /* ===== ANNOUNCEMENT ===== */
-#announcementBanner{display:none;position:fixed;bottom:0;left:0;right:0;z-index:99999;padding:0;pointer-events:none;}
-#annInner{background:rgba(0,0,0,.82);padding:18px 60px 22px;text-align:center;border-top:3px solid #00e5ff;animation:annSlideUp .4s cubic-bezier(.22,.61,.36,1) both;}
-@keyframes annSlideUp{from{transform:translateY(100%);opacity:0;}to{transform:translateY(0);opacity:1;}}
-#annText{font-family:'Orbitron',sans-serif;font-size:clamp(18px,3vw,32px);font-weight:900;color:#fff;text-shadow:0 0 20px rgba(0,229,255,.8),0 2px 0 rgba(0,0,0,.9);letter-spacing:2px;line-height:1.3;}
+#announcementBanner{display:none;position:fixed;top:0;left:0;right:0;z-index:99999;padding:0;pointer-events:none;}
+#annInner{position:relative;background:linear-gradient(135deg,rgba(0,5,15,.96),rgba(0,10,25,.98));padding:22px 80px 26px;text-align:center;border-bottom:3px solid #00e5ff;border-top:2px solid rgba(0,229,255,.3);animation:annSlideDown .5s cubic-bezier(.22,.61,.36,1) both;overflow:hidden;}
+#annInner::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(0,229,255,.05),transparent);animation:annSweep 2s linear infinite;}
+@keyframes annSweep{from{transform:translateX(-100%);}to{transform:translateX(100%);}}
+#annInner::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,#00e5ff,#00ff87,#ff2bd6,#00e5ff,transparent);animation:annLine 3s linear infinite;}
+@keyframes annLine{from{background-position:0% 50%;}to{background-position:200% 50%;}}
+@keyframes annSlideDown{from{transform:translateY(-100%);opacity:0;}to{transform:translateY(0);opacity:1;}}
+.ann-corner{position:absolute;width:20px;height:20px;pointer-events:none;}
+.ann-corner.tl{top:6px;left:10px;border-top:2px solid #00e5ff;border-left:2px solid #00e5ff;}
+.ann-corner.tr{top:6px;right:10px;border-top:2px solid #00e5ff;border-right:2px solid #00e5ff;}
+.ann-corner.bl{bottom:6px;left:10px;border-bottom:2px solid #00ff87;border-left:2px solid #00ff87;}
+.ann-corner.br{bottom:6px;right:10px;border-bottom:2px solid #00ff87;border-right:2px solid #00ff87;}
+#annLabel{font-family:'Orbitron',sans-serif;font-size:9px;color:rgba(0,229,255,.7);letter-spacing:4px;margin-bottom:6px;}
+#annText{font-family:'Orbitron',sans-serif;font-size:clamp(16px,2.8vw,30px);font-weight:900;color:#fff;text-shadow:0 0 30px rgba(0,229,255,.9),0 0 60px rgba(0,229,255,.4);letter-spacing:2px;line-height:1.3;}
 #annEmoji{font-size:clamp(20px,3vw,34px);margin-right:12px;}
 #announcementBanner .ann-close{position:absolute;right:20px;bottom:50%;transform:translateY(50%);cursor:pointer;color:rgba(255,255,255,.5);font-size:22px;pointer-events:auto;background:rgba(0,0,0,.4);border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;}
 #announcementBanner .ann-close:hover{color:#fff;background:rgba(255,43,109,.3);}
@@ -454,7 +464,7 @@ iframe{width:100%;height:100%;border:none;}
 .ann-input:focus{border-color:rgba(0,229,255,.5);}
 
 /* ===== MUSIC PLAYER ===== */
-#musicPlayer{position:fixed;bottom:20px;right:20px;width:280px;background:var(--sf);border:1px solid var(--dim);border-radius:4px;padding:16px;z-index:9000;box-shadow:0 0 30px rgba(0,229,255,.1);}
+#musicPlayer{width:100%;background:transparent;border:none;border-top:1px solid var(--dim);padding:10px 0 0 0;margin-top:8px;}
 #musicPlayer::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--c),var(--g));}
 .mp-title{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--di);letter-spacing:3px;margin-bottom:10px;}
 .mp-track{font-family:'Orbitron',sans-serif;font-size:11px;color:var(--c);letter-spacing:1px;margin-bottom:4px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
@@ -956,8 +966,6 @@ iframe{width:100%;height:100%;border:none;}
 <div id="page-panel" style="display:none">
 <div id="particlesPanel"></div>
 <div class="mouseGlow" id="mg"></div>
-<div class="cdeco tl"></div>
-<div class="cdeco br"></div>
 
 <!-- NOTIFICATION -->
 <div class="notif" id="notif"></div>
@@ -1024,7 +1032,10 @@ iframe{width:100%;height:100%;border:none;}
         <button class="mm-btn" onclick="prevTrack()">◀◀</button>
         <button class="mm-btn" onclick="toggleMusic()" id="mmPlayBtn">▶</button>
         <button class="mm-btn" onclick="nextTrack()">▶▶</button>
-        <div class="mm-vol"><div class="mm-volfill" id="mmVol"></div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;margin-top:6px;">
+        <span style="font-size:9px;color:var(--mu);letter-spacing:1px;">VOL</span>
+        <input type="range" min="0" max="100" value="60" oninput="setVol(this.value);document.getElementById('mpVol').value=this.value;" style="flex:1;accent-color:#00e5ff;cursor:pointer;">
       </div>
     </div>
     <div class="sidebar-bottom">
@@ -1332,11 +1343,10 @@ iframe{width:100%;height:100%;border:none;}
     <span class="mp-vol-label">VOL</span>
     <input type="range" class="mp-vol" id="mpVol" min="0" max="100" value="60" oninput="setVol(this.value)">
   </div>
-  <div style="margin-top:8px;border-top:1px solid var(--dim);padding-top:8px;">
-    <div style="font-size:9px;color:var(--mu);letter-spacing:2px;margin-bottom:6px;">TRACKS (8)</div>
-    <div id="mpPlaylist" style="max-height:100px;overflow-y:auto;"></div>
+  <div style="margin-top:6px;border-top:1px solid var(--dim);padding-top:6px;">
+    <div style="font-size:8px;color:var(--mu);letter-spacing:2px;margin-bottom:4px;">TRACKS (8)</div>
+    <div id="mpPlaylist" style="max-height:80px;overflow-y:auto;"></div>
   </div>
-</div>
 </div>
 <!-- FIRST LOGIN MODAL — outside both page wrappers so it always shows -->
 <div id="firstLoginModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:2000000;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
@@ -1352,8 +1362,13 @@ iframe{width:100%;height:100%;border:none;}
 
 <!-- GLOBAL ANNOUNCEMENT BANNER — fixed position, always visible -->
 <div id="announcementBanner">
-  <div id="annInner" style="position:relative;">
-    <span id="annEmoji">📢</span><span id="annText"></span>
+  <div id="annInner">
+    <div class="ann-corner tl"></div>
+    <div class="ann-corner tr"></div>
+    <div class="ann-corner bl"></div>
+    <div class="ann-corner br"></div>
+    <div id="annLabel">// GLOBAL ANNOUNCEMENT</div>
+    <div><span id="annEmoji">📢</span> <span id="annText"></span></div>
   </div>
 </div>
 
@@ -2292,6 +2307,22 @@ function initAnnouncement(){
   }
 }
 
+function playAnnSound(){
+  try{
+    const ac=new(window.AudioContext||window.webkitAudioContext)();
+    [[0,.08,880,.15],[.1,.08,1100,.1],[.2,.12,660,.12],[.35,.2,880,.08]].forEach(([t,dur,freq,vol])=>{
+      const o=ac.createOscillator(),g=ac.createGain();
+      o.frequency.value=freq;o.type='sine';
+      g.gain.setValueAtTime(0,ac.currentTime+t);
+      g.gain.linearRampToValueAtTime(vol,ac.currentTime+t+.02);
+      g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+t+dur);
+      o.connect(g);g.connect(ac.destination);
+      o.start(ac.currentTime+t);o.stop(ac.currentTime+t+dur);
+    });
+    setTimeout(()=>ac.close(),800);
+  }catch(e){}
+}
+
 function showAnnouncementBanner(data){
   const banner=document.getElementById('announcementBanner');
   const textEl=document.getElementById('annText');
@@ -2301,6 +2332,11 @@ function showAnnouncementBanner(data){
     if(dismissed===data.text)return;
     textEl.textContent=data.text;
     banner.style.display='block';
+    // Restart slide animation
+    const inner=document.getElementById('annInner');
+    if(inner){inner.style.animation='none';void inner.offsetWidth;inner.style.animation='';}
+    // Play sound
+    playAnnSound();
     // Auto-dismiss after 10 seconds
     clearTimeout(window._annTimer);
     window._annTimer=setTimeout(()=>dismissAnnouncement(),10000);
@@ -2515,10 +2551,12 @@ function toggleMusic(){
   if(!isPlaying){
     isPlaying=true;
     document.getElementById('mpPlayBtn').textContent='⏸ PAUSE';
+    document.getElementById('mmPlayBtn').textContent='⏸';
     playTrack(trackIdx);
   } else {
     isPlaying=false;
     document.getElementById('mpPlayBtn').textContent='▶ PLAY';
+    document.getElementById('mmPlayBtn').textContent='▶';
     stopAllNodes();
     document.querySelectorAll('.mp-vis-bar').forEach(b=>b.classList.add('paused'));
     if(audioCtx) audioCtx.suspend();
