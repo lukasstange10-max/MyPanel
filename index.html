@@ -2507,10 +2507,15 @@ window.onYouTubeIframeAPIReady=function(){
     dw.innerHTML='<div id="ytDiscoIframe"></div>';
     discoYTPlayer=new YT.Player('ytDiscoIframe',{
       height:'200',width:'200',videoId:DISCO_YT_ID,
-      playerVars:{autoplay:0,start:DISCO_YT_START,controls:0,rel:0,playsinline:1,loop:1,playlist:DISCO_YT_ID,origin:location.origin||'https://lukasstange10-max.github.io'},
+      playerVars:{autoplay:0,start:DISCO_YT_START,controls:0,rel:0,playsinline:1,origin:location.origin||'https://lukasstange10-max.github.io'},
       events:{
         onReady(e){discoYTReady=true;e.target.setVolume(80);if(discoShouldPlay)e.target.playVideo();},
-        onStateChange(e){if(e.data===YT.PlayerState.ENDED){e.target.seekTo(DISCO_YT_START,true);e.target.playVideo();}}
+        onStateChange(e){
+          if(e.data===YT.PlayerState.ENDED){
+            e.target.seekTo(DISCO_YT_START,true);
+            e.target.playVideo();
+          }
+        }
       }
     });
   }
@@ -2520,10 +2525,15 @@ window.onYouTubeIframeAPIReady=function(){
     tw.innerHTML='<div id="ytTacoIframe"></div>';
     tacoYTPlayer=new YT.Player('ytTacoIframe',{
       height:'200',width:'200',videoId:TACO_YT_ID,
-      playerVars:{autoplay:0,start:TACO_YT_START,controls:0,rel:0,playsinline:1,loop:1,playlist:TACO_YT_ID,origin:location.origin||'https://lukasstange10-max.github.io'},
+      playerVars:{autoplay:0,start:TACO_YT_START,controls:0,rel:0,playsinline:1,origin:location.origin||'https://lukasstange10-max.github.io'},
       events:{
         onReady(e){tacoYTReady=true;e.target.setVolume(80);if(tacoShouldPlay)e.target.playVideo();},
-        onStateChange(e){if(e.data===YT.PlayerState.ENDED){e.target.seekTo(TACO_YT_START,true);e.target.playVideo();}}
+        onStateChange(e){
+          if(e.data===YT.PlayerState.ENDED){
+            e.target.seekTo(TACO_YT_START,true);
+            e.target.playVideo();
+          }
+        }
       }
     });
   }
