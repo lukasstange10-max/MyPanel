@@ -2581,7 +2581,16 @@ window.onYouTubeIframeAPIReady=function(){
 
 function startDiscoMusic(){
   discoShouldPlay=true;
-  if(discoYTReady&&discoYTPlayer){try{discoYTPlayer.seekTo(DISCO_YT_START,true);discoYTPlayer.playVideo();}catch(e){}}
+  if(discoYTPlayer&&discoYTReady){try{discoYTPlayer.seekTo(DISCO_YT_START,true);discoYTPlayer.playVideo();}catch(e){}return;}
+  if(window.YT&&window.YT.Player&&!discoYTPlayer){
+    const dw=document.getElementById('ytDiscoWrap');
+    if(dw){dw.innerHTML='<div id="ytDiscoIframe2"></div>';
+      discoYTPlayer=new YT.Player('ytDiscoIframe2',{height:'200',width:'200',videoId:DISCO_YT_ID,
+        playerVars:{autoplay:1,start:DISCO_YT_START,controls:0,rel:0,playsinline:1,origin:location.origin||'https://lukasstange10-max.github.io'},
+        events:{onReady(e){discoYTReady=true;e.target.setVolume(80);e.target.playVideo();},
+          onStateChange(e){if(e.data===YT.PlayerState.ENDED){e.target.seekTo(DISCO_YT_START,true);e.target.playVideo();}}}});
+    }
+  }
 }
 function stopDiscoMusic(){
   discoShouldPlay=false;
@@ -2589,7 +2598,25 @@ function stopDiscoMusic(){
 }
 function startCyberMusic(){
   cyberShouldPlay=true;
-  if(cyberYTReady&&cyberYTPlayer){try{cyberYTPlayer.seekTo(CYBER_YT_START,true);cyberYTPlayer.playVideo();}catch(e){}}
+  if(cyberYTPlayer&&cyberYTReady){
+    try{cyberYTPlayer.seekTo(CYBER_YT_START,true);cyberYTPlayer.playVideo();}catch(e){}
+    return;
+  }
+  // If YT API already loaded, create player now
+  if(window.YT&&window.YT.Player){
+    const cw=document.getElementById('ytCyberWrap');
+    if(cw&&!cyberYTPlayer){
+      cw.innerHTML='<div id="ytCyberIframe2"></div>';
+      cyberYTPlayer=new YT.Player('ytCyberIframe2',{
+        height:'200',width:'200',videoId:CYBER_YT_ID,
+        playerVars:{autoplay:1,start:CYBER_YT_START,controls:0,rel:0,playsinline:1,origin:location.origin||'https://lukasstange10-max.github.io'},
+        events:{
+          onReady(e){cyberYTReady=true;e.target.setVolume(80);e.target.playVideo();},
+          onStateChange(e){if(e.data===YT.PlayerState.ENDED){e.target.seekTo(CYBER_YT_START,true);e.target.playVideo();}}
+        }
+      });
+    }
+  }
 }
 function stopCyberMusic(){
   cyberShouldPlay=false;
@@ -2649,6 +2676,19 @@ function stopCyberUniverse(){
   document.querySelectorAll('.cyber-shooting').forEach(s=>s.remove());
 }
 
+function startTacoMusic(){
+  tacoShouldPlay=true;
+  if(tacoYTPlayer&&tacoYTReady){try{tacoYTPlayer.seekTo(TACO_YT_START,true);tacoYTPlayer.playVideo();}catch(e){}return;}
+  if(window.YT&&window.YT.Player&&!tacoYTPlayer){
+    const tw=document.getElementById('ytTacoWrap');
+    if(tw){tw.innerHTML='<div id="ytTacoIframe2"></div>';
+      tacoYTPlayer=new YT.Player('ytTacoIframe2',{height:'200',width:'200',videoId:TACO_YT_ID,
+        playerVars:{autoplay:1,start:TACO_YT_START,controls:0,rel:0,playsinline:1,origin:location.origin||'https://lukasstange10-max.github.io'},
+        events:{onReady(e){tacoYTReady=true;e.target.setVolume(80);e.target.playVideo();},
+          onStateChange(e){if(e.data===YT.PlayerState.ENDED){e.target.seekTo(TACO_YT_START,true);e.target.playVideo();}}}});
+    }
+  }
+}
 function stopTacoMusic(){
   tacoShouldPlay=false;
   if(tacoYTPlayer){try{tacoYTPlayer.pauseVideo();}catch(e){}}
@@ -2752,9 +2792,16 @@ function applyEvent(event){
       banner.textContent='🌌 CYBER UNIVERSUM AKTIV · 4x XP · ✨';
     }
     const timer=document.getElementById('eventTimer');
-    if(timer){timer.style.display='block';timer.style.borderColor='#6699ff';timer.style.boxShadow='0 0 20px rgba(100,150,255,.5)';}
-    const tc=document.getElementById('eventTimerCount');if(tc){tc.style.textShadow='0 0 15px #6699ff';tc.style.animation='cyberText 2s linear infinite';}
-    const tl=document.getElementById('eventTimerLabel');if(tl)tl.style.color='#6699ff';
+    if(timer){
+      timer.style.display='block';
+      timer.style.borderColor='#6699ff';
+      timer.style.boxShadow='0 0 20px rgba(100,150,255,.5)';
+      timer.style.pointerEvents='none';
+    }
+    const tc=document.getElementById('eventTimerCount');
+    if(tc){tc.style.textShadow='0 0 15px #6699ff';tc.style.animation='cyberText 2s linear infinite';}
+    const tl=document.getElementById('eventTimerLabel');
+    if(tl)tl.style.color='#6699ff';
     startCyberMusic();
   }
   const nameEl=document.getElementById('activeEventName');
