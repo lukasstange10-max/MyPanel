@@ -2507,7 +2507,33 @@ function showNotif(msg){
   clearTimeout(n._t);n._t=setTimeout(()=>n.classList.remove('show'),2800);
 }
 
-/* ===== COUNTDOWN TIMER ===== */
+// iOS Audio Unlock — muss beim ersten Touch ausgeführt werden
+let audioUnlocked=false;
+function unlockAudio(){
+  if(audioUnlocked)return;
+  audioUnlocked=true;
+  // Create silent AudioContext to unlock iOS audio
+  try{
+    const ac=new(window.AudioContext||window.webkitAudioContext)();
+    const buf=ac.createBuffer(1,1,22050);
+    const src=ac.createBufferSource();
+    src.buffer=buf;src.connect(ac.destination);src.start(0);
+    setTimeout(()=>ac.close(),100);
+  }catch(e){}
+  // Also resume existing audioCtx if exists
+  if(audioCtx&&audioCtx.state==='suspended') audioCtx.resume();
+  // Try to play event music if event active
+  if(activeEvent){
+    if(activeEvent.type==='disco')try{startDiscoMusic();}catch(e){}
+    if(activeEvent.type==='taco')try{startTacoMusic();}catch(e){}
+    if(activeEvent.type==='cucaracha')try{startCuckMusic();}catch(e){}
+  }
+}
+// Unlock on any touch/click
+document.addEventListener('touchstart', unlockAudio, {once:true});
+document.addEventListener('click', unlockAudio, {once:true});
+
+
 let cdInterval=null;
 
 function publishCountdown(){
