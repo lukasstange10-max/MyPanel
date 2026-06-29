@@ -1354,14 +1354,6 @@ body.disco-mode .nav-logo,body.disco-mode .ctitle,body.disco-mode #username{anim
         <div id="maintStatus" style="margin-top:10px;text-align:center;font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:2px;color:var(--mu);">STATUS: UNBEKANNT</div>
       </div>
 
-      <!-- UPDATE LIVE -->
-      <div class="card" style="border-color:rgba(0,255,135,.2);">
-        <div class="ctitle" style="color:#00ff87;"><span>🚀</span> ADMIN — UPDATE VERÖFFENTLICHEN</div>
-        <p style="color:var(--mu);font-size:12px;margin-bottom:16px;letter-spacing:1px;">Drücke den Knopf wenn du bereit bist — alle Spieler werden sofort auf die neue Version weitergeleitet.</p>
-        <button onclick="publishUpdate()" style="width:100%;padding:14px;border:2px solid rgba(0,255,135,.5);border-radius:6px;background:rgba(0,255,135,.08);color:#00ff87;font-family:'Orbitron',sans-serif;font-size:14px;font-weight:900;letter-spacing:3px;cursor:pointer;transition:.2s;" onmouseover="this.style.background='rgba(0,255,135,.15)'" onmouseout="this.style.background='rgba(0,255,135,.08)'">🚀 UPDATE JETZT LIVE SCHALTEN</button>
-        <p style="color:var(--mu);font-size:10px;margin-top:10px;letter-spacing:1px;text-align:center;">Alle verbundenen Nutzer werden automatisch neu geladen.</p>
-      </div>
-
       <!-- COUNTDOWN TIMER ADMIN -->
       <div class="card" style="border-color:rgba(255,210,63,.2);">
         <div class="ctitle" style="color:#ffd23f;"><span>⏳</span> ADMIN — COUNTDOWN TIMER</div>
@@ -2577,35 +2569,6 @@ function initMaintenanceListener(){
   });
 }
 
-/* ===== UPDATE LIVE SYSTEM ===== */
-function publishUpdate(){
-  if(!window.fbDB){showNotif('⚠ FIREBASE NICHT VERBUNDEN');return;}
-  if(!confirm('🚀 UPDATE JETZT LIVE SCHALTEN?\n\nAlle Spieler werden sofort neu geladen!'))return;
-  window.fbDB.ref('siteUpdate').set({
-    timestamp:Date.now(),by:ADMIN_NAME
-  }).then(()=>showNotif('🚀 UPDATE LIVE! Alle Spieler werden neu geladen...'));
-}
-
-function initUpdateListener(){
-  if(!window.fbDB)return setTimeout(initUpdateListener,2000);
-  let lastTs=0;
-  window.fbDB.ref('siteUpdate').on('value',snap=>{
-    const data=snap.val();
-    if(!data)return;
-    const ts=Number(data.timestamp)||0;
-    if(lastTs===0){lastTs=ts;return;}
-    if(ts>lastTs){
-      lastTs=ts;
-      const p=getProfile();
-      const name=(p?p.username:'').toUpperCase();
-      if(name!==ADMIN_NAME){
-        showNotif('🚀 UPDATE — Seite wird neu geladen...');
-        setTimeout(()=>window.location.reload(),2000);
-      }
-    }
-  });
-}
-
 function publishCountdown(){
   const title=document.getElementById('cdTitle').value.trim();
   const h=parseInt(document.getElementById('cdHour').value)||0;
@@ -3336,7 +3299,6 @@ function startPanelBoot(){
     initFriendsSystem();
     initEventSystem();
     initCountdown();
-    initUpdateListener();
     initMaintenanceListener();
     setTimeout(()=>initAnnouncement(),3000);
   }
@@ -3374,7 +3336,6 @@ function startPanelBoot(){
           initFriendsSystem();
           initEventSystem();
           initCountdown();
-          initUpdateListener();
           initMaintenanceListener();
           setTimeout(()=>initAnnouncement(),3000);
         },700);
