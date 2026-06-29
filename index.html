@@ -687,6 +687,8 @@ body.disco-mode .nav-logo,body.disco-mode .ctitle,body.disco-mode #username{anim
 <button id="sidebarToggle" onclick="toggleSidebar()">☰</button>
 <div id="sidebarOverlay" onclick="closeSidebar()"></div>
 
+<div id="vulkanContainer"></div>
+<div id="vulkanFlash"></div>
 <!-- EVENT ELEMENTS -->
 <div id="discoBall">🪩</div>
 <div id="discoString"></div>
@@ -1339,6 +1341,11 @@ body.disco-mode .nav-logo,body.disco-mode .ctitle,body.disco-mode #username{anim
             <div style="font-size:40px;margin-bottom:8px;">🪳</div>
             <div style="font-family:'Orbitron',sans-serif;font-size:13px;font-weight:900;color:#c8a020;letter-spacing:2px;">LA CUCARACHA</div>
             <div style="font-size:11px;color:var(--mu);margin-top:6px;line-height:1.5;">Kakerlaken überall · <span style="color:#ffd23f;font-weight:700;">4x XP</span></div>
+          </div>
+          <div class="event-card" onclick="startEvent('vulkan')" style="padding:20px;border:2px solid rgba(255,60,0,.5);border-radius:6px;background:linear-gradient(135deg,rgba(255,60,0,.12),rgba(180,30,0,.08));cursor:pointer;text-align:center;transition:.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform=''">
+            <div style="font-size:40px;margin-bottom:8px;">🌋</div>
+            <div style="font-family:'Orbitron',sans-serif;font-size:13px;font-weight:900;color:#ff4400;letter-spacing:2px;">VULKAN</div>
+            <div style="font-size:11px;color:var(--mu);margin-top:6px;line-height:1.5;">Lava · Feuer · Chaos · <span style="color:#ffd23f;font-weight:700;">7x XP</span></div>
           </div>
         </div>
       </div>
@@ -2644,9 +2651,9 @@ function startEvent(type){
   const now=Date.now();
   const event={
     type,
-    name:type==='disco'?'🪩 DISCO MODE':type==='taco'?'🌮 TACO RAIN':type==='cucaracha'?'🪳 LA CUCARACHA':'EVENT',
+    name:type==='disco'?'🪩 DISCO MODE':type==='taco'?'🌮 TACO RAIN':type==='cucaracha'?'🪳 LA CUCARACHA':type==='vulkan'?'🌋 VULKAN':'EVENT',
     startedAt:now,duration:minutes,endsAt:now+minutes*60*1000,
-    xpMultiplier:type==='taco'?3:type==='cucaracha'?4:2,
+    xpMultiplier:type==='taco'?3:type==='cucaracha'?4:type==='vulkan'?7:2,
     startedBy:getMyName()
   };
   if(type==='disco'){discoShouldPlay=true;if(discoYTReady&&discoYTPlayer){try{discoYTPlayer.seekTo(DISCO_YT_START,true);discoYTPlayer.playVideo();}catch(e){}}}
@@ -2776,8 +2783,73 @@ function stopTacoMusic(){
   if(tacoYTPlayer){try{tacoYTPlayer.pauseVideo();}catch(e){}}
 }
 
+let vulkanInterval=null;
+
+function startVulkan(){
+  const c=document.getElementById('vulkanContainer');
+  const flash=document.getElementById('vulkanFlash');
+  if(!c)return;
+  c.style.display='block'; c.innerHTML='';
+  if(flash)flash.style.display='block';
+  document.body.classList.add('vulkan-mode');
+
+  const rocks=['🪨','🔥','💥','🌋','🔴','🟠'];
+  const lavas=['🔥','💧','🫧'];
+
+  function spawnRock(){
+    const el=document.createElement('div');
+    el.className='vulk-rock';
+    const size=20+Math.random()*35;
+    const dur=1.5+Math.random()*2.5;
+    el.style.cssText=`left:${Math.random()*95}vw;font-size:${size}px;animation-duration:${dur}s;animation-delay:${-Math.random()*dur}s;`;
+    el.textContent=rocks[Math.floor(Math.random()*rocks.length)];
+    c.appendChild(el);
+    setTimeout(()=>el.remove(),(dur+0.5)*1000);
+  }
+
+  function spawnLava(){
+    const el=document.createElement('div');
+    el.className='vulk-lava';
+    const size=15+Math.random()*25;
+    const dur=2+Math.random()*3;
+    el.style.cssText=`left:${Math.random()*95}vw;font-size:${size}px;animation-duration:${dur}s;`;
+    el.textContent=lavas[Math.floor(Math.random()*lavas.length)];
+    c.appendChild(el);
+    setTimeout(()=>el.remove(),(dur+0.5)*1000);
+  }
+
+  function spawnCrack(){
+    const el=document.createElement('div');
+    el.className='vulk-crack';
+    const h=30+Math.random()*40;
+    const dur=0.4+Math.random()*0.4;
+    el.style.cssText=`left:${Math.random()*95}vw;top:${Math.random()*60}vh;height:${h}px;animation-duration:${dur}s;`;
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(),(dur+0.2)*1000);
+  }
+
+  // Initial burst
+  for(let i=0;i<15;i++) setTimeout(spawnRock, i*100);
+  for(let i=0;i<8;i++) setTimeout(spawnLava, i*150);
+
+  vulkanInterval=setInterval(()=>{
+    spawnRock();
+    if(Math.random()>.4) spawnLava();
+    if(Math.random()>.6) spawnCrack();
+  },250);
+}
+
+function stopVulkan(){
+  clearInterval(vulkanInterval); vulkanInterval=null;
+  document.body.classList.remove('vulkan-mode');
+  const c=document.getElementById('vulkanContainer');
+  if(c){c.style.display='none';c.innerHTML='';}
+  const flash=document.getElementById('vulkanFlash');
+  if(flash)flash.style.display='none';
+  document.querySelectorAll('.vulk-crack').forEach(e=>e.remove());
+}
+
 function startCucaracha(){
-  const c=document.getElementById('cuckContainer');
   if(!c)return;
   c.style.display='block';c.innerHTML='';
   const sides=['left','right','top','bottom'];
@@ -2859,7 +2931,7 @@ function applyEvent(event){
   activeEvent=event;
   if(!event){
     try{document.body.classList.remove('disco-mode');}catch(e){}
-    ['discoBall','discoString','discoFlash','eventBanner','eventTimer','tacoContainer'].forEach(id=>{
+    ['discoBall','discoString','discoFlash','eventBanner','eventTimer','tacoContainer','cuckContainer','vulkanContainer','vulkanFlash'].forEach(id=>{
       try{const el=document.getElementById(id);if(el)el.style.display='none';}catch(e){}
     });
     localStorage.removeItem(XP_MULTIPLIER_KEY);
@@ -2870,6 +2942,7 @@ function applyEvent(event){
     try{stopTacoRain();}catch(e){}
     try{stopCuckMusic();}catch(e){}
     try{stopCucaracha();}catch(e){}
+    try{stopVulkan();}catch(e){}
     try{document.getElementById('activeEventBox').style.display='none';}catch(e){}
     try{document.getElementById('eventStopBtn').style.display='none';}catch(e){}
     return;
@@ -2931,6 +3004,23 @@ function applyEvent(event){
     const tl=document.getElementById('eventTimerLabel');if(tl)tl.style.color='#c8a020';
     if(cuckShouldPlay)try{startCuckMusic();}catch(e){}
   }
+
+  if(event.type==='vulkan'){
+    try{startVulkan();}catch(e){}
+    const banner=document.getElementById('eventBanner');
+    if(banner){
+      banner.style.display='block';
+      banner.style.background='linear-gradient(90deg,rgba(255,60,0,.2),rgba(200,30,0,.15),rgba(255,60,0,.2))';
+      banner.style.borderColor='#ff4400';
+      banner.style.color='#ff6600';
+      banner.style.animation='vulkText 1s linear infinite';
+      banner.textContent='🌋 VULKAN AKTIV · 7x XP · 🔥';
+    }
+    const timer=document.getElementById('eventTimer');
+    if(timer){timer.style.display='block';timer.style.borderColor='#ff4400';timer.style.boxShadow='0 0 25px rgba(255,60,0,.6)';}
+    const tc=document.getElementById('eventTimerCount');if(tc){tc.style.textShadow='0 0 15px #ff4400';tc.style.animation='vulkText 1s linear infinite';}
+    const tl=document.getElementById('eventTimerLabel');if(tl)tl.style.color='#ff4400';
+  }
   const box=document.getElementById('activeEventBox');
   const nameEl=document.getElementById('activeEventName');
   if(box){box.style.display='block';box.style.pointerEvents='auto';}
@@ -2960,7 +3050,7 @@ function applyEvent(event){
       // Only remove from Firebase, don't call stopEvent() to avoid race condition
       try{
         document.body.classList.remove('disco-mode');
-        ['discoBall','discoString','discoFlash','eventBanner','eventTimer','tacoContainer'].forEach(id=>{
+        ['discoBall','discoString','discoFlash','eventBanner','eventTimer','tacoContainer','cuckContainer','vulkanContainer','vulkanFlash'].forEach(id=>{
           const el=document.getElementById(id);if(el)el.style.display='none';
         });
         document.getElementById('eventStopBtn').style.display='none';
