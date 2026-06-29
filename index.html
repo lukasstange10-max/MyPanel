@@ -2786,67 +2786,49 @@ function stopTacoMusic(){
 let vulkanInterval=null;
 
 function startVulkan(){
-  const c=document.getElementById('vulkanContainer');
+  document.getElementById('app').classList.add('vulkan-mode');
   const flash=document.getElementById('vulkanFlash');
-  if(!c)return;
-  c.style.display='block'; c.innerHTML='';
   if(flash)flash.style.display='block';
-  document.getElementById('app').classList.add('vulkan-mode');document.querySelector('.content')?.classList.add('vulkan-shake');
 
   const rocks=['🪨','🔥','💥','🌋','🔴','🟠'];
   const lavas=['🔥','💧','🫧'];
 
   function spawnRock(){
     const el=document.createElement('div');
-    el.className='vulk-rock';
     const size=20+Math.random()*35;
     const dur=1.5+Math.random()*2.5;
-    el.style.cssText=`left:${Math.random()*95}vw;font-size:${size}px;animation-duration:${dur}s;animation-delay:${-Math.random()*dur}s;`;
+    const left=Math.floor(Math.random()*92);
+    el.style.cssText=`position:fixed;top:-60px;left:${left}%;font-size:${size}px;z-index:99986;pointer-events:none;user-select:none;animation:vulkFall ${dur}s linear forwards;`;
     el.textContent=rocks[Math.floor(Math.random()*rocks.length)];
-    c.appendChild(el);
-    setTimeout(()=>el.remove(),(dur+0.5)*1000);
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(),(dur+0.3)*1000);
   }
 
   function spawnLava(){
     const el=document.createElement('div');
-    el.className='vulk-lava';
     const size=15+Math.random()*25;
     const dur=2+Math.random()*3;
-    el.style.cssText=`left:${Math.random()*95}vw;font-size:${size}px;animation-duration:${dur}s;`;
+    const left=Math.floor(Math.random()*92);
+    el.style.cssText=`position:fixed;bottom:-40px;left:${left}%;font-size:${size}px;z-index:99986;pointer-events:none;user-select:none;animation:vulkRise ${dur}s linear forwards;`;
     el.textContent=lavas[Math.floor(Math.random()*lavas.length)];
-    c.appendChild(el);
-    setTimeout(()=>el.remove(),(dur+0.5)*1000);
-  }
-
-  function spawnCrack(){
-    const el=document.createElement('div');
-    el.className='vulk-crack';
-    const h=30+Math.random()*40;
-    const dur=0.4+Math.random()*0.4;
-    el.style.cssText=`left:${Math.random()*95}vw;top:${Math.random()*60}vh;height:${h}px;animation-duration:${dur}s;`;
     document.body.appendChild(el);
-    setTimeout(()=>el.remove(),(dur+0.2)*1000);
+    setTimeout(()=>el.remove(),(dur+0.3)*1000);
   }
 
-  // Initial burst
-  for(let i=0;i<15;i++) setTimeout(spawnRock, i*100);
-  for(let i=0;i<8;i++) setTimeout(spawnLava, i*150);
-
+  for(let i=0;i<20;i++) setTimeout(spawnRock, i*80);
+  for(let i=0;i<10;i++) setTimeout(spawnLava, i*120);
   vulkanInterval=setInterval(()=>{
     spawnRock();
     if(Math.random()>.4) spawnLava();
-    if(Math.random()>.6) spawnCrack();
-  },250);
+  },300);
 }
 
 function stopVulkan(){
   clearInterval(vulkanInterval); vulkanInterval=null;
-  document.getElementById('app').classList.remove('vulkan-mode');document.querySelector('.content')?.classList.remove('vulkan-shake');
-  const c=document.getElementById('vulkanContainer');
-  if(c){c.style.display='none';c.innerHTML='';}
+  document.getElementById('app').classList.remove('vulkan-mode');
   const flash=document.getElementById('vulkanFlash');
   if(flash)flash.style.display='none';
-  document.querySelectorAll('.vulk-crack').forEach(e=>e.remove());
+  document.querySelectorAll('[style*="vulkFall"],[style*="vulkRise"]').forEach(e=>e.remove());
 }
 
 function startCucaracha(){
