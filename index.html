@@ -2791,7 +2791,7 @@ function startVulkan(){
   if(!c)return;
   c.style.display='block'; c.innerHTML='';
   if(flash)flash.style.display='block';
-  document.body.classList.add('vulkan-mode');
+  document.getElementById('app').classList.add('vulkan-mode');
 
   const rocks=['🪨','🔥','💥','🌋','🔴','🟠'];
   const lavas=['🔥','💧','🫧'];
@@ -2841,7 +2841,7 @@ function startVulkan(){
 
 function stopVulkan(){
   clearInterval(vulkanInterval); vulkanInterval=null;
-  document.body.classList.remove('vulkan-mode');
+  document.getElementById('app').classList.remove('vulkan-mode');
   const c=document.getElementById('vulkanContainer');
   if(c){c.style.display='none';c.innerHTML='';}
   const flash=document.getElementById('vulkanFlash');
