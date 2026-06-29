@@ -699,7 +699,15 @@ body.disco-mode .nav-logo,body.disco-mode .ctitle,body.disco-mode #username{anim
 <div id="ytTacoWrap" style="position:fixed;left:-9999px;top:-9999px;width:200px;height:200px;overflow:hidden;opacity:0;"></div>
 <div id="ytCuckWrap" style="position:fixed;left:-9999px;top:-9999px;width:200px;height:200px;overflow:hidden;opacity:0;"></div>
 
-<!-- COUNTDOWN WIDGET -->
+<!-- IOS MUSIK BUTTON -->
+<div id="iosMusicBtn" onclick="iosTapPlay()" style="display:none;position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:99998;cursor:pointer;text-align:center;">
+  <div style="background:rgba(0,0,0,.9);border:1px solid #00e5ff;border-radius:30px;padding:8px 20px;display:flex;align-items:center;gap:8px;box-shadow:0 0 15px rgba(0,229,255,.4);">
+    <span style="font-size:16px;">🎵</span>
+    <div>
+      <div style="font-family:'Orbitron',sans-serif;font-size:10px;font-weight:900;color:#00e5ff;letter-spacing:2px;">MUSIK STARTEN</div>
+    </div>
+  </div>
+</div>
 <div id="cdWidget" style="display:none;position:fixed;top:60px;right:16px;z-index:99990;background:rgba(0,0,0,.88);border:2px solid #ffd23f;border-radius:10px;padding:14px 18px;text-align:center;box-shadow:0 0 25px rgba(255,210,63,.35);pointer-events:none;min-width:160px;">
   <div id="cdWidgetTitle" style="font-family:'Orbitron',sans-serif;font-size:10px;color:#ffd23f;letter-spacing:2px;margin-bottom:6px;"></div>
   <div id="cdWidgetTime" style="font-family:'Orbitron',sans-serif;font-size:22px;font-weight:900;color:#fff;text-shadow:0 0 15px #ffd23f;letter-spacing:2px;">00:00:00</div>
@@ -2507,12 +2515,20 @@ function showNotif(msg){
   clearTimeout(n._t);n._t=setTimeout(()=>n.classList.remove('show'),2800);
 }
 
+function iosTapPlay(){
+  const btn=document.getElementById('iosMusicBtn');
+  if(btn)btn.style.display='none';
+  if(!activeEvent)return;
+  if(activeEvent.type==='disco')try{startDiscoMusic();}catch(e){}
+  if(activeEvent.type==='taco')try{startTacoMusic();}catch(e){}
+  if(activeEvent.type==='cucaracha')try{startCuckMusic();}catch(e){}
+}
+
 // iOS Audio Unlock — muss beim ersten Touch ausgeführt werden
 let audioUnlocked=false;
 function unlockAudio(){
   if(audioUnlocked)return;
   audioUnlocked=true;
-  // Create silent AudioContext to unlock iOS audio
   try{
     const ac=new(window.AudioContext||window.webkitAudioContext)();
     const buf=ac.createBuffer(1,1,22050);
@@ -2520,16 +2536,8 @@ function unlockAudio(){
     src.buffer=buf;src.connect(ac.destination);src.start(0);
     setTimeout(()=>ac.close(),100);
   }catch(e){}
-  // Also resume existing audioCtx if exists
   if(audioCtx&&audioCtx.state==='suspended') audioCtx.resume();
-  // Try to play event music if event active
-  if(activeEvent){
-    if(activeEvent.type==='disco')try{startDiscoMusic();}catch(e){}
-    if(activeEvent.type==='taco')try{startTacoMusic();}catch(e){}
-    if(activeEvent.type==='cucaracha')try{startCuckMusic();}catch(e){}
-  }
 }
-// Unlock on any touch/click
 document.addEventListener('touchstart', unlockAudio, {once:true});
 document.addEventListener('click', unlockAudio, {once:true});
 
@@ -2904,6 +2912,10 @@ function applyEvent(event){
   if(nameEl)nameEl.textContent=event.name;
   const stopBtn=document.getElementById('eventStopBtn');
   if(stopBtn){const p=getProfile();const name=(p?p.username:'').toUpperCase();stopBtn.style.display=name===ADMIN_NAME?'block':'none';}
+  // Show iOS music button
+  const iosBtn=document.getElementById('iosMusicBtn');
+  if(iosBtn)iosBtn.style.display='block';
+  setTimeout(()=>{if(iosBtn)iosBtn.style.display='none';},15000);
 
   // Save event to localStorage as backup
   localStorage.setItem('mpActiveEvent', JSON.stringify(event));
