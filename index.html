@@ -679,6 +679,15 @@ body.disco-mode .nav-logo,body.disco-mode .ctitle,body.disco-mode #username{anim
 .cuck{position:fixed;z-index:99986;pointer-events:none;font-size:32px;user-select:none;animation-timing-function:linear;animation-iteration-count:1;}
 #cuckContainer{display:none;position:fixed;inset:0;z-index:99986;pointer-events:none;overflow:hidden;}
 
+/* ===== VULKAN EVENT ===== */
+@keyframes vulkFall{0%{transform:translateY(0) rotate(0deg);opacity:1;}100%{transform:translateY(115vh) rotate(540deg);opacity:.4;}}
+@keyframes vulkRise{0%{transform:translateY(0) scale(1);opacity:.9;}100%{transform:translateY(-115vh) scale(.3);opacity:0;}}
+@keyframes vulkGlow{0%,100%{background:rgba(255,60,0,.06);}50%{background:rgba(255,120,0,.12);}}
+@keyframes vulkText{0%,100%{color:#ff4400;text-shadow:0 0 15px #ff4400;}50%{color:#ff8800;text-shadow:0 0 20px #ff8800;}}
+@keyframes vulkFlash{0%,100%{opacity:0;}50%{opacity:.06;}}
+#vulkanFlash{display:none;position:fixed;inset:0;z-index:99984;pointer-events:none;background:radial-gradient(ellipse at 50% 100%,rgba(255,80,0,.25),transparent 60%);animation:vulkFlash .5s ease-in-out infinite;}
+#app.vulkan-mode #sec-dashboard .card,#app.vulkan-mode #sec-highscores .card,#app.vulkan-mode #sec-games .card{animation:vulkGlow 1.5s ease-in-out infinite;}
+#app.vulkan-mode .nav-logo,#app.vulkan-mode #username{animation:vulkText 1s linear infinite;}
 
 </style>
 <body>
@@ -2785,10 +2794,59 @@ function stopTacoMusic(){
 
 let vulkanInterval=null;
 
+let vulkanAudioCtx=null,vulkanRumbleNodes=[],vulkanSoundInterval=null;
+
+function startVulkanSound(){
+  try{
+    vulkanAudioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    const ac=vulkanAudioCtx;
+    const master=ac.createGain();master.gain.value=0.35;master.connect(ac.destination);
+
+    // Continuous low rumble
+    const rumbleOsc=ac.createOscillator();
+    rumbleOsc.type='sawtooth';rumbleOsc.frequency.value=45;
+    const rumbleLFO=ac.createOscillator();rumbleLFO.frequency.value=4;
+    const rumbleLFOGain=ac.createGain();rumbleLFOGain.gain.value=8;
+    rumbleLFO.connect(rumbleLFOGain);rumbleLFOGain.connect(rumbleOsc.frequency);
+    const rumbleFilter=ac.createBiquadFilter();rumbleFilter.type='lowpass';rumbleFilter.frequency.value=120;
+    const rumbleGain=ac.createGain();rumbleGain.gain.value=0.5;
+    rumbleOsc.connect(rumbleFilter);rumbleFilter.connect(rumbleGain);rumbleGain.connect(master);
+    rumbleOsc.start();rumbleLFO.start();
+    vulkanRumbleNodes.push(rumbleOsc,rumbleLFO);
+
+    // Random explosion bursts
+    function boom(){
+      const t=ac.currentTime;
+      const buf=ac.createBuffer(1,ac.sampleRate*0.6,ac.sampleRate);
+      const d=buf.getChannelData(0);
+      for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,2);
+      const src=ac.createBufferSource();
+      const f=ac.createBiquadFilter();f.type='lowpass';f.frequency.setValueAtTime(800,t);f.frequency.exponentialRampToValueAtTime(80,t+0.5);
+      const g=ac.createGain();g.gain.setValueAtTime(0.6,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.6);
+      src.buffer=buf;src.connect(f);f.connect(g);g.connect(master);
+      src.start(t);
+      // Low boom tone underneath
+      const o=ac.createOscillator();o.type='sine';o.frequency.setValueAtTime(70,t);o.frequency.exponentialRampToValueAtTime(25,t+0.4);
+      const og=ac.createGain();og.gain.setValueAtTime(0.5,t);og.gain.exponentialRampToValueAtTime(0.001,t+0.5);
+      o.connect(og);og.connect(master);o.start(t);o.stop(t+0.5);
+    }
+    boom();
+    vulkanSoundInterval=setInterval(()=>{ if(Math.random()>0.3) boom(); },1800);
+  }catch(e){console.warn('Vulkan sound error',e);}
+}
+
+function stopVulkanSound(){
+  clearInterval(vulkanSoundInterval);vulkanSoundInterval=null;
+  vulkanRumbleNodes.forEach(n=>{try{n.stop();}catch(e){}});
+  vulkanRumbleNodes=[];
+  if(vulkanAudioCtx){try{vulkanAudioCtx.close();}catch(e){}vulkanAudioCtx=null;}
+}
+
 function startVulkan(){
   document.getElementById('app').classList.add('vulkan-mode');
   const flash=document.getElementById('vulkanFlash');
   if(flash)flash.style.display='block';
+  try{startVulkanSound();}catch(e){}
 
   const rocks=['🪨','🔥','💥','🌋','🔴','🟠'];
   const lavas=['🔥','💧','🫧'];
@@ -2825,6 +2883,7 @@ function startVulkan(){
 
 function stopVulkan(){
   clearInterval(vulkanInterval); vulkanInterval=null;
+  try{stopVulkanSound();}catch(e){}
   document.getElementById('app').classList.remove('vulkan-mode');
   const flash=document.getElementById('vulkanFlash');
   if(flash)flash.style.display='none';
