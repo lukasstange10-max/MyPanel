@@ -2800,38 +2800,65 @@ function startVulkanSound(){
   try{
     vulkanAudioCtx=new(window.AudioContext||window.webkitAudioContext)();
     const ac=vulkanAudioCtx;
-    const master=ac.createGain();master.gain.value=0.35;master.connect(ac.destination);
+    const master=ac.createGain();master.gain.value=0.5;master.connect(ac.destination);
 
-    // Continuous low rumble
+    // Continuous low rumble (deep, textured)
     const rumbleOsc=ac.createOscillator();
-    rumbleOsc.type='sawtooth';rumbleOsc.frequency.value=45;
-    const rumbleLFO=ac.createOscillator();rumbleLFO.frequency.value=4;
-    const rumbleLFOGain=ac.createGain();rumbleLFOGain.gain.value=8;
+    rumbleOsc.type='sawtooth';rumbleOsc.frequency.value=38;
+    const rumbleOsc2=ac.createOscillator();
+    rumbleOsc2.type='triangle';rumbleOsc2.frequency.value=52;
+    const rumbleLFO=ac.createOscillator();rumbleLFO.frequency.value=3.5;
+    const rumbleLFOGain=ac.createGain();rumbleLFOGain.gain.value=12;
     rumbleLFO.connect(rumbleLFOGain);rumbleLFOGain.connect(rumbleOsc.frequency);
-    const rumbleFilter=ac.createBiquadFilter();rumbleFilter.type='lowpass';rumbleFilter.frequency.value=120;
-    const rumbleGain=ac.createGain();rumbleGain.gain.value=0.5;
-    rumbleOsc.connect(rumbleFilter);rumbleFilter.connect(rumbleGain);rumbleGain.connect(master);
-    rumbleOsc.start();rumbleLFO.start();
-    vulkanRumbleNodes.push(rumbleOsc,rumbleLFO);
+    const rumbleFilter=ac.createBiquadFilter();rumbleFilter.type='lowpass';rumbleFilter.frequency.value=160;
+    const rumbleGain=ac.createGain();rumbleGain.gain.value=0.55;
+    rumbleOsc.connect(rumbleFilter);rumbleOsc2.connect(rumbleFilter);
+    rumbleFilter.connect(rumbleGain);rumbleGain.connect(master);
+    rumbleOsc.start();rumbleOsc2.start();rumbleLFO.start();
+    vulkanRumbleNodes.push(rumbleOsc,rumbleOsc2,rumbleLFO);
 
-    // Random explosion bursts
-    function boom(){
+    // Crackling lava texture (filtered noise, constant low level)
+    const crackleBuf=ac.createBuffer(1,ac.sampleRate*2,ac.sampleRate);
+    const cd=crackleBuf.getChannelData(0);
+    for(let i=0;i<cd.length;i++) cd[i]=(Math.random()*2-1)*(Math.random()>0.985?1:0.05);
+    const crackleSrc=ac.createBufferSource();crackleSrc.buffer=crackleBuf;crackleSrc.loop=true;
+    const crackleFilter=ac.createBiquadFilter();crackleFilter.type='highpass';crackleFilter.frequency.value=2500;
+    const crackleGain=ac.createGain();crackleGain.gain.value=0.12;
+    crackleSrc.connect(crackleFilter);crackleFilter.connect(crackleGain);crackleGain.connect(master);
+    crackleSrc.start();
+    vulkanRumbleNodes.push(crackleSrc);
+
+    // Big eruption blast — sharp crack + sub boom + rolling thunder tail
+    function eruptionBlast(big){
       const t=ac.currentTime;
-      const buf=ac.createBuffer(1,ac.sampleRate*0.6,ac.sampleRate);
+      const vol=big?1:0.55;
+      // Sharp crack (short bright noise)
+      const cbuf=ac.createBuffer(1,ac.sampleRate*0.15,ac.sampleRate);
+      const cdat=cbuf.getChannelData(0);
+      for(let i=0;i<cdat.length;i++) cdat[i]=(Math.random()*2-1)*Math.pow(1-i/cdat.length,3);
+      const csrc=ac.createBufferSource();csrc.buffer=cbuf;
+      const cf=ac.createBiquadFilter();cf.type='highpass';cf.frequency.value=600;
+      const cg=ac.createGain();cg.gain.setValueAtTime(vol*0.5,t);cg.gain.exponentialRampToValueAtTime(0.001,t+0.15);
+      csrc.connect(cf);cf.connect(cg);cg.connect(master);csrc.start(t);
+
+      // Body boom (long noise burst, lowpass sweeping down)
+      const dur=big?1.6:0.8;
+      const buf=ac.createBuffer(1,ac.sampleRate*dur,ac.sampleRate);
       const d=buf.getChannelData(0);
-      for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,2);
-      const src=ac.createBufferSource();
-      const f=ac.createBiquadFilter();f.type='lowpass';f.frequency.setValueAtTime(800,t);f.frequency.exponentialRampToValueAtTime(80,t+0.5);
-      const g=ac.createGain();g.gain.setValueAtTime(0.6,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.6);
-      src.buffer=buf;src.connect(f);f.connect(g);g.connect(master);
-      src.start(t);
-      // Low boom tone underneath
-      const o=ac.createOscillator();o.type='sine';o.frequency.setValueAtTime(70,t);o.frequency.exponentialRampToValueAtTime(25,t+0.4);
-      const og=ac.createGain();og.gain.setValueAtTime(0.5,t);og.gain.exponentialRampToValueAtTime(0.001,t+0.5);
-      o.connect(og);og.connect(master);o.start(t);o.stop(t+0.5);
+      for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,1.5);
+      const src=ac.createBufferSource();src.buffer=buf;
+      const f=ac.createBiquadFilter();f.type='lowpass';f.frequency.setValueAtTime(1000,t);f.frequency.exponentialRampToValueAtTime(60,t+dur*0.8);
+      const g=ac.createGain();g.gain.setValueAtTime(vol*0.7,t+0.02);g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+      src.connect(f);f.connect(g);g.connect(master);src.start(t);
+
+      // Sub bass thump
+      const o=ac.createOscillator();o.type='sine';
+      o.frequency.setValueAtTime(big?55:65,t);o.frequency.exponentialRampToValueAtTime(20,t+dur*0.6);
+      const og=ac.createGain();og.gain.setValueAtTime(vol*0.8,t);og.gain.exponentialRampToValueAtTime(0.001,t+dur*0.7);
+      o.connect(og);og.connect(master);o.start(t);o.stop(t+dur*0.7);
     }
-    boom();
-    vulkanSoundInterval=setInterval(()=>{ if(Math.random()>0.3) boom(); },1800);
+    eruptionBlast(true);
+    vulkanSoundInterval=setInterval(()=>{ eruptionBlast(Math.random()>0.6); },Math.random()*1500+1800);
   }catch(e){console.warn('Vulkan sound error',e);}
 }
 
@@ -2842,52 +2869,106 @@ function stopVulkanSound(){
   if(vulkanAudioCtx){try{vulkanAudioCtx.close();}catch(e){}vulkanAudioCtx=null;}
 }
 
+let vulkanParticles=[],vulkanRAF=null,vulkanBgEl=null,vulkanShakeInterval=null;
+
 function startVulkan(){
   document.getElementById('app').classList.add('vulkan-mode');
   const flash=document.getElementById('vulkanFlash');
   if(flash)flash.style.display='block';
   try{startVulkanSound();}catch(e){}
 
-  const rocks=['🪨','🔥','💥','🌋','🔴','🟠'];
-  const lavas=['🔥','💧','🫧'];
+  // Background volcano graphic — semi-transparent, fixed bottom center
+  if(!vulkanBgEl){
+    vulkanBgEl=document.createElement('div');
+    vulkanBgEl.id='vulkanBg';
+    vulkanBgEl.style.cssText='position:fixed;bottom:-4vh;left:50%;transform:translateX(-50%);font-size:48vh;line-height:1;opacity:.16;z-index:1;pointer-events:none;user-select:none;filter:drop-shadow(0 0 60px rgba(255,80,0,.5));';
+    vulkanBgEl.textContent='🌋';
+    document.body.appendChild(vulkanBgEl);
+  }
+  vulkanBgEl.style.display='block';
 
-  function spawnRock(){
-    const el=document.createElement('div');
-    const size=20+Math.random()*35;
-    const dur=1.5+Math.random()*2.5;
-    const left=Math.floor(Math.random()*92);
-    el.style.cssText=`position:fixed;top:-60px;left:${left}%;font-size:${size}px;z-index:99986;pointer-events:none;user-select:none;animation:vulkFall ${dur}s linear forwards;`;
-    el.textContent=rocks[Math.floor(Math.random()*rocks.length)];
-    document.body.appendChild(el);
-    setTimeout(()=>el.remove(),(dur+0.3)*1000);
+  // Screen shake via #app margin (safe — no transform, no fixed-position bugs)
+  const appEl=document.getElementById('app');
+  clearInterval(vulkanShakeInterval);
+  vulkanShakeInterval=setInterval(()=>{
+    const dx=(Math.random()-0.5)*6;
+    appEl.style.marginLeft=dx+'px';
+  },90);
+
+  // Crater position: top of the volcano graphic, roughly centered
+  function craterPos(){
+    return {
+      x: window.innerWidth/2 + (Math.random()-0.5)*40,
+      y: window.innerHeight - window.innerHeight*0.30
+    };
   }
 
-  function spawnLava(){
+  const emojis=['🪨','🔥','💥','🟠','🔴','🌋'];
+
+  function spawnParticle(big){
+    const p=craterPos();
+    const ang=(Math.random()*0.7+1.75)*Math.PI; // mostly upward, spread left-right
+    const speed=big?(11+Math.random()*5):(6+Math.random()*6);
     const el=document.createElement('div');
-    const size=15+Math.random()*25;
-    const dur=2+Math.random()*3;
-    const left=Math.floor(Math.random()*92);
-    el.style.cssText=`position:fixed;bottom:-40px;left:${left}%;font-size:${size}px;z-index:99986;pointer-events:none;user-select:none;animation:vulkRise ${dur}s linear forwards;`;
-    el.textContent=lavas[Math.floor(Math.random()*lavas.length)];
+    const size=big?(40+Math.random()*25):(16+Math.random()*22);
+    el.style.cssText=`position:fixed;left:0;top:0;font-size:${size}px;z-index:99986;pointer-events:none;user-select:none;will-change:transform;`;
+    el.textContent=emojis[Math.floor(Math.random()*emojis.length)];
     document.body.appendChild(el);
-    setTimeout(()=>el.remove(),(dur+0.3)*1000);
+    vulkanParticles.push({
+      el,x:p.x,y:p.y,
+      vx:Math.cos(ang)*speed,
+      vy:Math.sin(ang)*speed*2.2 - (big?6:2),
+      rot:Math.random()*360,vr:(Math.random()-0.5)*12,
+      life:0,maxLife:big?3.2:2.2
+    });
   }
 
-  for(let i=0;i<20;i++) setTimeout(spawnRock, i*80);
-  for(let i=0;i<10;i++) setTimeout(spawnLava, i*120);
+  function eruptBurst(big){
+    const count=big?14:5;
+    for(let i=0;i<count;i++) setTimeout(()=>spawnParticle(big), i*25);
+  }
+
+  // Physics loop
+  const GRAV=0.45;
+  function loop(){
+    for(let i=vulkanParticles.length-1;i>=0;i--){
+      const pt=vulkanParticles[i];
+      pt.vy+=GRAV;
+      pt.x+=pt.vx;
+      pt.y+=pt.vy;
+      pt.rot+=pt.vr;
+      pt.life+=1/60;
+      const fade=Math.max(0,1-pt.life/pt.maxLife);
+      pt.el.style.transform=`translate(${pt.x}px,${pt.y}px) rotate(${pt.rot}deg)`;
+      pt.el.style.opacity=fade;
+      if(pt.life>=pt.maxLife || pt.y>window.innerHeight+100){
+        pt.el.remove();
+        vulkanParticles.splice(i,1);
+      }
+    }
+    vulkanRAF=requestAnimationFrame(loop);
+  }
+  loop();
+
+  eruptBurst(true);
   vulkanInterval=setInterval(()=>{
-    spawnRock();
-    if(Math.random()>.4) spawnLava();
-  },300);
+    eruptBurst(Math.random()>0.55);
+  },900);
 }
 
 function stopVulkan(){
   clearInterval(vulkanInterval); vulkanInterval=null;
+  clearInterval(vulkanShakeInterval); vulkanShakeInterval=null;
+  cancelAnimationFrame(vulkanRAF); vulkanRAF=null;
   try{stopVulkanSound();}catch(e){}
-  document.getElementById('app').classList.remove('vulkan-mode');
+  const appEl=document.getElementById('app');
+  appEl.classList.remove('vulkan-mode');
+  appEl.style.marginLeft='0';
+  if(vulkanBgEl) vulkanBgEl.style.display='none';
   const flash=document.getElementById('vulkanFlash');
   if(flash)flash.style.display='none';
-  document.querySelectorAll('[style*="vulkFall"],[style*="vulkRise"]').forEach(e=>e.remove());
+  vulkanParticles.forEach(pt=>pt.el.remove());
+  vulkanParticles=[];
 }
 
 function startCucaracha(){
