@@ -685,6 +685,7 @@ body.disco-mode .nav-logo,body.disco-mode .ctitle,body.disco-mode #username{anim
 @keyframes vulkGlow{0%,100%{background:rgba(255,60,0,.06);}50%{background:rgba(255,120,0,.12);}}
 @keyframes vulkText{0%,100%{color:#ff4400;text-shadow:0 0 15px #ff4400;}50%{color:#ff8800;text-shadow:0 0 20px #ff8800;}}
 @keyframes vulkFlash{0%,100%{opacity:0;}50%{opacity:.06;}}
+@keyframes vulkBgBreathe{0%,100%{transform:translateX(-50%) scale(1);}50%{transform:translateX(-50%) scale(1.035);}}
 #vulkanFlash{display:none;position:fixed;inset:0;z-index:99984;pointer-events:none;background:radial-gradient(ellipse at 50% 100%,rgba(255,80,0,.25),transparent 60%);animation:vulkFlash .5s ease-in-out infinite;}
 #app.vulkan-mode #sec-dashboard .card,#app.vulkan-mode #sec-highscores .card,#app.vulkan-mode #sec-games .card{animation:vulkGlow 1.5s ease-in-out infinite;}
 #app.vulkan-mode .nav-logo,#app.vulkan-mode #username{animation:vulkText 1s linear infinite;}
@@ -709,6 +710,7 @@ body.disco-mode .nav-logo,body.disco-mode .ctitle,body.disco-mode #username{anim
 <div id="ytDiscoWrap" style="position:fixed;left:-9999px;top:-9999px;width:200px;height:200px;overflow:hidden;opacity:0;"></div>
 <div id="ytTacoWrap" style="position:fixed;left:-9999px;top:-9999px;width:200px;height:200px;overflow:hidden;opacity:0;"></div>
 <div id="ytCuckWrap" style="position:fixed;left:-9999px;top:-9999px;width:200px;height:200px;overflow:hidden;opacity:0;"></div>
+<div id="ytVulkWrap" style="position:fixed;left:-9999px;top:-9999px;width:200px;height:200px;overflow:hidden;opacity:0;"></div>
 
 
 <div id="cdWidget" style="display:none;position:fixed;top:60px;right:16px;z-index:99990;background:rgba(0,0,0,.88);border:2px solid #ffd23f;border-radius:10px;padding:14px 18px;text-align:center;box-shadow:0 0 25px rgba(255,210,63,.35);pointer-events:none;min-width:160px;">
@@ -2668,6 +2670,7 @@ function startEvent(type){
   if(type==='disco'){discoShouldPlay=true;if(discoYTReady&&discoYTPlayer){try{discoYTPlayer.seekTo(DISCO_YT_START,true);discoYTPlayer.playVideo();}catch(e){}}}
   if(type==='taco'){tacoShouldPlay=true;if(tacoYTReady&&tacoYTPlayer){try{tacoYTPlayer.seekTo(TACO_YT_START,true);tacoYTPlayer.playVideo();}catch(e){}}}
   if(type==='cucaracha'){cuckShouldPlay=true;if(cuckYTReady&&cuckYTPlayer){try{cuckYTPlayer.seekTo(CUCK_YT_START,true);cuckYTPlayer.playVideo();}catch(e){}}}
+  if(type==='vulkan'){vulkShouldPlay=true;if(vulkYTReady&&vulkYTPlayer){try{vulkYTPlayer.seekTo(VULK_YT_START,true);vulkYTPlayer.playVideo();}catch(e){}}}
   window.fbDB.ref('activeEvent').set(event)
     .then(()=>showNotif('🎉 '+event.name+' GESTARTET für '+minutes+' Minuten!'))
     .catch(()=>showNotif('⚠ FEHLER'));
@@ -2691,9 +2694,12 @@ const TACO_YT_ID='W-3DWBv0CvU';
 const TACO_YT_START=0;
 const CUCK_YT_ID='SHYUkAthMN0';
 const CUCK_YT_START=0;
+const VULK_YT_ID='WFnf84MVLNo';
+const VULK_YT_START=0;
 let discoYTPlayer=null,discoYTReady=false,discoShouldPlay=false;
 let tacoYTPlayer=null,tacoYTReady=false,tacoShouldPlay=false;
 let cuckYTPlayer=null,cuckYTReady=false,cuckShouldPlay=false;
+let vulkYTPlayer=null,vulkYTReady=false,vulkShouldPlay=false;
 let tacoInterval=null,cuckInterval=null;
 
 // Load YouTube API on page load
@@ -2754,6 +2760,19 @@ window.onYouTubeIframeAPIReady=function(){
       }
     });
   }
+  // Vulkan player
+  const vkw=document.getElementById('ytVulkWrap');
+  if(vkw){
+    vkw.innerHTML='<div id="ytVulkIframe"></div>';
+    vulkYTPlayer=new YT.Player('ytVulkIframe',{
+      height:'200',width:'200',videoId:VULK_YT_ID,
+      playerVars:{autoplay:0,start:VULK_YT_START,controls:0,rel:0,playsinline:1,origin:location.origin||'https://lukasstange10-max.github.io'},
+      events:{
+        onReady(e){vulkYTReady=true;e.target.setVolume(85);if(vulkShouldPlay)e.target.playVideo();},
+        onStateChange(e){if(e.data===YT.PlayerState.ENDED){e.target.seekTo(VULK_YT_START,true);e.target.playVideo();}}
+      }
+    });
+  }
 };
 
 function startDiscoMusic(){
@@ -2796,130 +2815,87 @@ let vulkanInterval=null;
 
 let vulkanAudioCtx=null,vulkanRumbleNodes=[],vulkanSoundInterval=null;
 
-function startVulkanSound(){
-  try{
-    vulkanAudioCtx=new(window.AudioContext||window.webkitAudioContext)();
-    const ac=vulkanAudioCtx;
-    const master=ac.createGain();master.gain.value=0.5;master.connect(ac.destination);
-
-    // Continuous low rumble (deep, textured)
-    const rumbleOsc=ac.createOscillator();
-    rumbleOsc.type='sawtooth';rumbleOsc.frequency.value=38;
-    const rumbleOsc2=ac.createOscillator();
-    rumbleOsc2.type='triangle';rumbleOsc2.frequency.value=52;
-    const rumbleLFO=ac.createOscillator();rumbleLFO.frequency.value=3.5;
-    const rumbleLFOGain=ac.createGain();rumbleLFOGain.gain.value=12;
-    rumbleLFO.connect(rumbleLFOGain);rumbleLFOGain.connect(rumbleOsc.frequency);
-    const rumbleFilter=ac.createBiquadFilter();rumbleFilter.type='lowpass';rumbleFilter.frequency.value=160;
-    const rumbleGain=ac.createGain();rumbleGain.gain.value=0.55;
-    rumbleOsc.connect(rumbleFilter);rumbleOsc2.connect(rumbleFilter);
-    rumbleFilter.connect(rumbleGain);rumbleGain.connect(master);
-    rumbleOsc.start();rumbleOsc2.start();rumbleLFO.start();
-    vulkanRumbleNodes.push(rumbleOsc,rumbleOsc2,rumbleLFO);
-
-    // Crackling lava texture (filtered noise, constant low level)
-    const crackleBuf=ac.createBuffer(1,ac.sampleRate*2,ac.sampleRate);
-    const cd=crackleBuf.getChannelData(0);
-    for(let i=0;i<cd.length;i++) cd[i]=(Math.random()*2-1)*(Math.random()>0.985?1:0.05);
-    const crackleSrc=ac.createBufferSource();crackleSrc.buffer=crackleBuf;crackleSrc.loop=true;
-    const crackleFilter=ac.createBiquadFilter();crackleFilter.type='highpass';crackleFilter.frequency.value=2500;
-    const crackleGain=ac.createGain();crackleGain.gain.value=0.12;
-    crackleSrc.connect(crackleFilter);crackleFilter.connect(crackleGain);crackleGain.connect(master);
-    crackleSrc.start();
-    vulkanRumbleNodes.push(crackleSrc);
-
-    // Big eruption blast — sharp crack + sub boom + rolling thunder tail
-    function eruptionBlast(big){
-      const t=ac.currentTime;
-      const vol=big?1:0.55;
-      // Sharp crack (short bright noise)
-      const cbuf=ac.createBuffer(1,ac.sampleRate*0.15,ac.sampleRate);
-      const cdat=cbuf.getChannelData(0);
-      for(let i=0;i<cdat.length;i++) cdat[i]=(Math.random()*2-1)*Math.pow(1-i/cdat.length,3);
-      const csrc=ac.createBufferSource();csrc.buffer=cbuf;
-      const cf=ac.createBiquadFilter();cf.type='highpass';cf.frequency.value=600;
-      const cg=ac.createGain();cg.gain.setValueAtTime(vol*0.5,t);cg.gain.exponentialRampToValueAtTime(0.001,t+0.15);
-      csrc.connect(cf);cf.connect(cg);cg.connect(master);csrc.start(t);
-
-      // Body boom (long noise burst, lowpass sweeping down)
-      const dur=big?1.6:0.8;
-      const buf=ac.createBuffer(1,ac.sampleRate*dur,ac.sampleRate);
-      const d=buf.getChannelData(0);
-      for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,1.5);
-      const src=ac.createBufferSource();src.buffer=buf;
-      const f=ac.createBiquadFilter();f.type='lowpass';f.frequency.setValueAtTime(1000,t);f.frequency.exponentialRampToValueAtTime(60,t+dur*0.8);
-      const g=ac.createGain();g.gain.setValueAtTime(vol*0.7,t+0.02);g.gain.exponentialRampToValueAtTime(0.001,t+dur);
-      src.connect(f);f.connect(g);g.connect(master);src.start(t);
-
-      // Sub bass thump
-      const o=ac.createOscillator();o.type='sine';
-      o.frequency.setValueAtTime(big?55:65,t);o.frequency.exponentialRampToValueAtTime(20,t+dur*0.6);
-      const og=ac.createGain();og.gain.setValueAtTime(vol*0.8,t);og.gain.exponentialRampToValueAtTime(0.001,t+dur*0.7);
-      o.connect(og);og.connect(master);o.start(t);o.stop(t+dur*0.7);
+function startVulkanMusic(){
+  vulkShouldPlay=true;
+  if(vulkYTPlayer&&vulkYTReady){try{vulkYTPlayer.seekTo(VULK_YT_START,true);vulkYTPlayer.playVideo();}catch(e){}return;}
+  if(window.YT&&window.YT.Player&&!vulkYTPlayer){
+    const vkw=document.getElementById('ytVulkWrap');
+    if(vkw){vkw.innerHTML='<div id="ytVulkIframe2"></div>';
+      vulkYTPlayer=new YT.Player('ytVulkIframe2',{height:'200',width:'200',videoId:VULK_YT_ID,
+        playerVars:{autoplay:1,start:VULK_YT_START,controls:0,rel:0,playsinline:1,origin:location.origin||'https://lukasstange10-max.github.io'},
+        events:{onReady(e){vulkYTReady=true;e.target.setVolume(85);e.target.playVideo();},
+          onStateChange(e){if(e.data===YT.PlayerState.ENDED){e.target.seekTo(VULK_YT_START,true);e.target.playVideo();}}}});
     }
-    eruptionBlast(true);
-    vulkanSoundInterval=setInterval(()=>{ eruptionBlast(Math.random()>0.6); },Math.random()*1500+1800);
-  }catch(e){console.warn('Vulkan sound error',e);}
+  }
 }
 
-function stopVulkanSound(){
-  clearInterval(vulkanSoundInterval);vulkanSoundInterval=null;
-  vulkanRumbleNodes.forEach(n=>{try{n.stop();}catch(e){}});
-  vulkanRumbleNodes=[];
-  if(vulkanAudioCtx){try{vulkanAudioCtx.close();}catch(e){}vulkanAudioCtx=null;}
+function stopVulkanMusic(){
+  vulkShouldPlay=false;
+  if(vulkYTPlayer){try{vulkYTPlayer.pauseVideo();}catch(e){}}
 }
 
-let vulkanParticles=[],vulkanRAF=null,vulkanBgEl=null,vulkanShakeInterval=null;
+let vulkanParticles=[],vulkanRAF=null,vulkanBgEl=null,vulkanShakeInterval=null,vulkanShakeT=0;
 
 function startVulkan(){
   document.getElementById('app').classList.add('vulkan-mode');
   const flash=document.getElementById('vulkanFlash');
   if(flash)flash.style.display='block';
-  try{startVulkanSound();}catch(e){}
+  try{startVulkanMusic();}catch(e){}
 
-  // Background volcano graphic — semi-transparent, fixed bottom center
+  // Background volcano graphic — bigger, nicer glow, semi-transparent
   if(!vulkanBgEl){
     vulkanBgEl=document.createElement('div');
     vulkanBgEl.id='vulkanBg';
-    vulkanBgEl.style.cssText='position:fixed;bottom:-4vh;left:50%;transform:translateX(-50%);font-size:48vh;line-height:1;opacity:.16;z-index:1;pointer-events:none;user-select:none;filter:drop-shadow(0 0 60px rgba(255,80,0,.5));';
+    vulkanBgEl.style.cssText='position:fixed;bottom:-6vh;left:50%;transform:translateX(-50%);font-size:64vh;line-height:1;opacity:.22;z-index:1;pointer-events:none;user-select:none;filter:drop-shadow(0 0 80px rgba(255,90,0,.55)) drop-shadow(0 0 140px rgba(255,40,0,.3)) saturate(1.3);animation:vulkBgBreathe 5s ease-in-out infinite;transform-origin:center bottom;';
     vulkanBgEl.textContent='🌋';
     document.body.appendChild(vulkanBgEl);
   }
   vulkanBgEl.style.display='block';
 
-  // Screen shake via #app margin (safe — no transform, no fixed-position bugs)
+  // Uniform screen shake via transform on #app — smooth organic rumble
   const appEl=document.getElementById('app');
+  vulkanShakeT=0;
   clearInterval(vulkanShakeInterval);
   vulkanShakeInterval=setInterval(()=>{
-    const dx=(Math.random()-0.5)*6;
-    appEl.style.marginLeft=dx+'px';
-  },90);
+    vulkanShakeT+=1;
+    const dx=Math.sin(vulkanShakeT*1.7)*4 + (Math.random()-0.5)*3;
+    const dy=Math.cos(vulkanShakeT*2.3)*2.5 + (Math.random()-0.5)*2;
+    appEl.style.transform=`translate(${dx}px,${dy}px)`;
+  },60);
 
-  // Crater position: top of the volcano graphic, roughly centered
+  // Crater position: top of the volcano graphic, centered
   function craterPos(){
     return {
-      x: window.innerWidth/2 + (Math.random()-0.5)*40,
-      y: window.innerHeight - window.innerHeight*0.30
+      x: window.innerWidth/2 + (Math.random()-0.5)*36,
+      y: window.innerHeight - window.innerHeight*0.38
     };
   }
 
-  const emojis=['🪨','🔥','💥','🟠','🔴','🌋'];
+  const emojis=['🪨','🔥','🌋'];
+  const glowColors=['#ff5500','#ff8800','#ffaa00','#ff2200'];
 
   function spawnParticle(big){
     const p=craterPos();
     const ang=(Math.random()*0.7+1.75)*Math.PI; // mostly upward, spread left-right
     const speed=big?(11+Math.random()*5):(6+Math.random()*6);
     const el=document.createElement('div');
-    const size=big?(40+Math.random()*25):(16+Math.random()*22);
-    el.style.cssText=`position:fixed;left:0;top:0;font-size:${size}px;z-index:99986;pointer-events:none;user-select:none;will-change:transform;`;
-    el.textContent=emojis[Math.floor(Math.random()*emojis.length)];
+    const useOrb=Math.random()>0.45;
+    const size=big?(34+Math.random()*22):(12+Math.random()*18);
+    const opacity=0.55+Math.random()*0.3;
+    if(useOrb){
+      const col=glowColors[Math.floor(Math.random()*glowColors.length)];
+      el.style.cssText=`position:fixed;left:0;top:0;width:${size}px;height:${size}px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff6d8,${col} 55%,rgba(120,10,0,0) 90%);box-shadow:0 0 ${size*1.4}px ${col},0 0 ${size*0.5}px #fff6d8;z-index:99986;pointer-events:none;user-select:none;will-change:transform;`;
+    } else {
+      el.style.cssText=`position:fixed;left:0;top:0;font-size:${size}px;z-index:99986;pointer-events:none;user-select:none;will-change:transform;filter:drop-shadow(0 0 10px #ff5500);`;
+      el.textContent=emojis[Math.floor(Math.random()*emojis.length)];
+    }
     document.body.appendChild(el);
     vulkanParticles.push({
       el,x:p.x,y:p.y,
       vx:Math.cos(ang)*speed,
       vy:Math.sin(ang)*speed*2.2 - (big?6:2),
       rot:Math.random()*360,vr:(Math.random()-0.5)*12,
-      life:0,maxLife:big?3.2:2.2
+      life:0,maxLife:big?3.2:2.2,baseOpacity:opacity
     });
   }
 
@@ -2938,7 +2914,7 @@ function startVulkan(){
       pt.y+=pt.vy;
       pt.rot+=pt.vr;
       pt.life+=1/60;
-      const fade=Math.max(0,1-pt.life/pt.maxLife);
+      const fade=Math.max(0,1-pt.life/pt.maxLife)*pt.baseOpacity;
       pt.el.style.transform=`translate(${pt.x}px,${pt.y}px) rotate(${pt.rot}deg)`;
       pt.el.style.opacity=fade;
       if(pt.life>=pt.maxLife || pt.y>window.innerHeight+100){
@@ -2960,10 +2936,10 @@ function stopVulkan(){
   clearInterval(vulkanInterval); vulkanInterval=null;
   clearInterval(vulkanShakeInterval); vulkanShakeInterval=null;
   cancelAnimationFrame(vulkanRAF); vulkanRAF=null;
-  try{stopVulkanSound();}catch(e){}
+  try{stopVulkanMusic();}catch(e){}
   const appEl=document.getElementById('app');
   appEl.classList.remove('vulkan-mode');
-  appEl.style.marginLeft='0';
+  appEl.style.transform='';
   if(vulkanBgEl) vulkanBgEl.style.display='none';
   const flash=document.getElementById('vulkanFlash');
   if(flash)flash.style.display='none';
