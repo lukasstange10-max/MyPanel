@@ -2695,7 +2695,7 @@ const TACO_YT_START=0;
 const CUCK_YT_ID='SHYUkAthMN0';
 const CUCK_YT_START=0;
 const VULK_YT_ID='WFnf84MVLNo';
-const VULK_YT_START=0;
+const VULK_YT_START=32;
 let discoYTPlayer=null,discoYTReady=false,discoShouldPlay=false;
 let tacoYTPlayer=null,tacoYTReady=false,tacoShouldPlay=false;
 let cuckYTPlayer=null,cuckYTReady=false,cuckShouldPlay=false;
@@ -2876,7 +2876,7 @@ function startVulkan(){
 
   function spawnParticle(big){
     const p=craterPos();
-    const ang=(Math.random()*0.7+1.75)*Math.PI; // mostly upward, spread left-right
+    const spread=(Math.random()-0.5)*1.7; // -0.85..0.85 rad (~±49°) from straight up
     const speed=big?(11+Math.random()*5):(6+Math.random()*6);
     const el=document.createElement('div');
     const useOrb=Math.random()>0.45;
@@ -2892,8 +2892,8 @@ function startVulkan(){
     document.body.appendChild(el);
     vulkanParticles.push({
       el,x:p.x,y:p.y,
-      vx:Math.cos(ang)*speed,
-      vy:Math.sin(ang)*speed*2.2 - (big?6:2),
+      vx:Math.sin(spread)*speed,
+      vy:-Math.cos(spread)*speed*2.2 - (big?6:2),
       rot:Math.random()*360,vr:(Math.random()-0.5)*12,
       life:0,maxLife:big?3.2:2.2,baseOpacity:opacity
     });
