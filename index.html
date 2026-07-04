@@ -755,7 +755,7 @@ body.disco-mode .nav-logo,body.disco-mode .ctitle,body.disco-mode #username{anim
     <span class="l2">GAMING</span>
     <span class="l3">HUB</span>
   </h1>
-  <p class="hero-sub">12 Spiele · Echtzeit-Multiplayer · Globale Highscores · Clans · Chat</p>
+  <p class="hero-sub">13 Spiele · Echtzeit-Multiplayer · Globale Highscores · Clans · Chat</p>
   <div class="hero-btns">
     <a href="javascript:void(0)" onclick="openPanel()" class="btn-primary">
       <span class="btn-glow"></span>▶ JETZT SPIELEN
@@ -767,7 +767,7 @@ body.disco-mode .nav-logo,body.disco-mode .ctitle,body.disco-mode #username{anim
   <div class="live-bar">
     <div class="live-item"><span class="live-dot"></span>SYSTEM ONLINE</div>
     <div class="live-sep">·</div>
-    <div class="live-item">🎮 12 SPIELE</div>
+    <div class="live-item">🎮 13 SPIELE</div>
     <div class="live-sep">·</div>
     <div class="live-item">🏆 GLOBALE RANGLISTE</div>
     <div class="live-sep">·</div>
@@ -830,7 +830,7 @@ body.disco-mode .nav-logo,body.disco-mode .ctitle,body.disco-mode #username{anim
         </div>
       </div>
       <div class="mock-stats-row">
-        <div class="mock-stat"><div class="mstat-num" style="color:var(--c)">12</div><div class="mstat-label">SPIELE</div></div>
+        <div class="mock-stat"><div class="mstat-num" style="color:var(--c)">13</div><div class="mstat-label">SPIELE</div></div>
         <div class="mock-stat"><div class="mstat-num" style="color:var(--g)">247</div><div class="mstat-label">HIGHSCORES</div></div>
         <div class="mock-stat"><div class="mstat-num" style="color:var(--pk,#ff0080)">3</div><div class="mstat-label">FREUNDE</div></div>
         <div class="mock-stat"><div class="mstat-num" style="color:#ffd23f">1</div><div class="mstat-label">ONLINE</div></div>
@@ -1156,7 +1156,7 @@ body.disco-mode .nav-logo,body.disco-mode .ctitle,body.disco-mode #username{anim
       </div>
 
       <div class="stat-row">
-        <div class="stat-pill"><div class="sp-num" id="stat-games">12</div><div class="sp-label">SPIELE</div></div>
+        <div class="stat-pill"><div class="sp-num" id="stat-games">13</div><div class="sp-label">SPIELE</div></div>
         <div class="stat-pill"><div class="sp-num" id="stat-hs">0</div><div class="sp-label">HIGHSCORES</div></div>
         <div class="stat-pill"><div class="sp-num" id="stat-favs">0</div><div class="sp-label">FAVORITEN</div></div>
         <div class="stat-pill"><div class="sp-num" id="stat-online">0</div><div class="sp-label">FREUNDE ONLINE</div></div>
@@ -1414,6 +1414,13 @@ body.disco-mode .nav-logo,body.disco-mode .ctitle,body.disco-mode #username{anim
     <div id="sec-news" style="display:none;">
       <div class="card">
         <div class="ctitle"><span>◉</span> NEWS & UPDATES</div>
+        <div class="newsitem"><span>🔊 Taco- & La-Cucaracha-Musik gefixt (neue funktionierende Video-Links)</span><span class="news-tag">FIX</span></div>
+        <div class="newsitem"><span>🧟 Zombie Survival: Touch-Steuerung, Shop-Bugs gefixt, steigende Schwierigkeit</span><span class="news-tag">UPDATE</span></div>
+        <div class="newsitem"><span>🐍 Snake: neues Neon-Design, Wand-Wrap-Modus, Gold-Powerup, Tempo live wechselbar</span><span class="news-tag">UPDATE</span></div>
+        <div class="newsitem"><span>🧠 Memory: getrennte Bestenlisten pro Schwierigkeit, Sterne-Wertung, Konfetti</span><span class="news-tag">UPDATE</span></div>
+        <div class="newsitem"><span>⚡ Geometry Dash: 2 neue Schwierigkeitsstufen (Extrem, Unmöglich) + neues Design</span><span class="news-tag">UPDATE</span></div>
+        <div class="newsitem"><span>🧱 Breakout: Multiball-Powerup, bessere Physik, Level-System</span><span class="news-tag">UPDATE</span></div>
+        <div class="newsitem"><span>⚽ Elfmeterschießen: echte WM-2026-Gruppen, Torwart selbst steuerbar (A/D + Klick)</span><span class="news-tag">NEU</span></div>
         <div class="newsitem"><span>🌀 Neues Spiel: NEON VORTEX ist da!</span><span class="news-tag">NEU</span></div>
         <div class="newsitem"><span>▲ MEGA UPDATE v3.0 — Highscores, Musik, Freunde!</span><span class="news-tag">UPDATE</span></div>
         <div class="newsitem"><span>🎵 Synthwave Audio Engine eingebaut</span><span class="news-tag">UPDATE</span></div>
@@ -1615,6 +1622,7 @@ const GAMES = [
   {id:'vortex',name:'NEON VORTEX',icon:'🌀',desc:'Überlebe den Sog',file:'vortex.html'},
   {id:'pong',name:'NEON PONG',icon:'🏓',desc:'1v1 Online Multiplayer',file:'pong.html'},
   {id:'tiktaktu',name:'TIK TAK TU',icon:'🤖',desc:'Spiel gegen den Bot',file:'tiktaktu.html'},
+  {id:'penaltykick',name:'WM 2026 PENALTY',icon:'🏆',desc:'WM Elfmeter Turnier',file:'penalty.html'},
 ];
 
 const FRIENDS = [
@@ -2667,9 +2675,9 @@ function startEvent(type){
     xpMultiplier:type==='taco'?3:type==='cucaracha'?4:type==='vulkan'?7:2,
     startedBy:getMyName()
   };
-  if(type==='disco'){discoShouldPlay=true;if(discoYTReady&&discoYTPlayer){try{discoYTPlayer.seekTo(DISCO_YT_START,true);discoYTPlayer.playVideo();}catch(e){}}}
-  if(type==='taco'){tacoShouldPlay=true;if(tacoYTReady&&tacoYTPlayer){try{tacoYTPlayer.seekTo(TACO_YT_START,true);tacoYTPlayer.playVideo();}catch(e){}}}
-  if(type==='cucaracha'){cuckShouldPlay=true;if(cuckYTReady&&cuckYTPlayer){try{cuckYTPlayer.seekTo(CUCK_YT_START,true);cuckYTPlayer.playVideo();}catch(e){}}}
+  if(type==='disco'){try{startDiscoMusic();}catch(e){}}
+  if(type==='taco'){try{startTacoMusic();}catch(e){}}
+  if(type==='cucaracha'){try{startCuckMusic();}catch(e){}}
   if(type==='vulkan'){vulkShouldPlay=true;if(vulkYTReady&&vulkYTPlayer){try{vulkYTPlayer.seekTo(VULK_YT_START,true);vulkYTPlayer.playVideo();}catch(e){}}}
   window.fbDB.ref('activeEvent').set(event)
     .then(()=>showNotif('🎉 '+event.name+' GESTARTET für '+minutes+' Minuten!'))
@@ -2690,9 +2698,9 @@ function stopEvent(){
 
 const DISCO_YT_ID='cE0wfjsybIQ';
 const DISCO_YT_START=30;
-const TACO_YT_ID='W-3DWBv0CvU';
+const TACO_YT_ID='npjF032TDDQ';
 const TACO_YT_START=0;
-const CUCK_YT_ID='SHYUkAthMN0';
+const CUCK_YT_ID='gxw19DuJVZA';
 const CUCK_YT_START=0;
 const VULK_YT_ID='WFnf84MVLNo';
 const VULK_YT_START=32;
@@ -2711,55 +2719,7 @@ let tacoInterval=null,cuckInterval=null;
 })();
 
 window.onYouTubeIframeAPIReady=function(){
-  // Disco player
-  const dw=document.getElementById('ytDiscoWrap');
-  if(dw){
-    dw.innerHTML='<div id="ytDiscoIframe"></div>';
-    discoYTPlayer=new YT.Player('ytDiscoIframe',{
-      height:'200',width:'200',videoId:DISCO_YT_ID,
-      playerVars:{autoplay:0,start:DISCO_YT_START,controls:0,rel:0,playsinline:1,origin:location.origin||'https://lukasstange10-max.github.io'},
-      events:{
-        onReady(e){discoYTReady=true;e.target.setVolume(80);if(discoShouldPlay)e.target.playVideo();},
-        onStateChange(e){
-          if(e.data===YT.PlayerState.ENDED){
-            e.target.seekTo(DISCO_YT_START,true);
-            e.target.playVideo();
-          }
-        }
-      }
-    });
-  }
-  // Taco player
-  const tw=document.getElementById('ytTacoWrap');
-  if(tw){
-    tw.innerHTML='<div id="ytTacoIframe"></div>';
-    tacoYTPlayer=new YT.Player('ytTacoIframe',{
-      height:'200',width:'200',videoId:TACO_YT_ID,
-      playerVars:{autoplay:0,start:TACO_YT_START,controls:0,rel:0,playsinline:1,origin:location.origin||'https://lukasstange10-max.github.io'},
-      events:{
-        onReady(e){tacoYTReady=true;e.target.setVolume(80);if(tacoShouldPlay)e.target.playVideo();},
-        onStateChange(e){
-          if(e.data===YT.PlayerState.ENDED){
-            e.target.seekTo(TACO_YT_START,true);
-            e.target.playVideo();
-          }
-        }
-      }
-    });
-  }
-  // Cucaracha player
-  const ckw=document.getElementById('ytCuckWrap');
-  if(ckw){
-    ckw.innerHTML='<div id="ytCuckIframe"></div>';
-    cuckYTPlayer=new YT.Player('ytCuckIframe',{
-      height:'200',width:'200',videoId:CUCK_YT_ID,
-      playerVars:{autoplay:0,start:CUCK_YT_START,controls:0,rel:0,playsinline:1,origin:location.origin||'https://lukasstange10-max.github.io'},
-      events:{
-        onReady(e){cuckYTReady=true;e.target.setVolume(85);if(cuckShouldPlay)e.target.playVideo();},
-        onStateChange(e){if(e.data===YT.PlayerState.ENDED){e.target.seekTo(CUCK_YT_START,true);e.target.playVideo();}}
-      }
-    });
-  }
+  // Disco, Taco & Cucaracha laufen jetzt über Web-Audio-Synth — kein YT-Player mehr nötig
   // Vulkan player
   const vkw=document.getElementById('ytVulkWrap');
   if(vkw){
@@ -2775,40 +2735,157 @@ window.onYouTubeIframeAPIReady=function(){
   }
 };
 
+/* ===== DISCO-MUSIK — Web-Audio-Synth-Loop (kein YouTube mehr, läuft immer zuverlässig) ===== */
+let discoLoopTimer=null, discoNodes=[];
+
+function discoKick(t){
+  const o=audioCtx.createOscillator();
+  const g=audioCtx.createGain();
+  o.frequency.setValueAtTime(150,t);
+  o.frequency.exponentialRampToValueAtTime(0.01,t+0.35);
+  g.gain.setValueAtTime(0.9,t);
+  g.gain.exponentialRampToValueAtTime(0.001,t+0.35);
+  o.connect(g);g.connect(masterGain);
+  o.start(t);o.stop(t+0.35);
+  discoNodes.push(o);
+}
+function discoHat(t,open){
+  const buf=audioCtx.createBuffer(1,audioCtx.sampleRate*(open?0.22:0.07),audioCtx.sampleRate);
+  const d=buf.getChannelData(0);
+  for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1);
+  const src=audioCtx.createBufferSource();
+  const bpf=audioCtx.createBiquadFilter();
+  bpf.type='highpass';bpf.frequency.value=7500;
+  const g=audioCtx.createGain();
+  g.gain.setValueAtTime(open?0.11:0.07,t);
+  g.gain.exponentialRampToValueAtTime(0.001,t+(open?0.22:0.07));
+  src.buffer=buf;src.connect(bpf);bpf.connect(g);g.connect(masterGain);
+  src.start(t);
+  discoNodes.push(src);
+}
+function discoClap(t){
+  const buf=audioCtx.createBuffer(1,audioCtx.sampleRate*0.15,audioCtx.sampleRate);
+  const d=buf.getChannelData(0);
+  for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,1.5);
+  const src=audioCtx.createBufferSource();
+  const g=audioCtx.createGain();
+  g.gain.setValueAtTime(0.35,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.15);
+  src.buffer=buf;src.connect(g);g.connect(masterGain);
+  src.start(t);
+  discoNodes.push(src);
+}
+function discoNote(freq,t,dur,type,vol){
+  const o=audioCtx.createOscillator();
+  const g=audioCtx.createGain();
+  o.type=type;o.frequency.value=freq;
+  g.gain.setValueAtTime(0,t);
+  g.gain.linearRampToValueAtTime(vol,t+0.02);
+  g.gain.exponentialRampToValueAtTime(0.001,t+dur-0.02);
+  o.connect(g);g.connect(masterGain);
+  o.start(t);o.stop(t+dur);
+  discoNodes.push(o);
+}
+
+function playDiscoBar(){
+  if(!discoShouldPlay)return;
+  initAudio();
+  const now=audioCtx.currentTime;
+  const bpm=120;
+  const beat=60/bpm;
+  const eighth=beat/2;
+
+  /* Four-on-the-floor Kick + Offbeat Hi-Hats + Clap auf 2 & 4 — klassisches Disco-Pattern */
+  for(let b=0;b<4;b++){
+    const bt=now+b*beat;
+    discoKick(bt);
+    discoHat(bt+eighth,false);
+    discoHat(bt+eighth*1.5,b%2===1);
+    if(b===1||b===3) discoClap(bt);
+  }
+
+  /* Funky Walking-Bassline (Am-Groove, disco-typisch) */
+  const bassNotes=[110.00,110.00,146.83,164.81,110.00,110.00,130.81,146.83]; // A2,A2,D3,E3,A2,A2,C3,D3
+  bassNotes.forEach((f,i)=>discoNote(f,now+i*eighth,eighth*0.85,'sawtooth',0.13));
+
+  /* Streicher-Stabs (Akkord-Anschläge auf den Offbeats, typischer Disco-String-Sound) */
+  const stabs=[[220,277.18,329.63],[220,277.18,329.63],[196,246.94,293.66],[196,246.94,293.66]];
+  stabs.forEach((chord,i)=>{
+    const t=now+i*beat+eighth;
+    chord.forEach(f=>discoNote(f,t,eighth*0.7,'sawtooth',0.045));
+  });
+
+  discoLoopTimer=setTimeout(playDiscoBar,4*beat*1000);
+}
+
 function startDiscoMusic(){
   discoShouldPlay=true;
-  if(discoYTPlayer&&discoYTReady){try{discoYTPlayer.seekTo(DISCO_YT_START,true);discoYTPlayer.playVideo();}catch(e){}return;}
-  if(window.YT&&window.YT.Player&&!discoYTPlayer){
-    const dw=document.getElementById('ytDiscoWrap');
-    if(dw){dw.innerHTML='<div id="ytDiscoIframe2"></div>';
-      discoYTPlayer=new YT.Player('ytDiscoIframe2',{height:'200',width:'200',videoId:DISCO_YT_ID,
-        playerVars:{autoplay:1,start:DISCO_YT_START,controls:0,rel:0,playsinline:1,origin:location.origin||'https://lukasstange10-max.github.io'},
-        events:{onReady(e){discoYTReady=true;e.target.setVolume(80);e.target.playVideo();},
-          onStateChange(e){if(e.data===YT.PlayerState.ENDED){e.target.seekTo(DISCO_YT_START,true);e.target.playVideo();}}}});
-    }
-  }
+  initAudio();
+  clearTimeout(discoLoopTimer);
+  discoNodes=[];
+  playDiscoBar();
 }
 function stopDiscoMusic(){
   discoShouldPlay=false;
-  if(discoYTPlayer){try{discoYTPlayer.pauseVideo();}catch(e){}}
+  clearTimeout(discoLoopTimer);
+  discoNodes.forEach(n=>{try{n.stop();}catch(e){}});
+  discoNodes=[];
+}
+
+/* ===== TACO-MUSIK — Web-Audio-Synth-Loop (kein YouTube mehr, läuft immer zuverlässig) ===== */
+let tacoLoopTimer=null, tacoNodes=[];
+const EVENT_NOTE_FREQ={C3:130.81,G3:196.00,C4:261.63,D4:293.66,E4:329.63,F4:349.23,G4:392.00,A4:440.00,B4:493.88,C5:523.25};
+
+function playTacoPhrase(){
+  if(!tacoShouldPlay)return;
+  initAudio();
+  const now=audioCtx.currentTime;
+  const bpm=150;
+  const step=60/bpm/2; // Achtelnoten — verspielt & hüpfend
+  const melody=['C4','E4','G4','E4','C4','E4','G4','A4','G4','E4','D4','C4'];
+
+  melody.forEach((n,i)=>{
+    const t=now+i*step;
+    const g=audioCtx.createGain();
+    const o=audioCtx.createOscillator();
+    o.type='square';
+    o.frequency.value=EVENT_NOTE_FREQ[n];
+    g.gain.setValueAtTime(0,t);
+    g.gain.linearRampToValueAtTime(0.09,t+0.01);
+    g.gain.exponentialRampToValueAtTime(0.001,t+step*0.9);
+    o.connect(g);g.connect(masterGain);
+    o.start(t);o.stop(t+step);
+    tacoNodes.push(o);
+
+    if(i%2===0){
+      const bg=audioCtx.createGain();
+      const bo=audioCtx.createOscillator();
+      bo.type='triangle';
+      bo.frequency.value=EVENT_NOTE_FREQ[n]/2;
+      bg.gain.setValueAtTime(0,t);
+      bg.gain.linearRampToValueAtTime(0.12,t+0.01);
+      bg.gain.exponentialRampToValueAtTime(0.001,t+step*1.8);
+      bo.connect(bg);bg.connect(masterGain);
+      bo.start(t);bo.stop(t+step*2);
+      tacoNodes.push(bo);
+    }
+  });
+
+  const loopDur=melody.length*step;
+  tacoLoopTimer=setTimeout(playTacoPhrase,loopDur*1000);
 }
 
 function startTacoMusic(){
   tacoShouldPlay=true;
-  if(tacoYTPlayer&&tacoYTReady){try{tacoYTPlayer.seekTo(TACO_YT_START,true);tacoYTPlayer.playVideo();}catch(e){}return;}
-  if(window.YT&&window.YT.Player&&!tacoYTPlayer){
-    const tw=document.getElementById('ytTacoWrap');
-    if(tw){tw.innerHTML='<div id="ytTacoIframe2"></div>';
-      tacoYTPlayer=new YT.Player('ytTacoIframe2',{height:'200',width:'200',videoId:TACO_YT_ID,
-        playerVars:{autoplay:1,start:TACO_YT_START,controls:0,rel:0,playsinline:1,origin:location.origin||'https://lukasstange10-max.github.io'},
-        events:{onReady(e){tacoYTReady=true;e.target.setVolume(80);e.target.playVideo();},
-          onStateChange(e){if(e.data===YT.PlayerState.ENDED){e.target.seekTo(TACO_YT_START,true);e.target.playVideo();}}}});
-    }
-  }
+  initAudio();
+  clearTimeout(tacoLoopTimer);
+  tacoNodes=[];
+  playTacoPhrase();
 }
 function stopTacoMusic(){
   tacoShouldPlay=false;
-  if(tacoYTPlayer){try{tacoYTPlayer.pauseVideo();}catch(e){}}
+  clearTimeout(tacoLoopTimer);
+  tacoNodes.forEach(n=>{try{n.stop();}catch(e){}});
+  tacoNodes=[];
 }
 
 let vulkanInterval=null;
@@ -2977,23 +3054,82 @@ function stopCucaracha(){
   if(c){c.style.display='none';c.innerHTML='';}
 }
 
-function startCuckMusic(){
-  cuckShouldPlay=true;
-  if(cuckYTPlayer&&cuckYTReady){try{cuckYTPlayer.seekTo(CUCK_YT_START,true);cuckYTPlayer.playVideo();}catch(e){}return;}
-  if(window.YT&&window.YT.Player&&!cuckYTPlayer){
-    const ckw=document.getElementById('ytCuckWrap');
-    if(ckw){ckw.innerHTML='<div id="ytCuckIframe2"></div>';
-      cuckYTPlayer=new YT.Player('ytCuckIframe2',{height:'200',width:'200',videoId:CUCK_YT_ID,
-        playerVars:{autoplay:1,start:CUCK_YT_START,controls:0,rel:0,playsinline:1,origin:location.origin||'https://lukasstange10-max.github.io'},
-        events:{onReady(e){cuckYTReady=true;e.target.setVolume(85);e.target.playVideo();},
-          onStateChange(e){if(e.data===YT.PlayerState.ENDED){e.target.seekTo(CUCK_YT_START,true);e.target.playVideo();}}}});
-    }
-  }
+/* ===== LA-CUCARACHA-MUSIK — Web-Audio-Synth mit der traditionellen Volkslied-Melodie (gemeinfrei) ===== */
+let cuckLoopTimer=null, cuckNodes=[];
+
+function cuckPerc(t){
+  const buf=audioCtx.createBuffer(1,audioCtx.sampleRate*0.05,audioCtx.sampleRate);
+  const d=buf.getChannelData(0);
+  for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1);
+  const src=audioCtx.createBufferSource();
+  const bpf=audioCtx.createBiquadFilter();
+  bpf.type='highpass';bpf.frequency.value=4000;
+  const g=audioCtx.createGain();
+  g.gain.setValueAtTime(0.05,t);
+  g.gain.exponentialRampToValueAtTime(0.001,t+0.05);
+  src.buffer=buf;src.connect(bpf);bpf.connect(g);g.connect(masterGain);
+  src.start(t);
+  cuckNodes.push(src);
 }
 
+function playCuckPhrase(){
+  if(!cuckShouldPlay)return;
+  initAudio();
+  const now=audioCtx.currentTime;
+  const bpm=132;
+  const step=60/bpm/2; // Achtelnoten, Mariachi-Tempo
+  const melody=['C4','C4','C4','F4','A4','C4','C4','C4','F4','A4','F4','F4','E4','E4','D4','D4','C4'];
+
+  melody.forEach((n,i)=>{
+    const t=now+i*step;
+
+    /* Mariachi-Trompete: zwei leicht verstimmte Sägezahn-Oszillatoren */
+    const g=audioCtx.createGain();
+    const o=audioCtx.createOscillator();
+    o.type='sawtooth';o.frequency.value=EVENT_NOTE_FREQ[n];
+    const o2=audioCtx.createOscillator();
+    o2.type='sawtooth';o2.frequency.value=EVENT_NOTE_FREQ[n];o2.detune.value=6;
+    g.gain.setValueAtTime(0,t);
+    g.gain.linearRampToValueAtTime(0.075,t+0.015);
+    g.gain.exponentialRampToValueAtTime(0.001,t+step*0.95);
+    o.connect(g);o2.connect(g);g.connect(masterGain);
+    o.start(t);o.stop(t+step);
+    o2.start(t);o2.stop(t+step);
+    cuckNodes.push(o,o2);
+
+    /* Oom-Pah-Bass (Guitarrón-artig) auf jeder zweiten Note */
+    if(i%2===0){
+      const bg=audioCtx.createGain();
+      const bo=audioCtx.createOscillator();
+      bo.type='triangle';bo.frequency.value=EVENT_NOTE_FREQ[n]/2;
+      bg.gain.setValueAtTime(0,t);
+      bg.gain.linearRampToValueAtTime(0.1,t+0.01);
+      bg.gain.exponentialRampToValueAtTime(0.001,t+step*1.8);
+      bo.connect(bg);bg.connect(masterGain);
+      bo.start(t);bo.stop(t+step*2);
+      cuckNodes.push(bo);
+    }
+
+    /* Güiro/Maraca-Perkussion auf jedem Achtel */
+    cuckPerc(t);
+  });
+
+  const loopDur=melody.length*step;
+  cuckLoopTimer=setTimeout(playCuckPhrase,loopDur*1000);
+}
+
+function startCuckMusic(){
+  cuckShouldPlay=true;
+  initAudio();
+  clearTimeout(cuckLoopTimer);
+  cuckNodes=[];
+  playCuckPhrase();
+}
 function stopCuckMusic(){
   cuckShouldPlay=false;
-  if(cuckYTPlayer){try{cuckYTPlayer.pauseVideo();}catch(e){}}
+  clearTimeout(cuckLoopTimer);
+  cuckNodes.forEach(n=>{try{n.stop();}catch(e){}});
+  cuckNodes=[];
 }
 
 function startTacoRain(){
@@ -3101,7 +3237,7 @@ function applyEvent(event){
     if(timer){timer.style.display='block';timer.style.borderColor='#c8a020';timer.style.boxShadow='0 0 20px rgba(200,160,30,.4)';}
     const tc=document.getElementById('eventTimerCount');if(tc){tc.style.textShadow='0 0 12px #c8a020';tc.style.animation='none';}
     const tl=document.getElementById('eventTimerLabel');if(tl)tl.style.color='#c8a020';
-    if(cuckShouldPlay)try{startCuckMusic();}catch(e){}
+    try{startCuckMusic();}catch(e){}
   }
 
   if(event.type==='vulkan'){

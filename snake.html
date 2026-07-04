@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Snake 2.0</title>
+<title>Snake</title>
 
 <style>
 *{
@@ -14,7 +14,7 @@ box-sizing:border-box;
 
 body{
 font-family:Arial,Helvetica,sans-serif;
-background:linear-gradient(135deg,#07111f,#0b1e36);
+background:radial-gradient(circle at 25% 15%,#1e1b4b,#020617 65%);
 color:#fff;
 min-height:100vh;
 display:flex;
@@ -27,18 +27,27 @@ overflow:hidden;
 .wrapper{
 width:100%;
 max-width:760px;
-background:#18253a;
+background:rgba(24,37,58,.85);
 padding:28px;
 border-radius:28px;
-box-shadow:0 25px 60px rgba(0,0,0,.45);
+box-shadow:0 25px 60px rgba(0,0,0,.5),0 0 90px rgba(99,102,241,.12) inset;
+border:1px solid rgba(255,255,255,.06);
 text-align:center;
+backdrop-filter:blur(10px);
 }
 
 h1{
 font-size:56px;
 font-weight:900;
 margin-bottom:12px;
+background:linear-gradient(90deg,#22d3ee,#6366f1,#f472b6,#22d3ee);
+background-size:300% auto;
+-webkit-background-clip:text;
+background-clip:text;
+color:transparent;
+animation:hueFlow 6s linear infinite;
 }
+@keyframes hueFlow{to{background-position:300% center;}}
 
 .score{
 font-size:28px;
@@ -77,10 +86,17 @@ transform:translateY(-2px);
 background:linear-gradient(135deg,#64748b,#475569);
 }
 
+.wrap-btn{
+background:linear-gradient(135deg,#0891b2,#0e7490);
+}
+.wrap-btn.on{
+background:linear-gradient(135deg,#22c55e,#16a34a);
+}
+
 canvas{
 background:#000;
 border-radius:24px;
-box-shadow:0 0 28px rgba(79,70,229,.35);
+box-shadow:0 0 34px rgba(99,102,241,.4);
 margin-top:14px;
 }
 
@@ -163,7 +179,7 @@ canvas{width:100%;height:auto;}
 
 <div class="wrapper">
 
-<h1>🎮 Snake 2.0</h1>
+<h1>🐍 Snake</h1>
 
 <div class="score">
 Punkte: <span id="score">0</span><br>
@@ -176,7 +192,9 @@ Punkte: <span id="score">0</span><br>
 
 <div class="bottom">
 <button onclick="restartGame()">🔄 Neustart</button>
-<button onclick="pauseGame()">⏸ Pause</button>
+<button onclick="pauseGame()" id="pauseBtn">⏸ Pause</button>
+<button class="wrap-btn" id="wrapBtn" onclick="toggleWrap()">🌀 Rand: Aus</button>
+<button onclick="openSpeedMenu()">🎚️ Tempo</button>
 
 
 <div class="pad">
@@ -186,6 +204,22 @@ Punkte: <span id="score">0</span><br>
 <button class="right" onclick="changeDir('RIGHT')">➡️</button>
 </div>
 
+</div>
+
+<!-- Tempo ändern (mitten im Spiel) -->
+<div class="overlay hidden" id="speedMenuBox">
+<div class="modal">
+<h2 style="font-size:38px;">🎚️ Tempo ändern</h2>
+<p>Schlange und Punktestand bleiben erhalten</p>
+<div class="speed-buttons">
+<button onclick="changeSpeed('slow')">🐢 Langsam</button>
+<button onclick="changeSpeed('medium')">⚡ Mittel</button>
+<button onclick="changeSpeed('fast')">🚀 Schnell</button>
+</div>
+<div class="speed-buttons" style="margin-top:18px;">
+<button class="back-btn" onclick="closeSpeedMenu()">✕ Abbrechen</button>
+</div>
+</div>
 </div>
 
 <!-- Start Overlay -->
@@ -240,13 +274,64 @@ let snake,food,dir,score;
 let game;
 let paused=false;
 let speed=145;
+let baseSpeed=145;
 let speedMode="medium";
+let wrapEnabled=false;
+let boostTimeout=null;
 
 let hsSlow=parseInt(localStorage.getItem("hsSlow")||0);
 let hsMedium=parseInt(localStorage.getItem("hsMedium")||0);
 let hsFast=parseInt(localStorage.getItem("hsFast")||0);
 
 updateHighscores();
+
+/* ===== SOUND ===== */
+let actx=null;
+function sfx(freq,dur,type,vol){
+  try{
+    if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();
+    const o=actx.createOscillator(),g=actx.createGain();
+    o.type=type||'square';o.frequency.value=freq;
+    g.gain.setValueAtTime(0,actx.currentTime);
+    g.gain.linearRampToValueAtTime(vol||0.12,actx.currentTime+0.01);
+    g.gain.exponentialRampToValueAtTime(0.001,actx.currentTime+dur);
+    o.connect(g);g.connect(actx.destination);
+    o.start();o.stop(actx.currentTime+dur);
+  }catch(e){}
+}
+function sndEat(){sfx(560,0.09,'square',0.1);}
+function sndGold(){[0,0.08,0.16].forEach((t,i)=>setTimeout(()=>sfx(700+i*220,0.13,'triangle',0.13),t*1000));}
+function sndGameOver(){[0,0.15,0.3].forEach((t,i)=>setTimeout(()=>sfx(300-i*80,0.25,'sawtooth',0.12),t*1000));}
+function sndPause(){sfx(380,0.07,'sine',0.08);}
+
+/* WAND-WRAP TOGGLE */
+function toggleWrap(){
+wrapEnabled=!wrapEnabled;
+const btn=document.getElementById('wrapBtn');
+btn.innerText='🌀 Rand: '+(wrapEnabled?'An':'Aus');
+btn.classList.toggle('on',wrapEnabled);
+}
+
+/* TEMPO MITTEN IM SPIEL ÄNDERN — Schlange/Score bleiben erhalten */
+function openSpeedMenu(){
+document.getElementById('speedMenuBox').classList.remove('hidden');
+}
+function closeSpeedMenu(){
+document.getElementById('speedMenuBox').classList.add('hidden');
+}
+function changeSpeed(mode){
+speedMode=mode;
+if(mode==="slow") baseSpeed=230;
+if(mode==="medium") baseSpeed=145;
+if(mode==="fast") baseSpeed=85;
+speed=baseSpeed;
+
+clearInterval(game);
+clearTimeout(boostTimeout);
+if(!paused) game=setInterval(draw,speed);
+
+closeSpeedMenu();
+}
 
 function init(){
 snake=[{x:10*box,y:10*box}];
@@ -255,12 +340,15 @@ dir="RIGHT";
 score=0;
 paused=false;
 document.getElementById("score").innerText="0";
+const pb=document.getElementById('pauseBtn');
+if(pb)pb.innerText='⏸ Pause';
 }
 
 function randomFood(){
 return{
 x:Math.floor(Math.random()*size)*box,
-y:Math.floor(Math.random()*size)*box
+y:Math.floor(Math.random()*size)*box,
+gold:Math.random()<0.15 // ~15% Chance auf Power-Up-Frucht
 };
 }
 
@@ -270,9 +358,10 @@ document.getElementById("gameOverBox").classList.add("hidden");
 
 speedMode=mode;
 
-if(mode==="slow") speed=230;
-if(mode==="medium") speed=145;
-if(mode==="fast") speed=85;
+if(mode==="slow") baseSpeed=230;
+if(mode==="medium") baseSpeed=145;
+if(mode==="fast") baseSpeed=85;
+speed=baseSpeed;
 
 restartGame();
 }
@@ -283,12 +372,37 @@ startWith(mode);
 
 function restartGame(){
 clearInterval(game);
+clearTimeout(boostTimeout);
+speed=baseSpeed;
 init();
 game=setInterval(draw,speed);
 }
 
 function pauseGame(){
 paused=!paused;
+sndPause();
+const btn=document.getElementById('pauseBtn');
+if(paused){
+clearInterval(game);
+btn.innerText='▶ Weiter';
+drawPauseOverlay();
+}else{
+btn.innerText='⏸ Pause';
+game=setInterval(draw,speed);
+}
+}
+
+function drawPauseOverlay(){
+ctx.fillStyle='rgba(0,0,0,.55)';
+ctx.fillRect(0,0,canvas.width,canvas.height);
+ctx.fillStyle='#fff';
+ctx.textAlign='center';
+ctx.font='bold 42px Arial';
+ctx.fillText('⏸ PAUSE',canvas.width/2,canvas.height/2-8);
+ctx.font='16px Arial';
+ctx.fillStyle='rgba(255,255,255,.7)';
+ctx.fillText('Weiter mit dem Pause-Button',canvas.width/2,canvas.height/2+26);
+ctx.textAlign='left';
 }
 
 function changeDir(newDir){
@@ -307,20 +421,60 @@ if(e.key==="ArrowDown") changeDir("DOWN");
 
 function draw(){
 
-if(paused) return;
-
-ctx.fillStyle="#000";
+ctx.fillStyle="#05070d";
 ctx.fillRect(0,0,canvas.width,canvas.height);
 
-ctx.fillStyle="red";
-ctx.beginPath();
-ctx.arc(food.x+10,food.y+10,8,0,Math.PI*2);
-ctx.fill();
+/* Grid-Hintergrund */
+ctx.save();
+ctx.strokeStyle="rgba(99,102,241,.08)";
+ctx.lineWidth=1;
+for(let i=0;i<=size;i++){
+ctx.beginPath();ctx.moveTo(i*box,0);ctx.lineTo(i*box,canvas.height);ctx.stroke();
+ctx.beginPath();ctx.moveTo(0,i*box);ctx.lineTo(canvas.width,i*box);ctx.stroke();
+}
+ctx.restore();
 
+/* FUTTER — animiert, gold = Power-Up */
+const pulse=Math.sin(Date.now()/180)*1.5;
+ctx.save();
+if(food.gold){
+ctx.shadowColor="#facc15";
+ctx.shadowBlur=18;
+ctx.fillStyle="#facc15";
+ctx.beginPath();
+ctx.arc(food.x+10,food.y+10,9+pulse,0,Math.PI*2);
+ctx.fill();
+}else{
+ctx.shadowColor="#ef4444";
+ctx.shadowBlur=12;
+ctx.fillStyle="#ef4444";
+ctx.beginPath();
+ctx.arc(food.x+10,food.y+10,8+pulse*0.6,0,Math.PI*2);
+ctx.fill();
+}
+ctx.restore();
+
+/* SCHLANGE — Farbverlauf Kopf zu Schwanz + Glow am Kopf */
 for(let i=0;i<snake.length;i++){
-ctx.fillStyle=i===0 ? "#6366f1" : "#25186e";
+ctx.save();
+if(i===0){
+ctx.shadowColor="#818cf8";
+ctx.shadowBlur=14;
+ctx.fillStyle="#a5b4fc";
+}else{
+const t=i/Math.max(snake.length-1,1);
+const r=Math.round(99-(99-37)*t),g=Math.round(102-(102-26)*t),b=Math.round(241-(241-110)*t);
+ctx.fillStyle=`rgb(${r},${g},${b})`;
+}
+if(typeof ctx.roundRect==='function'){
+ctx.beginPath();ctx.roundRect(snake[i].x,snake[i].y,18,18,5);ctx.fill();
+}else{
 ctx.fillRect(snake[i].x,snake[i].y,18,18);
 }
+ctx.restore();
+}
+
+if(paused) return;
 
 let headX=snake[0].x;
 let headY=snake[0].y;
@@ -330,10 +484,16 @@ if(dir==="RIGHT") headX+=box;
 if(dir==="UP") headY-=box;
 if(dir==="DOWN") headY+=box;
 
+/* WAND-WRAP: durch den Rand teleportieren statt sterben */
+if(wrapEnabled){
+if(headX<0) headX=canvas.width-box;
+else if(headX>=canvas.width) headX=0;
+if(headY<0) headY=canvas.height-box;
+else if(headY>=canvas.height) headY=0;
+}
+
 if(
-headX<0 || headY<0 ||
-headX>=canvas.width ||
-headY>=canvas.height ||
+(!wrapEnabled && (headX<0 || headY<0 || headX>=canvas.width || headY>=canvas.height)) ||
 collision(headX,headY,snake)
 ){
 gameOver();
@@ -342,7 +502,24 @@ return;
 
 if(headX===food.x && headY===food.y){
 
+if(food.gold){
+score+=3;
+sndGold();
+/* kurzer Speed-Boost */
+clearTimeout(boostTimeout);
+clearInterval(game);
+speed=Math.max(50,Math.floor(baseSpeed*0.55));
+game=setInterval(draw,speed);
+boostTimeout=setTimeout(()=>{
+clearInterval(game);
+speed=baseSpeed;
+game=setInterval(draw,speed);
+},3000);
+}else{
 score++;
+sndEat();
+}
+
 document.getElementById("score").innerText=score;
 saveHighscore();
 food=randomFood();
@@ -389,21 +566,16 @@ document.getElementById("hsFast").innerText=hsFast;
 
 function gameOver(){
 clearInterval(game);
+clearTimeout(boostTimeout);
+speed=baseSpeed;
+sndGameOver();
 document.getElementById("endScore").innerText=score;
 document.getElementById("gameOverBox").classList.remove("hidden");
 
-// Auto-save to MyPanel highscores — only if new personal best
+// An MyPanel-Highscoresystem übergeben (nutzt automatisch den XP-Multiplikator + Notification)
 try{
-  const profRaw=localStorage.getItem('mpProfile');
-  const prof=profRaw?JSON.parse(profRaw):null;
-  const player=(prof?prof.username:localStorage.getItem('username')||'MYPANEL USER').toUpperCase();
-  const all=JSON.parse(localStorage.getItem('highscores')||'[]');
-  const prevBest=all.filter(s=>s.player===player&&s.game==='Snake').sort((a,b)=>b.score-a.score);
-  if(prevBest.length===0||score>prevBest[0].score){
-    const filtered=all.filter(s=>!(s.player===player&&s.game==='Snake'));
-    filtered.push({player,game:'Snake',score:Math.floor(score*(_mult||1)),date:new Date().toLocaleDateString('de-DE')});
-    filtered.sort((a,b)=>b.score-a.score);
-    localStorage.setItem('highscores',JSON.stringify(filtered.slice(0,50)));
+  if(typeof window.autoSaveScore==='function'){
+    window.autoSaveScore('Snake',score);
   }
 }catch(e){}
 }

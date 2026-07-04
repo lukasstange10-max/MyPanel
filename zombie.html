@@ -7,7 +7,7 @@
 <style>
 body{
 margin:0;
-background:linear-gradient(135deg,#020617,#0f172a);
+background:radial-gradient(circle at 30% 20%,#1e1b4b,#020617 65%);
 display:flex;
 justify-content:center;
 align-items:center;
@@ -15,12 +15,16 @@ height:100vh;
 font-family:Segoe UI;
 color:white;
 overflow:hidden;
+touch-action:none;
 }
 
 canvas{
 background:#020617;
 border-radius:20px;
-box-shadow:0 0 60px #6366f1;
+box-shadow:0 0 60px rgba(99,102,241,.5);
+max-width:94vw;
+max-height:88vh;
+touch-action:none;
 }
 
 #hud{
@@ -33,6 +37,11 @@ padding:8px 20px;
 border-radius:15px;
 backdrop-filter:blur(10px);
 font-weight:900;
+display:flex;
+gap:16px;
+flex-wrap:wrap;
+justify-content:center;
+border:1px solid rgba(255,255,255,.08);
 }
 
 .overlay{
@@ -53,7 +62,19 @@ padding:25px;
 border-radius:20px;
 text-align:center;
 backdrop-filter:blur(15px);
+border:1px solid rgba(255,255,255,.08);
+box-shadow:0 0 50px rgba(99,102,241,.2);
 }
+
+.panel h1{
+background:linear-gradient(90deg,#f472b6,#facc15,#22d3ee,#f472b6);
+background-size:300% auto;
+-webkit-background-clip:text;
+background-clip:text;
+color:transparent;
+animation:hueFlow 6s linear infinite;
+}
+@keyframes hueFlow{to{background-position:300% center;}}
 
 button{
 padding:12px 25px;
@@ -64,6 +85,50 @@ background:#6366f1;
 color:white;
 font-weight:bold;
 cursor:pointer;
+transition:.15s;
+}
+button:hover{transform:translateY(-2px);}
+button:disabled{
+background:#334155;
+color:rgba(255,255,255,.5);
+cursor:default;
+transform:none;
+}
+button.owned{
+background:linear-gradient(135deg,#22c55e,#16a34a);
+}
+
+/* JOYSTICK (mobil, nur im WASD-Modus) */
+#joystick{
+position:fixed;
+bottom:30px;
+left:30px;
+width:110px;
+height:110px;
+border-radius:50%;
+background:rgba(255,255,255,.08);
+border:2px solid rgba(255,255,255,.2);
+z-index:50;
+touch-action:none;
+}
+#joystickKnob{
+position:absolute;
+top:50%;left:50%;
+width:46px;height:46px;
+border-radius:50%;
+background:rgba(99,102,241,.75);
+box-shadow:0 0 14px rgba(99,102,241,.6);
+transform:translate(-50%,-50%);
+pointer-events:none;
+}
+#shootHint{
+position:fixed;
+bottom:44px;
+right:34px;
+font-size:12px;
+opacity:.6;
+z-index:50;
+text-align:center;
 }
 </style>
 </head>
@@ -73,10 +138,15 @@ cursor:pointer;
 <canvas id="game" width="500" height="600"></canvas>
 
 <div id="hud">
-❤️ <span id="hp">5</span> |
+<span id="hpLine">❤️❤️❤️❤️❤️</span> |
 💎 <span id="coins">0</span> |
+⏱️ <span id="waveText">0</span>s |
 🎮 <span id="modeText">-</span>
 </div>
+
+<!-- Joystick nur im WASD-Modus auf Touch sichtbar -->
+<div id="joystick" class="hidden"><div id="joystickKnob"></div></div>
+<div id="shootHint" class="hidden">👆 Zum Zielen<br>halten & schießen</div>
 
 <!-- MENU -->
 <div class="overlay" id="menu">
@@ -92,8 +162,8 @@ cursor:pointer;
 <div class="panel">
 <h2>🎮 Steuerung wählen</h2>
 
-<button onclick="startGame('mouse')">🖱️ Maus bewegen + schießen</button>
-<button onclick="startGame('wasd')">⌨️ WASD bewegen + Maus schießen</button>
+<button onclick="startGame('mouse')">🖱️ Maus/Touch bewegen + schießen</button>
+<button onclick="startGame('wasd')">⌨️ WASD/Joystick bewegen + Maus/Touch schießen</button>
 
 </div>
 </div>
@@ -102,12 +172,13 @@ cursor:pointer;
 <div class="overlay hidden" id="shop">
 <div class="panel">
 <h2>🛒 Shop</h2>
+<p style="opacity:.7;font-size:13px;margin-top:-6px;">💎 <span id="shopCoins">0</span> Münzen</p>
 
-<button onclick="buy('spread')">Spread (1200)</button>
-<button onclick="buy('damage')">Damage (1800)</button>
-<button onclick="buy('firerate')">Fire Rate (1500)</button>
-<button onclick="buy('hp')">+1 Leben (2000)</button>
-<button onclick="buy('multi')">Multishot (2500)</button>
+<button id="buySpread" onclick="buy('spread')">Spread-Schuss (1200)</button>
+<button id="buyDamage" onclick="buy('damage')">Damage x2 (1800)</button>
+<button id="buyFirerate" onclick="buy('firerate')">Fire Rate ⬆ (1500)</button>
+<button id="buyHp" onclick="buy('hp')">+1 Leben (2000)</button>
+<button id="buyMulti" onclick="buy('multi')">Multishot (2500)</button>
 
 <br>
 <button onclick="backMenu()">⬅ Zurück</button>
@@ -118,7 +189,9 @@ cursor:pointer;
 <div class="overlay hidden" id="gameOver">
 <div class="panel">
 <h2>💀 Game Over</h2>
-<button onclick="backMenu()">Zurück</button>
+<p id="finalStats" style="opacity:.85;"></p>
+<button onclick="startGame(controlMode)">🔄 Nochmal</button>
+<button onclick="backMenu()">⬅ Menü</button>
 </div>
 </div>
 
@@ -135,22 +208,49 @@ let upgrades=JSON.parse(localStorage.getItem("zup")||"{}");
 let shooting=false;
 let game;
 let controlMode="wasd";
+let survTime=0; // Sekunden überlebt — treibt die Schwierigkeitskurve
+let fireCooldown=0;
 
 let mouse={x:250,y:300};
+let joyVec={x:0,y:0}; // Bewegungsvektor vom virtuellen Joystick
+
+/* ===== SOUND ===== */
+let actx=null;
+function sfx(freq,dur,type,vol){
+  try{
+    if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();
+    const o=actx.createOscillator(),g=actx.createGain();
+    o.type=type||'square';o.frequency.value=freq;
+    g.gain.setValueAtTime(0,actx.currentTime);
+    g.gain.linearRampToValueAtTime(vol||0.1,actx.currentTime+0.01);
+    g.gain.exponentialRampToValueAtTime(0.001,actx.currentTime+dur);
+    o.connect(g);g.connect(actx.destination);
+    o.start();o.stop(actx.currentTime+dur);
+  }catch(e){}
+}
+function sndShoot(){sfx(760,0.05,'square',0.05);}
+function sndHit(){sfx(220,0.06,'square',0.07);}
+function sndKill(){sfx(140,0.12,'sawtooth',0.1);}
+function sndHurt(){sfx(120,0.22,'sawtooth',0.14);}
+function sndBuy(){[0,0.08].forEach((t,i)=>setTimeout(()=>sfx(600+i*260,0.1,'triangle',0.11),t*1000));}
+function sndDenied(){sfx(150,0.15,'sawtooth',0.09);}
+function sndGameOver(){[0,0.15,0.3].forEach((t,i)=>setTimeout(()=>sfx(300-i*80,0.25,'sawtooth',0.12),t*1000));}
 
 /* SAVE FUNCTION */
 function saveCoins(){
 localStorage.setItem("zcoins",coins);
 }
 
-/* INPUT */
+/* INPUT — Tastatur */
 document.addEventListener("keydown",(e)=>keys[e.key.toLowerCase()]=true);
 document.addEventListener("keyup",(e)=>keys[e.key.toLowerCase()]=false);
 
+/* INPUT — Maus */
 canvas.addEventListener("mousemove",(e)=>{
 let r=canvas.getBoundingClientRect();
-let mx=e.clientX-r.left;
-let my=e.clientY-r.top;
+let scale=canvas.width/r.width;
+let mx=(e.clientX-r.left)*scale;
+let my=(e.clientY-r.top)*scale;
 
 mouse.x=mx;
 mouse.y=my;
@@ -164,9 +264,70 @@ player.y=my;
 canvas.addEventListener("mousedown",()=>shooting=true);
 canvas.addEventListener("mouseup",()=>shooting=false);
 
+/* INPUT — Touch auf dem Canvas (Zielen + Schießen, im Maus-Modus auch Bewegen) */
+function touchPosOnCanvas(t){
+const r=canvas.getBoundingClientRect();
+const scale=canvas.width/r.width;
+return{x:(t.clientX-r.left)*scale,y:(t.clientY-r.top)*scale};
+}
+canvas.addEventListener("touchstart",(e)=>{
+e.preventDefault();
+const p=touchPosOnCanvas(e.touches[0]);
+mouse.x=p.x;mouse.y=p.y;
+if(controlMode==="mouse"){player.x=p.x;player.y=p.y;}
+shooting=true;
+},{passive:false});
+canvas.addEventListener("touchmove",(e)=>{
+e.preventDefault();
+const p=touchPosOnCanvas(e.touches[0]);
+mouse.x=p.x;mouse.y=p.y;
+if(controlMode==="mouse"){player.x=p.x;player.y=p.y;}
+},{passive:false});
+canvas.addEventListener("touchend",(e)=>{
+e.preventDefault();
+shooting=false;
+},{passive:false});
+
+/* INPUT — virtueller Joystick (nur WASD-Modus, mobile Bewegung) */
+const joyEl=document.getElementById('joystick');
+const knobEl=document.getElementById('joystickKnob');
+let joyActive=false,joyId=null;
+function joyReset(){joyVec.x=0;joyVec.y=0;knobEl.style.transform='translate(-50%,-50%)';}
+function joyHandle(t){
+const r=joyEl.getBoundingClientRect();
+const cx=r.left+r.width/2,cy=r.top+r.height/2;
+let dx=t.clientX-cx,dy=t.clientY-cy;
+const max=r.width/2;
+const dist=Math.min(Math.sqrt(dx*dx+dy*dy),max);
+const ang=Math.atan2(dy,dx);
+dx=Math.cos(ang)*dist;dy=Math.sin(ang)*dist;
+joyVec.x=dx/max;joyVec.y=dy/max;
+knobEl.style.transform=`translate(${dx-23}px,${dy-23}px)`;
+}
+joyEl.addEventListener("touchstart",(e)=>{
+e.preventDefault();
+joyActive=true;joyId=e.changedTouches[0].identifier;
+joyHandle(e.changedTouches[0]);
+},{passive:false});
+joyEl.addEventListener("touchmove",(e)=>{
+e.preventDefault();
+for(const t of e.changedTouches){if(t.identifier===joyId)joyHandle(t);}
+},{passive:false});
+joyEl.addEventListener("touchend",(e)=>{
+e.preventDefault();
+joyActive=false;joyReset();
+},{passive:false});
+
+/* Touch-Gerät erkennen, um Joystick/Hinweis nur dort zu zeigen */
+const isTouchDevice=('ontouchstart' in window)||navigator.maxTouchPoints>0;
+
 /* MENU */
 function chooseMode(){
 show("modeSelect");
+}
+
+function updateHpHud(){
+document.getElementById("hpLine").innerText='❤️'.repeat(Math.max(hp,0));
 }
 
 function startGame(mode){
@@ -174,16 +335,29 @@ function startGame(mode){
 controlMode=mode;
 
 document.getElementById("modeText").innerText =
-mode==="mouse" ? "Maus" : "WASD";
+mode==="mouse" ? "Maus/Touch" : "WASD";
 
 player={x:250,y:300,speed:3};
 bullets=[];
 zombies=[];
 effects=[];
 hp=5+(upgrades.hp||0);
+survTime=0;
+fireCooldown=0;
+joyReset();
 
-document.getElementById("hp").innerText=hp;
+updateHpHud();
 document.getElementById("coins").innerText=coins;
+document.getElementById("waveText").innerText="0";
+
+/* Joystick nur im WASD-Modus auf Touch-Geräten anzeigen */
+if(mode==="wasd" && isTouchDevice){
+joyEl.classList.remove("hidden");
+document.getElementById("shootHint").classList.remove("hidden");
+}else{
+joyEl.classList.add("hidden");
+document.getElementById("shootHint").classList.add("hidden");
+}
 
 hideAll();
 
@@ -191,10 +365,8 @@ clearInterval(game);
 game=setInterval(update,16);
 }
 
-/* SHOOT */
-setInterval(()=>{
-if(!shooting) return;
-
+/* SHOOT — wird jetzt in update() mit dynamischem Cooldown ausgeführt (siehe fireBullets) */
+function fireBullets(){
 let dx=mouse.x-player.x;
 let dy=mouse.y-player.y;
 
@@ -208,10 +380,12 @@ dx/=dist;
 dy/=dist;
 }
 
-let shots = upgrades.multi ? 5 : 1;
+/* BUG-FIX: "multi" bestimmt die Anzahl, "spread" bestimmt jetzt den Fächer-Winkel — beide Upgrades tun jetzt wirklich etwas */
+let shots = upgrades.multi ? 5 : (upgrades.spread ? 3 : 1);
+let spreadStep = upgrades.spread ? 0.35 : 0.2;
 
 for(let i=0;i<shots;i++){
-let spread=(i-(shots-1)/2)*0.2;
+let spread=(i-(shots-1)/2)*spreadStep;
 
 bullets.push({
 x:player.x,
@@ -221,29 +395,66 @@ dy:dy+spread
 });
 }
 
-},120);
+sndShoot();
+}
 
 /* UPDATE */
 function update(){
 
-ctx.clearRect(0,0,500,600);
+survTime+=16/1000;
+document.getElementById("waveText").innerText=Math.floor(survTime);
 
-/* MOVE */
+/* Hintergrund mit leichtem Vignette statt reinem Clear */
+ctx.fillStyle="#020617";
+ctx.fillRect(0,0,500,600);
+ctx.save();
+ctx.strokeStyle="rgba(99,102,241,.06)";
+for(let gx=0;gx<=500;gx+=50){ctx.beginPath();ctx.moveTo(gx,0);ctx.lineTo(gx,600);ctx.stroke();}
+for(let gy=0;gy<=600;gy+=50){ctx.beginPath();ctx.moveTo(0,gy);ctx.lineTo(500,gy);ctx.stroke();}
+ctx.restore();
+
+/* MOVE — Tastatur + virtueller Joystick kombiniert */
 if(controlMode==="wasd"){
-if(keys["w"]) player.y-=player.speed;
-if(keys["s"]) player.y+=player.speed;
-if(keys["a"]) player.x-=player.speed;
-if(keys["d"]) player.x+=player.speed;
+let mx=0,my=0;
+if(keys["w"]) my-=1;
+if(keys["s"]) my+=1;
+if(keys["a"]) mx-=1;
+if(keys["d"]) mx+=1;
+if(joyVec.x||joyVec.y){mx+=joyVec.x;my+=joyVec.y;}
+const len=Math.sqrt(mx*mx+my*my);
+if(len>0){
+player.x+=(mx/len)*player.speed;
+player.y+=(my/len)*player.speed;
+}
+}
+player.x=Math.max(15,Math.min(485,player.x));
+player.y=Math.max(15,Math.min(585,player.y));
+
+/* FEUERRATE — Cooldown statt fester setInterval, "Fire Rate"-Upgrade wirkt jetzt wirklich */
+fireCooldown-=16;
+if(shooting && fireCooldown<=0){
+fireBullets();
+fireCooldown = upgrades.firerate ? 70 : 120;
 }
 
-/* PLAYER */
-ctx.fillStyle="#6366f1";
+/* PLAYER — Glow-Kreis */
+ctx.save();
+ctx.shadowColor="#818cf8";
+ctx.shadowBlur=16;
+const pg=ctx.createRadialGradient(player.x-4,player.y-4,2,player.x,player.y,15);
+pg.addColorStop(0,"#a5b4fc");
+pg.addColorStop(1,"#6366f1");
+ctx.fillStyle=pg;
 ctx.beginPath();
 ctx.arc(player.x,player.y,15,0,Math.PI*2);
 ctx.fill();
+ctx.restore();
 
 /* BULLETS */
-ctx.fillStyle="yellow";
+ctx.save();
+ctx.shadowColor="#facc15";
+ctx.shadowBlur=6;
+ctx.fillStyle="#facc15";
 bullets.forEach((b,i)=>{
 b.x+=b.dx*8;
 b.y+=b.dy*8;
@@ -254,14 +465,17 @@ if(b.x<0||b.x>500||b.y<0||b.y>600){
 bullets.splice(i,1);
 }
 });
+ctx.restore();
 
-/* SPAWN */
-if(Math.random()<0.04){
+/* SPAWN — Rate steigt mit der Überlebenszeit (Schwierigkeitskurve) */
+const spawnChance=Math.min(0.04+survTime*0.0015,0.12);
+if(Math.random()<spawnChance){
+const tier=Math.floor(survTime/20); // alle 20s wird ein Tick härter
 zombies.push({
 x:Math.random()*500,
 y:0,
-hp:2,
-speed:1.5,
+hp:2+Math.floor(tier*0.6),
+speed:1.5+Math.min(tier*0.12,1.8),
 size:15
 });
 }
@@ -271,15 +485,22 @@ zombies.forEach((z,i)=>{
 
 let dx=player.x-z.x;
 let dy=player.y-z.y;
-let dist=Math.sqrt(dx*dx+dy*dy);
+let dist=Math.sqrt(dx*dx+dy*dy)||1;
 
 z.x+=dx/dist*z.speed;
 z.y+=dy/dist*z.speed;
 
-ctx.fillStyle="green";
+ctx.save();
+ctx.shadowColor="#22c55e";
+ctx.shadowBlur=10;
+const zg=ctx.createRadialGradient(z.x-4,z.y-4,2,z.x,z.y,z.size);
+zg.addColorStop(0,"#4ade80");
+zg.addColorStop(1,"#15803d");
+ctx.fillStyle=zg;
 ctx.beginPath();
 ctx.arc(z.x,z.y,z.size,0,Math.PI*2);
 ctx.fill();
+ctx.restore();
 
 /* HIT */
 bullets.forEach((b,bi)=>{
@@ -289,12 +510,14 @@ bullets.splice(bi,1);
 
 let dmg = upgrades.damage ? 2 : 1;
 z.hp -= dmg;
+sndHit();
 
 effects.push({x:z.x,y:z.y,size:5});
 
 if(z.hp<=0){
 zombies.splice(i,1);
 coins++;
+sndKill();
 document.getElementById("coins").innerText=coins;
 
 /* SAVE HERE */
@@ -306,7 +529,8 @@ saveCoins();
 /* PLAYER HIT */
 if(dist<z.size+10){
 hp--;
-document.getElementById("hp").innerText=hp;
+sndHurt();
+updateHpHud();
 zombies.splice(i,1);
 
 if(hp<=0){
@@ -316,7 +540,11 @@ gameOver();
 });
 
 /* EFFECTS */
+ctx.save();
+ctx.shadowColor="#fb923c";
+ctx.shadowBlur=8;
 effects.forEach((e,i)=>{
+ctx.globalAlpha=Math.max(0,1-e.size/20);
 ctx.fillStyle="orange";
 ctx.beginPath();
 ctx.arc(e.x,e.y,e.size,0,Math.PI*2);
@@ -325,6 +553,7 @@ ctx.fill();
 e.size+=2;
 if(e.size>20) effects.splice(i,1);
 });
+ctx.restore();
 }
 
 /* GAME OVER */
@@ -332,36 +561,69 @@ function gameOver(){
 clearInterval(game);
 saveCoins();
 localStorage.setItem("zup",JSON.stringify(upgrades));
+sndGameOver();
+
+document.getElementById("finalStats").innerText=
+`${Math.floor(survTime)}s überlebt · ${coins} 💎 Münzen`;
+
 show("gameOver");
 
-// Auto-save to MyPanel — coins earned = score, only if new personal best
+// An MyPanel-Highscoresystem übergeben (nutzt automatisch den XP-Multiplikator + Notification)
 try{
-  const profRaw=localStorage.getItem('mpProfile');
-  const prof=profRaw?JSON.parse(profRaw):null;
-  const player=(prof?prof.username:localStorage.getItem('username')||'MYPANEL USER').toUpperCase();
-  const all=JSON.parse(localStorage.getItem('highscores')||'[]');
-  const prevBest=all.filter(s=>s.player===player&&s.game==='Zombie Survival').sort((a,b)=>b.score-a.score);
-  if(prevBest.length===0||coins>prevBest[0].score){
-    const filtered=all.filter(s=>!(s.player===player&&s.game==='Zombie Survival'));
-    const _mult=parseFloat(localStorage.getItem('mpXpMultiplier')||'1');
-    filtered.push({player,game:'Zombie Survival',score:Math.floor(coins*_mult),date:new Date().toLocaleDateString('de-DE')});
-    filtered.sort((a,b)=>b.score-a.score);
-    localStorage.setItem('highscores',JSON.stringify(filtered.slice(0,50)));
+  if(typeof window.autoSaveScore==='function'){
+    window.autoSaveScore('Zombie Survival',coins);
   }
 }catch(e){}
 }
 
 /* SHOP */
-function openShop(){show("shop");}
+function openShop(){
+show("shop");
+updateShopUI();
+}
 function backMenu(){show("menu");}
+
+const SHOP_ITEMS={
+spread:{price:1200,btn:'buySpread',label:'Spread-Schuss'},
+damage:{price:1800,btn:'buyDamage',label:'Damage x2'},
+firerate:{price:1500,btn:'buyFirerate',label:'Fire Rate ⬆'},
+multi:{price:2500,btn:'buyMulti',label:'Multishot'}
+};
 
 function buy(type){
 
-if(type==="spread" && coins>=1200){coins-=1200;upgrades.spread=true;}
-if(type==="damage" && coins>=1800){coins-=1800;upgrades.damage=true;}
-if(type==="firerate" && coins>=1500){coins-=1500;upgrades.firerate=true;}
-if(type==="hp" && coins>=2000){coins-=2000;upgrades.hp=(upgrades.hp||0)+1;}
-if(type==="multi" && coins>=2500){coins-=2500;upgrades.multi=true;}
+/* HP ist stapelbar — beliebig oft kaufbar */
+if(type==="hp"){
+if(coins>=2000){
+coins-=2000;
+upgrades.hp=(upgrades.hp||0)+1;
+sndBuy();
+}else{
+sndDenied();
+}
+document.getElementById("coins").innerText=coins;
+saveCoins();
+localStorage.setItem("zup",JSON.stringify(upgrades));
+updateShopUI();
+return;
+}
+
+/* BUG-FIX: einmalige Upgrades lassen sich nicht mehr doppelt kaufen */
+const item=SHOP_ITEMS[type];
+if(!item) return;
+
+if(upgrades[type]){
+sndDenied(); // schon gekauft — kein erneuter Abzug
+return;
+}
+
+if(coins>=item.price){
+coins-=item.price;
+upgrades[type]=true;
+sndBuy();
+}else{
+sndDenied();
+}
 
 document.getElementById("coins").innerText=coins;
 
@@ -369,6 +631,29 @@ document.getElementById("coins").innerText=coins;
 saveCoins();
 
 localStorage.setItem("zup",JSON.stringify(upgrades));
+updateShopUI();
+}
+
+/* Shop-Buttons als "gekauft" markieren + Preis-Anzeige aktuell halten */
+function updateShopUI(){
+document.getElementById("shopCoins").innerText=coins;
+
+Object.entries(SHOP_ITEMS).forEach(([key,item])=>{
+const btn=document.getElementById(item.btn);
+if(!btn)return;
+if(upgrades[key]){
+btn.innerText='✅ '+item.label+' (gekauft)';
+btn.classList.add('owned');
+btn.disabled=true;
+}else{
+btn.innerText=item.label+' ('+item.price+')';
+btn.classList.remove('owned');
+btn.disabled=false;
+}
+});
+
+const hpBtn=document.getElementById('buyHp');
+if(hpBtn)hpBtn.innerText='+1 Leben (2000) · Stufe '+(upgrades.hp||0);
 }
 
 /* UI */

@@ -14,12 +14,13 @@
 body{
 margin:0;
 font-family:Segoe UI;
-background:linear-gradient(135deg,#0f172a,#020617);
+background:radial-gradient(circle at 25% 15%,#1e1b4b,#020617 60%);
 color:var(--text);
 display:flex;
 justify-content:center;
 align-items:center;
 height:100vh;
+overflow:hidden;
 }
 
 /* SCREENS */
@@ -30,14 +31,22 @@ align-items:center;
 text-align:center;
 width:100%;
 max-width:1000px;
+padding:0 12px;
 }
 
 .active{display:flex;}
 
 h1{
-font-size:60px;
+font-size:clamp(36px,7vw,60px);
 margin-bottom:10px;
+background:linear-gradient(90deg,#f472b6,#facc15,#22d3ee,#f472b6);
+background-size:300% auto;
+-webkit-background-clip:text;
+background-clip:text;
+color:transparent;
+animation:hueFlow 6s linear infinite;
 }
+@keyframes hueFlow{to{background-position:300% center;}}
 
 /* ACTIVE DIFF TEXT */
 .selected{
@@ -58,11 +67,13 @@ font-weight:900;
 cursor:pointer;
 margin:8px;
 transition:0.2s;
+box-shadow:0 8px 20px rgba(79,70,229,.35);
 }
 
 button:hover{
-transform:scale(1.08);
+transform:scale(1.08) translateY(-2px);
 }
+button:active{transform:scale(.97);}
 
 /* ACTIVE BUTTON */
 .activeBtn{
@@ -70,23 +81,56 @@ background:linear-gradient(135deg,#facc15,#f59e0b);
 color:black;
 }
 
+/* INPUT */
+input{
+padding:14px 18px;
+border-radius:14px;
+border:1px solid rgba(255,255,255,.15);
+background:rgba(255,255,255,.07);
+color:#fff;
+font-size:18px;
+outline:none;
+text-align:center;
+margin-bottom:10px;
+backdrop-filter:blur(6px);
+}
+input:focus{border-color:#facc15;box-shadow:0 0 0 3px rgba(250,204,21,.2);}
+input::placeholder{color:rgba(255,255,255,.4);}
+
 /* BOARD */
 .board{
-background:rgba(255,255,255,0.05);
-padding:20px;
-border-radius:16px;
+background:rgba(255,255,255,.06);
+padding:20px 26px;
+border-radius:18px;
 margin-bottom:20px;
+border:1px solid rgba(255,255,255,.08);
+box-shadow:0 15px 40px rgba(0,0,0,.35);
+display:flex;
+gap:26px;
+flex-wrap:wrap;
+justify-content:center;
 }
+.board .col{min-width:150px;}
+.board .col h3{font-size:15px;margin-bottom:6px;color:#facc15;letter-spacing:1px;}
+.board .col div{font-size:13px;opacity:.9;line-height:1.7;}
+
+/* GAME STATS */
+.gstats{
+display:flex;gap:22px;justify-content:center;margin-bottom:14px;
+font-size:18px;font-weight:700;flex-wrap:wrap;
+}
+.gstats span b{color:#facc15;}
 
 /* GRID */
 .grid{
 display:grid;
 gap:10px;
+justify-content:center;
 }
 
 .card{
-width:80px;
-height:80px;
+width:var(--cs,80px);
+height:var(--cs,80px);
 perspective:1000px;
 cursor:pointer;
 }
@@ -102,30 +146,44 @@ transition:transform 0.4s;
 transform:rotateY(180deg);
 }
 
+.card.shake .inner{animation:shakeCard .35s;}
+@keyframes shakeCard{20%{transform:translateX(-6px) rotateY(180deg);}40%{transform:translateX(6px) rotateY(180deg);}60%{transform:translateX(-4px) rotateY(180deg);}80%{transform:translateX(4px) rotateY(180deg);}}
+
 .front,.back{
 position:absolute;
 width:100%;
 height:100%;
-border-radius:12px;
+border-radius:calc(var(--cs,80px)*0.15);
 display:flex;
 align-items:center;
 justify-content:center;
-font-size:26px;
+font-size:calc(var(--cs,80px)*0.34);
 backface-visibility:hidden;
+box-shadow:0 6px 16px rgba(0,0,0,.3);
 }
 
 .front{
 background:linear-gradient(135deg,var(--main),#4f46e5);
+font-weight:900;
+color:rgba(255,255,255,.9);
 }
 
 .back{
-background:#22c55e;
+background:linear-gradient(135deg,#22c55e,#15803d);
 transform:rotateY(180deg);
 }
 
+.card.match .inner{animation:matchPulse .5s ease;}
+@keyframes matchPulse{0%{transform:rotateY(180deg) scale(1);}50%{transform:rotateY(180deg) scale(1.15);}100%{transform:rotateY(180deg) scale(1);}}
+
 .card.match .back{
-background:#facc15;
+background:linear-gradient(135deg,#facc15,#f59e0b);
+box-shadow:0 0 22px rgba(250,204,21,.55);
 }
+
+/* STARS */
+.stars{font-size:40px;margin:10px 0;letter-spacing:6px;}
+.stars .off{opacity:.2;}
 
 /* WIN */
 .win{
@@ -134,11 +192,27 @@ top:0;
 left:0;
 width:100%;
 height:100%;
-background:rgba(0,0,0,0.9);
+background:rgba(0,0,0,0.88);
 display:none;
 flex-direction:column;
 align-items:center;
 justify-content:center;
+overflow:hidden;
+}
+
+/* CONFETTI */
+.confetti{
+position:fixed;
+top:-20px;
+width:9px;height:14px;
+border-radius:2px;
+pointer-events:none;
+animation:confettiFall linear forwards;
+z-index:99998;
+}
+@keyframes confettiFall{
+0%{transform:translateY(0) rotate(0deg);opacity:1;}
+100%{transform:translateY(110vh) rotate(720deg);opacity:.3;}
 }
 </style>
 </head>
@@ -171,15 +245,22 @@ justify-content:center;
 
 <!-- GAME -->
 <div class="screen" id="game">
-<div>Züge: <b id="moves">0</b> | Zeit: <b id="time">0</b>s</div>
+<div class="gstats">
+<span>Züge: <b id="moves">0</b></span>
+<span>Zeit: <b id="time">0</b>s</span>
+</div>
 <div class="grid" id="grid"></div>
 </div>
 
 <!-- WIN -->
 <div class="win" id="win">
 <h2>🎉 Gewonnen!</h2>
+<div class="stars" id="starsLine"></div>
 <div id="result"></div>
-<button onclick="restart()">Nochmal</button>
+<div>
+<button onclick="replaySame()">🔁 Nochmal (gleiche Stufe)</button>
+<button onclick="restart()">⬅ Neue Runde</button>
+</div>
 </div>
 
 <script>
@@ -187,6 +268,41 @@ let size=4;
 const emojis=["🍎","🍌","🍇","🍉","🍓","🍍","🥝","🍒","🥑","🍑","🍋","🍊","🍈","🍏","🍐","🍅"];
 
 let cards=[],flipped=[],moves=0,matches=0,time=0,timer;
+let lastName='',lastSize=4;
+
+/* ===== SOUND ===== */
+let actx=null;
+function sfx(freq,dur,type,vol){
+  try{
+    if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();
+    const o=actx.createOscillator(),g=actx.createGain();
+    o.type=type||'square';o.frequency.value=freq;
+    g.gain.setValueAtTime(0,actx.currentTime);
+    g.gain.linearRampToValueAtTime(vol||0.12,actx.currentTime+0.01);
+    g.gain.exponentialRampToValueAtTime(0.001,actx.currentTime+dur);
+    o.connect(g);g.connect(actx.destination);
+    o.start();o.stop(actx.currentTime+dur);
+  }catch(e){}
+}
+function sndFlip(){sfx(500,0.08,'triangle',0.09);}
+function sndMatch(){[0,0.09].forEach((t,i)=>setTimeout(()=>sfx(700+i*220,0.14,'triangle',0.12),t*1000));}
+function sndMismatch(){sfx(160,0.18,'sawtooth',0.1);}
+function sndWin(){[0,0.12,0.24,0.36,0.48].forEach((t,i)=>setTimeout(()=>sfx(520+i*140,0.16,'triangle',0.13),t*1000));}
+
+/* ===== KONFETTI ===== */
+function confettiBurst(){
+  const colors=['#facc15','#f472b6','#22d3ee','#a855f7','#22c55e','#ef4444'];
+  for(let i=0;i<70;i++){
+    const c=document.createElement('div');
+    c.className='confetti';
+    c.style.left=Math.random()*100+'vw';
+    c.style.background=colors[Math.floor(Math.random()*colors.length)];
+    c.style.animationDuration=(2+Math.random()*1.8)+'s';
+    c.style.animationDelay=(Math.random()*0.4)+'s';
+    document.body.appendChild(c);
+    setTimeout(()=>c.remove(),4200);
+  }
+}
 
 /* DIFF */
 function setDiff(s,btn){
@@ -213,6 +329,7 @@ function toName(){ show("name"); }
 function startGame(){
 const name=document.getElementById("player").value.trim();
 if(!name){alert("Name eingeben!");return;}
+lastName=name;lastSize=size;
 
 show("game");
 
@@ -220,6 +337,7 @@ moves=0;matches=0;time=0;flipped=[];
 document.getElementById("moves").innerText=0;
 document.getElementById("time").innerText=0;
 
+clearInterval(timer);
 timer=setInterval(()=>{
 time++;
 document.getElementById("time").innerText=time;
@@ -230,7 +348,12 @@ let selected=emojis.slice(0,total);
 cards=[...selected,...selected].sort(()=>Math.random()-0.5);
 
 const grid=document.getElementById("grid");
-grid.style.gridTemplateColumns=`repeat(${size},80px)`;
+
+/* Responsive Kartengröße: passt sich Bildschirmbreite & Gridgröße an */
+const availW=Math.min(window.innerWidth*0.92,700);
+const cs=Math.floor(Math.min(80,(availW-(size-1)*10)/size));
+grid.style.setProperty('--cs',cs+'px');
+grid.style.gridTemplateColumns=`repeat(${size},${cs}px)`;
 grid.innerHTML="";
 
 cards.forEach(e=>{
@@ -253,6 +376,7 @@ function flip(card,emoji){
 if(card.classList.contains("flip")||flipped.length===2)return;
 
 card.classList.add("flip");
+sndFlip();
 flipped.push({card,emoji});
 
 if(flipped.length===2){
@@ -270,44 +394,69 @@ if(a.emoji===b.emoji){
 a.card.classList.add("match");
 b.card.classList.add("match");
 matches++;
+sndMatch();
 
 if(matches===cards.length/2) win();
 }else{
-a.card.classList.remove("flip");
-b.card.classList.remove("flip");
+sndMismatch();
+a.card.classList.add("shake");
+b.card.classList.add("shake");
+setTimeout(()=>{
+a.card.classList.remove("flip","shake");
+b.card.classList.remove("flip","shake");
+},350);
 }
 
 flipped=[];
 }
 
+/* Schwierigkeitsname aus Gridgröße */
+function diffKey(s){return s===4?'easy':s===6?'medium':'hard';}
+function diffLabel(s){return s===4?'Easy':s===6?'Medium':'Hard';}
+function diffWeight(s){return s===4?1:s===6?1.5:2;} // härtere Stufe = mehr Punkte im globalen Highscore
+
+/* STERNE — je effizienter (weniger Züge), desto mehr Sterne */
+function starsForMoves(mvs,totalPairs){
+if(mvs<=totalPairs*1.5) return 3;
+if(mvs<=totalPairs*2.2) return 2;
+return 1;
+}
+
 /* WIN */
 function win(){
 clearInterval(timer);
+sndWin();
+confettiBurst();
 
-const name=document.getElementById("player").value;
-saveScore(name,time);
+const name=document.getElementById("player").value||lastName;
+const totalPairs=cards.length/2;
+const stars=starsForMoves(moves,totalPairs);
 
-// Auto-save to MyPanel highscores — score = 10000 / time (schneller = höher), only if new personal best
+saveScore(name,time,size);
+
+// An MyPanel-Highscoresystem übergeben (nutzt automatisch den XP-Multiplikator + Notification)
 try{
-  const profRaw=localStorage.getItem('mpProfile');
-  const prof=profRaw?JSON.parse(profRaw):null;
-  const player=(prof?prof.username:localStorage.getItem('username')||'MYPANEL USER').toUpperCase();
-  const _mult=parseFloat(localStorage.getItem('mpXpMultiplier')||'1');
-  const mscore=Math.max(1,Math.floor(10000/time*_mult));
-  const all=JSON.parse(localStorage.getItem('highscores')||'[]');
-  const prevBest=all.filter(s=>s.player===player&&s.game==='Memory').sort((a,b)=>b.score-a.score);
-  if(prevBest.length===0||mscore>prevBest[0].score){
-    const filtered=all.filter(s=>!(s.player===player&&s.game==='Memory'));
-    filtered.push({player,game:'Memory',score:mscore,date:new Date().toLocaleDateString('de-DE')});
-    filtered.sort((a,b)=>b.score-a.score);
-    localStorage.setItem('highscores',JSON.stringify(filtered.slice(0,50)));
+  const mscore=Math.max(1,Math.floor(10000/time*diffWeight(size)));
+  if(typeof window.autoSaveScore==='function'){
+    window.autoSaveScore('Memory',mscore);
   }
 }catch(e){}
 
-document.getElementById("result").innerText=`${name} - ${time}s`;
+document.getElementById("starsLine").innerHTML=
+  [1,2,3].map(i=>`<span class="${i<=stars?'on':'off'}">⭐</span>`).join('');
+
+document.getElementById("result").innerText=`${name} · ${diffLabel(size)} · ${moves} Züge · ${time}s`;
 document.getElementById("win").style.display="flex";
 
 renderBoard();
+}
+
+/* Nochmal gleiche Schwierigkeit — direkt ohne Menü */
+function replaySame(){
+document.getElementById("win").style.display="none";
+size=lastSize;
+document.getElementById("player").value=lastName;
+startGame();
 }
 
 /* RESTART */
@@ -317,24 +466,30 @@ show("start");
 renderBoard();
 }
 
-/* STORAGE (TOP 4) */
-function saveScore(name,time){
-let data=JSON.parse(localStorage.getItem("memoryGlobal")||"[]");
-data.push({name,time});
-data.sort((a,b)=>a.time-b.time);
-data=data.slice(0,4); // 🔥 NUR TOP 4
-localStorage.setItem("memoryGlobal",JSON.stringify(data));
+/* STORAGE (Top 3 PRO SCHWIERIGKEIT) */
+function saveScore(name,time,s){
+const key='memoryGlobalByDiff';
+let data=JSON.parse(localStorage.getItem(key)||'{"easy":[],"medium":[],"hard":[]}');
+const dk=diffKey(s);
+if(!data[dk])data[dk]=[];
+data[dk].push({name,time});
+data[dk].sort((a,b)=>a.time-b.time);
+data[dk]=data[dk].slice(0,3);
+localStorage.setItem(key,JSON.stringify(data));
 }
 
-/* BOARD */
+/* BOARD — getrennt nach Schwierigkeit */
 function renderBoard(){
-let data=JSON.parse(localStorage.getItem("memoryGlobal")||"[]");
+const data=JSON.parse(localStorage.getItem('memoryGlobalByDiff')||'{"easy":[],"medium":[],"hard":[]}');
+const cols=[['easy','🟢 Easy'],['medium','🟠 Medium'],['hard','🔴 Hard']].map(([k,label])=>{
+const list=data[k]||[];
+const rows=list.length
+  ?list.map((s,i)=>`<div>#${i+1} ${s.name} — ${s.time}s</div>`).join('')
+  :'<div style="opacity:.5;">Noch keine Rekorde</div>';
+return `<div class="col"><h3>${label}</h3>${rows}</div>`;
+}).join('');
 
-document.getElementById("board").innerHTML=
-"<b>🏆 Rekorde</b><br><br>"+
-(data.length
-? data.map((s,i)=>`#${i+1} ${s.name} - ${s.time}s`).join("<br>")
-: "Noch keine Rekorde");
+document.getElementById("board").innerHTML=`<div style="width:100%;font-size:15px;margin-bottom:10px;">🏆 <b>Rekorde</b></div><div style="display:flex;gap:26px;flex-wrap:wrap;justify-content:center;">${cols}</div>`;
 }
 
 /* INIT */
