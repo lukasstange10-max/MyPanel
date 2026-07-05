@@ -1933,31 +1933,33 @@ const fbConfig={
 
 // Load Firebase SDK
 (function loadFirebase(){
-  // Load Firebase AFTER page is fully ready — never blocks boot
+  let attempts=0;
   function tryLoad(){
+    attempts++;
     const s=document.createElement('script');
     s.src='https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js';
     s.async=true;
-    s.onerror=()=>{};
+    s.onerror=()=>{ if(attempts<3) setTimeout(tryLoad,1500); };
     s.onload=()=>{
       const s2=document.createElement('script');
       s2.src='https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js';
       s2.async=true;
-      s2.onerror=()=>{};
+      s2.onerror=()=>{ if(attempts<3) setTimeout(tryLoad,1500); };
       s2.onload=()=>{
         try{
           if(!firebase.apps.length)firebase.initializeApp(fbConfig);
           window.fbDB=firebase.database();
           initFirebaseListeners();
-        }catch(e){}
+        }catch(e){
+          if(attempts<3) setTimeout(tryLoad,1500);
+        }
       };
       document.head.appendChild(s2);
     };
     document.head.appendChild(s);
   }
-  // Wait until window is fully loaded, then wait 3 more seconds
-  if(document.readyState==='complete'){setTimeout(tryLoad,3000);}
-  else{window.addEventListener('load',()=>setTimeout(tryLoad,3000));}
+  // Sofort starten statt künstlich zu warten — Firebase soll so schnell wie möglich verfügbar sein
+  tryLoad();
 })();
 
 function getBestScore(game){const s=getScores().filter(x=>x.game===game).sort((a,b)=>b.score-a.score);return s.length?s[0].score:0;}
@@ -2720,58 +2722,6 @@ function checkAndInitProfile(){
   }
 }
 checkAndInitProfile();
-
-/* ===== DIAGNOSE-PANEL (temporär, um das Problem einzugrenzen) ===== */
-function showDiagPanel(){
-  let panel=document.getElementById('diagPanel');
-  if(panel){panel.remove();return;}
-  panel=document.createElement('div');
-  panel.id='diagPanel';
-  panel.style.cssText='position:fixed;bottom:70px;left:12px;z-index:99999999;background:#000;border:2px solid #00e5ff;border-radius:10px;padding:14px;font-family:monospace;font-size:11px;color:#0f0;max-width:min(92vw,480px);max-height:70vh;overflow:auto;white-space:pre-wrap;word-break:break-all;box-shadow:0 0 30px rgba(0,229,255,.5);';
-
-  let out='';
-  try{
-    out+='=== localStorage.mpProfile ===\n'+(localStorage.getItem('mpProfile')||'(leer/null)')+'\n\n';
-  }catch(e){out+='FEHLER beim Lesen von mpProfile: '+e.message+'\n\n';}
-  try{
-    out+='=== sessionStorage.mpProfile ===\n'+(sessionStorage.getItem('mpProfile')||'(leer/null)')+'\n\n';
-  }catch(e){out+='FEHLER beim Lesen (sessionStorage): '+e.message+'\n\n';}
-  try{
-    const m=document.cookie.match('(?:^|; )mpProfile=([^;]*)');
-    out+='=== Cookie mpProfile ===\n'+(m?decodeURIComponent(m[1]):'(nicht vorhanden)')+'\n\n';
-  }catch(e){out+='FEHLER beim Lesen des Cookies: '+e.message+'\n\n';}
-  try{
-    const hs=localStorage.getItem('highscores');
-    const parsed=hs?JSON.parse(hs):[];
-    out+='=== localStorage.highscores ===\nAnzahl Einträge: '+parsed.length+'\n'+(hs?hs.substring(0,600):'(leer/null)')+(hs&&hs.length>600?'... (gekürzt)':'')+'\n\n';
-  }catch(e){out+='FEHLER beim Lesen von highscores: '+e.message+'\n\n';}
-  try{
-    out+='=== window.fbDB verbunden? ===\n'+(window.fbDB?'JA':'NEIN')+'\n\n';
-  }catch(e){}
-  try{
-    out+='=== localStorage generell nutzbar? ===\n';
-    localStorage.setItem('__diagtest','1');
-    const ok=localStorage.getItem('__diagtest')==='1';
-    localStorage.removeItem('__diagtest');
-    out+=(ok?'JA':'NEIN — localStorage scheint blockiert zu sein!')+'\n\n';
-  }catch(e){out+='FEHLER — localStorage komplett blockiert: '+e.message+'\n\n';}
-
-  panel.innerText=out;
-  const closeBtn=document.createElement('button');
-  closeBtn.textContent='✕ Schließen';
-  closeBtn.style.cssText='display:block;margin-top:10px;padding:8px 14px;background:#00e5ff;color:#000;border:none;border-radius:6px;font-weight:900;cursor:pointer;';
-  closeBtn.onclick=()=>panel.remove();
-  panel.appendChild(closeBtn);
-  document.body.appendChild(panel);
-}
-(function(){
-  const btn=document.createElement('button');
-  btn.id='diagToggleBtn';
-  btn.textContent='🐛 DIAGNOSE';
-  btn.style.cssText='position:fixed;bottom:16px;left:12px;z-index:99999998;background:rgba(0,0,0,.7);border:1px solid #00e5ff;color:#00e5ff;padding:8px 14px;border-radius:20px;font-family:Orbitron,sans-serif;font-size:10px;font-weight:900;letter-spacing:1px;cursor:pointer;';
-  btn.onclick=showDiagPanel;
-  document.body.appendChild(btn);
-})();
 // Extra safety: also run on full load in case DOM wasn't ready
 window.addEventListener('load',checkAndInitProfile);
 // Enter-key support
