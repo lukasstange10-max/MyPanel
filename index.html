@@ -2688,10 +2688,12 @@ function saveFirstLogin(){
     setTimeout(()=>document.getElementById('firstLoginInput').style.borderColor='',1000);
     return;
   }
-  saveProfile(v);
-  applyProfile();
-  document.getElementById('firstLoginModal').style.display='none';
-  showNotif('🎮 WILLKOMMEN, '+v.toUpperCase()+'!');
+  // Modal auf jeden Fall schließen, selbst falls saveProfile/applyProfile intern einen Fehler werfen
+  try{ saveProfile(v); }catch(e){}
+  try{ applyProfile(); }catch(e){}
+  const modal=document.getElementById('firstLoginModal');
+  if(modal)modal.style.display='none';
+  try{ showNotif('🎮 WILLKOMMEN, '+v.toUpperCase()+'!'); }catch(e){}
 }
 
 // Boot: show first-login if no profile yet, else apply existing
@@ -2886,8 +2888,12 @@ function initMaintenanceListener(){
     const p=getProfile();
     const name=(p?p.username:'').toUpperCase();
     if(statusEl)statusEl.textContent='STATUS: '+(data&&data.active?'🔧 AKTIV':'✅ INAKTIV');
-    if(name!==ADMIN_NAME){
+    const loginModal=document.getElementById('firstLoginModal');
+    const loginOpen=loginModal&&loginModal.style.display!=='none';
+    if(name!==ADMIN_NAME&&!loginOpen){
       overlay.style.display=data&&data.active?'flex':'none';
+    }else{
+      overlay.style.display='none';
     }
   });
 }
