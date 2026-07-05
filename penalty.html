@@ -1114,6 +1114,27 @@ function showChampion(){
   document.getElementById('champFlag').innerHTML=flagImg(pTeam,'lg');
   document.getElementById('champName').textContent=pTeam.n;
 
+  // Highscore: Anzahl gewonnener Turniere zählen
+  try{
+    const pr=JSON.parse(localStorage.getItem('mpProfile')||'null');
+    const pn=(pr?pr.username:'MYPANEL USER').toUpperCase();
+    const all=JSON.parse(localStorage.getItem('highscores')||'[]');
+    const prev=all.filter(s=>s.player===pn&&s.game==='WM 2026 Penalty').sort((a,b)=>b.score-a.score);
+    const newScore=(prev.length>0?prev[0].score:0)+1;
+
+    if(window.parent&&window.parent.fbDB){
+      const fbKey=pn.replace(/[.#$\/\[\]]/g,'_')+'__WM_2026_Penalty';
+      window.parent.fbDB.ref('highscores/'+fbKey).transaction(cur=>{
+        if(!cur||newScore>cur.score)return{player:pn,game:'WM 2026 Penalty',score:newScore,date:new Date().toLocaleDateString('de-DE')};
+        return cur;
+      });
+    }
+
+    const filtered=all.filter(s=>!(s.player===pn&&s.game==='WM 2026 Penalty'));
+    filtered.push({player:pn,game:'WM 2026 Penalty',score:newScore,date:new Date().toLocaleDateString('de-DE')});
+    filtered.sort((a,b)=>b.score-a.score);
+    localStorage.setItem('highscores',JSON.stringify(filtered.slice(0,50)));
+  }catch(e){}
 }
 
 function showElim(lbl){

@@ -285,6 +285,19 @@ function submitGuess(){
         // Score: each win adds points, fewer guesses = more points (max 600 for 1 guess, min 100 for 6 guesses)
         const pts=(ROWS-currentRow)*100+100;
         const newScore=(prevBest.length>0?prevBest[0].score:0)+pts;
+        if(window.parent&&window.parent.fbDB){
+          try{
+            const mult=parseFloat(localStorage.getItem('mpXpMultiplier')||'1');
+            const boosted=Math.floor(newScore*mult);
+            const pr=JSON.parse(localStorage.getItem('mpProfile')||'null');
+            const pn=(pr?pr.username:'MYPANEL USER').toUpperCase();
+            const fbKey=pn.replace(/[.#$\/\[\]]/g,'_')+'__Wordle';
+            window.parent.fbDB.ref('highscores/'+fbKey).transaction(cur=>{
+              if(!cur||boosted>cur.score)return{player:pn,game:'Wordle',score:boosted,date:new Date().toLocaleDateString('de-DE')};
+              return cur;
+            });
+          }catch(e){}
+        }
         if(typeof window.autoSaveScore==='function'){
           window.autoSaveScore('Wordle',newScore);
         }

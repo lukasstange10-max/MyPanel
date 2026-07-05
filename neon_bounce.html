@@ -626,6 +626,19 @@ function endGame(){
   document.getElementById('overOv').style.display='flex';
 
   try{
+    if(window.parent&&window.parent.fbDB){
+      try{
+        const mult=parseFloat(localStorage.getItem('mpXpMultiplier')||'1');
+        const boosted=Math.floor(score*mult);
+        const pr=JSON.parse(localStorage.getItem('mpProfile')||'null');
+        const pn=(pr?pr.username:'MYPANEL USER').toUpperCase();
+        const fbKey=pn.replace(/[.#$\/\[\]]/g,'_')+'__Neon_Bounce';
+        window.parent.fbDB.ref('highscores/'+fbKey).transaction(cur=>{
+          if(!cur||boosted>cur.score)return{player:pn,game:'Neon Bounce',score:boosted,date:new Date().toLocaleDateString('de-DE')};
+          return cur;
+        });
+      }catch(e){}
+    }
     if(typeof window.autoSaveScore==='function'){
       window.autoSaveScore('Neon Bounce',score);
     }

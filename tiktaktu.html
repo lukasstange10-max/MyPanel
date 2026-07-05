@@ -660,6 +660,17 @@ try{
   const all=JSON.parse(localStorage.getItem('highscores')||'[]');
   const prev=all.filter(s=>s.player===player&&s.game==='Tik Tak Tu').sort((a,b)=>b.score-a.score);
   const newScore=(prev.length>0?prev[0].score:0)+1;
+  if(window.parent&&window.parent.fbDB){
+    try{
+      const mult=parseFloat(localStorage.getItem('mpXpMultiplier')||'1');
+      const boosted=Math.floor(newScore*mult);
+      const fbKey=player.replace(/[.#$\/\[\]]/g,'_')+'__Tik_Tak_Tu';
+      window.parent.fbDB.ref('highscores/'+fbKey).transaction(cur=>{
+        if(!cur||boosted>cur.score)return{player,game:'Tik Tak Tu',score:boosted,date:new Date().toLocaleDateString('de-DE')};
+        return cur;
+      });
+    }catch(e){}
+  }
   if(typeof window.autoSaveScore==='function'){
     window.autoSaveScore('Tik Tak Tu',newScore);
   }else{

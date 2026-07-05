@@ -331,7 +331,20 @@ function saveHighscore(sc){
     const pr=JSON.parse(localStorage.getItem('mpProfile')||'null');
     const pn=(pr?pr.username:'MYPANEL USER').toUpperCase();
     if(window.parent&&window.parent.fbDB){
-      window.parent.fbDB.ref('highscores/'+pn+'_Flappy').transaction(cur=>(cur===null||boosted>cur)?boosted:cur);
+      const fbKey=pn.replace(/[.#$\/\[\]]/g,'_')+'__Flappy';
+      window.parent.fbDB.ref('highscores/'+fbKey).transaction(cur=>{
+        if(!cur||boosted>cur.score)return{player:pn,game:'Flappy',score:boosted,date:new Date().toLocaleDateString('de-DE')};
+        return cur;
+      });
+    }
+    // Lokalen Fallback zusätzlich sichern
+    const all=JSON.parse(localStorage.getItem('highscores')||'[]');
+    const prevBest=all.filter(s=>s.player===pn&&s.game==='Flappy').sort((a,b)=>b.score-a.score);
+    if(prevBest.length===0||boosted>prevBest[0].score){
+      const filtered=all.filter(s=>!(s.player===pn&&s.game==='Flappy'));
+      filtered.push({player:pn,game:'Flappy',score:boosted,date:new Date().toLocaleDateString('de-DE')});
+      filtered.sort((a,b)=>b.score-a.score);
+      localStorage.setItem('highscores',JSON.stringify(filtered.slice(0,50)));
     }
     if(mult>1) toast('🎉 '+mult+'x XP! → '+boosted+' PUNKTE','#ffd23f');
   }catch(e){}
