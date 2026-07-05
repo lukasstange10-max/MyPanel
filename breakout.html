@@ -172,20 +172,32 @@ margin-bottom:20px;
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 <script>
 let rdb=null;
-try{
-  if(typeof firebase!=='undefined'){
-    firebase.initializeApp({
-      apiKey:"AIzaSyDqVPdgGhRx6v__sx7pCe5mOre8XT7xRLg",
-      authDomain:"mypanel-41c90.firebaseapp.com",
-      databaseURL:"https://mypanel-41c90-default-rtdb.europe-west1.firebasedatabase.app",
-      projectId:"mypanel-41c90",
-      storageBucket:"mypanel-41c90.firebasestorage.app",
-      messagingSenderId:"69361490898",
-      appId:"1:69361490898:web:1fcec1264539c8e637060b"
-    });
-    rdb=firebase.apps&&firebase.apps.length?firebase.database():null;
-  }
-}catch(e){rdb=null;}
+const FIREBASE_CFG={
+  apiKey:"AIzaSyDqVPdgGhRx6v__sx7pCe5mOre8XT7xRLg",
+  authDomain:"mypanel-41c90.firebaseapp.com",
+  databaseURL:"https://mypanel-41c90-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:"mypanel-41c90",
+  storageBucket:"mypanel-41c90.firebasestorage.app",
+  messagingSenderId:"69361490898",
+  appId:"1:69361490898:web:1fcec1264539c8e637060b"
+};
+function initRdb(){
+  try{
+    if(typeof firebase!=='undefined'){
+      if(!firebase.apps||!firebase.apps.length)firebase.initializeApp(FIREBASE_CFG);
+      rdb=firebase.database();
+    }
+  }catch(e){rdb=null;}
+}
+initRdb();
+// Falls der erste Ladeversuch fehlgeschlagen ist (z.B. kurzer Netzwerk-Haenger),
+// das SDK-Skript dynamisch neu laden und einen zweiten Versuch starten.
+if(!rdb){
+  const retry=document.createElement('script');
+  retry.src='https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js';
+  retry.onload=initRdb;
+  document.head.appendChild(retry);
+}
 
 function getMyName(){
   try{const p=JSON.parse(localStorage.getItem('mpProfile')||'null');return p?p.username:'SPIELER';}catch(e){return 'SPIELER';}

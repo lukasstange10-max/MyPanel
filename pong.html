@@ -137,7 +137,7 @@ canvas{display:block;}
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 <script>
 /* ===== FIREBASE ===== */
-firebase.initializeApp({
+const FIREBASE_CFG={
   apiKey:"AIzaSyDqVPdgGhRx6v__sx7pCe5mOre8XT7xRLg",
   authDomain:"mypanel-41c90.firebaseapp.com",
   databaseURL:"https://mypanel-41c90-default-rtdb.europe-west1.firebasedatabase.app",
@@ -145,8 +145,25 @@ firebase.initializeApp({
   storageBucket:"mypanel-41c90.firebasestorage.app",
   messagingSenderId:"69361490898",
   appId:"1:69361490898:web:1fcec1264539c8e637060b"
-});
-const db=firebase.database();
+};
+let db=null;
+function initFbDb(){
+  try{
+    if(typeof firebase!=='undefined'){
+      if(!firebase.apps||!firebase.apps.length)firebase.initializeApp(FIREBASE_CFG);
+      db=firebase.database();
+    }
+  }catch(e){db=null;}
+}
+initFbDb();
+// Falls der erste Ladeversuch fehlgeschlagen ist (z.B. kurzer Netzwerk-Hänger),
+// das SDK-Skript dynamisch neu laden und einen zweiten Versuch starten.
+if(!db){
+  const retry=document.createElement('script');
+  retry.src='https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js';
+  retry.onload=initFbDb;
+  document.head.appendChild(retry);
+}
 
 /* ===== STATE ===== */
 const canvas=document.getElementById('c');
