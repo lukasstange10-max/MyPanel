@@ -2688,6 +2688,7 @@ function saveFirstLogin(){
     setTimeout(()=>document.getElementById('firstLoginInput').style.borderColor='',1000);
     return;
   }
+  window._profileJustSet=true; // verhindert, dass ein späterer checkAndInitProfile()-Aufruf das Modal nochmal aufreißt
   // Modal auf jeden Fall schließen, selbst falls saveProfile/applyProfile intern einen Fehler werfen
   try{ saveProfile(v); }catch(e){}
   try{ applyProfile(); }catch(e){}
@@ -2698,6 +2699,7 @@ function saveFirstLogin(){
 
 // Boot: show first-login if no profile yet, else apply existing
 function checkAndInitProfile(){
+  if(window._profileJustSet)return; // Nutzer hat gerade schon LOSLEGEN geklickt -> Modal nie wieder aufreißen
   try{
     const p=_pGet();
     const modal=document.getElementById('firstLoginModal');
