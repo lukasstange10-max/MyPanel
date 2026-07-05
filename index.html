@@ -1236,7 +1236,6 @@ body.disco-mode .nav-logo,body.disco-mode .ctitle,body.disco-mode #username{anim
       <button class="mbtn" onclick="showSection('games')"><span class="bico">◈</span>SPIELE</button>
       <button class="mbtn" onclick="showSection('highscores')"><span class="bico">🏆</span>HIGHSCORES</button>
       <button class="mbtn" onclick="showSection('friends')"><span class="bico">🌐</span>FREUNDE<span id="friendBadge" style="display:none;background:#ff2b6d;color:#fff;font-family:'Orbitron',sans-serif;font-size:9px;font-weight:900;padding:2px 6px;border-radius:10px;margin-left:6px;"></span></button>
-      <button class="mbtn" onclick="showSection('arena')"><span class="bico">🏟️</span>LIVE-ARENA</button>
       <button class="mbtn" onclick="showSection('clans')"><span class="bico">⚔️</span>CLANS</button>
       <button class="mbtn" onclick="showSection('favorites')"><span class="bico">◆</span>FAVORITEN</button>
       <button class="mbtn" onclick="showSection('news')"><span class="bico">◉</span>NEWS</button>
@@ -1418,14 +1417,6 @@ body.disco-mode .nav-logo,body.disco-mode .ctitle,body.disco-mode #username{anim
       </div>
     </div>
 
-    <!-- LIVE ARENA -->
-    <div id="sec-arena" style="display:none">
-      <div class="card">
-        <div class="ctitle"><span>🏟️</span> LIVE ARENA <span style="color:var(--mu);font-size:11px;font-family:'Share Tech Mono',monospace;">— wer ist online, was wird gerade gespielt</span></div>
-        <div id="arenaGrid"></div>
-      </div>
-    </div>
-
     <!-- CLANS -->
     <div id="sec-clans" style="display:none">
       <div class="card" id="myClanCard" style="display:none;">
@@ -1534,6 +1525,15 @@ body.disco-mode .nav-logo,body.disco-mode .ctitle,body.disco-mode #username{anim
           <button onclick="setMaintenance(false)" style="flex:1;padding:12px;border:2px solid rgba(0,255,135,.3);border-radius:6px;background:rgba(0,255,135,.06);color:#00ff87;font-family:'Orbitron',sans-serif;font-size:11px;font-weight:900;letter-spacing:2px;cursor:pointer;">✅ WARTUNG AUS</button>
         </div>
         <div id="maintStatus" style="margin-top:10px;text-align:center;font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:2px;color:var(--mu);">STATUS: UNBEKANNT</div>
+      </div>
+
+      <!-- BOOT-SEQUENCE SPEED -->
+      <div class="card" style="border-color:rgba(0,229,255,.2);">
+        <div class="ctitle" style="color:var(--c);"><span>⚡</span> ADMIN — BOOT-GESCHWINDIGKEIT</div>
+        <p style="color:var(--mu);font-size:12px;margin-bottom:14px;letter-spacing:1px;">Stelle ein, wie schnell die Lade-Sequenz beim Öffnen des Panels durchläuft.</p>
+        <input id="bootSpeedSlider" type="range" min="1" max="10" step="1" value="5" oninput="saveBootSpeed(this.value)" style="width:100%;">
+        <div id="bootSpeedLabel" style="margin-top:8px;text-align:center;font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:2px;color:var(--mu);">GESCHWINDIGKEIT: 5</div>
+        <button onclick="testBoot()" style="margin-top:12px;width:100%;padding:10px;border:2px solid rgba(0,229,255,.3);border-radius:6px;background:rgba(0,229,255,.06);color:var(--c);font-family:'Orbitron',sans-serif;font-size:11px;font-weight:900;letter-spacing:2px;cursor:pointer;">▶ BOOT TESTEN</button>
       </div>
 
       <!-- COUNTDOWN TIMER ADMIN -->
@@ -1789,6 +1789,17 @@ document.querySelectorAll(".stat").forEach(el=>sobs.observe(el));
 
 /* ===== PANEL SCRIPT ===== */
 
+/* Escape user-provided text before it is ever inserted via innerHTML,
+   to prevent stored XSS from chat messages, comments, clan names, friend names etc. */
+function escapeHtml(str){
+  return String(str==null?'':str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
+}
+
 /* ===== DATA ===== */
 const GAMES = [
   {id:'snake',name:'SNAKE',icon:'🐍',desc:'Klassisches Snake Game',file:'snake.html'},
@@ -1836,7 +1847,6 @@ function showSection(name){
   event.currentTarget.classList.add('active');
   if(name==='highscores'){renderHsTable('all');renderPlayerOfMonth();loadComments();}
   if(name==='clans')loadClans();
-  if(name==='arena')renderArena();
   if(name==='friends'){
     // Generate invite link immediately
     const me=getMyName();
@@ -1880,25 +1890,10 @@ renderQuickGames();renderAllGames();
 function playGame(file){
   document.getElementById('gameOverlay').style.display='flex';
   document.getElementById('gameFrame').src=file;
-
-  // Aktuell gespieltes Spiel in der Presence tracken (für die Live-Arena)
-  try{
-    const me=getMyName();
-    const g=GAMES.find(x=>x.file===file);
-    if(window.fbDB&&me){
-      window.fbDB.ref('presence/'+me).update({currentGame:g?g.name:file,currentGameIcon:g?g.icon:'🎮',gameStarted:Date.now()});
-    }
-  }catch(e){}
 }
 function closeGame(){
   document.getElementById('gameOverlay').style.display='none';
   document.getElementById('gameFrame').src='';
-  try{
-    const me=getMyName();
-    if(window.fbDB&&me){
-      window.fbDB.ref('presence/'+me).update({currentGame:null,currentGameIcon:null});
-    }
-  }catch(e){}
 }
 
 /* ===== FAVORITES ===== */
@@ -1933,33 +1928,31 @@ const fbConfig={
 
 // Load Firebase SDK
 (function loadFirebase(){
-  let attempts=0;
+  // Load Firebase AFTER page is fully ready — never blocks boot
   function tryLoad(){
-    attempts++;
     const s=document.createElement('script');
     s.src='https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js';
     s.async=true;
-    s.onerror=()=>{ if(attempts<3) setTimeout(tryLoad,1500); };
+    s.onerror=()=>{};
     s.onload=()=>{
       const s2=document.createElement('script');
       s2.src='https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js';
       s2.async=true;
-      s2.onerror=()=>{ if(attempts<3) setTimeout(tryLoad,1500); };
+      s2.onerror=()=>{};
       s2.onload=()=>{
         try{
           if(!firebase.apps.length)firebase.initializeApp(fbConfig);
           window.fbDB=firebase.database();
           initFirebaseListeners();
-        }catch(e){
-          if(attempts<3) setTimeout(tryLoad,1500);
-        }
+        }catch(e){}
       };
       document.head.appendChild(s2);
     };
     document.head.appendChild(s);
   }
-  // Sofort starten statt künstlich zu warten — Firebase soll so schnell wie möglich verfügbar sein
-  tryLoad();
+  // Wait until window is fully loaded, then wait 3 more seconds
+  if(document.readyState==='complete'){setTimeout(tryLoad,3000);}
+  else{window.addEventListener('load',()=>setTimeout(tryLoad,3000));}
 })();
 
 function getBestScore(game){const s=getScores().filter(x=>x.game===game).sort((a,b)=>b.score-a.score);return s.length?s[0].score:0;}
@@ -1994,27 +1987,9 @@ function initFirebaseListeners(){
   });
 }
 
-// Called by game files automatically on game over
-function autoSaveScore(gameName,score){
-  if(!score||score<=0)return;
-  const p=getProfile();
-  const player=(p?p.username:localStorage.getItem('username')||'MYPANEL USER').toUpperCase();
-
-  // Local best check
-  const scores=getScores();
-  const prevBest=scores.filter(s=>s.player===player&&s.game===gameName).sort((a,b)=>b.score-a.score);
-  if(prevBest.length>0&&Math.floor(score)<=prevBest[0].score)return;
-
-  // Update local
-  const filtered=scores.filter(s=>!(s.player===player&&s.game===gameName));
-  filtered.push({player,game:gameName,score:Math.floor(score),date:new Date().toLocaleDateString('de-DE')});
-  filtered.sort((a,b)=>b.score-a.score);
-  saveScores(filtered.slice(0,100));
-  renderHsTable('all');renderDashHs();updateStats();
-
-  // Push to Firebase
-  pushScoreToFirebase(player,gameName,Math.floor(score));
-}
+// NOTE: autoSaveScore is defined once, further down (after XP_MULTIPLIER_KEY exists),
+// since that version also applies event XP multipliers and clan score updates.
+// (Previously there were two conflicting definitions of this function — removed the dead one here.)
 
 // When coming back from a game, sync scores from localStorage (written by game files)
 window.addEventListener('focus',()=>{
@@ -2038,7 +2013,7 @@ function renderHsTable(filter){
   if(!scores.length){t.innerHTML+='<tr><td colspan="5" style="color:var(--di);font-family:Share Tech Mono,monospace;font-size:11px;letter-spacing:2px;padding:16px">NOCH KEINE SCORES — SPIELE EIN SPIEL!</td></tr>';return;}
   scores.forEach((s,i)=>{
     const rc=i===0?'r1':i===1?'r2':i===2?'r3':'';
-    t.innerHTML+=`<tr><td class="hs-rank ${rc}">${i+1}</td><td style="color:var(--tm)">${s.player}</td><td class="hs-game">${s.game}</td><td class="hs-score">${s.score.toLocaleString()}</td><td style="color:var(--di);font-family:Share Tech Mono,monospace;font-size:10px">${s.date||'-'}</td></tr>`;
+    t.innerHTML+=`<tr><td class="hs-rank ${rc}">${i+1}</td><td style="color:var(--tm)">${escapeHtml(s.player)}</td><td class="hs-game">${escapeHtml(s.game)}</td><td class="hs-score">${s.score.toLocaleString()}</td><td style="color:var(--di);font-family:Share Tech Mono,monospace;font-size:10px">${escapeHtml(s.date)||'-'}</td></tr>`;
   });
 }
 
@@ -2050,7 +2025,7 @@ function renderDashHs(){
   if(!scores.length){t.innerHTML+='<tr><td colspan="4" style="color:var(--di);font-family:Share Tech Mono,monospace;font-size:11px;letter-spacing:2px;padding:16px">NOCH KEINE SCORES</td></tr>';return;}
   scores.forEach((s,i)=>{
     const rc=i===0?'r1':i===1?'r2':i===2?'r3':'';
-    t.innerHTML+=`<tr><td class="hs-rank ${rc}">${i+1}</td><td style="color:var(--tm)">${s.player}</td><td class="hs-game">${s.game}</td><td class="hs-score">${s.score.toLocaleString()}</td></tr>`;
+    t.innerHTML+=`<tr><td class="hs-rank ${rc}">${i+1}</td><td style="color:var(--tm)">${escapeHtml(s.player)}</td><td class="hs-game">${escapeHtml(s.game)}</td><td class="hs-score">${s.score.toLocaleString()}</td></tr>`;
   });
 }
 renderDashHs();
@@ -2114,10 +2089,10 @@ function initFriendsSystem(){
       card.style.display='block';
       list.innerHTML=pending.map(r=>`
         <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--dim);">
-          <div style="font-family:'Orbitron',sans-serif;font-size:12px;color:var(--tm);">👤 ${r.from}</div>
+          <div style="font-family:'Orbitron',sans-serif;font-size:12px;color:var(--tm);">👤 ${escapeHtml(r.from)}</div>
           <div style="display:flex;gap:8px;">
-            <button onclick="respondFriendRequest('${r.from}','accept')" style="padding:6px 14px;border:1px solid rgba(0,255,135,.4);border-radius:3px;background:rgba(0,255,135,.08);color:var(--g);font-family:'Orbitron',sans-serif;font-size:10px;cursor:pointer;">✓ ANNEHMEN</button>
-            <button onclick="respondFriendRequest('${r.from}','decline')" style="padding:6px 14px;border:1px solid rgba(255,43,109,.3);border-radius:3px;background:rgba(255,43,109,.06);color:#ff2b6d;font-family:'Orbitron',sans-serif;font-size:10px;cursor:pointer;">✕ ABLEHNEN</button>
+            <button onclick="respondFriendRequest('${escapeHtml(r.from)}','accept')" style="padding:6px 14px;border:1px solid rgba(0,255,135,.4);border-radius:3px;background:rgba(0,255,135,.08);color:var(--g);font-family:'Orbitron',sans-serif;font-size:10px;cursor:pointer;">✓ ANNEHMEN</button>
+            <button onclick="respondFriendRequest('${escapeHtml(r.from)}','decline')" style="padding:6px 14px;border:1px solid rgba(255,43,109,.3);border-radius:3px;background:rgba(255,43,109,.06);color:#ff2b6d;font-family:'Orbitron',sans-serif;font-size:10px;cursor:pointer;">✕ ABLEHNEN</button>
           </div>
         </div>`).join('');
     } else {
@@ -2143,52 +2118,32 @@ function sendFriendRequest(){
   const me=getMyName();
   if(!target||target===me){showNotif('⚠ UNGÜLTIGER NAME');return;}
   if(!window.fbDB){showNotif('⚠ FIREBASE NICHT VERBUNDEN');return;}
-
-  // Erst prüfen, ob ihr schon befreundet seid — verhindert doppelte Anfragen/Einträge
-  window.fbDB.ref('friends/'+me+'/'+target).once('value',snap=>{
-    if(snap.exists()){
-      showNotif('ℹ️ IHR SEID BEREITS BEFREUNDET!');
-      return;
-    }
-    window.fbDB.ref('friendRequests/'+target+'/'+me).set({
-      from:me,to:target,status:'pending',ts:Date.now()
-    }).then(()=>{showNotif('📨 ANFRAGE AN '+target+' GESENDET!');inp.value='';})
-    .catch(()=>showNotif('⚠ FEHLER BEIM SENDEN'));
-  });
+  window.fbDB.ref('friendRequests/'+target+'/'+me).set({
+    from:me,to:target,status:'pending',ts:Date.now()
+  }).then(()=>{showNotif('📨 ANFRAGE AN '+target+' GESENDET!');inp.value='';})
+  .catch(()=>showNotif('⚠ FEHLER BEIM SENDEN'));
 }
 
 function acceptInvite(from){
   const me=getMyName();
   if(!window.fbDB)return;
-  window.fbDB.ref('friends/'+me+'/'+from).once('value',snap=>{
-    if(snap.exists()){
-      showNotif('ℹ️ IHR SEID BEREITS BEFREUNDET!');
-    }else{
-      window.fbDB.ref('friends/'+me+'/'+from).set({name:from,since:Date.now()});
-      window.fbDB.ref('friends/'+from+'/'+me).set({name:me,since:Date.now()});
-      showNotif('✅ '+from+' ALS FREUND HINZUGEFÜGT!');
-    }
-    window.fbDB.ref('friendRequests/'+me+'/'+from).remove();
-  });
+  const key=getFriendKey(me,from);
+  window.fbDB.ref('friends/'+me+'/'+from).set({name:from,since:Date.now()});
+  window.fbDB.ref('friends/'+from+'/'+me).set({name:me,since:Date.now()});
+  window.fbDB.ref('friendRequests/'+me+'/'+from).remove();
+  showNotif('✅ '+from+' ALS FREUND HINZUGEFÜGT!');
 }
 
 function respondFriendRequest(from,action){
   const me=getMyName();
   if(!window.fbDB)return;
   if(action==='accept'){
-    window.fbDB.ref('friends/'+me+'/'+from).once('value',snap=>{
-      if(snap.exists()){
-        showNotif('ℹ️ IHR SEID BEREITS BEFREUNDET!');
-      }else{
-        window.fbDB.ref('friends/'+me+'/'+from).set({name:from,since:Date.now()});
-        window.fbDB.ref('friends/'+from+'/'+me).set({name:me,since:Date.now()});
-        showNotif('✅ '+from+' ALS FREUND HINZUGEFÜGT!');
-      }
-      window.fbDB.ref('friendRequests/'+me+'/'+from).remove();
-    });
-    return;
+    window.fbDB.ref('friends/'+me+'/'+from).set({name:from,since:Date.now()});
+    window.fbDB.ref('friends/'+from+'/'+me).set({name:me,since:Date.now()});
+    showNotif('✅ '+from+' ALS FREUND HINZUGEFÜGT!');
+  } else {
+    showNotif('✕ ANFRAGE VON '+from+' ABGELEHNT');
   }
-  showNotif('✕ ANFRAGE VON '+from+' ABGELEHNT');
   window.fbDB.ref('friendRequests/'+me+'/'+from).remove();
 }
 
@@ -2222,8 +2177,8 @@ function openChat(friendName){
     el.innerHTML=Object.values(msgs).sort((a,b)=>a.ts-b.ts).map(m=>{
       const isMe=m.from===me;
       return `<div style="align-self:${isMe?'flex-end':'flex-start'};max-width:75%;background:${isMe?'rgba(0,229,255,.12)':'rgba(255,255,255,.06)'};border:1px solid ${isMe?'rgba(0,229,255,.3)':'var(--dim)'};border-radius:6px;padding:7px 12px;">
-        <div style="font-size:10px;color:var(--mu);letter-spacing:1px;margin-bottom:3px;">${m.from}</div>
-        <div style="font-size:13px;color:var(--tm);">${m.text}</div>
+        <div style="font-size:10px;color:var(--mu);letter-spacing:1px;margin-bottom:3px;">${escapeHtml(m.from)}</div>
+        <div style="font-size:13px;color:var(--tm);">${escapeHtml(m.text)}</div>
       </div>`;
     }).join('');
     el.scrollTop=el.scrollHeight;
@@ -2243,85 +2198,6 @@ function sendChatMsg(){
   inp.value='';
 }
 
-/* ===== LIVE ARENA ===== */
-function renderArena(){
-  const g=document.getElementById('arenaGrid');
-  if(!g)return;
-  const me=getMyName();
-  if(!window.fbDB){
-    g.innerHTML='<div style="color:var(--mu);font-size:12px;letter-spacing:2px;padding:16px;font-family:Share Tech Mono,monospace;">FIREBASE NICHT VERBUNDEN</div>';
-    return;
-  }
-  window.fbDB.ref('friends/'+me).once('value',snap=>{
-    const friendsObj=snap.val()||{};
-    const names=Object.keys(friendsObj);
-    if(!names.length){
-      g.innerHTML='<div style="color:var(--mu);font-size:12px;letter-spacing:2px;padding:16px;font-family:Share Tech Mono,monospace;">FÜGE FREUNDE HINZU, UM ZU SEHEN WER GERADE SPIELT</div>';
-      return;
-    }
-    g.innerHTML='<div style="color:var(--mu);font-size:11px;letter-spacing:2px;padding:10px;font-family:Share Tech Mono,monospace;">⏳ LADE...</div>';
-    let loaded=0;
-    const rows=[];
-    names.forEach(name=>{
-      window.fbDB.ref('presence/'+name).once('value',pSnap=>{
-        loaded++;
-        const p=pSnap.val()||{};
-        rows.push({name,online:!!p.online,game:p.currentGame||null,icon:p.currentGameIcon||'🎮'});
-        if(loaded===names.length){
-          rows.sort((a,b)=>(b.online?1:0)-(a.online?1:0)||(b.game?1:0)-(a.game?1:0));
-          g.innerHTML='';
-          rows.forEach(r=>{
-            const specGame=SPECTATABLE_GAMES[r.game];
-            const canSpectate=r.online&&!!specGame;
-            const card=document.createElement('div');
-            card.className='friend-card';
-            card.innerHTML=`
-              <div class="fa" style="background:rgba(0,0,0,.4);border-color:${r.online?'#00ff87':'#555'};color:${r.online?'#00ff87':'#888'};box-shadow:0 0 8px ${r.online?'#00ff8740':'transparent'}">${r.name[0]}</div>
-              <div style="flex:1;min-width:0;">
-                <div class="fn">${r.name}</div>
-                <div class="fg">${r.online?'● ONLINE':'● OFFLINE'}${r.game?' · '+r.icon+' spielt '+r.game:''}</div>
-              </div>
-              ${canSpectate?`<button onclick="spectateGame('${r.name}','${r.game}')" style="padding:6px 12px;border:1px solid rgba(0,229,255,.4);border-radius:3px;background:rgba(0,229,255,.08);color:var(--c);font-size:10px;cursor:pointer;font-family:'Orbitron',sans-serif;white-space:nowrap;">👁️ ZUSCHAUEN</button>`:''}
-            `;
-            g.appendChild(card);
-          });
-        }
-      });
-    });
-  });
-}
-
-/* Zuschauen bei unterstützten Spielen (Neon Pong über Raumcode, Arcade Racing direkt über Namen) */
-const SPECTATABLE_GAMES={
-  'NEON PONG':{file:'pong.html',via:'room'},
-  'ARCADE RACING':{file:'arcaderacing.html',via:'name'},
-  'BREAKOUT':{file:'breakout.html',via:'name'},
-  'FLAPPY':{file:'flappy.html',via:'name'},
-  'GEOMETRY DASH':{file:'geometrydash.html',via:'name'},
-  'MEMORY':{file:'memory.html',via:'name'},
-  'WM 2026 PENALTY':{file:'penalty.html',via:'name'},
-  'SNAKE':{file:'snake.html',via:'name'},
-  'SPACE SHOOTER':{file:'spaceshooter.html',via:'name'},
-  'TIK TAK TU':{file:'tiktaktu.html',via:'name'},
-  'NEON VORTEX':{file:'vortex.html',via:'name'},
-  'WORDLE':{file:'wordle.html',via:'name'},
-  'ZOMBIE SURVIVAL':{file:'zombie.html',via:'name'},
-  'NEON BOUNCE':{file:'neon_bounce.html',via:'name'}
-};
-function spectateGame(playerName,gameName){
-  const cfg=SPECTATABLE_GAMES[gameName];
-  if(!cfg){showNotif('⚠ ZUSCHAUEN HIER NICHT MÖGLICH');return;}
-  if(cfg.via==='name'){
-    playGame(cfg.file+'?spectate='+encodeURIComponent(playerName));
-    return;
-  }
-  window.fbDB.ref('presence/'+playerName+'/pongRoom').once('value',snap=>{
-    const room=snap.val();
-    if(!room){showNotif('⚠ KEIN AKTIVES SPIEL GEFUNDEN');return;}
-    playGame(cfg.file+'?spectate='+encodeURIComponent(room));
-  });
-}
-
 function renderFriends(friendsObj){
   const g=document.getElementById('friendsGrid');
   const cnt=document.getElementById('friendCount');
@@ -2339,7 +2215,7 @@ function renderFriends(friendsObj){
     if(!window.fbDB){
       const card=document.createElement('div');
       card.className='friend-card';
-      card.innerHTML=`<div class="fa" style="background:rgba(0,0,0,.4);border-color:#555;color:#888">${f.name[0]}</div><div style="flex:1;"><div class="fn">${f.name}</div><div class="fg">● OFFLINE</div></div>`;
+      card.innerHTML=`<div class="fa" style="background:rgba(0,0,0,.4);border-color:#555;color:#888">${escapeHtml(f.name[0])}</div><div style="flex:1;"><div class="fn">${escapeHtml(f.name)}</div><div class="fg">● OFFLINE</div></div>`;
       g.appendChild(card);
       return;
     }
@@ -2350,15 +2226,15 @@ function renderFriends(friendsObj){
       const card=document.createElement('div');
       card.className='friend-card';
       card.innerHTML=`
-        <div class="fa" style="background:rgba(0,0,0,.4);border-color:${online?'#00ff87':'#555'};color:${online?'#00ff87':'#888'};box-shadow:0 0 8px ${online?'#00ff8740':'transparent'}">${f.name[0]}</div>
+        <div class="fa" style="background:rgba(0,0,0,.4);border-color:${online?'#00ff87':'#555'};color:${online?'#00ff87':'#888'};box-shadow:0 0 8px ${online?'#00ff8740':'transparent'}">${escapeHtml(f.name[0])}</div>
         <div style="flex:1;min-width:0;">
-          <div class="fn">${f.name}</div>
+          <div class="fn">${escapeHtml(f.name)}</div>
           <div class="fg">${online?'● ONLINE':'● OFFLINE'}</div>
-          ${topScore?`<div style="font-size:10px;color:var(--mu);font-family:Share Tech Mono,monospace;margin-top:2px;">🏆 ${topScore.game}: ${topScore.score}</div>`:''}
+          ${topScore?`<div style="font-size:10px;color:var(--mu);font-family:Share Tech Mono,monospace;margin-top:2px;">🏆 ${escapeHtml(topScore.game)}: ${topScore.score}</div>`:''}
         </div>
         <div style="display:flex;flex-direction:column;gap:5px;">
-          <button onclick="openChat('${f.name}')" style="padding:5px 10px;border:1px solid rgba(0,229,255,.3);border-radius:3px;background:rgba(0,229,255,.06);color:var(--c);font-size:10px;cursor:pointer;font-family:'Orbitron',sans-serif;">💬</button>
-          <button onclick="removeFriend('${f.name}')" style="padding:5px 10px;border:1px solid rgba(255,43,109,.3);border-radius:3px;background:rgba(255,43,109,.05);color:#ff2b6d;font-size:10px;cursor:pointer;font-family:'Orbitron',sans-serif;">✕</button>
+          <button onclick="openChat('${escapeHtml(f.name)}')" style="padding:5px 10px;border:1px solid rgba(0,229,255,.3);border-radius:3px;background:rgba(0,229,255,.06);color:var(--c);font-size:10px;cursor:pointer;font-family:'Orbitron',sans-serif;">💬</button>
+          <button onclick="removeFriend('${escapeHtml(f.name)}')" style="padding:5px 10px;border:1px solid rgba(255,43,109,.3);border-radius:3px;background:rgba(255,43,109,.05);color:#ff2b6d;font-size:10px;cursor:pointer;font-family:'Orbitron',sans-serif;">✕</button>
         </div>`;
       g.appendChild(card);
     });
@@ -2380,7 +2256,7 @@ function renderFriendsMini(){
         if(!online)return;
         const div=document.createElement('div');
         div.className='fm-user';
-        div.innerHTML=`<div class="fm-avatar" style="border-color:#00ff87;color:#00ff87">${f.name[0]}</div><div class="fm-name">${f.name}</div><div class="fm-status on"></div>`;
+        div.innerHTML=`<div class="fm-avatar" style="border-color:#00ff87;color:#00ff87">${escapeHtml(f.name[0])}</div><div class="fm-name">${escapeHtml(f.name)}</div><div class="fm-status on"></div>`;
         el.appendChild(div);
       });
     });
@@ -2467,7 +2343,7 @@ function renderPlayerOfMonth(){
   const [winner,pts]=sorted[0];
   const now=new Date();
   const month=now.toLocaleDateString('de-DE',{month:'long',year:'numeric'});
-  el.innerHTML=`<div class="potm-card"><div class="potm-crown">👑</div><div><div class="potm-name">${winner}</div><div class="potm-score">${pts.toLocaleString()} GESAMTPUNKTE · ${month}</div>${sorted.slice(1,3).map(([n,p],i)=>`<div style="font-size:11px;color:var(--mu);margin-top:4px;letter-spacing:1px;">${i===0?'🥈':'🥉'} ${n} — ${p.toLocaleString()}</div>`).join('')}</div></div>`;
+  el.innerHTML=`<div class="potm-card"><div class="potm-crown">👑</div><div><div class="potm-name">${escapeHtml(winner)}</div><div class="potm-score">${pts.toLocaleString()} GESAMTPUNKTE · ${month}</div>${sorted.slice(1,3).map(([n,p],i)=>`<div style="font-size:11px;color:var(--mu);margin-top:4px;letter-spacing:1px;">${i===0?'🥈':'🥉'} ${escapeHtml(n)} — ${p.toLocaleString()}</div>`).join('')}</div></div>`;
 }
 
 /* ===== COMMENTS ===== */
@@ -2490,7 +2366,7 @@ function loadComments(){
     if(!el)return;
     const data=snap.val();
     if(!data){el.innerHTML='<div style="color:var(--mu);font-size:12px;letter-spacing:2px;">Noch keine Kommentare.</div>';return;}
-    el.innerHTML=Object.values(data).reverse().map(c=>`<div class="comment"><div class="comment-author">${c.avatar||'🎮'} ${c.author}</div><div class="comment-text">${c.text}</div><div class="comment-time">${c.date||''}</div></div>`).join('');
+    el.innerHTML=Object.values(data).reverse().map(c=>`<div class="comment"><div class="comment-author">${escapeHtml(c.avatar)||'🎮'} ${escapeHtml(c.author)}</div><div class="comment-text">${escapeHtml(c.text)}</div><div class="comment-time">${escapeHtml(c.date)||''}</div></div>`).join('');
   });
 }
 
@@ -2510,7 +2386,7 @@ function loadClans(){
       const info=document.getElementById('myClanInfo');
       if(info){
         const members=Object.keys(myClan.members||{});
-        info.innerHTML=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;"><span class="clan-tag">[${myClan.tag||'???'}]</span><span class="clan-name">${myClan.name}</span></div><div class="clan-members">👥 ${members.join(', ')}</div><div style="font-size:11px;color:var(--mu);margin-top:6px;letter-spacing:1px;">🏆 Gesamtpunkte: ${(myClan.score||0).toLocaleString()}</div>`;
+        info.innerHTML=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;"><span class="clan-tag">[${escapeHtml(myClan.tag)||'???'}]</span><span class="clan-name">${escapeHtml(myClan.name)}</span></div><div class="clan-members">👥 ${members.map(escapeHtml).join(', ')}</div><div style="font-size:11px;color:var(--mu);margin-top:6px;letter-spacing:1px;">🏆 Gesamtpunkte: ${(myClan.score||0).toLocaleString()}</div>`;
       }
     }else{
       if(myCard)myCard.style.display='none';
@@ -2520,7 +2396,7 @@ function loadClans(){
     if(lb){
       const sorted=Object.entries(clans).sort((a,b)=>(b[1].score||0)-(a[1].score||0));
       if(!sorted.length){lb.innerHTML='<div style="color:var(--mu);font-size:12px;letter-spacing:2px;padding:8px;">Noch keine Clans.</div>';return;}
-      lb.innerHTML=sorted.map(([name,c],i)=>`<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--dim);"><div style="font-family:'Orbitron',sans-serif;font-size:13px;color:${i===0?'#ffd23f':i===1?'#c0c0c0':i===2?'#cd7f32':'var(--mu)'};">${i===0?'👑':i===1?'🥈':i===2?'🥉':'#'+(i+1)}</div><span class="clan-tag">[${c.tag||'???'}]</span><div style="flex:1;font-family:'Orbitron',sans-serif;font-size:12px;color:var(--tm);">${name}</div><div style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--c);">${(c.score||0).toLocaleString()}</div></div>`).join('');
+      lb.innerHTML=sorted.map(([name,c],i)=>`<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--dim);"><div style="font-family:'Orbitron',sans-serif;font-size:13px;color:${i===0?'#ffd23f':i===1?'#c0c0c0':i===2?'#cd7f32':'var(--mu)'};">${i===0?'👑':i===1?'🥈':i===2?'🥉':'#'+(i+1)}</div><span class="clan-tag">[${escapeHtml(c.tag)||'???'}]</span><div style="flex:1;font-family:'Orbitron',sans-serif;font-size:12px;color:var(--tm);">${escapeHtml(name)}</div><div style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--c);">${(c.score||0).toLocaleString()}</div></div>`).join('');
     }
   });
 }
@@ -2528,8 +2404,8 @@ function createClan(){
   const name=document.getElementById('clanNameInput').value.trim().toUpperCase();
   const tag=document.getElementById('clanTagInput').value.trim().toUpperCase();
   const me=getMyName();
-  if(!name||name.length<2){showNotif('⚠ CLAN NAME EINGEBEN');return;}
-  if(!tag||tag.length<2){showNotif('⚠ CLAN TAG EINGEBEN');return;}
+  if(!name||name.length<2||!/^[A-Z0-9_ -]{2,24}$/.test(name)){showNotif('⚠ CLAN NAME: 2-24 ZEICHEN, NUR BUCHSTABEN/ZAHLEN');return;}
+  if(!tag||tag.length<2||!/^[A-Z0-9]{2,6}$/.test(tag)){showNotif('⚠ CLAN TAG: 2-6 BUCHSTABEN/ZAHLEN');return;}
   if(!window.fbDB){showNotif('⚠ FIREBASE NICHT VERBUNDEN');return;}
   window.fbDB.ref('clans/'+name).once('value',snap=>{
     if(snap.exists()){showNotif('⚠ CLAN EXISTIERT BEREITS');return;}
@@ -2572,6 +2448,13 @@ function updateClanScore(score){
 
 const PROFILE_KEY='mpProfile';
 const LOCK_DAYS=30;
+// SICHERHEITSHINWEIS: Dieser Admin-Check ist rein clientseitig (nur UI-Anzeige).
+// Er verhindert NICHT, dass jemand per Browser-Devtools direkt in Firebase schreibt
+// (z.B. announcement, maintenance, activeEvent setzen), wenn deine Firebase-
+// Realtime-Database-Regeln das erlauben. Echter Schutz erfordert Firebase
+// Authentication + serverseitige Security Rules, die Schreibzugriffe auf
+// bestimmte Pfade (announcement, maintenance, activeEvent, countdown) auf einen
+// echten Admin-UID beschränken - das kann diese Datei allein nicht leisten.
 const ADMIN_NAME='LUKAS123';
 
 /* --- 3-layer storage: localStorage + cookie + sessionStorage --- */
@@ -2675,6 +2558,7 @@ function saveUsername(){
   let username=p?p.username:'MYPANEL USER';
   if(!locked){
     if(!v||v.length<2){showNotif('⚠ MINDESTENS 2 ZEICHEN EINGEBEN');return;}
+    if(!/^[A-Za-z0-9_-]{2,20}$/.test(v)){showNotif('⚠ NUR BUCHSTABEN, ZAHLEN, _ UND - (2-20 ZEICHEN)');return;}
     username=v.toUpperCase();
   }
   const profile={username,avatar:selectedAvatar||p&&p.avatar||'🎮',status:selectedStatus||'🟢 Online',createdAt:p?p.createdAt:Date.now(),changedAt:locked?(p?p.changedAt:Date.now()):Date.now()};
@@ -2685,17 +2569,15 @@ function saveUsername(){
 }
 function saveFirstLogin(){
   const v=document.getElementById('firstLoginInput').value.trim();
-  if(!v||v.length<2){
+  if(!v||v.length<2||!/^[A-Za-z0-9_-]{2,20}$/.test(v)){
     document.getElementById('firstLoginInput').style.borderColor='#ff2b6d';
     setTimeout(()=>document.getElementById('firstLoginInput').style.borderColor='',1000);
     return;
   }
-  // Modal auf jeden Fall schließen, selbst falls saveProfile/applyProfile intern einen Fehler werfen
-  try{ saveProfile(v); }catch(e){}
-  try{ applyProfile(); }catch(e){}
-  const modal=document.getElementById('firstLoginModal');
-  if(modal)modal.style.display='none';
-  try{ showNotif('🎮 WILLKOMMEN, '+v.toUpperCase()+'!'); }catch(e){}
+  saveProfile(v);
+  applyProfile();
+  document.getElementById('firstLoginModal').style.display='none';
+  showNotif('🎮 WILLKOMMEN, '+v.toUpperCase()+'!');
 }
 
 // Boot: show first-login if no profile yet, else apply existing
@@ -2890,12 +2772,8 @@ function initMaintenanceListener(){
     const p=getProfile();
     const name=(p?p.username:'').toUpperCase();
     if(statusEl)statusEl.textContent='STATUS: '+(data&&data.active?'🔧 AKTIV':'✅ INAKTIV');
-    const loginModal=document.getElementById('firstLoginModal');
-    const loginOpen=loginModal&&loginModal.style.display!=='none';
-    if(name!==ADMIN_NAME&&!loginOpen){
+    if(name!==ADMIN_NAME){
       overlay.style.display=data&&data.active?'flex':'none';
-    }else{
-      overlay.style.display='none';
     }
   });
 }
@@ -3599,8 +3477,9 @@ function applyEvent(event){
         try{stopDiscoMusic();}catch(e){}
         try{stopTacoMusic();}catch(e){}
         try{stopTacoRain();}catch(e){}
-        try{stopCyberMusic();}catch(e){}
-        try{stopCyberUniverse();}catch(e){}
+        try{stopCuckMusic();}catch(e){}
+        try{stopCucaracha();}catch(e){}
+        try{stopVulkan();}catch(e){}
         if(window.fbDB)window.fbDB.ref('activeEvent').remove();
       }catch(e){}
       return;
@@ -3676,7 +3555,7 @@ function autoSaveScore(gameName,score){
 
 
 let audioCtx=null, masterGain=null, isPlaying=false, trackIdx=0;
-let currentNodes=[], animFrame=null;
+let currentNodes=[], animFrame=null, trackLoopTimeout=null;
 
 const TRACKS=[
   {name:'Neon City Drive',   artist:'MYPANEL SYNTHWAVE', bpm:95,  key:220, style:'chill'},
@@ -3697,6 +3576,7 @@ function initAudio(){
 
 function stopAllNodes(){
   cancelAnimationFrame(animFrame);
+  clearTimeout(trackLoopTimeout);
   currentNodes.forEach(n=>{try{n.stop();}catch(e){}});
   currentNodes=[];
 }
@@ -3810,7 +3690,8 @@ function playTrack(idx){
   }
 
   // Restart after 32 bars
-  setTimeout(()=>{if(isPlaying) playTrack(trackIdx);}, BARS*beat*4*1000+500);
+  clearTimeout(trackLoopTimeout);
+  trackLoopTimeout=setTimeout(()=>{if(isPlaying) playTrack(trackIdx);}, BARS*beat*4*1000+500);
 
   // Visualizer animation
   const bars=document.querySelectorAll('.mp-vis-bar');
@@ -3938,15 +3819,18 @@ function startPanelBoot(){
   const blines=loader.querySelectorAll('.bline');
   let p=0, lineIdx=0;
   blines.forEach(l=>l.style.opacity='0');
+  // Boot speed: 1 (langsam) - 10 (schnell). Skaliert sowohl den Fortschritt pro Tick als auch das Log-Tempo.
+  const speed=Math.min(10,Math.max(1,getBootSpeed()));
+  const speedMult=speed/5; // 5 = Standardgeschwindigkeit (Faktor 1)
   const lineInterval=setInterval(()=>{
     if(lineIdx<blines.length){
       blines[lineIdx].style.opacity='1';
       blines[lineIdx].style.transition='opacity .5s';
       lineIdx++;
     }
-  },800);
+  },800/speedMult);
   const pInterval=setInterval(()=>{
-    p=Math.min(100, p + Math.random()*2.5+1.5);
+    p=Math.min(100, p + (Math.random()*2.5+1.5)*speedMult);
     if(barfill)barfill.style.width=p+'%';
     if(pct)pct.textContent=Math.floor(p)+'%';
     if(p>=100){
