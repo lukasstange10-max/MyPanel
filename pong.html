@@ -540,22 +540,27 @@ function showWin(d){
       const all=JSON.parse(localStorage.getItem('highscores')||'[]');
       const prev=all.filter(s=>s.player===myName&&s.game==='Neon Pong').sort((a,b)=>b.score-a.score);
       const wins=(prev.length>0?prev[0].score:0)+1;
+      const mult=parseFloat(localStorage.getItem('mpXpMultiplier')||'1');
+      const boosted=Math.floor(wins*mult);
 
-      // An MyPanel-Highscoresystem übergeben (nutzt automatisch den XP-Multiplikator + Notification)
-      if(typeof window.autoSaveScore==='function'){
-        window.autoSaveScore('Neon Pong',wins);
-      }else{
-        const _mult=parseFloat(localStorage.getItem('mpXpMultiplier')||'1');
-        const filtered=all.filter(s=>!(s.player===myName&&s.game==='Neon Pong'));
-        filtered.push({player:myName,game:'Neon Pong',score:Math.floor(wins*_mult),date:new Date().toLocaleDateString('de-DE')});
-        filtered.sort((a,b)=>b.score-a.score);
-        localStorage.setItem('highscores',JSON.stringify(filtered.slice(0,50)));
+      // Direkt über die eigene Firebase-Verbindung schreiben (Pong braucht sie sowieso fürs Raum-System)
+      if(db){
+        const fbKey=myName.replace(/[.#$\/\[\]]/g,'_')+'__Neon_Pong';
+        db.ref('highscores/'+fbKey).transaction(cur=>{
+          if(!cur||boosted>cur.score)return{player:myName,game:'Neon Pong',score:boosted,date:new Date().toLocaleDateString('de-DE')};
+          return cur;
+        });
       }
 
-      // Firebase
-      if(db){
-        const key=myName.replace(/[.#$\/\[\]]/g,'_')+'__Neon Pong';
-        db.ref('highscores/'+key).set({player:myName,game:'Neon Pong',score:wins,date:new Date().toLocaleDateString('de-DE')});
+      // Lokalen Fallback zusätzlich sichern
+      const filtered=all.filter(s=>!(s.player===myName&&s.game==='Neon Pong'));
+      filtered.push({player:myName,game:'Neon Pong',score:boosted,date:new Date().toLocaleDateString('de-DE')});
+      filtered.sort((a,b)=>b.score-a.score);
+      localStorage.setItem('highscores',JSON.stringify(filtered.slice(0,50)));
+
+      // XP-Multiplikator-Notification, falls vorhanden
+      if(typeof window.autoSaveScore==='function'){
+        try{window.autoSaveScore('Neon Pong',wins);}catch(e){}
       }
     }catch(e){}
   }
