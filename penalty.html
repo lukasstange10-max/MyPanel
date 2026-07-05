@@ -171,6 +171,28 @@ canvas{display:block;position:fixed;inset:0;}
   <button class="gbtn" onclick="showTitle()" style="margin-top:8px;">🔄 NOCHMAL</button>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script>
+let rdb=null;
+try{
+  if(typeof firebase!=='undefined'){
+    firebase.initializeApp({
+      apiKey:"AIzaSyDqVPdgGhRx6v__sx7pCe5mOre8XT7xRLg",
+      authDomain:"mypanel-41c90.firebaseapp.com",
+      databaseURL:"https://mypanel-41c90-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId:"mypanel-41c90",
+      storageBucket:"mypanel-41c90.firebasestorage.app",
+      messagingSenderId:"69361490898",
+      appId:"1:69361490898:web:1fcec1264539c8e637060b"
+    });
+    rdb=firebase.apps&&firebase.apps.length?firebase.database():null;
+  }
+}catch(e){rdb=null;}
+
+function getMyName(){
+  try{const p=JSON.parse(localStorage.getItem('mpProfile')||'null');return p?p.username:'SPIELER';}catch(e){return 'SPIELER';}
+}
+</script>
 <script>
 // ===== TEAMS =====
 const T=[
@@ -298,6 +320,80 @@ let matchPhase='p',matchOver=false,animating=false;
 let gkDiving=false,gkDir=null;
 let aimX=null,aimY=null,showAim=false;
 let ballSpin=0;
+
+/* ===== ZUSCHAUER-MODUS ===== */
+const _urlParams=new URLSearchParams(location.search);
+const spectateName=_urlParams.get('spectate');
+let isSpectator=false;
+
+function startSpectate(name){
+  isSpectator=true;
+  hideAll();
+  canvas.classList.remove('hidden');
+
+  const banner=document.createElement('div');
+  banner.id='spectateBanner';
+  banner.style.cssText='position:fixed;top:16px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.75);border:1px solid #FFD700;padding:8px 22px;border-radius:20px;font-family:Anton,sans-serif;font-size:12px;letter-spacing:2px;color:#FFD700;z-index:9999;box-shadow:0 0 20px rgba(255,215,0,.3);';
+  banner.textContent='👁️ ZUSCHAUER-MODUS · '+name.toUpperCase();
+  document.body.appendChild(banner);
+
+  if(!rdb){banner.textContent='⚠ FIREBASE NICHT VERBUNDEN';banner.style.borderColor='#ff2b6d';banner.style.color='#ff2b6d';return;}
+
+  try{
+    const key=getMyName().replace(/[.#$\/\[\]]/g,'_');
+    const specRef=rdb.ref('liveGames/'+name+'/spectators/'+key);
+    specRef.set(true);
+    specRef.onDisconnect().remove();
+  }catch(e){}
+
+  const ref=rdb.ref('liveGames/'+name);
+  ref.on('value',snap=>{
+    if(!snap.exists()){
+      banner.textContent='⏹ KEIN LIVE-SPIEL GEFUNDEN';
+      banner.style.borderColor='#ff2b6d';banner.style.color='#ff2b6d';
+      return;
+    }
+    const d=snap.val();
+    pTeam=T.find(t=>t.n===d.pTeamName)||pTeam;
+    oTeam=T.find(t=>t.n===d.oTeamName)||oTeam;
+    pScore=d.pScore||0;oScore=d.oScore||0;
+    kickRound=d.kickRound||1;matchPhase=d.matchPhase||'p';
+    gkDiving=!!d.gkDiving;gkDir=d.gkDir||null;
+    showAim=!!d.showAim;aimX=d.aimX;aimY=d.aimY;
+    if(d.ball){bAnimState=d.ball;}else{bAnimState=null;}
+  });
+
+  requestAnimationFrame(spectatorLoop);
+}
+if(spectateName)startSpectate(spectateName);
+
+function spectatorLoop(){
+  if(!isSpectator)return;
+  drawScene();
+  requestAnimationFrame(spectatorLoop);
+}
+
+/* Eigenen Live-Zustand periodisch senden, damit Freunde zuschauen können */
+let lastLiveSync=0;
+function syncLiveState(){
+  if(isSpectator||!rdb||!pTeam||!oTeam)return;
+  const now=Date.now();
+  if(now-lastLiveSync<100)return;
+  lastLiveSync=now;
+  try{
+    rdb.ref('liveGames/'+getMyName()).set({
+      pTeamName:pTeam.n,oTeamName:oTeam.n,
+      pScore,oScore,kickRound,matchPhase,
+      gkDiving,gkDir,showAim,aimX,aimY,
+      ball:bAnimState,ts:now
+    });
+  }catch(e){}
+}
+function clearLiveState(){
+  if(isSpectator||!rdb)return;
+  try{rdb.ref('liveGames/'+getMyName()).remove();}catch(e){}
+}
+window.addEventListener('beforeunload',clearLiveState);
 let tutShown=false;
 
 // ===== GOALKEEPER CONTROL (defending) =====
@@ -966,6 +1062,7 @@ function finalizeMatch(){
 }
 
 function showMatchResult(win){
+  clearLiveState();
   const ov=document.getElementById('resultOverlay');
   ov.style.display='flex';
   document.getElementById('roEmoji').textContent=win?'🎉':'😢';
@@ -1004,6 +1101,7 @@ function showChampion(){
 }
 
 function showElim(lbl){
+  clearLiveState();
   hideAll();
   document.getElementById('elimScreen').classList.remove('hidden');
   document.getElementById('elimInfo').textContent='AUSGESCHIEDEN: '+lbl.replace('🏆 ','');
@@ -1035,6 +1133,7 @@ let raf,last=0;
 function gameLoop(ts){
   updateBallAnim();
   updateGkStand();
+  syncLiveState();
   drawScene();
   raf=requestAnimationFrame(gameLoop);
 }

@@ -120,6 +120,24 @@ canvas{display:block;position:fixed;inset:0;width:100%!important;height:100%!imp
   <div style="font-size:clamp(13px,2.5vw,22px);font-weight:900;color:#fff;text-shadow:0 0 20px rgba(0,229,255,.8);">📢 <span id="annText"></span></div>
 </div></div>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script>
+let rdb=null;
+try{
+  if(typeof firebase!=='undefined'){
+    firebase.initializeApp({
+      apiKey:"AIzaSyDqVPdgGhRx6v__sx7pCe5mOre8XT7xRLg",
+      authDomain:"mypanel-41c90.firebaseapp.com",
+      databaseURL:"https://mypanel-41c90-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId:"mypanel-41c90",
+      storageBucket:"mypanel-41c90.firebasestorage.app",
+      messagingSenderId:"69361490898",
+      appId:"1:69361490898:web:1fcec1264539c8e637060b"
+    });
+    rdb=firebase.apps&&firebase.apps.length?firebase.database():null;
+  }
+}catch(e){rdb=null;}
+</script>
 <script>
 const canvas=document.getElementById('c');
 const ctx=canvas.getContext('2d');
@@ -150,6 +168,10 @@ let activeSkin=localStorage.getItem('fn_skin')||'default';
 let inventory=JSON.parse(localStorage.getItem('fn_inv')||'{}');
 let shopTab='skins';
 
+function getMyName(){
+  try{const p=JSON.parse(localStorage.getItem('mpProfile')||'null');return p?p.username:'SPIELER';}catch(e){return 'SPIELER';}
+}
+
 function save(){
   localStorage.setItem('fn_coins',coins);
   localStorage.setItem('fn_high',high);
@@ -163,6 +185,95 @@ let bird,pipes,coinItems,particles,gameState,score,frameCoins,raf;
 let activePower=null,powerTimer=0;
 let shieldHp=0,slowActive=false,magnetActive=false,doubleActive=false;
 let bgStars=[];
+
+/* ===== ZUSCHAUER-MODUS ===== */
+const _urlParams=new URLSearchParams(location.search);
+const spectateName=_urlParams.get('spectate');
+let isSpectator=false;
+
+function startSpectate(name){
+  isSpectator=true;
+  document.getElementById('menuScreen').classList.add('hidden');
+  document.getElementById('hud').classList.remove('hidden');
+  pipes=[];coinItems=[];particles=[];
+  bird={x:W*0.2,y:H*0.45,vy:0,rot:0,skin:SKINS.default};
+
+  const banner=document.createElement('div');
+  banner.id='spectateBanner';
+  banner.style.cssText='position:fixed;top:16px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.75);border:1px solid #00e5ff;padding:8px 22px;border-radius:20px;font-family:Orbitron,sans-serif;font-size:11px;letter-spacing:2px;color:#00e5ff;z-index:9999;box-shadow:0 0 20px rgba(0,229,255,.3);';
+  banner.textContent='👁️ ZUSCHAUER-MODUS · '+name.toUpperCase();
+  document.body.appendChild(banner);
+
+  if(!rdb){banner.textContent='⚠ FIREBASE NICHT VERBUNDEN';banner.style.borderColor='#ff2b6d';banner.style.color='#ff2b6d';return;}
+
+  try{
+    const key=getMyName().replace(/[.#$\/\[\]]/g,'_');
+    const specRef=rdb.ref('liveGames/'+name+'/spectators/'+key);
+    specRef.set(true);
+    specRef.onDisconnect().remove();
+  }catch(e){}
+
+  const ref=rdb.ref('liveGames/'+name);
+  ref.on('value',snap=>{
+    if(!snap.exists()){
+      banner.textContent='⏹ KEIN LIVE-SPIEL GEFUNDEN';
+      banner.style.borderColor='#ff2b6d';banner.style.color='#ff2b6d';
+      return;
+    }
+    const d=snap.val();
+    bird.y=d.birdY;bird.rot=d.birdRot||0;
+    pipes=d.pipes||[];
+    score=d.score||0;
+    document.getElementById('hudScore').textContent=score;
+  });
+
+  gameState='spectating';
+  spectatorLoop();
+}
+if(spectateName)startSpectate(spectateName);
+
+function spectatorLoop(){
+  if(gameState!=='spectating')return;
+  W=canvas.width;H=canvas.height;
+  ctx.clearRect(0,0,W,H);
+  drawBg();
+  const PR=W*0.038,PW=PR*2.4;
+  pipes.forEach(p=>{
+    ctx.save();
+    ctx.shadowColor='#00ff87';ctx.shadowBlur=20;
+    const pgrad=ctx.createLinearGradient(p.x,0,p.x+PW,0);
+    pgrad.addColorStop(0,'#00c060');pgrad.addColorStop(1,'#00ff87');
+    ctx.fillStyle=pgrad;
+    ctx.beginPath();ctx.roundRect(p.x,0,PW,p.top-8,4);ctx.fill();
+    ctx.beginPath();ctx.roundRect(p.x-5,p.top-18,PW+10,18,[4,4,0,0]);ctx.fill();
+    ctx.beginPath();ctx.roundRect(p.x,p.bottom+8,PW,H-p.bottom,4);ctx.fill();
+    ctx.beginPath();ctx.roundRect(p.x-5,p.bottom,PW+10,18,[0,0,4,4]);ctx.fill();
+    ctx.restore();
+  });
+  drawBird();
+  raf=requestAnimationFrame(spectatorLoop);
+}
+
+/* Eigenen Live-Zustand periodisch senden, damit Freunde zuschauen können */
+let lastLiveSync=0;
+function syncLiveState(){
+  if(isSpectator||!rdb||!bird)return;
+  const now=Date.now();
+  if(now-lastLiveSync<100)return;
+  lastLiveSync=now;
+  try{
+    rdb.ref('liveGames/'+getMyName()).set({
+      birdY:Math.round(bird.y),birdRot:Math.round(bird.rot*100)/100,
+      pipes:pipes.map(p=>({x:Math.round(p.x),top:Math.round(p.top),bottom:Math.round(p.bottom)})),
+      score,ts:now
+    });
+  }catch(e){}
+}
+function clearLiveState(){
+  if(isSpectator||!rdb)return;
+  try{rdb.ref('liveGames/'+getMyName()).remove();}catch(e){}
+}
+window.addEventListener('beforeunload',clearLiveState);
 
 // Init stars once
 for(let i=0;i<80;i++) bgStars.push({x:Math.random(),y:Math.random(),r:.5+Math.random()*1.5,a:.3+Math.random()*.7,sp:.1+Math.random()*.3});
@@ -314,6 +425,8 @@ function gameLoop(ts){
   const dt=slowActive?rawDt*0.4:rawDt;
   const speed=pipeSpeed*(slowActive?0.4:1);
 
+  syncLiveState();
+
   W=canvas.width;H=canvas.height;
   ctx.clearRect(0,0,W,H);
 
@@ -411,6 +524,7 @@ function gameLoop(ts){
 function handleCollision(){
   if(shieldHp>0){shieldHp=0;spawnParticles(bird.x,bird.y,'#00e5ff',20);document.getElementById('powerBadge').style.display='none';return;}
   coins+=frameCoins;save();
+  clearLiveState();
   spawnParticles(bird.x,bird.y,'#ff2b6d',25);
   gameState='done';
   setTimeout(showGameover,600);

@@ -335,6 +335,28 @@ onclick="reset()">
 
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script>
+let rdb=null;
+try{
+  if(typeof firebase!=='undefined'){
+    firebase.initializeApp({
+      apiKey:"AIzaSyDqVPdgGhRx6v__sx7pCe5mOre8XT7xRLg",
+      authDomain:"mypanel-41c90.firebaseapp.com",
+      databaseURL:"https://mypanel-41c90-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId:"mypanel-41c90",
+      storageBucket:"mypanel-41c90.firebasestorage.app",
+      messagingSenderId:"69361490898",
+      appId:"1:69361490898:web:1fcec1264539c8e637060b"
+    });
+    rdb=firebase.apps&&firebase.apps.length?firebase.database():null;
+  }
+}catch(e){rdb=null;}
+
+function getMyName(){
+  try{const p=JSON.parse(localStorage.getItem('mpProfile')||'null');return p?p.username:'SPIELER';}catch(e){return 'SPIELER';}
+}
+</script>
 <script>
 
 const board=
@@ -353,6 +375,69 @@ Array(9)
 
 let active=
 true;
+
+/* ===== ZUSCHAUER-MODUS ===== */
+const _urlParams=new URLSearchParams(location.search);
+const spectateName=_urlParams.get('spectate');
+let isSpectator=false;
+
+function startSpectate(name){
+  isSpectator=true;
+
+  const banner=document.createElement('div');
+  banner.id='spectateBanner';
+  banner.style.cssText='position:fixed;top:16px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.75);border:1px solid #6366f1;padding:8px 22px;border-radius:20px;font-family:Arial,sans-serif;font-size:12px;font-weight:900;letter-spacing:2px;color:#a5b4fc;z-index:9999;box-shadow:0 0 20px rgba(99,102,241,.35);';
+  banner.textContent='👁️ ZUSCHAUER-MODUS · '+name.toUpperCase();
+  document.body.appendChild(banner);
+
+  if(!rdb){banner.textContent='⚠ FIREBASE NICHT VERBUNDEN';banner.style.borderColor='#ff2b6d';banner.style.color='#ff2b6d';return;}
+
+  try{
+    const key=getMyName().replace(/[.#$\/\[\]]/g,'_');
+    const specRef=rdb.ref('liveGames/'+name+'/spectators/'+key);
+    specRef.set(true);
+    specRef.onDisconnect().remove();
+  }catch(e){}
+
+  const ref=rdb.ref('liveGames/'+name);
+  ref.on('value',snap=>{
+    if(!snap.exists()){
+      banner.textContent='⏹ KEIN LIVE-SPIEL GEFUNDEN';
+      banner.style.borderColor='#ff2b6d';banner.style.color='#ff2b6d';
+      return;
+    }
+    const d=snap.val();
+    game=d.game||Array(9).fill("");
+    status.innerHTML=d.status||'';
+    renderReadOnly();
+  });
+}
+if(spectateName)startSpectate(spectateName);
+
+function renderReadOnly(){
+  board.innerHTML="";
+  game.forEach(v=>{
+    const c=document.createElement("div");
+    c.className="cell";
+    if(v){c.innerHTML=v;c.classList.add(v.toLowerCase());}
+    board.appendChild(c);
+  });
+}
+
+/* Eigenen Live-Zustand senden, damit Freunde zuschauen können */
+function syncLiveState(){
+  if(isSpectator||!rdb)return;
+  try{
+    rdb.ref('liveGames/'+getMyName()).set({
+      game,status:status.innerHTML,ts:Date.now()
+    });
+  }catch(e){}
+}
+function clearLiveState(){
+  if(isSpectator||!rdb)return;
+  try{rdb.ref('liveGames/'+getMyName()).remove();}catch(e){}
+}
+window.addEventListener('beforeunload',clearLiveState);
 
 const wins=[
 
@@ -402,6 +487,8 @@ c
 );
 
 });
+
+syncLiveState();
 
 }
 
@@ -551,26 +638,31 @@ game[a]==="X"
 
 status.innerHTML=
 "🏆 DU GEWINNST";
+clearLiveState();
 
-// Auto-save to MyPanel — tracks total wins as score
+// An MyPanel-Highscoresystem übergeben (nutzt automatisch den XP-Multiplikator + Notification)
 try{
   const profRaw=localStorage.getItem('mpProfile');
   const prof=profRaw?JSON.parse(profRaw):null;
   const player=(prof?prof.username:localStorage.getItem('username')||'MYPANEL USER').toUpperCase();
   const all=JSON.parse(localStorage.getItem('highscores')||'[]');
   const prev=all.filter(s=>s.player===player&&s.game==='Tik Tak Tu').sort((a,b)=>b.score-a.score);
-  const _mult=parseFloat(localStorage.getItem('mpXpMultiplier')||'1');
-  const newScore=Math.floor(((prev.length>0?prev[0].score:0)+1)*_mult);
-  const filtered=all.filter(s=>!(s.player===player&&s.game==='Tik Tak Tu'));
-  filtered.push({player,game:'Tik Tak Tu',score:newScore,date:new Date().toLocaleDateString('de-DE')});
-  filtered.sort((a,b)=>b.score-a.score);
-  localStorage.setItem('highscores',JSON.stringify(filtered.slice(0,50)));
+  const newScore=(prev.length>0?prev[0].score:0)+1;
+  if(typeof window.autoSaveScore==='function'){
+    window.autoSaveScore('Tik Tak Tu',newScore);
+  }else{
+    const filtered=all.filter(s=>!(s.player===player&&s.game==='Tik Tak Tu'));
+    filtered.push({player,game:'Tik Tak Tu',score:newScore,date:new Date().toLocaleDateString('de-DE')});
+    filtered.sort((a,b)=>b.score-a.score);
+    localStorage.setItem('highscores',JSON.stringify(filtered.slice(0,50)));
+  }
 }catch(e){}
 
 }else{
 
 status.innerHTML=
 "🤖 BOT GEWINNT";
+clearLiveState();
 
 document
 .body

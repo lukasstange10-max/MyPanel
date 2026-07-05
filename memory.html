@@ -263,6 +263,28 @@ z-index:99998;
 </div>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script>
+let rdb=null;
+try{
+  if(typeof firebase!=='undefined'){
+    firebase.initializeApp({
+      apiKey:"AIzaSyDqVPdgGhRx6v__sx7pCe5mOre8XT7xRLg",
+      authDomain:"mypanel-41c90.firebaseapp.com",
+      databaseURL:"https://mypanel-41c90-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId:"mypanel-41c90",
+      storageBucket:"mypanel-41c90.firebasestorage.app",
+      messagingSenderId:"69361490898",
+      appId:"1:69361490898:web:1fcec1264539c8e637060b"
+    });
+    rdb=firebase.apps&&firebase.apps.length?firebase.database():null;
+  }
+}catch(e){rdb=null;}
+
+function getMyName(){
+  try{const p=JSON.parse(localStorage.getItem('mpProfile')||'null');return p?p.username:'SPIELER';}catch(e){return 'SPIELER';}
+}
+</script>
 <script>
 let size=4;
 const emojis=["🍎","🍌","🍇","🍉","🍓","🍍","🥝","🍒","🥑","🍑","🍋","🍊","🍈","🍏","🍐","🍅"];
@@ -303,6 +325,88 @@ function confettiBurst(){
     setTimeout(()=>c.remove(),4200);
   }
 }
+
+/* ===== ZUSCHAUER-MODUS ===== */
+const _urlParams=new URLSearchParams(location.search);
+const spectateName=_urlParams.get('spectate');
+let isSpectator=false;
+
+function startSpectate(name){
+  isSpectator=true;
+  show('game');
+
+  const banner=document.createElement('div');
+  banner.id='spectateBanner';
+  banner.style.cssText='position:fixed;top:16px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.75);border:1px solid #22d3ee;padding:8px 22px;border-radius:20px;font-family:Segoe UI;font-size:12px;font-weight:900;letter-spacing:2px;color:#22d3ee;z-index:9999;box-shadow:0 0 20px rgba(34,211,238,.35);';
+  banner.textContent='👁️ ZUSCHAUER-MODUS · '+name.toUpperCase();
+  document.body.appendChild(banner);
+
+  if(!rdb){banner.textContent='⚠ FIREBASE NICHT VERBUNDEN';banner.style.borderColor='#ff2b6d';banner.style.color='#ff2b6d';return;}
+
+  try{
+    const key=getMyName().replace(/[.#$\/\[\]]/g,'_');
+    const specRef=rdb.ref('liveGames/'+name+'/spectators/'+key);
+    specRef.set(true);
+    specRef.onDisconnect().remove();
+  }catch(e){}
+
+  const ref=rdb.ref('liveGames/'+name);
+  ref.on('value',snap=>{
+    if(!snap.exists()){
+      banner.textContent='⏹ KEIN LIVE-SPIEL GEFUNDEN';
+      banner.style.borderColor='#ff2b6d';banner.style.color='#ff2b6d';
+      return;
+    }
+    const d=snap.val();
+    size=d.size||4;moves=d.moves||0;time=d.time||0;
+    document.getElementById('moves').innerText=moves;
+    document.getElementById('time').innerText=time;
+    renderSpectatorGrid(d.cards||[],d.flippedIdx||[],d.matchedIdx||[]);
+  });
+}
+if(spectateName)startSpectate(spectateName);
+
+function renderSpectatorGrid(cardsArr,flippedIdx,matchedIdx){
+  const grid=document.getElementById('grid');
+  const availW=Math.min(window.innerWidth*0.92,700);
+  const cs=Math.floor(Math.min(80,(availW-(size-1)*10)/size));
+  grid.style.setProperty('--cs',cs+'px');
+  grid.style.gridTemplateColumns=`repeat(${size},${cs}px)`;
+  grid.innerHTML='';
+  cardsArr.forEach((e,i)=>{
+    const card=document.createElement('div');
+    const isUp=flippedIdx.includes(i)||matchedIdx.includes(i);
+    card.className='card'+(isUp?' flip':'')+(matchedIdx.includes(i)?' match':'');
+    card.innerHTML=`<div class="inner"><div class="front">?</div><div class="back">${e}</div></div>`;
+    grid.appendChild(card);
+  });
+}
+
+/* Eigenen Live-Zustand periodisch senden, damit Freunde zuschauen können */
+let lastLiveSync=0;
+function syncLiveState(){
+  if(isSpectator||!rdb)return;
+  const now=Date.now();
+  if(now-lastLiveSync<200)return;
+  lastLiveSync=now;
+  try{
+    const cardEls=[...document.getElementById('grid').children];
+    const flippedIdx=[];
+    const matchedIdx=[];
+    cardEls.forEach((c,i)=>{
+      if(c.classList.contains('match'))matchedIdx.push(i);
+      else if(c.classList.contains('flip'))flippedIdx.push(i);
+    });
+    rdb.ref('liveGames/'+getMyName()).set({
+      size,cards,flippedIdx,matchedIdx,moves,time,ts:now
+    });
+  }catch(e){}
+}
+function clearLiveState(){
+  if(isSpectator||!rdb)return;
+  try{rdb.ref('liveGames/'+getMyName()).remove();}catch(e){}
+}
+window.addEventListener('beforeunload',clearLiveState);
 
 /* DIFF */
 function setDiff(s,btn){
@@ -378,6 +482,7 @@ if(card.classList.contains("flip")||flipped.length===2)return;
 card.classList.add("flip");
 sndFlip();
 flipped.push({card,emoji});
+syncLiveState();
 
 if(flipped.length===2){
 moves++;
@@ -425,6 +530,7 @@ return 1;
 /* WIN */
 function win(){
 clearInterval(timer);
+clearLiveState();
 sndWin();
 confettiBurst();
 

@@ -169,6 +169,28 @@ margin-bottom:20px;
 <button class="btn" onclick="nextLevel()">▶ Nächstes Level</button>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script>
+let rdb=null;
+try{
+  if(typeof firebase!=='undefined'){
+    firebase.initializeApp({
+      apiKey:"AIzaSyDqVPdgGhRx6v__sx7pCe5mOre8XT7xRLg",
+      authDomain:"mypanel-41c90.firebaseapp.com",
+      databaseURL:"https://mypanel-41c90-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId:"mypanel-41c90",
+      storageBucket:"mypanel-41c90.firebasestorage.app",
+      messagingSenderId:"69361490898",
+      appId:"1:69361490898:web:1fcec1264539c8e637060b"
+    });
+    rdb=firebase.apps&&firebase.apps.length?firebase.database():null;
+  }
+}catch(e){rdb=null;}
+
+function getMyName(){
+  try{const p=JSON.parse(localStorage.getItem('mpProfile')||'null');return p?p.username:'SPIELER';}catch(e){return 'SPIELER';}
+}
+</script>
 <script>
 const canvas=document.getElementById("canvas");
 const ctx=canvas.getContext("2d");
@@ -184,6 +206,92 @@ let high=localStorage.getItem("breakoutHigh")||0;
 let running=false;
 
 highEl.innerText=high;
+
+/* ===== ZUSCHAUER-MODUS ===== */
+const _urlParams=new URLSearchParams(location.search);
+const spectateName=_urlParams.get('spectate');
+let isSpectator=false;
+
+function startSpectate(name){
+  isSpectator=true;
+  show("gameScreen");
+
+  const banner=document.createElement('div');
+  banner.id='spectateBanner';
+  banner.style.cssText='position:fixed;top:16px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.75);border:1px solid #6366f1;padding:8px 22px;border-radius:20px;font-family:Segoe UI;font-size:12px;font-weight:900;letter-spacing:2px;color:#a5b4fc;z-index:9999;box-shadow:0 0 20px rgba(99,102,241,.35);';
+  banner.textContent='👁️ ZUSCHAUER-MODUS · '+name.toUpperCase();
+  document.body.appendChild(banner);
+
+  if(!rdb){banner.textContent='⚠ FIREBASE NICHT VERBUNDEN';banner.style.borderColor='#ff2b6d';banner.style.color='#ff2b6d';return;}
+
+  try{
+    const key=getMyName().replace(/[.#$\/\[\]]/g,'_');
+    const specRef=rdb.ref('liveGames/'+name+'/spectators/'+key);
+    specRef.set(true);
+    specRef.onDisconnect().remove();
+  }catch(e){}
+
+  paddle={x:250,y:360,w:100,h:10};
+  balls=[];bricks=[];powerups=[];
+
+  const ref=rdb.ref('liveGames/'+name);
+  ref.on('value',snap=>{
+    if(!snap.exists()){
+      banner.textContent='⏹ KEIN LIVE-SPIEL GEFUNDEN';
+      banner.style.borderColor='#ff2b6d';banner.style.color='#ff2b6d';
+      return;
+    }
+    const d=snap.val();
+    paddle.x=d.paddleX;
+    balls=d.balls||[];
+    bricks=d.bricks||[];
+    powerups=d.powerups||[];
+    score=d.score||0;level=d.level||1;lives=d.lives!=null?d.lives:3;
+    scoreEl.innerText=score;levelEl.innerText=level;
+    livesEl.innerText='❤'.repeat(Math.max(lives,0))+'🖤'.repeat(3-Math.max(lives,0));
+    drawSpectatorFrame();
+  });
+}
+if(spectateName)startSpectate(spectateName);
+
+function drawSpectatorFrame(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle="#6366f1";
+  ctx.fillRect(paddle.x,paddle.y,paddle.w,paddle.h);
+  balls.forEach(ball=>{
+    ctx.beginPath();ctx.arc(ball.x,ball.y,ball.r||8,0,Math.PI*2);
+    ctx.fillStyle="#facc15";ctx.fill();
+  });
+  bricks.forEach(b=>{
+    if(!b||b.hit)return;
+    ctx.fillStyle=b.color||"#22c55e";
+    ctx.fillRect(b.x,b.y,b.w,b.h);
+  });
+  powerups.forEach(p=>drawPowerup(p));
+}
+
+/* Eigenen Live-Zustand periodisch senden, damit Freunde zuschauen können */
+let lastLiveSync=0;
+function syncLiveState(){
+  if(isSpectator||!rdb)return;
+  const now=Date.now();
+  if(now-lastLiveSync<120)return;
+  lastLiveSync=now;
+  try{
+    rdb.ref('liveGames/'+getMyName()).set({
+      paddleX:Math.round(paddle.x),
+      balls:balls.map(b=>({x:Math.round(b.x),y:Math.round(b.y),r:b.r})),
+      bricks:bricks.filter(b=>b&&!b.hit).map(b=>({x:b.x,y:b.y,w:b.w,h:b.h,color:b.color})),
+      powerups:powerups.map(p=>({x:Math.round(p.x),y:Math.round(p.y),w:p.w,h:p.h})),
+      score,level,lives,ts:now
+    });
+  }catch(e){}
+}
+function clearLiveState(){
+  if(isSpectator||!rdb)return;
+  try{rdb.ref('liveGames/'+getMyName()).remove();}catch(e){}
+}
+window.addEventListener('beforeunload',clearLiveState);
 
 /* ===== SOUND ===== */
 let actx=null;
@@ -336,6 +444,8 @@ ctx.restore();
 function loop(){
 if(!running) return;
 
+syncLiveState();
+
 ctx.clearRect(0,0,canvas.width,canvas.height);
 
 /* PADDLE */
@@ -444,6 +554,7 @@ sndLifeLost();
 
 if(lives<=0){
 running=false;
+clearLiveState();
 
 if(score>high){
 high=score;

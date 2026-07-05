@@ -51,17 +51,103 @@ h1{font-family:'Orbitron',sans-serif;font-size:28px;font-weight:900;color:#00e5f
 <div id="keyboard"></div>
 <button id="playAgain" onclick="initGame()">▶ NOCHMAL SPIELEN</button>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script>
+let rdb=null;
+try{
+  if(typeof firebase!=='undefined'){
+    firebase.initializeApp({
+      apiKey:"AIzaSyDqVPdgGhRx6v__sx7pCe5mOre8XT7xRLg",
+      authDomain:"mypanel-41c90.firebaseapp.com",
+      databaseURL:"https://mypanel-41c90-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId:"mypanel-41c90",
+      storageBucket:"mypanel-41c90.firebasestorage.app",
+      messagingSenderId:"69361490898",
+      appId:"1:69361490898:web:1fcec1264539c8e637060b"
+    });
+    rdb=firebase.apps&&firebase.apps.length?firebase.database():null;
+  }
+}catch(e){rdb=null;}
+
+function getMyName(){
+  try{const p=JSON.parse(localStorage.getItem('mpProfile')||'null');return p?p.username:'SPIELER';}catch(e){return 'SPIELER';}
+}
+</script>
 <script>
 const WORDS=['KATZE','HUNDE','BLUME','STERN','GRUEN','WASSER','FEUER','LICHT','DUNKEL','MUSIK','NACHT','MORGEN','VOGEL','TISCH','BODEN','RAUCH','STAHL','CYBER','NEON','WELLE','KRAFT','TRAUM','PFEIL','GLANZ','STURM','FLUSS','BERGE','STEIN','WOLKE','BLITZ','FROST','GLAUB','KREUZ','SCHAF','FISCH','BAUCH','ASCHE','KLANG','PREIS','REICH'];
 const ROWS=6,COLS=5;
 let secret='',guesses=[],current='',gameOver=false,currentRow=0;
 let revealDelay=false;
 
+/* ===== ZUSCHAUER-MODUS ===== */
+const _urlParams=new URLSearchParams(location.search);
+const spectateName=_urlParams.get('spectate');
+let isSpectator=false;
+
+function startSpectate(name){
+  isSpectator=true;
+
+  const banner=document.createElement('div');
+  banner.id='spectateBanner';
+  banner.style.cssText='position:fixed;top:16px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.75);border:1px solid #00e5ff;padding:8px 22px;border-radius:20px;font-family:Orbitron,sans-serif;font-size:11px;letter-spacing:2px;color:#00e5ff;z-index:9999;box-shadow:0 0 20px rgba(0,229,255,.3);';
+  banner.textContent='👁️ ZUSCHAUER-MODUS · '+name.toUpperCase();
+  document.body.appendChild(banner);
+
+  if(!rdb){banner.textContent='⚠ FIREBASE NICHT VERBUNDEN';banner.style.borderColor='#ff2b6d';banner.style.color='#ff2b6d';return;}
+
+  try{
+    const key=getMyName().replace(/[.#$\/\[\]]/g,'_');
+    const specRef=rdb.ref('liveGames/'+name+'/spectators/'+key);
+    specRef.set(true);
+    specRef.onDisconnect().remove();
+  }catch(e){}
+
+  renderBoard();renderKeyboard();
+
+  const ref=rdb.ref('liveGames/'+name);
+  ref.on('value',snap=>{
+    if(!snap.exists()){
+      banner.textContent='⏹ KEIN LIVE-SPIEL GEFUNDEN';
+      banner.style.borderColor='#ff2b6d';banner.style.color='#ff2b6d';
+      return;
+    }
+    const d=snap.val();
+    // Nur die bereits abgeschickten Zeilen anzeigen (kein Zugriff auf das geheime Wort)
+    (d.rows||[]).forEach((row,r)=>{
+      row.result.forEach((res,c)=>{
+        const cell=document.getElementById(`cell-${r}-${c}`);
+        if(cell){cell.textContent=row.guess[c];cell.classList.remove('filled');cell.classList.add(res);}
+      });
+      updateKeyboard(row.guess,row.result);
+    });
+    document.getElementById('message').textContent=d.message||'';
+  });
+}
+if(spectateName)startSpectate(spectateName);
+
+/* Eigenen Live-Zustand senden (nur bereits aufgedeckte Zeilen, kein geheimes Wort) */
+const syncedRows=[];
+function syncRow(guess,result){
+  if(isSpectator||!rdb)return;
+  syncedRows.push({guess,result});
+  try{
+    rdb.ref('liveGames/'+getMyName()).set({
+      rows:syncedRows,message:document.getElementById('message').textContent,ts:Date.now()
+    });
+  }catch(e){}
+}
+function clearLiveState(){
+  if(isSpectator||!rdb)return;
+  try{rdb.ref('liveGames/'+getMyName()).remove();}catch(e){}
+}
+window.addEventListener('beforeunload',clearLiveState);
+
 function initGame(){
   secret=WORDS[Math.floor(Math.random()*WORDS.length)].toUpperCase();
   // ensure 5 letters
   if(secret.length!==5){secret=WORDS[0];}
   guesses=[];current='';gameOver=false;currentRow=0;revealDelay=false;
+  syncedRows.length=0;
   document.getElementById('message').textContent='';
   document.getElementById('playAgain').style.display='none';
   renderBoard();renderKeyboard();
@@ -96,6 +182,7 @@ function revealRow(r,guess,instant){
     const delay=instant?0:c*150;
     setTimeout(()=>{cell.classList.remove('filled');cell.classList.add(res);},delay);
   });
+  syncRow(guess,result);
   if(!instant){
     const totalDelay=COLS*150+200;
     setTimeout(()=>{updateKeyboard(guess,result);},totalDelay);
@@ -176,25 +263,24 @@ function submitGuess(){
       const msgs=['PERFEKT!','BRILLIANT!','AWESOME!','NEON PRO!','GUT GEMACHT!','YESSS!'];
       setMsg(msgs[Math.min(currentRow,msgs.length-1)]);
       gameOver=true;document.getElementById('playAgain').style.display='block';
-      // Auto-save to MyPanel — score = attempts used (fewer attempts = higher score displayed as 7-attempts)
+      clearLiveState();
+      // An MyPanel-Highscoresystem übergeben (nutzt automatisch den XP-Multiplikator + Notification)
       try{
-        const profRaw=localStorage.getItem('mpProfile');
-        const prof=profRaw?JSON.parse(profRaw):null;
-        const player=(prof?prof.username:localStorage.getItem('username')||'MYPANEL USER').toUpperCase();
-        const _mult=parseFloat(localStorage.getItem('mpXpMultiplier')||'1');
-        const all=JSON.parse(localStorage.getItem('highscores')||'[]');
+        const prev=JSON.parse(localStorage.getItem('highscores')||'[]');
+        const pr=JSON.parse(localStorage.getItem('mpProfile')||'null');
+        const pn=(pr?pr.username:'MYPANEL USER').toUpperCase();
+        const prevBest=prev.filter(s=>s.player===pn&&s.game==='Wordle').sort((a,b)=>b.score-a.score);
         // Score: each win adds points, fewer guesses = more points (max 600 for 1 guess, min 100 for 6 guesses)
         const pts=(ROWS-currentRow)*100+100;
-        const prev=all.filter(s=>s.player===player&&s.game==='Wordle').sort((a,b)=>b.score-a.score);
-        const newScore=(prev.length>0?prev[0].score:0)+pts;
-        const filtered=all.filter(s=>!(s.player===player&&s.game==='Wordle'));
-        filtered.push({player,game:'Wordle',score:newScore,date:new Date().toLocaleDateString('de-DE')});
-        filtered.sort((a,b)=>b.score-a.score);
-        localStorage.setItem('highscores',JSON.stringify(filtered.slice(0,50)));
+        const newScore=(prevBest.length>0?prevBest[0].score:0)+pts;
+        if(typeof window.autoSaveScore==='function'){
+          window.autoSaveScore('Wordle',newScore);
+        }
       }catch(e){}
     } else if(guesses.length>=ROWS){
       setMsg('// '+secret+' //');
       gameOver=true;document.getElementById('playAgain').style.display='block';
+      clearLiveState();
     }
     currentRow++;current='';
   },totalDelay);

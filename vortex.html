@@ -84,6 +84,28 @@
   </div>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script>
+let rdb=null;
+try{
+  if(typeof firebase!=='undefined'){
+    firebase.initializeApp({
+      apiKey:"AIzaSyDqVPdgGhRx6v__sx7pCe5mOre8XT7xRLg",
+      authDomain:"mypanel-41c90.firebaseapp.com",
+      databaseURL:"https://mypanel-41c90-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId:"mypanel-41c90",
+      storageBucket:"mypanel-41c90.firebasestorage.app",
+      messagingSenderId:"69361490898",
+      appId:"1:69361490898:web:1fcec1264539c8e637060b"
+    });
+    rdb=firebase.apps&&firebase.apps.length?firebase.database():null;
+  }
+}catch(e){rdb=null;}
+
+function getMyName(){
+  try{const p=JSON.parse(localStorage.getItem('mpProfile')||'null');return p?p.username:'SPIELER';}catch(e){return 'SPIELER';}
+}
+</script>
 <script>
 /* ============================================================
    NEON VORTEX — minimalist high-juice reflex dodger
@@ -113,6 +135,81 @@ document.getElementById('bestVal').textContent=best;
 
 let state='menu'; // menu | playing | dead
 let playerAngle=-Math.PI/2;
+
+/* ===== ZUSCHAUER-MODUS ===== */
+const _urlParams=new URLSearchParams(location.search);
+const spectateName=_urlParams.get('spectate');
+let isSpectator=false;
+
+function startSpectate(name){
+  isSpectator=true;
+  document.getElementById('startPanel').classList.add('hidden');
+  document.getElementById('overPanel').classList.add('hidden');
+  document.getElementById('progWrap').classList.remove('hidden');
+
+  const banner=document.createElement('div');
+  banner.id='spectateBanner';
+  banner.style.cssText='position:fixed;top:16px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.75);border:1px solid #00e5ff;padding:8px 22px;border-radius:20px;font-family:Arial,sans-serif;font-size:12px;font-weight:900;letter-spacing:2px;color:#00e5ff;z-index:9999;box-shadow:0 0 20px rgba(0,229,255,.3);';
+  banner.textContent='👁️ ZUSCHAUER-MODUS · '+name.toUpperCase();
+  document.body.appendChild(banner);
+
+  if(!rdb){banner.textContent='⚠ FIREBASE NICHT VERBUNDEN';banner.style.borderColor='#ff2b6d';banner.style.color='#ff2b6d';return;}
+
+  try{
+    const key=getMyName().replace(/[.#$\/\[\]]/g,'_');
+    const specRef=rdb.ref('liveGames/'+name+'/spectators/'+key);
+    specRef.set(true);
+    specRef.onDisconnect().remove();
+  }catch(e){}
+
+  const ref=rdb.ref('liveGames/'+name);
+  ref.on('value',snap=>{
+    if(!snap.exists()){
+      banner.textContent='⏹ KEIN LIVE-SPIEL GEFUNDEN';
+      banner.style.borderColor='#ff2b6d';banner.style.color='#ff2b6d';
+      return;
+    }
+    const d=snap.val();
+    playerAngle=d.playerAngle||-Math.PI/2;
+    walls=d.walls||[];
+    score=d.score||0;combo=d.combo||1;hue=d.hue||190;
+    updateHud();
+  });
+
+  state='playing';
+  requestAnimationFrame(spectatorLoop);
+}
+if(spectateName)startSpectate(spectateName);
+
+let lastSpecT=performance.now();
+function spectatorLoop(t){
+  if(!isSpectator)return;
+  const dt=Math.min((t-lastSpecT)/1000,0.034);
+  lastSpecT=t;
+  render(dt);
+  requestAnimationFrame(spectatorLoop);
+}
+
+/* Eigenen Live-Zustand periodisch senden, damit Freunde zuschauen können */
+let lastLiveSync=0;
+function syncLiveState(){
+  if(isSpectator||!rdb)return;
+  const now=Date.now();
+  if(now-lastLiveSync<100)return;
+  lastLiveSync=now;
+  try{
+    rdb.ref('liveGames/'+getMyName()).set({
+      playerAngle,
+      walls:walls.map(w=>({angle:w.angle,gapAngle:w.gapAngle,gapWidth:w.gapWidth,radius:w.radius,color:w.color})),
+      score:Math.floor(score),combo,hue,ts:now
+    });
+  }catch(e){}
+}
+function clearLiveState(){
+  if(isSpectator||!rdb)return;
+  try{rdb.ref('liveGames/'+getMyName()).remove();}catch(e){}
+}
+window.addEventListener('beforeunload',clearLiveState);
 let playerVel=0;
 let playerRadius=64;
 let pulsePhase=0;
@@ -221,23 +318,15 @@ function startGame(){
 
 function die(){
   state='dead';
+  clearLiveState();
   burst(cx+Math.cos(playerAngle)*playerRadius,cy+Math.sin(playerAngle)*playerRadius,'#ff2b6d',46,260);
   shakeMag=18;
   const finalScore=Math.floor(score);
 
-  // Auto-save to shared MyPanel highscores — only if new personal best
+  // An MyPanel-Highscoresystem übergeben (nutzt automatisch den XP-Multiplikator + Notification)
   try{
-    const profRaw=localStorage.getItem('mpProfile');
-    const prof=profRaw?JSON.parse(profRaw):null;
-    const player=(prof?prof.username:localStorage.getItem('username')||'MYPANEL USER').toUpperCase();
-    const all=JSON.parse(localStorage.getItem('highscores')||'[]');
-    const prevBest=all.filter(s=>s.player===player&&s.game==='Neon Vortex').sort((a,b)=>b.score-a.score);
-    if(prevBest.length===0||finalScore>prevBest[0].score){
-      const filtered=all.filter(s=>!(s.player===player&&s.game==='Neon Vortex'));
-      const _mult=parseFloat(localStorage.getItem('mpXpMultiplier')||'1');
-      filtered.push({player,game:'Neon Vortex',score:Math.floor(finalScore*_mult),date:new Date().toLocaleDateString('de-DE')});
-      filtered.sort((a,b)=>b.score-a.score);
-      localStorage.setItem('highscores',JSON.stringify(filtered.slice(0,50)));
+    if(typeof window.autoSaveScore==='function'){
+      window.autoSaveScore('Neon Vortex',finalScore);
     }
   }catch(e){}
 
@@ -285,6 +374,7 @@ function loop(t){
 requestAnimationFrame(loop);
 
 function update(dt){
+  syncLiveState();
   pulsePhase+=dt;
   hue+=dt*14;if(hue>360)hue-=360;
   if(comboShowTimer>0){

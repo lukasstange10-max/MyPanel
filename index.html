@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MyPanel — Gaming Hub</title>
-<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Orbitron:wght@700;900&family=Share+Tech+Mono&family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
 
 /* ===== THEMES ===== */
@@ -225,6 +225,136 @@ footer{border-top:1px solid var(--dim);padding:26px 60px;display:flex;align-item
 [data-theme="red"]{--c:#ff2020;--g:#ff6600;--bg:#0a0404;--sf:#120505;--panel:#180707;--card:#1e0909;--dim:rgba(255,32,32,.18);--grid:rgba(255,32,32,.06);--tm:#ffe0e0;--mu:#a04040;--di:#502020;}
 
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Rajdhani',sans-serif;scroll-behavior:smooth;}
+
+/* ===== DESIGN SWITCHER (3 komplette Look-Varianten, unabhängig vom Akzentfarben-System oben) ===== */
+.design-btn{
+background:rgba(255,255,255,.06);
+border:1px solid var(--c);
+color:var(--c);
+padding:8px 16px;
+border-radius:8px;
+font-family:'Rajdhani',sans-serif;
+font-weight:700;
+font-size:13px;
+letter-spacing:1px;
+cursor:pointer;
+transition:.2s;
+}
+.design-btn:hover{background:var(--c);color:#000;}
+
+.design-overlay{
+position:fixed;inset:0;z-index:9000;
+background:rgba(0,0,0,.75);
+backdrop-filter:blur(6px);
+display:flex;align-items:center;justify-content:center;
+}
+.design-overlay.hidden{display:none;}
+
+.design-modal{
+background:var(--sf,#080f14);
+border:1px solid var(--c);
+border-radius:20px;
+padding:30px;
+max-width:640px;
+width:92vw;
+box-shadow:0 0 60px var(--dim);
+}
+.design-modal-title{font-family:'Orbitron',sans-serif;font-size:22px;color:var(--c);margin-bottom:4px;}
+.design-modal-sub{font-size:13px;color:var(--mu,#5a8fa8);margin-bottom:20px;}
+
+.design-grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(130px,1fr));
+gap:14px;
+}
+.design-card{
+background:rgba(255,255,255,.04);
+border:1px solid rgba(255,255,255,.1);
+border-radius:14px;
+padding:14px 10px;
+text-align:center;
+cursor:pointer;
+transition:.2s;
+}
+.design-card:hover{border-color:var(--c);transform:translateY(-3px);}
+.design-card.active{border-color:var(--c);background:var(--dim);}
+
+.design-swatch{
+width:100%;height:60px;border-radius:10px;margin-bottom:10px;
+}
+.swatch-cyberpunk{background:linear-gradient(135deg,#030608,#00e5ff 140%);}
+.swatch-synthwave{background:linear-gradient(180deg,#2b0a4e,#ff6ec7 60%,#ffb85c);}
+.swatch-pixel{background:repeating-linear-gradient(0deg,#0a0a1e,#0a0a1e 4px,#141432 4px,#141432 8px);border:2px solid #ffd400;}
+.swatch-luxury{background:linear-gradient(135deg,#050505,#1a1a1a 60%,#d4af37);}
+
+.design-name{font-weight:700;font-size:13px;letter-spacing:.5px;color:var(--tm,#e0f7ff);}
+.design-desc{font-size:11px;color:var(--mu,#5a8fa8);margin-top:2px;}
+
+.design-close{
+margin-top:20px;
+width:100%;
+background:transparent;
+border:1px solid rgba(255,255,255,.15);
+color:var(--tm,#e0f7ff);
+padding:10px;
+border-radius:10px;
+cursor:pointer;
+font-family:'Rajdhani',sans-serif;
+font-weight:700;
+letter-spacing:1px;
+}
+.design-close:hover{border-color:var(--c);}
+
+/* ---------- SYNTHWAVE SUNSET ---------- */
+html[data-design="synthwave"]{
+--c:#ff6ec7;--g:#ffb85c;--pk:#f72585;--p:#7b2ff7;
+--bg:#150826;--sf:#1e0a35;--panel:#26103f;--card:#2c1249;
+--surface:#1e0a35;
+--dim:rgba(255,110,199,.18);--grid:rgba(255,110,199,.08);
+--tm:#ffe3f3;--text:#ffe3f3;--mu:#c88fd8;--muted:rgba(255,227,243,.55);--di:#5a2a70;--dimtext:rgba(255,227,243,.2);
+}
+html[data-design="synthwave"] body{
+background:linear-gradient(180deg,#150826 0%,#3a1256 45%,#7b1e5e 75%,#ff6ec7 100%);
+}
+html[data-design="synthwave"] body::before{
+background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+opacity:.7;
+}
+
+/* ---------- RETRO ARCADE / PIXEL ---------- */
+html[data-design="pixel"]{
+--c:#ffd400;--g:#00ff66;--pk:#ff004d;--p:#00aaff;
+--bg:#08080f;--sf:#0d0d18;--panel:#111120;--card:#151528;
+--surface:#0d0d18;
+--dim:rgba(255,212,0,.18);--grid:rgba(255,212,0,.1);
+--tm:#f0f0ff;--text:#f0f0ff;--mu:#8888aa;--muted:rgba(240,240,255,.55);--di:#33334a;--dimtext:rgba(240,240,255,.2);
+}
+html[data-design="pixel"] .nav-logo,
+html[data-design="pixel"] h1,html[data-design="pixel"] h2,html[data-design="pixel"] h3,
+html[data-design="pixel"] .ctitle,html[data-design="pixel"] .design-modal-title{
+font-family:'Press Start 2P',monospace!important;
+letter-spacing:0!important;
+}
+html[data-design="pixel"] .card,html[data-design="pixel"] .design-card,
+html[data-design="pixel"] .design-modal,html[data-design="pixel"] button{
+border-radius:2px!important;
+}
+html[data-design="pixel"] body::after{
+content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;
+background:repeating-linear-gradient(0deg,rgba(0,0,0,.18) 0px,rgba(0,0,0,.18) 1px,transparent 1px,transparent 3px);
+}
+
+/* ---------- BLACK & GOLD LUXURY ---------- */
+html[data-design="luxury"]{
+--c:#d4af37;--g:#f5cf6b;--pk:#d4af37;--p:#b8860b;
+--bg:#040404;--sf:#0a0a0a;--panel:#0d0d0d;--card:#111111;
+--surface:#0a0a0a;
+--dim:rgba(212,175,55,.14);--grid:rgba(212,175,55,.04);
+--tm:#f2e6c9;--text:#f2e6c9;--mu:#9a8a5c;--muted:rgba(242,230,201,.5);--di:#2a2412;--dimtext:rgba(242,230,201,.18);
+}
+html[data-design="luxury"] .card,html[data-design="luxury"] .design-card{
+box-shadow:none!important;
+}
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--c);border-radius:4px}
 #page-panel{overflow:hidden;height:100vh;}
 body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:60px 60px;z-index:-30;pointer-events:none;}
@@ -736,6 +866,7 @@ body.disco-mode .nav-logo,body.disco-mode .ctitle,body.disco-mode #username{anim
     <div class="tdot" data-t="pink" onclick="setTheme('pink')"></div>
     <div class="tdot" data-t="gold" onclick="setTheme('gold')"></div>
     <div class="tdot" data-t="red" onclick="setTheme('red')"></div>
+    <button class="design-btn" onclick="toggleDesignMenu()" title="Design wählen">🎨 Design</button>
     <a href="javascript:void(0)" onclick="openPanel()" class="nav-cta">▶ PANEL ÖFFNEN</a>
   </div>
 </nav>
@@ -755,7 +886,7 @@ body.disco-mode .nav-logo,body.disco-mode .ctitle,body.disco-mode #username{anim
     <span class="l2">GAMING</span>
     <span class="l3">HUB</span>
   </h1>
-  <p class="hero-sub">13 Spiele · Echtzeit-Multiplayer · Globale Highscores · Clans · Chat</p>
+  <p class="hero-sub">14 Spiele · Echtzeit-Multiplayer · Globale Highscores · Clans · Chat</p>
   <div class="hero-btns">
     <a href="javascript:void(0)" onclick="openPanel()" class="btn-primary">
       <span class="btn-glow"></span>▶ JETZT SPIELEN
@@ -767,7 +898,7 @@ body.disco-mode .nav-logo,body.disco-mode .ctitle,body.disco-mode #username{anim
   <div class="live-bar">
     <div class="live-item"><span class="live-dot"></span>SYSTEM ONLINE</div>
     <div class="live-sep">·</div>
-    <div class="live-item">🎮 13 SPIELE</div>
+    <div class="live-item">🎮 14 SPIELE</div>
     <div class="live-sep">·</div>
     <div class="live-item">🏆 GLOBALE RANGLISTE</div>
     <div class="live-sep">·</div>
@@ -786,7 +917,7 @@ body.disco-mode .nav-logo,body.disco-mode .ctitle,body.disco-mode #username{anim
 <div class="stats-wrap">
   <div class="stats-inner">
     <div class="stat reveal">
-      <div class="stat-num" data-target="12">0</div>
+      <div class="stat-num" data-target="14">0</div>
       <div class="stat-label">SPIELE</div>
     </div>
     <div class="stat reveal">
@@ -830,7 +961,7 @@ body.disco-mode .nav-logo,body.disco-mode .ctitle,body.disco-mode #username{anim
         </div>
       </div>
       <div class="mock-stats-row">
-        <div class="mock-stat"><div class="mstat-num" style="color:var(--c)">13</div><div class="mstat-label">SPIELE</div></div>
+        <div class="mock-stat"><div class="mstat-num" style="color:var(--c)">14</div><div class="mstat-label">SPIELE</div></div>
         <div class="mock-stat"><div class="mstat-num" style="color:var(--g)">247</div><div class="mstat-label">HIGHSCORES</div></div>
         <div class="mock-stat"><div class="mstat-num" style="color:var(--pk,#ff0080)">3</div><div class="mstat-label">FREUNDE</div></div>
         <div class="mock-stat"><div class="mstat-num" style="color:#ffd23f">1</div><div class="mstat-label">ONLINE</div></div>
@@ -850,7 +981,7 @@ body.disco-mode .nav-logo,body.disco-mode .ctitle,body.disco-mode #username{anim
 <!-- GAMES -->
 <div class="section" id="games">
   <div class="stag">// SPIELEBIBLIOTHEK</div>
-  <div class="stitle">12 <span>SPIELE</span> BEREIT</div>
+  <div class="stitle">14 <span>SPIELE</span> BEREIT</div>
   <div class="games-grid">
 
     <div class="gcard reveal">
@@ -935,6 +1066,16 @@ body.disco-mode .nav-logo,body.disco-mode .ctitle,body.disco-mode #username{anim
     </div>
 
     <div class="gcard reveal">
+      <div class="gprev" style="background:radial-gradient(circle,#001005,#000)">
+        <div style="position:absolute;width:74%;height:50%;border:3px solid rgba(0,229,255,.5);border-bottom:none;border-radius:4px 4px 0 0;top:14%;"></div>
+        <div style="position:absolute;font-size:30px;bottom:20%;">⚽</div>
+        <div style="position:absolute;font-size:22px;top:20%;">🏆</div>
+      </div>
+      <div class="govl"><a href="penalty.html" class="gplaybtn">▶ SPIELEN</a></div>
+      <div class="ginfo"><div class="gtag">SPORT</div><div class="gname">WM 2026 PENALTY</div><div class="gdesc">Elfmeterschießen mit echten WM-2026-Gruppen — schieß und halte selbst.</div></div>
+    </div>
+
+    <div class="gcard reveal">
       <div class="gprev" style="background:radial-gradient(circle,#080010,#000)">
         <div style="position:absolute;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;width:70%;">
           <div style="aspect-ratio:1;border:2px solid rgba(0,229,255,.3);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:18px;">✕</div>
@@ -950,6 +1091,19 @@ body.disco-mode .nav-logo,body.disco-mode .ctitle,body.disco-mode #username{anim
       </div>
       <div class="govl"><a href="tiktaktu.html" class="gplaybtn">▶ SPIELEN</a></div>
       <div class="ginfo"><div class="gtag">STRATEGIE</div><div class="gname">TIK TAK TU</div><div class="gdesc">Spiele gegen den unbesiegbaren Bot — kannst du ihn schlagen?</div></div>
+    </div>
+
+    <div class="gcard reveal">
+      <div class="gprev" style="background:radial-gradient(circle,#001410,#000)">
+        <div style="position:absolute;display:flex;gap:6px;align-items:center;">
+          <div style="width:34px;height:34px;border:2px solid #22c55e;border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;font-weight:900;color:#22c55e;font-size:14px;">4</div>
+          <div style="width:34px;height:34px;border:2px solid #eab308;border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;font-weight:900;color:#eab308;font-size:14px;">6</div>
+          <div style="width:34px;height:34px;border:2px solid #ef4444;border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;font-weight:900;color:#ef4444;font-size:14px;">9</div>
+          <div style="width:16px;height:16px;border-radius:50%;background:#00e5ff;box-shadow:0 0 10px #00e5ff;"></div>
+        </div>
+      </div>
+      <div class="govl"><a href="neon_bounce.html" class="gplaybtn">▶ SPIELEN</a></div>
+      <div class="ginfo"><div class="gtag">ARCADE</div><div class="gname">NEON BOUNCE</div><div class="gdesc">Ziel, schieß, zerstöre die Zahlen-Kästchen — bevor sie die Linie erreichen</div></div>
     </div>
 
     <div class="gcard reveal" style="border-color:rgba(255,210,63,.2);background:rgba(255,210,63,.02);">
@@ -969,7 +1123,7 @@ body.disco-mode .nav-logo,body.disco-mode .ctitle,body.disco-mode #username{anim
   <div class="stitle">WAS <span>DRIN STECKT</span></div>
   <div class="feats">
     <div class="feat reveal"><span class="ficon">⚡</span><div class="ftitle">KEIN DOWNLOAD</div><div class="fdesc">Alles direkt im Browser. Kein Server, kein Setup — einfach öffnen und spielen.</div></div>
-    <div class="feat reveal"><span class="ficon">🎮</span><div class="ftitle">12 SPIELE</div><div class="fdesc">Snake, Memory, Geometry Dash, Space Shooter, Breakout, Zombie, Flappy, Racing, Wordle, Vortex, Pong & mehr.</div></div>
+    <div class="feat reveal"><span class="ficon">🎮</span><div class="ftitle">14 SPIELE</div><div class="fdesc">Snake, Memory, Geometry Dash, Space Shooter, Breakout, Zombie, Flappy, Racing, Wordle, Vortex, Pong, WM Penalty, Neon Bounce & mehr.</div></div>
     <div class="feat reveal"><span class="ficon">🏓</span><div class="ftitle">MULTIPLAYER</div><div class="fdesc">Echtzeit 1v1 Pong — Raum erstellen, Freund einladen, sofort losspielen.</div></div>
     <div class="feat reveal"><span class="ficon">🌐</span><div class="ftitle">GLOBALE RANGLISTE</div><div class="fdesc">Firebase-powered Highscores — alle Spieler, ein Leaderboard, Echtzeit-Updates.</div></div>
     <div class="feat reveal"><span class="ficon">👥</span><div class="ftitle">SOCIAL SYSTEM</div><div class="fdesc">Freunde hinzufügen, Clans gründen, chatten — direkt im Panel.</div></div>
@@ -1082,11 +1236,13 @@ body.disco-mode .nav-logo,body.disco-mode .ctitle,body.disco-mode #username{anim
       <button class="mbtn" onclick="showSection('games')"><span class="bico">◈</span>SPIELE</button>
       <button class="mbtn" onclick="showSection('highscores')"><span class="bico">🏆</span>HIGHSCORES</button>
       <button class="mbtn" onclick="showSection('friends')"><span class="bico">🌐</span>FREUNDE<span id="friendBadge" style="display:none;background:#ff2b6d;color:#fff;font-family:'Orbitron',sans-serif;font-size:9px;font-weight:900;padding:2px 6px;border-radius:10px;margin-left:6px;"></span></button>
+      <button class="mbtn" onclick="showSection('arena')"><span class="bico">🏟️</span>LIVE-ARENA</button>
       <button class="mbtn" onclick="showSection('clans')"><span class="bico">⚔️</span>CLANS</button>
       <button class="mbtn" onclick="showSection('favorites')"><span class="bico">◆</span>FAVORITEN</button>
       <button class="mbtn" onclick="showSection('news')"><span class="bico">◉</span>NEWS</button>
       <button class="mbtn" onclick="showSection('trailer')"><span class="bico">🎬</span>TRAILER</button>
       <button class="mbtn" onclick="openModal('updateModal')"><span class="bico">▲</span>UPDATES</button>
+      <button class="mbtn" onclick="toggleDesignMenu()"><span class="bico">🎨</span>DESIGN</button>
       <button class="mbtn admin-btn" id="adminBtn" onclick="showSection('admin')" style="display:none"><span class="bico">🔐</span>ADMIN</button>
     </div>
     <div class="mdivider"></div>
@@ -1156,7 +1312,7 @@ body.disco-mode .nav-logo,body.disco-mode .ctitle,body.disco-mode #username{anim
       </div>
 
       <div class="stat-row">
-        <div class="stat-pill"><div class="sp-num" id="stat-games">13</div><div class="sp-label">SPIELE</div></div>
+        <div class="stat-pill"><div class="sp-num" id="stat-games">14</div><div class="sp-label">SPIELE</div></div>
         <div class="stat-pill"><div class="sp-num" id="stat-hs">0</div><div class="sp-label">HIGHSCORES</div></div>
         <div class="stat-pill"><div class="sp-num" id="stat-favs">0</div><div class="sp-label">FAVORITEN</div></div>
         <div class="stat-pill"><div class="sp-num" id="stat-online">0</div><div class="sp-label">FREUNDE ONLINE</div></div>
@@ -1259,6 +1415,14 @@ body.disco-mode .nav-logo,body.disco-mode .ctitle,body.disco-mode #username{anim
           <input id="chatInput" class="minput" placeholder="NACHRICHT..." maxlength="200" style="flex:1;">
           <button onclick="sendChatMsg()" style="padding:10px 18px;border:1px solid rgba(0,229,255,.4);border-radius:3px;background:rgba(0,229,255,.08);color:var(--c);font-family:'Orbitron',sans-serif;font-size:11px;cursor:pointer;">▶</button>
         </div>
+      </div>
+    </div>
+
+    <!-- LIVE ARENA -->
+    <div id="sec-arena" style="display:none">
+      <div class="card">
+        <div class="ctitle"><span>🏟️</span> LIVE ARENA <span style="color:var(--mu);font-size:11px;font-family:'Share Tech Mono',monospace;">— wer ist online, was wird gerade gespielt</span></div>
+        <div id="arenaGrid"></div>
       </div>
     </div>
 
@@ -1414,7 +1578,8 @@ body.disco-mode .nav-logo,body.disco-mode .ctitle,body.disco-mode #username{anim
     <div id="sec-news" style="display:none;">
       <div class="card">
         <div class="ctitle"><span>◉</span> NEWS & UPDATES</div>
-        <div class="newsitem"><span>🔊 Taco- & La-Cucaracha-Musik gefixt (neue funktionierende Video-Links)</span><span class="news-tag">FIX</span></div>
+        <div class="newsitem"><span>🔮 Neues Spiel: NEON BOUNCE ist da!</span><span class="news-tag">NEU</span></div>
+        <div class="newsitem"><span>🔊 Disco, Taco & La Cucaracha: komplett neue Musik ohne YouTube — läuft jetzt überall zuverlässig</span><span class="news-tag">FIX</span></div>
         <div class="newsitem"><span>🧟 Zombie Survival: Touch-Steuerung, Shop-Bugs gefixt, steigende Schwierigkeit</span><span class="news-tag">UPDATE</span></div>
         <div class="newsitem"><span>🐍 Snake: neues Neon-Design, Wand-Wrap-Modus, Gold-Powerup, Tempo live wechselbar</span><span class="news-tag">UPDATE</span></div>
         <div class="newsitem"><span>🧠 Memory: getrennte Bestenlisten pro Schwierigkeit, Sterne-Wertung, Konfetti</span><span class="news-tag">UPDATE</span></div>
@@ -1534,6 +1699,22 @@ function setTheme(t){
 }
 (()=>setTheme(localStorage.getItem("theme")||"cyan"))();
 
+/* ===== DESIGN SWITCHER (3 komplette Look-Varianten) ===== */
+function setDesign(d){
+  document.documentElement.setAttribute("data-design",d);
+  localStorage.setItem("mpDesign",d);
+  document.querySelectorAll(".design-card").forEach(c=>c.classList.toggle("active",c.getAttribute("data-d")===d));
+}
+function toggleDesignMenu(){
+  const el=document.getElementById("designOverlay");
+  el.classList.toggle("hidden");
+  if(!el.classList.contains("hidden")){
+    const current=document.documentElement.getAttribute("data-design")||"cyberpunk";
+    document.querySelectorAll(".design-card").forEach(c=>c.classList.toggle("active",c.getAttribute("data-d")===current));
+  }
+}
+(()=>setDesign(localStorage.getItem("mpDesign")||"cyberpunk"))();
+
 /* ===== 3D CARD TILT ===== */
 document.querySelectorAll('.gcard').forEach(card=>{
   let ticking=false,tx=0,ty=0;
@@ -1623,6 +1804,7 @@ const GAMES = [
   {id:'pong',name:'NEON PONG',icon:'🏓',desc:'1v1 Online Multiplayer',file:'pong.html'},
   {id:'tiktaktu',name:'TIK TAK TU',icon:'🤖',desc:'Spiel gegen den Bot',file:'tiktaktu.html'},
   {id:'penaltykick',name:'WM 2026 PENALTY',icon:'🏆',desc:'WM Elfmeter Turnier',file:'penalty.html'},
+  {id:'neonbounce',name:'NEON BOUNCE',icon:'🔮',desc:'Ziel, schieß, zerstöre die Zahlen',file:'neon_bounce.html'},
 ];
 
 const FRIENDS = [
@@ -1654,6 +1836,7 @@ function showSection(name){
   event.currentTarget.classList.add('active');
   if(name==='highscores'){renderHsTable('all');renderPlayerOfMonth();loadComments();}
   if(name==='clans')loadClans();
+  if(name==='arena')renderArena();
   if(name==='friends'){
     // Generate invite link immediately
     const me=getMyName();
@@ -1697,10 +1880,25 @@ renderQuickGames();renderAllGames();
 function playGame(file){
   document.getElementById('gameOverlay').style.display='flex';
   document.getElementById('gameFrame').src=file;
+
+  // Aktuell gespieltes Spiel in der Presence tracken (für die Live-Arena)
+  try{
+    const me=getMyName();
+    const g=GAMES.find(x=>x.file===file);
+    if(window.fbDB&&me){
+      window.fbDB.ref('presence/'+me).update({currentGame:g?g.name:file,currentGameIcon:g?g.icon:'🎮',gameStarted:Date.now()});
+    }
+  }catch(e){}
 }
 function closeGame(){
   document.getElementById('gameOverlay').style.display='none';
   document.getElementById('gameFrame').src='';
+  try{
+    const me=getMyName();
+    if(window.fbDB&&me){
+      window.fbDB.ref('presence/'+me).update({currentGame:null,currentGameIcon:null});
+    }
+  }catch(e){}
 }
 
 /* ===== FAVORITES ===== */
@@ -1943,32 +2141,52 @@ function sendFriendRequest(){
   const me=getMyName();
   if(!target||target===me){showNotif('⚠ UNGÜLTIGER NAME');return;}
   if(!window.fbDB){showNotif('⚠ FIREBASE NICHT VERBUNDEN');return;}
-  window.fbDB.ref('friendRequests/'+target+'/'+me).set({
-    from:me,to:target,status:'pending',ts:Date.now()
-  }).then(()=>{showNotif('📨 ANFRAGE AN '+target+' GESENDET!');inp.value='';})
-  .catch(()=>showNotif('⚠ FEHLER BEIM SENDEN'));
+
+  // Erst prüfen, ob ihr schon befreundet seid — verhindert doppelte Anfragen/Einträge
+  window.fbDB.ref('friends/'+me+'/'+target).once('value',snap=>{
+    if(snap.exists()){
+      showNotif('ℹ️ IHR SEID BEREITS BEFREUNDET!');
+      return;
+    }
+    window.fbDB.ref('friendRequests/'+target+'/'+me).set({
+      from:me,to:target,status:'pending',ts:Date.now()
+    }).then(()=>{showNotif('📨 ANFRAGE AN '+target+' GESENDET!');inp.value='';})
+    .catch(()=>showNotif('⚠ FEHLER BEIM SENDEN'));
+  });
 }
 
 function acceptInvite(from){
   const me=getMyName();
   if(!window.fbDB)return;
-  const key=getFriendKey(me,from);
-  window.fbDB.ref('friends/'+me+'/'+from).set({name:from,since:Date.now()});
-  window.fbDB.ref('friends/'+from+'/'+me).set({name:me,since:Date.now()});
-  window.fbDB.ref('friendRequests/'+me+'/'+from).remove();
-  showNotif('✅ '+from+' ALS FREUND HINZUGEFÜGT!');
+  window.fbDB.ref('friends/'+me+'/'+from).once('value',snap=>{
+    if(snap.exists()){
+      showNotif('ℹ️ IHR SEID BEREITS BEFREUNDET!');
+    }else{
+      window.fbDB.ref('friends/'+me+'/'+from).set({name:from,since:Date.now()});
+      window.fbDB.ref('friends/'+from+'/'+me).set({name:me,since:Date.now()});
+      showNotif('✅ '+from+' ALS FREUND HINZUGEFÜGT!');
+    }
+    window.fbDB.ref('friendRequests/'+me+'/'+from).remove();
+  });
 }
 
 function respondFriendRequest(from,action){
   const me=getMyName();
   if(!window.fbDB)return;
   if(action==='accept'){
-    window.fbDB.ref('friends/'+me+'/'+from).set({name:from,since:Date.now()});
-    window.fbDB.ref('friends/'+from+'/'+me).set({name:me,since:Date.now()});
-    showNotif('✅ '+from+' ALS FREUND HINZUGEFÜGT!');
-  } else {
-    showNotif('✕ ANFRAGE VON '+from+' ABGELEHNT');
+    window.fbDB.ref('friends/'+me+'/'+from).once('value',snap=>{
+      if(snap.exists()){
+        showNotif('ℹ️ IHR SEID BEREITS BEFREUNDET!');
+      }else{
+        window.fbDB.ref('friends/'+me+'/'+from).set({name:from,since:Date.now()});
+        window.fbDB.ref('friends/'+from+'/'+me).set({name:me,since:Date.now()});
+        showNotif('✅ '+from+' ALS FREUND HINZUGEFÜGT!');
+      }
+      window.fbDB.ref('friendRequests/'+me+'/'+from).remove();
+    });
+    return;
   }
+  showNotif('✕ ANFRAGE VON '+from+' ABGELEHNT');
   window.fbDB.ref('friendRequests/'+me+'/'+from).remove();
 }
 
@@ -2021,6 +2239,85 @@ function sendChatMsg(){
   const chatKey=getFriendKey(me,activeChatFriend);
   window.fbDB.ref('chats/'+chatKey).push({from:me,text,ts:Date.now()});
   inp.value='';
+}
+
+/* ===== LIVE ARENA ===== */
+function renderArena(){
+  const g=document.getElementById('arenaGrid');
+  if(!g)return;
+  const me=getMyName();
+  if(!window.fbDB){
+    g.innerHTML='<div style="color:var(--mu);font-size:12px;letter-spacing:2px;padding:16px;font-family:Share Tech Mono,monospace;">FIREBASE NICHT VERBUNDEN</div>';
+    return;
+  }
+  window.fbDB.ref('friends/'+me).once('value',snap=>{
+    const friendsObj=snap.val()||{};
+    const names=Object.keys(friendsObj);
+    if(!names.length){
+      g.innerHTML='<div style="color:var(--mu);font-size:12px;letter-spacing:2px;padding:16px;font-family:Share Tech Mono,monospace;">FÜGE FREUNDE HINZU, UM ZU SEHEN WER GERADE SPIELT</div>';
+      return;
+    }
+    g.innerHTML='<div style="color:var(--mu);font-size:11px;letter-spacing:2px;padding:10px;font-family:Share Tech Mono,monospace;">⏳ LADE...</div>';
+    let loaded=0;
+    const rows=[];
+    names.forEach(name=>{
+      window.fbDB.ref('presence/'+name).once('value',pSnap=>{
+        loaded++;
+        const p=pSnap.val()||{};
+        rows.push({name,online:!!p.online,game:p.currentGame||null,icon:p.currentGameIcon||'🎮'});
+        if(loaded===names.length){
+          rows.sort((a,b)=>(b.online?1:0)-(a.online?1:0)||(b.game?1:0)-(a.game?1:0));
+          g.innerHTML='';
+          rows.forEach(r=>{
+            const specGame=SPECTATABLE_GAMES[r.game];
+            const canSpectate=r.online&&!!specGame;
+            const card=document.createElement('div');
+            card.className='friend-card';
+            card.innerHTML=`
+              <div class="fa" style="background:rgba(0,0,0,.4);border-color:${r.online?'#00ff87':'#555'};color:${r.online?'#00ff87':'#888'};box-shadow:0 0 8px ${r.online?'#00ff8740':'transparent'}">${r.name[0]}</div>
+              <div style="flex:1;min-width:0;">
+                <div class="fn">${r.name}</div>
+                <div class="fg">${r.online?'● ONLINE':'● OFFLINE'}${r.game?' · '+r.icon+' spielt '+r.game:''}</div>
+              </div>
+              ${canSpectate?`<button onclick="spectateGame('${r.name}','${r.game}')" style="padding:6px 12px;border:1px solid rgba(0,229,255,.4);border-radius:3px;background:rgba(0,229,255,.08);color:var(--c);font-size:10px;cursor:pointer;font-family:'Orbitron',sans-serif;white-space:nowrap;">👁️ ZUSCHAUEN</button>`:''}
+            `;
+            g.appendChild(card);
+          });
+        }
+      });
+    });
+  });
+}
+
+/* Zuschauen bei unterstützten Spielen (Neon Pong über Raumcode, Arcade Racing direkt über Namen) */
+const SPECTATABLE_GAMES={
+  'NEON PONG':{file:'pong.html',via:'room'},
+  'ARCADE RACING':{file:'arcaderacing.html',via:'name'},
+  'BREAKOUT':{file:'breakout.html',via:'name'},
+  'FLAPPY':{file:'flappy.html',via:'name'},
+  'GEOMETRY DASH':{file:'geometrydash.html',via:'name'},
+  'MEMORY':{file:'memory.html',via:'name'},
+  'WM 2026 PENALTY':{file:'penalty.html',via:'name'},
+  'SNAKE':{file:'snake.html',via:'name'},
+  'SPACE SHOOTER':{file:'spaceshooter.html',via:'name'},
+  'TIK TAK TU':{file:'tiktaktu.html',via:'name'},
+  'NEON VORTEX':{file:'vortex.html',via:'name'},
+  'WORDLE':{file:'wordle.html',via:'name'},
+  'ZOMBIE SURVIVAL':{file:'zombie.html',via:'name'},
+  'NEON BOUNCE':{file:'neon_bounce.html',via:'name'}
+};
+function spectateGame(playerName,gameName){
+  const cfg=SPECTATABLE_GAMES[gameName];
+  if(!cfg){showNotif('⚠ ZUSCHAUEN HIER NICHT MÖGLICH');return;}
+  if(cfg.via==='name'){
+    playGame(cfg.file+'?spectate='+encodeURIComponent(playerName));
+    return;
+  }
+  window.fbDB.ref('presence/'+playerName+'/pongRoom').once('value',snap=>{
+    const room=snap.val();
+    if(!room){showNotif('⚠ KEIN AKTIVES SPIEL GEFUNDEN');return;}
+    playGame(cfg.file+'?spectate='+encodeURIComponent(room));
+  });
 }
 
 function renderFriends(friendsObj){
@@ -3694,5 +3991,40 @@ function getBootSpeed(){return parseInt(localStorage.getItem('mpBootSpeed')||'5'
 
 
 </script>
+</div><!-- Ende #page-panel -->
+
+<!-- DESIGN SWITCHER — bewusst außerhalb von #page-trailer und #page-panel, damit das Modal immer erreichbar ist -->
+<div class="design-overlay hidden" id="designOverlay" onclick="if(event.target===this)toggleDesignMenu()">
+  <div class="design-modal">
+    <div class="design-modal-title">🎨 Design wählen</div>
+    <div class="design-modal-sub">Bleibt gespeichert, auch nach Neuladen der Seite</div>
+
+    <div class="design-grid">
+      <div class="design-card" data-d="cyberpunk" onclick="setDesign('cyberpunk')">
+        <div class="design-swatch swatch-cyberpunk"></div>
+        <div class="design-name">🌆 Cyberpunk Neon</div>
+        <div class="design-desc">Der klassische Look</div>
+      </div>
+      <div class="design-card" data-d="synthwave" onclick="setDesign('synthwave')">
+        <div class="design-swatch swatch-synthwave"></div>
+        <div class="design-name">🌇 Synthwave Sunset</div>
+        <div class="design-desc">80er Retro-Sonnenuntergang</div>
+      </div>
+      <div class="design-card" data-d="pixel" onclick="setDesign('pixel')">
+        <div class="design-swatch swatch-pixel"></div>
+        <div class="design-name">👾 Retro Arcade</div>
+        <div class="design-desc">8-Bit Pixel-Optik</div>
+      </div>
+      <div class="design-card" data-d="luxury" onclick="setDesign('luxury')">
+        <div class="design-swatch swatch-luxury"></div>
+        <div class="design-name">🖤 Black &amp; Gold</div>
+        <div class="design-desc">Edel &amp; minimalistisch</div>
+      </div>
+    </div>
+
+    <button class="design-close" onclick="toggleDesignMenu()">✕ Schließen</button>
+  </div>
+</div>
+
 </body>
 </html>

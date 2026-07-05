@@ -263,6 +263,28 @@ Punkte: <span id="score">0</span><br>
 </div>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script>
+let rdb=null;
+try{
+  if(typeof firebase!=='undefined'){
+    firebase.initializeApp({
+      apiKey:"AIzaSyDqVPdgGhRx6v__sx7pCe5mOre8XT7xRLg",
+      authDomain:"mypanel-41c90.firebaseapp.com",
+      databaseURL:"https://mypanel-41c90-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId:"mypanel-41c90",
+      storageBucket:"mypanel-41c90.firebasestorage.app",
+      messagingSenderId:"69361490898",
+      appId:"1:69361490898:web:1fcec1264539c8e637060b"
+    });
+    rdb=firebase.apps&&firebase.apps.length?firebase.database():null;
+  }
+}catch(e){rdb=null;}
+
+function getMyName(){
+  try{const p=JSON.parse(localStorage.getItem('mpProfile')||'null');return p?p.username:'SPIELER';}catch(e){return 'SPIELER';}
+}
+</script>
 <script>
 const canvas=document.getElementById("game");
 const ctx=canvas.getContext("2d");
@@ -273,6 +295,104 @@ const size=26;
 let snake,food,dir,score;
 let game;
 let paused=false;
+
+/* ===== ZUSCHAUER-MODUS ===== */
+const _urlParams=new URLSearchParams(location.search);
+const spectateName=_urlParams.get('spectate');
+let isSpectator=false;
+let specSnake=[],specFood={x:0,y:0},specScore=0;
+
+function startSpectate(name){
+  isSpectator=true;
+  document.querySelectorAll('.screen,.overlay').forEach(el=>el&&el.classList&&el.classList.add('hidden'));
+  canvas.style.display='block';
+
+  const banner=document.createElement('div');
+  banner.id='spectateBanner';
+  banner.style.cssText='position:fixed;top:16px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.75);border:1px solid #6366f1;padding:8px 22px;border-radius:20px;font-family:Arial,sans-serif;font-size:12px;font-weight:900;letter-spacing:2px;color:#a5b4fc;z-index:9999;box-shadow:0 0 20px rgba(99,102,241,.35);';
+  banner.textContent='👁️ ZUSCHAUER-MODUS · '+name.toUpperCase();
+  document.body.appendChild(banner);
+
+  if(!rdb){banner.textContent='⚠ FIREBASE NICHT VERBUNDEN';banner.style.borderColor='#ff2b6d';banner.style.color='#ff2b6d';return;}
+
+  try{
+    const key=getMyName().replace(/[.#$\/\[\]]/g,'_');
+    const specRef=rdb.ref('liveGames/'+name+'/spectators/'+key);
+    specRef.set(true);
+    specRef.onDisconnect().remove();
+  }catch(e){}
+
+  const ref=rdb.ref('liveGames/'+name);
+  ref.on('value',snap=>{
+    if(!snap.exists()){
+      banner.textContent='⏹ KEIN LIVE-SPIEL GEFUNDEN';
+      banner.style.borderColor='#ff2b6d';banner.style.color='#ff2b6d';
+      return;
+    }
+    const d=snap.val();
+    specSnake=d.snake||[];
+    specFood=d.food||{x:0,y:0};
+    specScore=d.score||0;
+    drawSpectatorFrame();
+  });
+}
+if(spectateName)startSpectate(spectateName);
+
+function drawSpectatorFrame(){
+  ctx.fillStyle="#05070d";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.save();
+  ctx.strokeStyle="rgba(99,102,241,.08)";
+  ctx.lineWidth=1;
+  for(let i=0;i<=size;i++){
+    ctx.beginPath();ctx.moveTo(i*box,0);ctx.lineTo(i*box,canvas.height);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(0,i*box);ctx.lineTo(canvas.width,i*box);ctx.stroke();
+  }
+  ctx.restore();
+
+  ctx.save();
+  ctx.shadowColor=specFood.gold?"#facc15":"#ef4444";
+  ctx.shadowBlur=12;
+  ctx.fillStyle=specFood.gold?"#facc15":"#ef4444";
+  ctx.beginPath();ctx.arc((specFood.x||0)+10,(specFood.y||0)+10,8,0,Math.PI*2);ctx.fill();
+  ctx.restore();
+
+  for(let i=0;i<specSnake.length;i++){
+    ctx.save();
+    if(i===0){ctx.shadowColor="#818cf8";ctx.shadowBlur=14;ctx.fillStyle="#a5b4fc";}
+    else{
+      const t=i/Math.max(specSnake.length-1,1);
+      const r=Math.round(99-(99-37)*t),g=Math.round(102-(102-26)*t),b=Math.round(241-(241-110)*t);
+      ctx.fillStyle=`rgb(${r},${g},${b})`;
+    }
+    ctx.fillRect(specSnake[i].x,specSnake[i].y,18,18);
+    ctx.restore();
+  }
+
+  const scoreEl=document.getElementById('score');
+  if(scoreEl)scoreEl.innerText=specScore;
+}
+
+/* Eigenen Live-Zustand periodisch senden, damit Freunde zuschauen können */
+let lastLiveSync=0;
+function syncLiveState(){
+  if(isSpectator||!rdb||!snake)return;
+  const now=Date.now();
+  if(now-lastLiveSync<150)return;
+  lastLiveSync=now;
+  try{
+    rdb.ref('liveGames/'+getMyName()).set({
+      snake:snake.map(s=>({x:s.x,y:s.y})),
+      food:{x:food.x,y:food.y,gold:!!food.gold},
+      score,ts:now
+    });
+  }catch(e){}
+}
+function clearLiveState(){
+  if(isSpectator||!rdb)return;
+  try{rdb.ref('liveGames/'+getMyName()).remove();}catch(e){}
+}
+window.addEventListener('beforeunload',clearLiveState);
 let speed=145;
 let baseSpeed=145;
 let speedMode="medium";
@@ -421,6 +541,8 @@ if(e.key==="ArrowDown") changeDir("DOWN");
 
 function draw(){
 
+syncLiveState();
+
 ctx.fillStyle="#05070d";
 ctx.fillRect(0,0,canvas.width,canvas.height);
 
@@ -567,6 +689,7 @@ document.getElementById("hsFast").innerText=hsFast;
 function gameOver(){
 clearInterval(game);
 clearTimeout(boostTimeout);
+clearLiveState();
 speed=baseSpeed;
 sndGameOver();
 document.getElementById("endScore").innerText=score;

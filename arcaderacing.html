@@ -34,6 +34,28 @@ canvas{display:block;border:1px solid #00e5ff;box-shadow:0 0 30px rgba(0,229,255
   <button onclick="startGame()">▶ STARTEN</button>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script>
+let rdb=null;
+try{
+  if(typeof firebase!=='undefined'){
+    firebase.initializeApp({
+      apiKey:"AIzaSyDqVPdgGhRx6v__sx7pCe5mOre8XT7xRLg",
+      authDomain:"mypanel-41c90.firebaseapp.com",
+      databaseURL:"https://mypanel-41c90-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId:"mypanel-41c90",
+      storageBucket:"mypanel-41c90.firebasestorage.app",
+      messagingSenderId:"69361490898",
+      appId:"1:69361490898:web:1fcec1264539c8e637060b"
+    });
+    rdb=firebase.apps&&firebase.apps.length?firebase.database():null;
+  }
+}catch(e){rdb=null;}
+
+function getMyName(){
+  try{const p=JSON.parse(localStorage.getItem('mpProfile')||'null');return p?p.username:'SPIELER';}catch(e){return 'SPIELER';}
+}
+</script>
 <script>
 const canvas=document.getElementById('c');
 const ctx=canvas.getContext('2d');
@@ -49,6 +71,82 @@ let lives=3;
 
 // road params
 const roadLeft=80,roadRight=400,roadW=320;
+
+/* ===== ZUSCHAUER-MODUS ===== */
+const _urlParams=new URLSearchParams(location.search);
+const spectateName=_urlParams.get('spectate');
+let isSpectator=false;
+
+if(spectateName)startSpectate(spectateName);
+
+function startSpectate(name){
+  isSpectator=true;
+  document.getElementById('overlay').style.display='none';
+  for(let i=0;i<8;i++)laneLines.push({y:i*100});
+
+  const banner=document.createElement('div');
+  banner.id='spectateBanner';
+  banner.style.cssText='position:fixed;top:16px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.75);border:1px solid #00e5ff;padding:8px 22px;border-radius:20px;font-family:Orbitron,sans-serif;font-size:11px;letter-spacing:2px;color:#00e5ff;z-index:50;box-shadow:0 0 20px rgba(0,229,255,.3);';
+  banner.textContent='👁️ ZUSCHAUER-MODUS · '+name.toUpperCase();
+  document.body.appendChild(banner);
+
+  if(!rdb){banner.textContent='⚠ FIREBASE NICHT VERBUNDEN';banner.style.borderColor='#ff2b6d';banner.style.color='#ff2b6d';return;}
+
+  // Als Zuschauer eintragen (für die Zuschauerzahl beim Spieler)
+  try{
+    const key=getMyName().replace(/[.#$\/\[\]]/g,'_');
+    const specRef=rdb.ref('liveGames/'+name+'/spectators/'+key);
+    specRef.set(true);
+    specRef.onDisconnect().remove();
+  }catch(e){}
+
+  const ref=rdb.ref('liveGames/'+name);
+  ref.on('value',snap=>{
+    if(!snap.exists()){
+      banner.textContent='⏹ KEIN LIVE-SPIEL GEFUNDEN';
+      banner.style.borderColor='#ff2b6d';banner.style.color='#ff2b6d';
+      return;
+    }
+    const d=snap.val();
+    playerX=d.playerX;playerY=d.playerY;
+    obstacles=d.obstacles||[];
+    score=d.score||0;dist=d.dist||0;speed=d.speed||3;lives=d.lives!=null?d.lives:3;
+    document.getElementById('scoreDisplay').textContent=score;
+    document.getElementById('distDisplay').textContent=Math.floor(dist)+'m';
+    document.getElementById('speedDisplay').textContent=Math.floor(speed*10);
+  });
+
+  // Eigener Animationsloop für flüssige Straßen-Optik zwischen den Firebase-Updates
+  function specLoop(){
+    if(!isSpectator)return;
+    roadOffset=(roadOffset+speed)%100;
+    laneLines.forEach(l=>{l.y+=speed;if(l.y>canvas.height+50)l.y=-50;});
+    draw();
+    requestAnimationFrame(specLoop);
+  }
+  specLoop();
+}
+
+/* Eigenen Live-Zustand periodisch an Firebase senden, damit Freunde zuschauen können */
+let lastLiveSync=0;
+function syncLiveState(){
+  if(isSpectator||!rdb)return;
+  const now=Date.now();
+  if(now-lastLiveSync<120)return;
+  lastLiveSync=now;
+  try{
+    rdb.ref('liveGames/'+getMyName()).set({
+      playerX,playerY,
+      obstacles:obstacles.map(o=>({x:o.x,y:o.y,w:o.w,h:o.h,color:o.color})),
+      score,dist,speed,lives,ts:now
+    });
+  }catch(e){}
+}
+function clearLiveState(){
+  if(isSpectator||!rdb)return;
+  try{rdb.ref('liveGames/'+getMyName()).remove();}catch(e){}
+}
+window.addEventListener('beforeunload',clearLiveState);
 
 function startGame(){
   document.getElementById('overlay').style.display='none';
@@ -109,6 +207,8 @@ function update(){
   document.getElementById('scoreDisplay').textContent=score;
   document.getElementById('distDisplay').textContent=Math.floor(dist)+'m';
   document.getElementById('speedDisplay').textContent=Math.floor(speed*10);
+
+  syncLiveState();
 }
 
 function explode(x,y){
@@ -198,6 +298,7 @@ function drawCar(x,y,w,h,color,isPlayer){
 
 function endGame(){
   gameRunning=false;
+  clearLiveState();
   const ov=document.getElementById('overlay');
   ov.style.display='flex';
   ov.querySelector('h1').textContent='CRASH!';
@@ -206,18 +307,10 @@ function endGame(){
   fs.style.display='block';
   fs.textContent='▶ '+score.toLocaleString()+' PTS // '+Math.floor(dist)+'m';
 
-  // Auto-save to MyPanel highscores — only if new personal best
+  // An MyPanel-Highscoresystem übergeben (nutzt automatisch den XP-Multiplikator + Notification)
   try{
-    const profRaw=localStorage.getItem('mpProfile');
-    const prof=profRaw?JSON.parse(profRaw):null;
-    const player=(prof?prof.username:localStorage.getItem('username')||'MYPANEL USER').toUpperCase();
-    const all=JSON.parse(localStorage.getItem('highscores')||'[]');
-    const prevBest=all.filter(s=>s.player===player&&s.game==='Arcade Racing').sort((a,b)=>b.score-a.score);
-    if(prevBest.length===0||score>prevBest[0].score){
-      const filtered=all.filter(s=>!(s.player===player&&s.game==='Arcade Racing'));
-      filtered.push({player,game:'Arcade Racing',score:Math.floor(score*(_mult||1)),date:new Date().toLocaleDateString('de-DE')});
-      filtered.sort((a,b)=>b.score-a.score);
-      localStorage.setItem('highscores',JSON.stringify(filtered.slice(0,50)));
+    if(typeof window.autoSaveScore==='function'){
+      window.autoSaveScore('Arcade Racing',score);
     }
   }catch(e){}
 }

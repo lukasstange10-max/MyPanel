@@ -195,6 +195,28 @@ text-align:center;
 </div>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script>
+let rdb=null;
+try{
+  if(typeof firebase!=='undefined'){
+    firebase.initializeApp({
+      apiKey:"AIzaSyDqVPdgGhRx6v__sx7pCe5mOre8XT7xRLg",
+      authDomain:"mypanel-41c90.firebaseapp.com",
+      databaseURL:"https://mypanel-41c90-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId:"mypanel-41c90",
+      storageBucket:"mypanel-41c90.firebasestorage.app",
+      messagingSenderId:"69361490898",
+      appId:"1:69361490898:web:1fcec1264539c8e637060b"
+    });
+    rdb=firebase.apps&&firebase.apps.length?firebase.database():null;
+  }
+}catch(e){rdb=null;}
+
+function getMyName(){
+  try{const p=JSON.parse(localStorage.getItem('mpProfile')||'null');return p?p.username:'SPIELER';}catch(e){return 'SPIELER';}
+}
+</script>
 <script>
 const canvas=document.getElementById("game");
 const ctx=canvas.getContext("2d");
@@ -208,6 +230,110 @@ let upgrades=JSON.parse(localStorage.getItem("zup")||"{}");
 let shooting=false;
 let game;
 let controlMode="wasd";
+
+/* ===== ZUSCHAUER-MODUS ===== */
+const _urlParams=new URLSearchParams(location.search);
+const spectateName=_urlParams.get('spectate');
+let isSpectator=false;
+let specData=null;
+
+function startSpectate(name){
+  isSpectator=true;
+  hideAll();
+  canvas.classList.remove('hidden');
+
+  const banner=document.createElement('div');
+  banner.id='spectateBanner';
+  banner.style.cssText='position:fixed;top:16px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.75);border:1px solid #6366f1;padding:8px 22px;border-radius:20px;font-family:Segoe UI;font-size:12px;font-weight:900;letter-spacing:2px;color:#a5b4fc;z-index:9999;box-shadow:0 0 20px rgba(99,102,241,.35);';
+  banner.textContent='👁️ ZUSCHAUER-MODUS · '+name.toUpperCase();
+  document.body.appendChild(banner);
+
+  if(!rdb){banner.textContent='⚠ FIREBASE NICHT VERBUNDEN';banner.style.borderColor='#ff2b6d';banner.style.color='#ff2b6d';return;}
+
+  try{
+    const key=getMyName().replace(/[.#$\/\[\]]/g,'_');
+    const specRef=rdb.ref('liveGames/'+name+'/spectators/'+key);
+    specRef.set(true);
+    specRef.onDisconnect().remove();
+  }catch(e){}
+
+  const ref=rdb.ref('liveGames/'+name);
+  ref.on('value',snap=>{
+    if(!snap.exists()){
+      banner.textContent='⏹ KEIN LIVE-SPIEL GEFUNDEN';
+      banner.style.borderColor='#ff2b6d';banner.style.color='#ff2b6d';
+      return;
+    }
+    specData=snap.val();
+    document.getElementById("waveText").innerText=Math.floor(specData.survTime||0);
+    document.getElementById("coins").innerText=specData.coins||0;
+    const specHp=specData.hp!=null?specData.hp:5;
+    const hpEl=document.getElementById('hpLine');
+    if(hpEl)hpEl.innerText='❤️'.repeat(Math.max(specHp,0));
+  });
+
+  clearInterval(game);
+  game=setInterval(drawSpectatorFrame,16);
+}
+if(spectateName)startSpectate(spectateName);
+
+function drawSpectatorFrame(){
+  if(!specData)return;
+  ctx.fillStyle="#020617";
+  ctx.fillRect(0,0,500,600);
+  ctx.save();
+  ctx.strokeStyle="rgba(99,102,241,.06)";
+  for(let gx=0;gx<=500;gx+=50){ctx.beginPath();ctx.moveTo(gx,0);ctx.lineTo(gx,600);ctx.stroke();}
+  for(let gy=0;gy<=600;gy+=50){ctx.beginPath();ctx.moveTo(0,gy);ctx.lineTo(500,gy);ctx.stroke();}
+  ctx.restore();
+
+  const p=specData.player||{x:250,y:300};
+  ctx.save();
+  ctx.shadowColor="#818cf8";ctx.shadowBlur=16;
+  const pg=ctx.createRadialGradient(p.x-4,p.y-4,2,p.x,p.y,15);
+  pg.addColorStop(0,"#a5b4fc");pg.addColorStop(1,"#6366f1");
+  ctx.fillStyle=pg;
+  ctx.beginPath();ctx.arc(p.x,p.y,15,0,Math.PI*2);ctx.fill();
+  ctx.restore();
+
+  ctx.save();
+  ctx.shadowColor="#facc15";ctx.shadowBlur=6;
+  ctx.fillStyle="#facc15";
+  (specData.bullets||[]).forEach(b=>ctx.fillRect(b.x,b.y,5,5));
+  ctx.restore();
+
+  (specData.zombies||[]).forEach(z=>{
+    ctx.save();
+    ctx.shadowColor="#22c55e";ctx.shadowBlur=10;
+    const zg=ctx.createRadialGradient(z.x-4,z.y-4,2,z.x,z.y,z.size||15);
+    zg.addColorStop(0,"#4ade80");zg.addColorStop(1,"#15803d");
+    ctx.fillStyle=zg;
+    ctx.beginPath();ctx.arc(z.x,z.y,z.size||15,0,Math.PI*2);ctx.fill();
+    ctx.restore();
+  });
+}
+
+/* Eigenen Live-Zustand periodisch senden, damit Freunde zuschauen können */
+let lastLiveSync=0;
+function syncLiveState(){
+  if(isSpectator||!rdb||!player)return;
+  const now=Date.now();
+  if(now-lastLiveSync<120)return;
+  lastLiveSync=now;
+  try{
+    rdb.ref('liveGames/'+getMyName()).set({
+      player:{x:Math.round(player.x),y:Math.round(player.y)},
+      bullets:bullets.map(b=>({x:Math.round(b.x),y:Math.round(b.y)})),
+      zombies:zombies.map(z=>({x:Math.round(z.x),y:Math.round(z.y),size:z.size})),
+      hp,coins,survTime,ts:now
+    });
+  }catch(e){}
+}
+function clearLiveState(){
+  if(isSpectator||!rdb)return;
+  try{rdb.ref('liveGames/'+getMyName()).remove();}catch(e){}
+}
+window.addEventListener('beforeunload',clearLiveState);
 let survTime=0; // Sekunden überlebt — treibt die Schwierigkeitskurve
 let fireCooldown=0;
 
@@ -401,6 +527,8 @@ sndShoot();
 /* UPDATE */
 function update(){
 
+syncLiveState();
+
 survTime+=16/1000;
 document.getElementById("waveText").innerText=Math.floor(survTime);
 
@@ -559,6 +687,7 @@ ctx.restore();
 /* GAME OVER */
 function gameOver(){
 clearInterval(game);
+clearLiveState();
 saveCoins();
 localStorage.setItem("zup",JSON.stringify(upgrades));
 sndGameOver();

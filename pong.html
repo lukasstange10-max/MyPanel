@@ -167,6 +167,46 @@ function resize(){
 }
 window.addEventListener('resize',resize);resize();
 
+/* ===== ZUSCHAUER-MODUS ===== */
+const _urlParams=new URLSearchParams(location.search);
+const spectateCode=_urlParams.get('spectate');
+if(spectateCode)startSpectate(spectateCode);
+
+function startSpectate(code){
+  document.querySelectorAll('.screen').forEach(el=>el.classList.add('hidden'));
+  canvas.classList.remove('hidden');canvas.style.display='block';
+  document.getElementById('hud').style.display='flex';
+
+  const banner=document.createElement('div');
+  banner.id='spectateBanner';
+  banner.style.cssText='position:fixed;top:16px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.75);border:1px solid #00e5ff;padding:8px 22px;border-radius:20px;font-family:Orbitron,sans-serif;font-size:11px;letter-spacing:2px;color:#00e5ff;z-index:50;box-shadow:0 0 20px rgba(0,229,255,.3);';
+  banner.textContent='👁️ ZUSCHAUER-MODUS';
+  document.body.appendChild(banner);
+
+  // Als Zuschauer eintragen, damit der Spieler die Anzahl live sieht
+  try{
+    const specRef=db.ref('pongRooms/'+code+'/spectators/'+getMyName().replace(/[.#$\/\[\]]/g,'_'));
+    specRef.set(true);
+    specRef.onDisconnect().remove();
+    window.addEventListener('beforeunload',()=>specRef.remove());
+  }catch(e){}
+
+  const ref=db.ref('pongRooms/'+code);
+  ref.on('value',snap=>{
+    if(!snap.exists()){
+      banner.textContent='⏹ SPIEL BEENDET ODER NICHT GEFUNDEN';
+      banner.style.borderColor='#ff2b6d';banner.style.color='#ff2b6d';
+      return;
+    }
+    const d=snap.val();
+    document.getElementById('p1Name').textContent=d.p1?d.p1.name:'P1';
+    document.getElementById('p2Name').textContent=d.p2?d.p2.name:'P2';
+    document.getElementById('p1Score').textContent=d.p1?d.p1.score:0;
+    document.getElementById('p2Score').textContent=d.p2?d.p2.score:0;
+    draw(d);
+  });
+}
+
 /* ===== SCREENS ===== */
 function showScreen(id){
   document.querySelectorAll('.screen,[id="c"],[id="hud"],[id="winOverlay"]').forEach(el=>{
@@ -195,6 +235,14 @@ async function createRoom(){
     status:'waiting',created:Date.now()
   });
   roomRef.onDisconnect().remove();
+
+  // Raumcode in der Presence hinterlegen -> andere können über die Live-Arena zuschauen
+  try{
+    const presRef=db.ref('presence/'+getMyName()+'/pongRoom');
+    presRef.set(code);
+    presRef.onDisconnect().remove();
+  }catch(e){}
+
   document.getElementById('roomCodeDisplay').textContent=code;
   document.getElementById('lobbyStatus').textContent='Warte auf Gegner...';
   showScreen('lobbyScreen');
@@ -212,6 +260,13 @@ async function joinRoom(){
   roomRef=db.ref('pongRooms/'+code);
   await roomRef.child('p2').update({name:getMyName(),y:H/2});
   await roomRef.child('status').set('ready');
+
+  try{
+    const presRef=db.ref('presence/'+getMyName()+'/pongRoom');
+    presRef.set(code);
+    presRef.onDisconnect().remove();
+  }catch(e){}
+
   document.getElementById('roomCodeDisplay').textContent=code;
   document.getElementById('lobbyStatus').textContent='Verbunden!';
   showScreen('lobbyScreen');
@@ -224,6 +279,7 @@ function listenRoom(){
     const d=snap.val();
     gameState=d;
     updateLobbyUI(d);
+    updateSpectatorCount(d);
     if(d.status==='playing'&&canvas.classList.contains('hidden')){
       startGame(d);
     }
@@ -232,6 +288,20 @@ function listenRoom(){
     }
   });
   listeners.push(()=>roomRef.off('value',l));
+}
+
+/* Zuschauerzahl oben links anzeigen (nur für die beiden Spieler, nicht im Zuschauer-Modus selbst) */
+function updateSpectatorCount(d){
+  const count=d.spectators?Object.keys(d.spectators).length:0;
+  let el=document.getElementById('specCount');
+  if(!el){
+    el=document.createElement('div');
+    el.id='specCount';
+    el.style.cssText='position:fixed;top:16px;left:16px;background:rgba(0,0,0,.6);border:1px solid rgba(0,229,255,.35);padding:6px 14px;border-radius:16px;font-family:Orbitron,sans-serif;font-size:11px;letter-spacing:1px;color:#00e5ff;z-index:50;';
+    document.body.appendChild(el);
+  }
+  el.style.display=count>0?'block':'none';
+  el.textContent='👁️ '+count+' Zuschauer';
 }
 
 function updateLobbyUI(d){
@@ -257,6 +327,7 @@ function leaveRoom(){
     else roomRef.child('p2').update({name:''});
     roomRef=null;
   }
+  try{db.ref('presence/'+getMyName()+'/pongRoom').remove();}catch(e){}
   if(raf){cancelAnimationFrame(raf);raf=null;}
   roomCode=null;myRole=null;
   document.getElementById('winOverlay').style.display='none';
