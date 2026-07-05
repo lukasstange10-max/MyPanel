@@ -2688,7 +2688,6 @@ function saveFirstLogin(){
     setTimeout(()=>document.getElementById('firstLoginInput').style.borderColor='',1000);
     return;
   }
-  window._profileJustSet=true; // verhindert, dass ein späterer checkAndInitProfile()-Aufruf das Modal nochmal aufreißt
   // Modal auf jeden Fall schließen, selbst falls saveProfile/applyProfile intern einen Fehler werfen
   try{ saveProfile(v); }catch(e){}
   try{ applyProfile(); }catch(e){}
@@ -2699,7 +2698,6 @@ function saveFirstLogin(){
 
 // Boot: show first-login if no profile yet, else apply existing
 function checkAndInitProfile(){
-  if(window._profileJustSet)return; // Nutzer hat gerade schon LOSLEGEN geklickt -> Modal nie wieder aufreißen
   try{
     const p=_pGet();
     const modal=document.getElementById('firstLoginModal');
@@ -2722,6 +2720,58 @@ function checkAndInitProfile(){
   }
 }
 checkAndInitProfile();
+
+/* ===== DIAGNOSE-PANEL (temporär, um das Problem einzugrenzen) ===== */
+function showDiagPanel(){
+  let panel=document.getElementById('diagPanel');
+  if(panel){panel.remove();return;}
+  panel=document.createElement('div');
+  panel.id='diagPanel';
+  panel.style.cssText='position:fixed;bottom:70px;left:12px;z-index:99999999;background:#000;border:2px solid #00e5ff;border-radius:10px;padding:14px;font-family:monospace;font-size:11px;color:#0f0;max-width:min(92vw,480px);max-height:70vh;overflow:auto;white-space:pre-wrap;word-break:break-all;box-shadow:0 0 30px rgba(0,229,255,.5);';
+
+  let out='';
+  try{
+    out+='=== localStorage.mpProfile ===\n'+(localStorage.getItem('mpProfile')||'(leer/null)')+'\n\n';
+  }catch(e){out+='FEHLER beim Lesen von mpProfile: '+e.message+'\n\n';}
+  try{
+    out+='=== sessionStorage.mpProfile ===\n'+(sessionStorage.getItem('mpProfile')||'(leer/null)')+'\n\n';
+  }catch(e){out+='FEHLER beim Lesen (sessionStorage): '+e.message+'\n\n';}
+  try{
+    const m=document.cookie.match('(?:^|; )mpProfile=([^;]*)');
+    out+='=== Cookie mpProfile ===\n'+(m?decodeURIComponent(m[1]):'(nicht vorhanden)')+'\n\n';
+  }catch(e){out+='FEHLER beim Lesen des Cookies: '+e.message+'\n\n';}
+  try{
+    const hs=localStorage.getItem('highscores');
+    const parsed=hs?JSON.parse(hs):[];
+    out+='=== localStorage.highscores ===\nAnzahl Einträge: '+parsed.length+'\n'+(hs?hs.substring(0,600):'(leer/null)')+(hs&&hs.length>600?'... (gekürzt)':'')+'\n\n';
+  }catch(e){out+='FEHLER beim Lesen von highscores: '+e.message+'\n\n';}
+  try{
+    out+='=== window.fbDB verbunden? ===\n'+(window.fbDB?'JA':'NEIN')+'\n\n';
+  }catch(e){}
+  try{
+    out+='=== localStorage generell nutzbar? ===\n';
+    localStorage.setItem('__diagtest','1');
+    const ok=localStorage.getItem('__diagtest')==='1';
+    localStorage.removeItem('__diagtest');
+    out+=(ok?'JA':'NEIN — localStorage scheint blockiert zu sein!')+'\n\n';
+  }catch(e){out+='FEHLER — localStorage komplett blockiert: '+e.message+'\n\n';}
+
+  panel.innerText=out;
+  const closeBtn=document.createElement('button');
+  closeBtn.textContent='✕ Schließen';
+  closeBtn.style.cssText='display:block;margin-top:10px;padding:8px 14px;background:#00e5ff;color:#000;border:none;border-radius:6px;font-weight:900;cursor:pointer;';
+  closeBtn.onclick=()=>panel.remove();
+  panel.appendChild(closeBtn);
+  document.body.appendChild(panel);
+}
+(function(){
+  const btn=document.createElement('button');
+  btn.id='diagToggleBtn';
+  btn.textContent='🐛 DIAGNOSE';
+  btn.style.cssText='position:fixed;bottom:16px;left:12px;z-index:99999998;background:rgba(0,0,0,.7);border:1px solid #00e5ff;color:#00e5ff;padding:8px 14px;border-radius:20px;font-family:Orbitron,sans-serif;font-size:10px;font-weight:900;letter-spacing:1px;cursor:pointer;';
+  btn.onclick=showDiagPanel;
+  document.body.appendChild(btn);
+})();
 // Extra safety: also run on full load in case DOM wasn't ready
 window.addEventListener('load',checkAndInitProfile);
 // Enter-key support
