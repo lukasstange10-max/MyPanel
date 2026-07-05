@@ -92,7 +92,7 @@ canvas{display:block;position:fixed;inset:0;}
   <div class="hs-box">
     <div class="sh">ELFMETER</div>
     <div class="sc"><span id="hudPS">0</span> : <span id="hudOS">0</span></div>
-    <div class="sr">RUNDE <span id="hudR">1</span>/5</div>
+    <div class="sr">RUNDE <span id="hudR">1</span>/<span id="hudTotal">5</span></div>
   </div>
   <div class="ht"><div class="hf" id="hudOF"></div><div class="hn" id="hudON"></div></div>
 </div>
@@ -1033,7 +1033,17 @@ function commitDive(x,y){
     updateHUD();
     setTimeout(()=>{
       gkDiving=false;gkDir=null;bAnimState=null;animating=false;
-      if(kickRound>=totalKicks){matchOver=true;setTimeout(finalizeMatch,400);return;}
+
+      // Nach der regulären Rundenzahl: bei Gleichstand geht's ins echte Sudden Death
+      // (eine weitere Runde, bis eine Entscheidung fällt — wie beim echten Elfmeterschießen)
+      if(kickRound>=totalKicks){
+        if(pScore===oScore){
+          totalKicks++;
+        }else{
+          matchOver=true;setTimeout(finalizeMatch,400);return;
+        }
+      }
+
       kickRound++;updateHUD();
       matchPhase='p';showAim=true;
       setKickMsg('DEIN SCHUSS! TIPPE AUF DAS TOR!');
@@ -1052,12 +1062,6 @@ function checkGoal(shotCol,gkCol){
 function finalizeMatch(){
   canvas.ontouchstart=null;canvas.onmousedown=null;
   canvas.ontouchmove=null;canvas.onmousemove=null;
-  if(pScore===oScore){
-    // Sudden death: quick random
-    const pg=Math.random()>.4,og=!pg||Math.random()>.5;
-    setTimeout(()=>showMatchResult(pg&&!og),400);
-    return;
-  }
   showMatchResult(pScore>oScore);
 }
 
@@ -1111,6 +1115,11 @@ function updateHUD(){
   document.getElementById('hudPS').textContent=pScore;
   document.getElementById('hudOS').textContent=oScore;
   document.getElementById('hudR').textContent=kickRound;
+  document.getElementById('hudTotal').textContent=totalKicks;
+  if(kickRound>5&&totalKicks>5){
+    document.getElementById('hudTotal').textContent='∞';
+    showTurnMsg('🔥 SUDDEN DEATH!');
+  }
 }
 
 function setKickMsg(t){document.getElementById('kickMsg').textContent=t;}
