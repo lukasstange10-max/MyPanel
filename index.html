@@ -1936,15 +1936,32 @@ const fbConfig={
     s.onerror=()=>{};
     s.onload=()=>{
       const s2=document.createElement('script');
-      s2.src='https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js';
+      s2.src='https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js';
       s2.async=true;
       s2.onerror=()=>{};
       s2.onload=()=>{
-        try{
-          if(!firebase.apps.length)firebase.initializeApp(fbConfig);
-          window.fbDB=firebase.database();
-          initFirebaseListeners();
-        }catch(e){}
+        const s3=document.createElement('script');
+        s3.src='https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js';
+        s3.async=true;
+        s3.onerror=()=>{};
+        s3.onload=()=>{
+          try{
+            if(!firebase.apps.length)firebase.initializeApp(fbConfig);
+            // Jeder Besucher bekommt automatisch (unsichtbar, ohne Login-Formular) eine
+            // anonyme Firebase-Identität. Erst DANACH wird window.fbDB gesetzt — dadurch
+            // kann die Datenbank in den Firebase-Regeln auf "nur eingeloggte Nutzer"
+            // (auth != null) beschränkt werden, ohne dass sich am Verhalten für die
+            // Besucher etwas ändert.
+            firebase.auth().onAuthStateChanged(user=>{
+              if(user){
+                window.fbDB=firebase.database();
+                initFirebaseListeners();
+              }
+            });
+            firebase.auth().signInAnonymously().catch(()=>{});
+          }catch(e){}
+        };
+        document.head.appendChild(s3);
       };
       document.head.appendChild(s2);
     };
