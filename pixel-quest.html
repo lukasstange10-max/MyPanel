@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PIXEL QUEST — Ein Arcade-Kurzfilm</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0a0d14;
+    --cyan: #2de1e6;
+    --magenta: #ff3d78;
+    --gold: #ffc857;
+    --panel-line: #262f42;
+    --text: #e9edf6;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html, body{ height:100%; background:#000; }
+  body{
+    display:flex; align-items:center; justify-content:center;
+    font-family:'JetBrains Mono', monospace;
+    min-height:100vh;
+  }
+
+  .screen-wrap{
+    position:relative;
+    width:100%;
+    max-width:900px;
+    aspect-ratio:16/9;
+    background: var(--bg);
+    overflow:hidden;
+    box-shadow: 0 0 0 3px #1a1f2c, 0 0 60px rgba(45,225,230,0.15);
+    border-radius:4px;
+  }
+
+  /* CRT scanline + vignette overlay */
+  .crt{
+    position:absolute; inset:0; pointer-events:none; z-index:50;
+    background:
+      repeating-linear-gradient(to bottom, rgba(255,255,255,0.035) 0px, rgba(255,255,255,0.035) 1px, transparent 1px, transparent 3px),
+      radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.55) 100%);
+  }
+
+  /* screen shake effect */
+  .screen-wrap.shake{ animation: screenShake 0.4s ease; }
+  @keyframes screenShake{
+    0%,100%{ transform:translate(0,0); }
+    20%{ transform:translate(-6px,4px) rotate(-0.4deg); }
+    40%{ transform:translate(5px,-5px) rotate(0.4deg); }
+    60%{ transform:translate(-4px,-3px); }
+    80%{ transform:translate(4px,4px); }
+  }
+  .screen-wrap.zoom{ animation: screenZoom 0.6s ease; }
+  @keyframes screenZoom{
+    0%{ transform:scale(1); }
+    50%{ transform:scale(1.04); }
+    100%{ transform:scale(1); }
+  }
+
+  .starfield{
+    position:absolute; inset:0; z-index:1; pointer-events:none;
+    background-image:
+      radial-gradient(1.5px 1.5px at 10% 20%, rgba(255,255,255,0.8), transparent),
+      radial-gradient(1.5px 1.5px at 25% 65%, rgba(255,255,255,0.6), transparent),
+      radial-gradient(2px 2px at 40% 30%, rgba(255,255,255,0.7), transparent),
+      radial-gradient(1px 1px at 55% 80%, rgba(255,255,255,0.5), transparent),
+      radial-gradient(1.5px 1.5px at 70% 15%, rgba(255,255,255,0.8), transparent),
+      radial-gradient(1px 1px at 85% 55%, rgba(255,255,255,0.6), transparent),
+      radial-gradient(2px 2px at 95% 75%, rgba(255,255,255,0.7), transparent),
+      radial-gradient(1.5px 1.5px at 15% 90%, rgba(255,255,255,0.5), transparent),
+      radial-gradient(1px 1px at 60% 45%, rgba(255,255,255,0.6), transparent),
+      radial-gradient(1.5px 1.5px at 33% 10%, rgba(255,255,255,0.7), transparent);
+    background-size: 300px 300px;
+    animation: driftStars 40s linear infinite;
+    opacity:0.6;
+  }
+  @keyframes driftStars{ from{ background-position:0 0; } to{ background-position:-600px 300px; } }
+
+  .parallax-cloud{
+    position:absolute; z-index:1; opacity:0.15;
+    width:120px; height:36px; border-radius:50px;
+    background: var(--cyan);
+    filter: blur(6px);
+  }
+  .parallax-cloud.c1{ top:12%; animation: driftCloud 18s linear infinite; }
+  .parallax-cloud.c2{ top:55%; width:80px; height:24px; animation: driftCloud 24s linear infinite; animation-delay:-8s; }
+  .parallax-cloud.c3{ top:75%; width:150px; height:40px; animation: driftCloud 30s linear infinite; animation-delay:-4s; }
+  @keyframes driftCloud{ from{ left:-200px; } to{ left:110%; } }
+
+  .scene{
+    position:absolute; inset:0;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+  }
+  .scene.active{ display:flex; }
+
+  /* ---------- Scene 1: Insert Coin ---------- */
+  #scene1{ background: #000; flex-direction:column; gap:26px; }
+  .blink-text{
+    font-family:'Press Start 2P', monospace;
+    color: var(--gold);
+    font-size: clamp(14px, 3vw, 22px);
+    animation: blink 0.9s steps(1) infinite;
+  }
+  @keyframes blink{ 0%,49%{ opacity:1; } 50%,100%{ opacity:0; } }
+  .coin-icon-big{
+    width:56px; height:56px; border-radius:50%;
+    background: radial-gradient(circle at 35% 30%, #fff8d8, var(--gold) 55%, #a97a10 100%);
+    box-shadow: 0 0 30px rgba(255,200,87,0.5);
+    animation: spinCoin 1.6s linear infinite;
+  }
+  @keyframes spinCoin{ from{ transform:rotateY(0deg); } to{ transform:rotateY(360deg); } }
+
+  /* ---------- Scene 2: Title reveal ---------- */
+  #scene2{ background: radial-gradient(circle at 50% 40%, #131a2b, #05070c 75%); flex-direction:column; gap:10px; }
+  .title-main{
+    font-family:'Press Start 2P', monospace;
+    font-size: clamp(22px, 6vw, 46px);
+    color: var(--cyan);
+    text-shadow: 3px 3px 0 var(--magenta), 0 0 26px rgba(45,225,230,0.6);
+    opacity:0;
+  }
+  #scene2.active .title-main{ animation: titleIn 0.8s ease forwards 0.15s, titleShake 2.4s ease-in-out 1.2s infinite; }
+  @keyframes titleIn{ from{ opacity:0; transform:scale(0.6) translateY(20px); } to{ opacity:1; transform:scale(1) translateY(0); } }
+  @keyframes titleShake{ 0%,100%{ transform:translate(0,0); } 50%{ transform:translate(1px,-1px); } }
+  .title-sub{
+    font-family:'JetBrains Mono', monospace;
+    color: var(--text);
+    font-size: clamp(10px, 2vw, 14px);
+    letter-spacing:3px;
+    opacity:0;
+  }
+  #scene2.active .title-sub{ animation: fadeIn 0.6s ease forwards 1s; }
+  @keyframes fadeIn{ to{ opacity:0.75; } }
+
+  /* ---------- Scene 3: Walk + jump + coin ---------- */
+  #scene3{
+    background: linear-gradient(to bottom, #131a2b 0%, #131a2b 70%, #1c2338 70%, #1c2338 100%);
+    justify-content:flex-start;
+  }
+  .ground-line{ position:absolute; bottom:30%; left:0; right:0; height:2px; background: var(--panel-line); }
+  .hero{
+    position:absolute; bottom:30%; left:-60px; width:34px; height:44px;
+  }
+  #scene3.active .hero{ animation: heroRun 6s linear forwards; }
+  @keyframes heroRun{
+    0%{ left:-60px; }
+    38%{ left:38%; }
+    46%{ left:38%; transform:translateY(0); }
+    50%{ transform:translateY(-70px); }
+    56%{ transform:translateY(0); left:52%; }
+    100%{ left:112%; }
+  }
+  .hero-body{ position:absolute; inset:0; }
+  .hero-leg{
+    position:absolute; bottom:0; width:10px; height:16px; background: var(--cyan);
+  }
+  .hero-leg.l{ left:4px; animation: legSwing 0.35s ease-in-out infinite; }
+  .hero-leg.r{ right:4px; animation: legSwing 0.35s ease-in-out infinite reverse; }
+  @keyframes legSwing{ 0%,100%{ transform:translateY(0) scaleY(1); } 50%{ transform:translateY(-3px) scaleY(0.85); } }
+  .hero-torso{ position:absolute; bottom:14px; left:4px; right:4px; height:20px; background: var(--cyan); border-radius:2px; }
+  .hero-head{ position:absolute; top:0; left:7px; width:20px; height:16px; background: var(--gold); border-radius:2px; }
+  .hero-visor{ position:absolute; top:5px; left:9px; width:14px; height:5px; background: #0a0d14; animation: visorBlink 3.2s ease-in-out infinite; }
+  @keyframes visorBlink{ 0%,92%,100%{ opacity:1; } 95%{ opacity:0.15; } }
+  .hero-arm{
+    position:absolute; top:16px; width:6px; height:16px; background: var(--gold);
+    border-radius:2px; transform-origin: top center;
+  }
+  .hero-arm.l{ left:-2px; animation: armSwing 0.35s ease-in-out infinite reverse; }
+  .hero-arm.r{ right:-2px; animation: armSwing 0.35s ease-in-out infinite; }
+  @keyframes armSwing{ 0%,100%{ transform:rotate(-25deg); } 50%{ transform:rotate(25deg); } }
+
+  /* sword is a CHILD of the right arm, so it always moves rigidly with the hand */
+  .hero-sword{
+    position:absolute; top:9px; left:-1px; width:7px; height:22px;
+    z-index:5;
+  }
+  .hero-sword .grip{
+    position:absolute; top:0; left:0; width:6px; height:7px;
+    background: #6b4a1a; border-radius:1px;
+  }
+  .hero-sword .hilt{
+    position:absolute; top:6px; left:-3px; width:12px; height:4px;
+    background: var(--gold); border-radius:1px;
+    box-shadow: 0 0 5px rgba(255,200,87,0.7);
+  }
+  .hero-sword .blade{
+    position:absolute; top:9px; left:0; width:6px; height:13px;
+    background: linear-gradient(180deg, #0a8a90, var(--cyan) 45%, #ffffff);
+    box-shadow: 0 0 12px 2px rgba(45,225,230,0.95);
+    border-radius:1px;
+  }
+
+  /* combat: the ARM itself swings in a big arc during the 3 combo hits, carrying the sword with it */
+  #scene4.active .hero2 .hero-arm.r{ animation: armSwordSwingSeq 5.6s ease forwards; }
+  #scene4.active .hero-afterimage .hero-arm.r{ animation: armSwordSwingSeq 5.6s ease forwards; }
+  @keyframes armSwordSwingSeq{
+    0%,43%{ transform:rotate(-30deg); }
+    46%{ transform:rotate(140deg); }
+    49%{ transform:rotate(-10deg); }
+    52%,53%{ transform:rotate(-30deg); }
+    55%{ transform:rotate(150deg); }
+    58%{ transform:rotate(-10deg); }
+    61%,62%{ transform:rotate(-30deg); }
+    63%{ transform:rotate(160deg); }
+    66%{ transform:rotate(-10deg); }
+    72%,100%{ transform:rotate(-30deg); }
+  }
+
+  .dust-particle{
+    position:absolute; bottom:calc(30% - 2px); width:5px; height:5px; border-radius:50%;
+    background: rgba(233,237,246,0.5); pointer-events:none;
+  }
+  .landing-dust{
+    position:absolute; bottom:30%; left:38%; width:4px; height:4px; border-radius:50%;
+    background: rgba(255,200,87,0.7);
+    opacity:0;
+  }
+  #scene3.active .landing-dust{ animation: dustBurst 0.5s ease-out forwards 3.3s; }
+  @keyframes dustBurst{
+    0%{ opacity:0.9; transform:translate(0,0) scale(1); }
+    100%{ opacity:0; transform:translate(var(--dx, -14px), 10px) scale(0.3); }
+  }
+
+  .spike{
+    position:absolute; bottom:30%; left:44%;
+    width:0; height:0;
+    border-left:14px solid transparent;
+    border-right:14px solid transparent;
+    border-bottom:34px solid var(--magenta);
+  }
+  .coin{
+    position:absolute; bottom:calc(30% + 100px); left:52%;
+    width:22px; height:22px; border-radius:50%;
+    background: radial-gradient(circle at 35% 30%, #fff8d8, var(--gold) 55%, #a97a10 100%);
+    box-shadow: 0 0 14px rgba(255,200,87,0.55);
+  }
+  #scene3.active .coin{ animation: coinPulse 0.4s ease-in-out infinite, coinCollect 6s linear forwards; }
+  @keyframes coinPulse{ 0%,100%{ transform:scale(1) rotateY(0deg); } 50%{ transform:scale(1.08) rotateY(180deg); } }
+  @keyframes coinCollect{ 0%,54%{ opacity:1; } 58%{ opacity:0; transform:scale(1.8); } 100%{ opacity:0; } }
+  .score-float{
+    position:absolute; bottom:calc(30% + 130px); left:52%;
+    font-family:'Press Start 2P', monospace; font-size:11px; color: var(--gold);
+    opacity:0;
+  }
+  #scene3.active .score-float{ animation: scorePop 1s ease forwards 3.4s; }
+  @keyframes scorePop{ 0%{ opacity:0; transform:translateY(0); } 30%{ opacity:1; } 100%{ opacity:0; transform:translateY(-30px); } }
+
+  /* ---------- Scene 4: Boss battle (5.6s, packed with action) ---------- */
+  #scene4{ background: radial-gradient(circle at 50% 50%, #241226, #05070c 75%); }
+  .boss{
+    position:absolute; width:90px; height:90px; border-radius:50%;
+    background: radial-gradient(circle at 35% 30%, #ff8fb5, var(--magenta) 60%, #7a0d33 100%);
+    box-shadow: 0 0 40px rgba(255,61,120,0.5);
+    right:20%;
+  }
+  #scene4.active .boss{
+    animation:
+      bossFloat 0.7s ease-in-out infinite,
+      bossHitFlash 0.4s ease-in-out 3 2.0s,
+      bossRage 0.3s ease forwards 3.08s,
+      bossChargeUp 0.4s ease-in-out 2 3.42s,
+      bossDie 0.5s ease forwards 3.9s;
+  }
+  @keyframes bossFloat{ 0%,100%{ transform:translateY(0) scale(1); } 50%{ transform:translateY(-10px) scale(1.03); } }
+  @keyframes bossHitFlash{ 0%,100%{ filter:brightness(1); } 50%{ filter:brightness(2.6) saturate(1.8); } }
+  @keyframes bossRage{ to{ filter:saturate(2.2) brightness(1.15); transform:scale(1.18); } }
+  @keyframes bossChargeUp{ 0%,100%{ box-shadow:0 0 40px rgba(255,61,120,0.5); } 50%{ box-shadow:0 0 80px 20px rgba(255,61,120,0.9); } }
+  @keyframes bossDie{ to{ opacity:0; transform:scale(0.1) rotate(90deg); } }
+
+  /* pre-finish slow-mo dramatic pause */
+  .slowmo-overlay{
+    position:absolute; inset:0; background: rgba(5,4,10,0.35); opacity:0; z-index:35; pointer-events:none;
+  }
+  #scene4.active .slowmo-overlay{ animation: slowmoSeq 5.6s ease forwards; }
+  @keyframes slowmoSeq{ 0%,61%{ opacity:0; } 62%{ opacity:1; } 69%{ opacity:0; } 100%{ opacity:0; } }
+  .finish-text{
+    position:absolute; left:50%; top:38%; transform:translate(-50%,-50%) scale(0.5);
+    font-family:'Press Start 2P', monospace; font-size: clamp(18px,4vw,30px); color:#fff;
+    text-shadow: 2px 2px 0 var(--magenta), -2px -2px 0 var(--cyan);
+    opacity:0; z-index:36; letter-spacing:2px;
+  }
+  #scene4.active .finish-text{ animation: finishTextSeq 5.6s ease forwards; }
+  @keyframes finishTextSeq{
+    0%,62%{ opacity:0; transform:translate(-50%,-50%) scale(0.3); }
+    64%{ opacity:1; transform:translate(-50%,-50%) scale(1.3); }
+    68%{ opacity:1; transform:translate(-50%,-50%) scale(1); }
+    70%{ opacity:0; transform:translate(-50%,-50%) scale(1.6); }
+    100%{ opacity:0; }
+  }
+
+  /* spark bursts on every hit, not just death */
+  .spark{
+    position:absolute; width:5px; height:5px; border-radius:50%; opacity:0;
+    right:23%; top:44%;
+  }
+  #scene4.active .spark{ animation: sparkBurstSeq 5.6s ease-out forwards; }
+  @keyframes sparkBurstSeq{
+    0%,44%{ opacity:0; transform:translate(0,0); }
+    46%{ opacity:1; }
+    50%{ opacity:0; transform:translate(var(--sdx), var(--sdy)); }
+    100%{ opacity:0; }
+  }
+  .spark.s2{ animation-delay: 0.09s; }
+  #scene4.active .spark.s2{ animation: sparkBurstSeq2 5.6s ease-out forwards; }
+  @keyframes sparkBurstSeq2{
+    0%,53%{ opacity:0; transform:translate(0,0); }
+    55%{ opacity:1; }
+    59%{ opacity:0; transform:translate(var(--sdx), var(--sdy)); }
+    100%{ opacity:0; }
+  }
+  .spark.s3{ }
+  #scene4.active .spark.s3{ animation: sparkBurstSeq3 5.6s ease-out forwards; }
+  @keyframes sparkBurstSeq3{
+    0%,61%{ opacity:0; transform:translate(0,0); }
+    63%{ opacity:1; }
+    67%{ opacity:0; transform:translate(var(--sdx), var(--sdy)); }
+    100%{ opacity:0; }
+  }
+
+  /* chromatic-aberration style glitch flicker on explosion */
+  .glitch-slice{
+    position:absolute; inset:0; opacity:0; pointer-events:none; z-index:42; mix-blend-mode:screen;
+  }
+  #scene4.active .glitch-slice.gr{ background: rgba(255,0,80,0.35); animation: glitchShift 0.35s steps(2) forwards 3.9s; }
+  #scene4.active .glitch-slice.gb{ background: rgba(0,220,255,0.35); animation: glitchShiftB 0.35s steps(2) forwards 3.9s; }
+  @keyframes glitchShift{ 0%{ opacity:0; transform:translateX(0); } 30%{ opacity:1; transform:translateX(8px); } 60%{ opacity:1; transform:translateX(-6px); } 100%{ opacity:0; transform:translateX(0); } }
+  @keyframes glitchShiftB{ 0%{ opacity:0; transform:translateX(0); } 30%{ opacity:1; transform:translateX(-8px); } 60%{ opacity:1; transform:translateX(6px); } 100%{ opacity:0; transform:translateX(0); } }
+  .boss-eye{ position:absolute; width:14px; height:14px; background:#fff; border-radius:50%; top:30px; }
+  .boss-eye.l{ left:22px; } .boss-eye.r{ right:22px; }
+  .boss-pupil{ position:absolute; width:6px; height:6px; background:#000; border-radius:50%; top:4px; left:4px; }
+
+  .boss-health-wrap{ position:absolute; top:14%; right:14%; width:160px; z-index:5; }
+  .boss-health-label{ font-family:'Press Start 2P', monospace; font-size:9px; color: var(--magenta); margin-bottom:6px; letter-spacing:1px; }
+  .boss-health-bar{ height:14px; border:2px solid var(--panel-line); background:#1a0a12; position:relative; overflow:hidden; }
+  .boss-health-fill{ position:absolute; inset:0; background: linear-gradient(90deg, var(--magenta), #ff8fb5); width:100%; }
+  #scene4.active .boss-health-fill{ animation: healthDrain 5.6s steps(1) forwards; }
+  @keyframes healthDrain{
+    0%{ width:100%; } 45%{ width:100%; } 46%{ width:66%; }
+    54%{ width:66%; } 55%{ width:33%; }
+    62%{ width:33%; } 63%{ width:0%; } 100%{ width:0%; }
+  }
+
+  .lightning{ position:absolute; opacity:0; pointer-events:none; }
+  #scene4.active .lightning{ animation: lightningFlash 0.55s ease-in-out infinite; animation-delay: 2s; }
+  @keyframes lightningFlash{ 0%,100%{ opacity:0; } 45%{ opacity:1; } 55%{ opacity:0; } }
+
+  .shockwave{ position:absolute; border:3px solid var(--cyan); border-radius:50%; width:20px; height:20px; opacity:0; }
+  #scene4.active .shockwave{ animation: shockwaveExpand 0.55s ease-out infinite; animation-delay: 2s; }
+  @keyframes shockwaveExpand{ 0%,35%{ opacity:0; transform:scale(0.5); } 45%{ opacity:0.8; transform:scale(1); } 70%{ opacity:0; transform:scale(3.4); } 100%{ opacity:0; } }
+
+  .impact-flash{ position:absolute; inset:0; background:#fff; opacity:0; pointer-events:none; z-index:40; }
+  #scene4.active .impact-flash{ animation: impactFlash 0.55s ease-in-out infinite; animation-delay: 2s; }
+  @keyframes impactFlash{ 0%,100%{ opacity:0; } 45%{ opacity:0.4; } 55%{ opacity:0; } }
+
+  /* combo counter popup */
+  .combo-text{
+    position:absolute; right:22%; top:30%;
+    font-family:'Press Start 2P', monospace; font-size:16px; color: var(--gold);
+    opacity:0; text-shadow: 2px 2px 0 var(--magenta); z-index:6;
+  }
+  #scene4.active .combo-text{ animation: comboPopSeq 5.6s ease forwards; }
+  @keyframes comboPopSeq{
+    0%,44%{ opacity:0; transform:translateY(0) scale(0.6); }
+    46%{ opacity:1; transform:translateY(-10px) scale(1.2); }
+    52%{ opacity:0; transform:translateY(-30px) scale(1); }
+    100%{ opacity:0; }
+  }
+  .combo-text.c2{ animation-delay:0s; }
+  #scene4.active .combo-text.c2{ animation: comboPopSeq2 5.6s ease forwards; }
+  @keyframes comboPopSeq2{
+    0%,53%{ opacity:0; transform:translateY(0) scale(0.6); }
+    55%{ opacity:1; transform:translateY(-10px) scale(1.3); }
+    61%{ opacity:0; transform:translateY(-30px) scale(1); }
+    100%{ opacity:0; }
+  }
+  #scene4.active .combo-text.c3{ animation: comboPopSeq3 5.6s ease forwards; }
+  @keyframes comboPopSeq3{
+    0%,61%{ opacity:0; transform:translateY(0) scale(0.6); }
+    63%{ opacity:1; transform:translateY(-10px) scale(1.4); }
+    69%{ opacity:0; transform:translateY(-30px) scale(1); }
+    100%{ opacity:0; }
+  }
+
+  /* hero choreography: idle -> triple-dodge-roll -> dash-combo x3 -> recoil -> dash back -> victory */
+  .hero2{ position:absolute; left:18%; bottom:38%; width:34px; height:44px; z-index:4; }
+  #scene4.active .hero2{ animation: heroSequence2 5.6s ease-in-out forwards; }
+  @keyframes heroSequence2{
+    0%{ transform:translate(0,0) rotate(0deg); }
+    4%{ transform:translate(0,0) rotate(0deg); }
+    9%{ transform:translate(-10px,-45px) rotate(-140deg); }
+    14%{ transform:translate(10px,-10px) rotate(-260deg); }
+    18%{ transform:translate(-8px,-50px) rotate(-380deg); }
+    22%{ transform:translate(0,0) rotate(-360deg); }
+    27%{ transform:translate(0,0) rotate(-360deg); }
+    34%{ transform:translate(410px,0) rotate(-360deg) scale(1.1); }
+    41%{ transform:translate(410px,0) rotate(-350deg) scale(0.95); }
+    46%{ transform:translate(410px,0) rotate(-372deg) scale(1.05); }
+    50%{ transform:translate(400px,-6px) rotate(-350deg); }
+    55%{ transform:translate(410px,0) rotate(-372deg) scale(1.05); }
+    59%{ transform:translate(400px,-6px) rotate(-350deg); }
+    63%{ transform:translate(410px,0) rotate(-372deg) scale(1.05); }
+    68%{ transform:translate(380px,4px) rotate(-350deg); }
+    78%{ transform:translate(380px,4px) rotate(-350deg); }
+    90%{ transform:translate(0,0) rotate(-360deg); }
+    94%{ transform:translate(0,-22px) rotate(-330deg); }
+    98%{ transform:translate(0,0) rotate(-360deg); }
+    100%{ transform:translate(0,0) rotate(-360deg); }
+  }
+  .hero-afterimage{
+    position:absolute; left:18%; bottom:38%; width:34px; height:44px;
+    opacity:0; z-index:3; filter:blur(1.5px);
+  }
+  #scene4.active .hero-afterimage{ animation: afterimageSeq2 5.6s ease-in-out forwards; }
+  @keyframes afterimageSeq2{
+    0%,30%{ opacity:0; transform:translateX(0); }
+    32%{ opacity:0.4; transform:translateX(200px); }
+    34%{ opacity:0; transform:translateX(410px); }
+    88%{ opacity:0; transform:translateX(410px); }
+    89%{ opacity:0.4; transform:translateX(200px); }
+    90%{ opacity:0; transform:translateX(0); }
+    100%{ opacity:0; }
+  }
+
+  /* speed lines during dash */
+  .speed-line{
+    position:absolute; height:2px; background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+    opacity:0; left:15%;
+  }
+  #scene4.active .speed-line{ animation: speedLineSeq 5.6s ease-in-out forwards; }
+  @keyframes speedLineSeq{
+    0%,29%{ opacity:0; transform:translateX(0) scaleX(0.3); }
+    32%{ opacity:1; transform:translateX(300px) scaleX(1.4); }
+    36%{ opacity:0; transform:translateX(450px) scaleX(0.6); }
+    100%{ opacity:0; }
+  }
+
+  /* triple projectile barrage */
+  .boss-projectile{
+    position:absolute; width:16px; height:16px; border-radius:50%;
+    background: radial-gradient(circle, #fff, var(--magenta) 70%);
+    box-shadow: 0 0 14px var(--magenta);
+    opacity:0;
+  }
+  .boss-projectile.p1{ top:38%; right:22%; }
+  .boss-projectile.p2{ top:48%; right:22%; }
+  .boss-projectile.p3{ top:58%; right:22%; }
+  #scene4.active .boss-projectile.p1{ animation: projectileFly1 5.6s ease-in forwards; }
+  #scene4.active .boss-projectile.p2{ animation: projectileFly2 5.6s ease-in forwards; }
+  #scene4.active .boss-projectile.p3{ animation: projectileFly3 5.6s ease-in forwards; }
+  @keyframes projectileFly1{ 0%,3%{ opacity:0; right:22%; top:38%; } 5%{ opacity:1; } 16%{ opacity:1; right:72%; top:30%; } 18%{ opacity:0; right:76%; } 100%{ opacity:0; } }
+  @keyframes projectileFly2{ 0%,6%{ opacity:0; right:22%; top:48%; } 8%{ opacity:1; } 19%{ opacity:1; right:72%; top:56%; } 21%{ opacity:0; right:76%; } 100%{ opacity:0; } }
+  @keyframes projectileFly3{ 0%,9%{ opacity:0; right:22%; top:58%; } 11%{ opacity:1; } 22%{ opacity:1; right:72%; top:66%; } 24%{ opacity:0; right:76%; } 100%{ opacity:0; } }
+
+  /* big explosion debris on death */
+  .debris{
+    position:absolute; width:8px; height:8px; opacity:0; right:20%; top:50%;
+  }
+  #scene4.active .debris{ animation: debrisFly 1s ease-out forwards 3.9s; }
+  @keyframes debrisFly{
+    0%{ opacity:1; transform:translate(0,0) rotate(0deg); }
+    100%{ opacity:0; transform:translate(var(--dx), var(--dy)) rotate(var(--dr)); }
+  }
+  .explosion-flash{
+    position:absolute; inset:0; background: radial-gradient(circle at 70% 45%, #fff, rgba(255,61,120,0.6) 40%, transparent 70%);
+    opacity:0; pointer-events:none; z-index:41;
+  }
+  #scene4.active .explosion-flash{ animation: explosionFlashSeq 0.7s ease-out forwards 3.9s; }
+  @keyframes explosionFlashSeq{ 0%{ opacity:0; } 15%{ opacity:1; } 100%{ opacity:0; } }
+
+  .slash{
+    position:absolute; right:24%; top:44%;
+    width:70px; height:4px; background: var(--cyan);
+    box-shadow:0 0 12px var(--cyan);
+    opacity:0;
+    transform:rotate(-30deg);
+  }
+  #scene4.active .slash{ animation: slashHit 0.55s ease-in-out infinite; animation-delay:2s; }
+  @keyframes slashHit{ 0%,100%{ opacity:0; } 45%{ opacity:1; transform:rotate(-30deg) scale(1); } 60%{ opacity:0; transform:rotate(-30deg) scale(1.5); } }
+
+  /* ---------- Scene 5: High score ---------- */
+  #scene5{ background: radial-gradient(circle at 50% 40%, #1a2436, #05070c 75%); flex-direction:column; gap:18px; }
+  .trophy{
+    font-size: 64px;
+    transform: scale(0);
+    position:relative;
+    z-index:2;
+  }
+  #scene5.active .trophy{ animation: trophyBounce 0.7s cubic-bezier(.34,1.56,.64,1) forwards 0.2s; }
+  @keyframes trophyBounce{ to{ transform:scale(1); } }
+  .star-rays{
+    position:absolute;
+    width:280px; height:280px;
+    background: conic-gradient(from 0deg, transparent 0deg, rgba(255,200,87,0.18) 8deg, transparent 16deg, transparent 40deg, rgba(255,200,87,0.18) 48deg, transparent 56deg, transparent 80deg, rgba(255,200,87,0.18) 88deg, transparent 96deg, transparent 120deg, rgba(255,200,87,0.18) 128deg, transparent 136deg, transparent 160deg, rgba(255,200,87,0.18) 168deg, transparent 176deg, transparent 200deg, rgba(255,200,87,0.18) 208deg, transparent 216deg, transparent 240deg, rgba(255,200,87,0.18) 248deg, transparent 256deg, transparent 280deg, rgba(255,200,87,0.18) 288deg, transparent 296deg, transparent 320deg, rgba(255,200,87,0.18) 328deg, transparent 336deg);
+    opacity:0;
+    z-index:1;
+  }
+  #scene5.active .star-rays{ animation: raysSpin 8s linear infinite, raysFadeIn 0.6s ease forwards; }
+  @keyframes raysSpin{ from{ transform:rotate(0deg); } to{ transform:rotate(360deg); } }
+  @keyframes raysFadeIn{ to{ opacity:1; } }
+  .highscore-text{
+    font-family:'Press Start 2P', monospace;
+    font-size: clamp(16px, 4vw, 28px);
+    color: var(--gold);
+    opacity:0;
+    text-shadow: 0 0 20px rgba(255,200,87,0.7);
+  }
+  #scene5.active .highscore-text{ animation: fadeIn2 0.6s ease forwards 0.7s; }
+  @keyframes fadeIn2{ to{ opacity:1; } }
+  .score-num{
+    font-family:'JetBrains Mono', monospace;
+    color: var(--cyan);
+    font-size: clamp(14px, 3vw, 20px);
+    opacity:0;
+  }
+  #scene5.active .score-num{ animation: fadeIn2 0.6s ease forwards 1.1s; }
+  .confetti-piece{
+    position:absolute; top:-20px; width:8px; height:8px; opacity:0.9;
+  }
+
+  /* victory hero: jumps in from the side and lands center-stage, cheering */
+  .hero3{
+    position:absolute; bottom:14%; left:50%;
+    width:34px; height:44px; z-index:3;
+    transform: translate(-50%, 120px) scale(0.9);
+    opacity:0;
+  }
+  #scene5.active .hero3{ animation: heroVictorySeq 3.4s cubic-bezier(.34,1.56,.64,1) forwards 0.15s; }
+  @keyframes heroVictorySeq{
+    0%{ opacity:0; transform:translate(-50%,120px) scale(0.9); }
+    8%{ opacity:1; }
+    35%{ transform:translate(-50%,-40px) scale(1.05); }
+    46%{ transform:translate(-50%,0px) scale(0.95); }
+    54%{ transform:translate(-50%,-10px) scale(1.03); }
+    62%,100%{ transform:translate(-50%,0px) scale(1); }
+  }
+  /* stop normal run-swing animations and hold a raised V-arms cheer pose */
+  .hero3 .hero-leg{ animation: none !important; height:14px; }
+  .hero3 .hero-leg.l{ transform:rotate(-12deg); transform-origin: top center; }
+  .hero3 .hero-leg.r{ transform:rotate(12deg); transform-origin: top center; }
+  .hero3 .hero-arm{ animation: none !important; }
+  .hero3 .hero-arm.l{ transform:rotate(155deg); }
+  .hero3 .hero-arm.r{ transform:rotate(-155deg); }
+  #scene5.active .hero3 .hero-arm,
+  #scene5.active .hero3 .hero-sword{ animation: cheerWiggle 0.5s ease-in-out infinite 1.4s !important; }
+  @keyframes cheerWiggle{ 0%,100%{ filter:brightness(1); } 50%{ filter:brightness(1.25); } }
+
+  /* ---------- Scene 6: Replay ---------- */
+  #scene6{ background:#000; flex-direction:column; gap:24px; }
+  .theend{
+    font-family:'Press Start 2P', monospace;
+    color: var(--text);
+    font-size: clamp(16px, 4vw, 26px);
+    letter-spacing:2px;
+    opacity:0;
+  }
+  #scene6.active .theend{ animation: fadeIn2 0.8s ease forwards 0.2s; }
+  .replay-btn{
+    font-family:'JetBrains Mono', monospace;
+    background: none;
+    border:2px solid var(--cyan);
+    color: var(--cyan);
+    padding:12px 26px;
+    font-size:14px;
+    letter-spacing:1px;
+    cursor:pointer;
+    opacity:0;
+    transition: background .2s ease, color .2s ease;
+  }
+  #scene6.active .replay-btn{ animation: fadeIn2 0.8s ease forwards 1s; }
+  .replay-btn:hover{ background: var(--cyan); color:#000; }
+
+  .skip-btn{
+    position:absolute; bottom:14px; right:14px; z-index:60;
+    font-family:'JetBrains Mono', monospace;
+    background: rgba(0,0,0,0.5);
+    border:1px solid var(--panel-line);
+    color: var(--text);
+    padding:6px 12px;
+    font-size:11px;
+    cursor:pointer;
+  }
+  .skip-btn:hover{ border-color: var(--cyan); }
+</style>
+</head>
+<body>
+
+  <div class="screen-wrap">
+    <div class="crt"></div>
+    <div class="starfield"></div>
+    <div class="parallax-cloud c1"></div>
+    <div class="parallax-cloud c2"></div>
+    <div class="parallax-cloud c3"></div>
+
+    <div class="scene" id="scene1">
+      <div class="coin-icon-big"></div>
+      <div class="blink-text">INSERT COIN</div>
+    </div>
+
+    <div class="scene" id="scene2">
+      <div class="title-main">PIXEL QUEST</div>
+      <div class="title-sub">EIN ARCADE-KURZFILM</div>
+    </div>
+
+    <div class="scene" id="scene3">
+      <div class="ground-line"></div>
+      <div class="spike"></div>
+      <div class="coin"></div>
+      <div class="score-float">+100</div>
+      <div class="landing-dust" style="left:50%; --dx:-14px;"></div>
+      <div class="landing-dust" style="left:53%; animation-delay:3.32s; --dx:10px;"></div>
+      <div class="landing-dust" style="left:51%; animation-delay:3.35s; --dx:-6px;"></div>
+      <div class="hero">
+        <div class="hero-body">
+          <div class="hero-leg l"></div>
+          <div class="hero-leg r"></div>
+          <div class="hero-arm l"></div>
+          <div class="hero-arm r"><div class="hero-sword"><div class="grip"></div><div class="hilt"></div><div class="blade"></div></div></div>
+          <div class="hero-torso"></div>
+          <div class="hero-head"></div>
+          <div class="hero-visor"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="scene" id="scene4">
+      <div class="impact-flash"></div>
+      <div class="explosion-flash"></div>
+      <div class="slowmo-overlay"></div>
+      <div class="glitch-slice gr"></div>
+      <div class="glitch-slice gb"></div>
+      <div class="finish-text">FINISH!</div>
+      <div class="boss-health-wrap">
+        <div class="boss-health-label">BOSS</div>
+        <div class="boss-health-bar"><div class="boss-health-fill"></div></div>
+      </div>
+      <div class="boss-projectile p1"></div>
+      <div class="boss-projectile p2"></div>
+      <div class="boss-projectile p3"></div>
+      <div class="combo-text">×1</div>
+      <div class="combo-text c2">×2</div>
+      <div class="combo-text c3">×3</div>
+      <div class="spark" style="--sdx:-30px; --sdy:-20px; background:var(--cyan);"></div>
+      <div class="spark" style="--sdx:25px; --sdy:-25px; background:var(--gold);"></div>
+      <div class="spark" style="--sdx:-15px; --sdy:25px; background:#fff;"></div>
+      <div class="spark s2" style="--sdx:-35px; --sdy:15px; background:var(--cyan);"></div>
+      <div class="spark s2" style="--sdx:30px; --sdy:-30px; background:var(--gold);"></div>
+      <div class="spark s2" style="--sdx:10px; --sdy:32px; background:#fff;"></div>
+      <div class="spark s3" style="--sdx:-40px; --sdy:-15px; background:var(--cyan);"></div>
+      <div class="spark s3" style="--sdx:38px; --sdy:20px; background:var(--gold);"></div>
+      <div class="spark s3" style="--sdx:0px; --sdy:-38px; background:#fff;"></div>
+      <svg class="lightning" width="30" height="60" style="top:20%; right:32%;" viewBox="0 0 30 60"><polygon points="18,0 4,32 14,32 8,60 28,24 16,24" fill="#ffc857"/></svg>
+      <svg class="lightning" width="24" height="50" style="top:50%; right:42%; animation-delay:2.15s;" viewBox="0 0 30 60"><polygon points="18,0 4,32 14,32 8,60 28,24 16,24" fill="#2de1e6"/></svg>
+      <div class="shockwave" style="right:22%; top:38%;"></div>
+      <div class="shockwave" style="right:22%; top:38%; animation-delay:2.1s;"></div>
+      <div class="speed-line" style="top:52%; width:60px;"></div>
+      <div class="speed-line" style="top:58%; width:80px; animation-delay:0.03s;"></div>
+      <div class="speed-line" style="top:64%; width:50px; animation-delay:0.06s;"></div>
+      <div class="hero-afterimage">
+        <div class="hero-body">
+          <div class="hero-leg l"></div>
+          <div class="hero-leg r"></div>
+          <div class="hero-arm l"></div>
+          <div class="hero-arm r"><div class="hero-sword"><div class="grip"></div><div class="hilt"></div><div class="blade"></div></div></div>
+          <div class="hero-torso"></div>
+          <div class="hero-head"></div>
+          <div class="hero-visor"></div>
+        </div>
+      </div>
+      <div class="hero2">
+        <div class="hero-body">
+          <div class="hero-leg l"></div>
+          <div class="hero-leg r"></div>
+          <div class="hero-arm l"></div>
+          <div class="hero-arm r"><div class="hero-sword"><div class="grip"></div><div class="hilt"></div><div class="blade"></div></div></div>
+          <div class="hero-torso"></div>
+          <div class="hero-head"></div>
+          <div class="hero-visor"></div>
+        </div>
+      </div>
+      <div class="slash"></div>
+      <div class="boss">
+        <div class="boss-eye l"><div class="boss-pupil"></div></div>
+        <div class="boss-eye r"><div class="boss-pupil"></div></div>
+      </div>
+      <div class="debris" style="--dx:120px; --dy:-80px; --dr:220deg; background:var(--magenta); right:20%; top:45%;"></div>
+      <div class="debris" style="--dx:-90px; --dy:-100px; --dr:180deg; background:var(--gold); right:24%; top:50%;"></div>
+      <div class="debris" style="--dx:140px; --dy:40px; --dr:300deg; background:var(--cyan); right:16%; top:55%;"></div>
+      <div class="debris" style="--dx:-110px; --dy:60px; --dr:150deg; background:var(--magenta); right:26%; top:58%;"></div>
+      <div class="debris" style="--dx:60px; --dy:-120px; --dr:260deg; background:#fff; right:18%; top:48%;"></div>
+      <div class="debris" style="--dx:-60px; --dy:-60px; --dr:90deg; background:var(--gold); right:22%; top:52%;"></div>
+    </div>
+
+    <div class="scene" id="scene5">
+      <div class="star-rays"></div>
+      <div class="hero3">
+        <div class="hero-body">
+          <div class="hero-leg l"></div>
+          <div class="hero-leg r"></div>
+          <div class="hero-arm l"></div>
+          <div class="hero-arm r"><div class="hero-sword"><div class="grip"></div><div class="hilt"></div><div class="blade"></div></div></div>
+          <div class="hero-torso"></div>
+          <div class="hero-head"></div>
+          <div class="hero-visor"></div>
+        </div>
+      </div>
+      <div class="trophy">🏆</div>
+      <div class="highscore-text">HIGH SCORE!</div>
+      <div class="score-num">009999</div>
+    </div>
+
+    <div class="scene" id="scene6">
+      <div class="theend">THE END</div>
+      <button class="replay-btn" id="replayBtn">↻ NOCHMAL SPIELEN</button>
+    </div>
+
+    <button class="skip-btn" id="skipBtn">Überspringen ⏭</button>
+  </div>
+
+<script>
+  const scenes = [
+    { id: 'scene1', duration: 2200 },
+    { id: 'scene2', duration: 2600 },
+    { id: 'scene3', duration: 6200 },
+    { id: 'scene4', duration: 5600 },
+    { id: 'scene5', duration: 3400 },
+    { id: 'scene6', duration: null } // waits for replay click
+  ];
+
+  let currentIndex = 0;
+  let timer = null;
+
+  function confettiBurst(){
+    const scene5 = document.getElementById('scene5');
+    const colors = ['#2de1e6', '#ff3d78', '#ffc857', '#ffffff'];
+    for(let i = 0; i < 40; i++){
+      const c = document.createElement('div');
+      c.className = 'confetti-piece';
+      c.style.left = Math.random() * 100 + '%';
+      c.style.background = colors[Math.floor(Math.random() * colors.length)];
+      c.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+      scene5.appendChild(c);
+      const fall = c.animate([
+        { transform: 'translateY(0) rotate(0deg)', opacity: 1 },
+        { transform: `translateY(${300 + Math.random()*120}px) rotate(${360 + Math.random()*360}deg)`, opacity: 0.9 }
+      ], { duration: 1800 + Math.random()*1200, delay: Math.random()*400, easing: 'ease-in' });
+      fall.onfinish = () => c.remove();
+    }
+  }
+
+  function shakeScreen(){
+    const wrap = document.querySelector('.screen-wrap');
+    wrap.classList.remove('shake');
+    void wrap.offsetWidth;
+    wrap.classList.add('shake');
+  }
+  function zoomPulse(){
+    const wrap = document.querySelector('.screen-wrap');
+    wrap.classList.remove('zoom');
+    void wrap.offsetWidth;
+    wrap.classList.add('zoom');
+  }
+
+  const sceneEffects = {
+    scene3: [ { at: 3300, fn: shakeScreen } ], // coin collect
+    scene4: [ { at: 1230, fn: shakeScreen }, { at: 2570, fn: shakeScreen }, { at: 3080, fn: shakeScreen }, { at: 3470, fn: zoomPulse }, { at: 3520, fn: shakeScreen }, { at: 3900, fn: () => { shakeScreen(); zoomPulse(); } } ], // dodge-roll landing + 3 combo hits + finish zoom + explosion
+    scene5: [ { at: 0, fn: zoomPulse } ]
+  };
+  let effectTimers = [];
+
+  function playScene(index){
+    document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
+    effectTimers.forEach(t => clearTimeout(t));
+    effectTimers = [];
+    const scene = scenes[index];
+    const el = document.getElementById(scene.id);
+    // force reflow so CSS animations restart cleanly on replay
+    void el.offsetWidth;
+    el.classList.add('active');
+
+    if(scene.id === 'scene5'){
+      setTimeout(confettiBurst, 250);
+    }
+
+    if(sceneEffects[scene.id]){
+      sceneEffects[scene.id].forEach(effect => {
+        effectTimers.push(setTimeout(effect.fn, effect.at));
+      });
+    }
+
+    if(scene.duration !== null){
+      timer = setTimeout(() => {
+        currentIndex = (index + 1) % scenes.length;
+        playScene(currentIndex);
+      }, scene.duration);
+    }
+  }
+
+  document.getElementById('replayBtn').addEventListener('click', () => {
+    currentIndex = 0;
+    playScene(0);
+  });
+
+  document.getElementById('skipBtn').addEventListener('click', () => {
+    clearTimeout(timer);
+    currentIndex = scenes.length - 1;
+    playScene(currentIndex);
+  });
+
+  playScene(0);
+</script>
+
+</body>
+</html>
