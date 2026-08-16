@@ -18,39 +18,39 @@
     padding: 18px 20px; gap: 12px; flex-wrap: wrap;
   }
   .stat-box {
-    display: flex; align-items: center; gap: 10px;
+    display: flex; align-items: center; gap: 14px;
     background: linear-gradient(160deg, rgba(35,20,60,0.72), rgba(18,10,32,0.72));
     border: 1px solid rgba(180, 140, 255, 0.28);
     border-radius: 999px;
-    padding: 7px 18px 7px 9px;
+    padding: 12px 28px 12px 14px;
     backdrop-filter: blur(10px) saturate(1.3);
     -webkit-backdrop-filter: blur(10px) saturate(1.3);
     box-shadow: 0 4px 18px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06);
-    min-width: 118px;
+    min-width: 160px;
     transition: box-shadow 0.25s ease, transform 0.25s ease;
   }
   .stat-icon {
-    width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+    width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
     box-shadow: inset 0 0 0 1px rgba(255,255,255,0.15);
   }
-  .stat-icon svg { width: 18px; height: 18px; }
+  .stat-icon svg { width: 26px; height: 26px; }
   .stat-text { display: flex; flex-direction: column; line-height: 1.15; }
-  .stat-label { font-size: 10.5px; letter-spacing: 1.2px; color: rgba(255,255,255,0.55); font-weight: 600; text-transform: uppercase; }
-  .stat-value { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; text-shadow: 0 2px 8px rgba(0,0,0,0.5); }
+  .stat-label { font-size: 13px; letter-spacing: 1.2px; color: rgba(255,255,255,0.55); font-weight: 600; text-transform: uppercase; }
+  .stat-value { font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; text-shadow: 0 2px 8px rgba(0,0,0,0.5); }
 
   #box-score .stat-icon { background: radial-gradient(circle, #ffe27a55, transparent 70%); }
   #box-score .stat-value { color: #ffe27a; }
-  #box-checkpoints .stat-icon { background: radial-gradient(circle, #9ad4ff55, transparent 70%); }
-  #box-checkpoints .stat-value { color: #9ad4ff; }
+  #box-checkpoints .stat-icon { background: radial-gradient(circle, #ffd54f55, transparent 70%); }
+  #box-checkpoints .stat-value { color: #ffd54f; }
   #box-timer .stat-icon { background: radial-gradient(circle, #d9b8ff55, transparent 70%); }
   #box-timer .stat-value { color: #d9b8ff; }
   #box-lives .stat-icon { background: radial-gradient(circle, #ff7a9055, transparent 70%); }
 
   #lives-bar-bg {
-    width: 90px; height: 10px; margin-top: 3px;
+    width: 130px; height: 15px; margin-top: 5px;
     background: rgba(0,0,0,0.4); border: 1px solid rgba(255,122,144,0.4);
-    border-radius: 6px; overflow: hidden;
+    border-radius: 8px; overflow: hidden;
   }
   #lives-bar-fill {
     height: 100%; width: 100%;
@@ -277,6 +277,10 @@
     margin: 2px 0 0 !important; font-size: 12.5px !important; font-style: italic;
     color: rgba(211,198,238,0.65) !important;
   }
+  #totalTrophyLine {
+    margin: 8px 0 0 !important; font-size: 12.5px !important; font-weight: 700;
+    color: #ffd54f !important; text-shadow: 0 0 8px rgba(255,213,79,0.4);
+  }
 
   /* feature highlight cards, replacing the old plain paragraph */
   .featureRow {
@@ -332,12 +336,6 @@
     0%, 100% { box-shadow: 0 6px 20px rgba(138,92,255,0.5); }
     50%      { box-shadow: 0 6px 32px rgba(122,255,196,0.6); }
   }
-  #finishScreen {
-    position: fixed; inset: 0; background: rgba(10,5,24,0.85);
-    display: none; flex-direction: column; align-items: center; justify-content: center;
-    color: #fff; z-index: 100; text-align: center;
-  }
-  #finishScreen h1 { color: #ffe27a; font-size: 38px; }
   .key { background: rgba(255,255,255,0.15); border-radius: 4px; padding: 2px 7px; font-weight: bold; }
 
   #pauseScreen {
@@ -467,17 +465,9 @@
 
 <div id="hud">
   <div id="topbar">
-    <div class="stat-box" id="box-score">
-      <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2l2.4 6.6L21 10l-5.2 4.4L17.4 21 12 17.3 6.6 21l1.6-6.6L3 10l6.6-1.4L12 2z" fill="#ffe27a"/></svg></div>
-      <div class="stat-text"><span class="stat-label">Punkte</span><span class="stat-value" id="score-val">0</span></div>
-    </div>
     <div class="stat-box" id="box-checkpoints">
-      <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="#9ad4ff" stroke-width="2"/><circle cx="12" cy="12" r="3" fill="#9ad4ff"/></svg></div>
-      <div class="stat-text"><span class="stat-label">Checkpoints</span><span class="stat-value" id="checkpoint-val">0 / 6</span></div>
-    </div>
-    <div class="stat-box" id="box-timer">
-      <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="#d9b8ff" stroke-width="2"/><path d="M12 7v5l3.5 2" stroke="#d9b8ff" stroke-width="2" stroke-linecap="round"/></svg></div>
-      <div class="stat-text"><span class="stat-label">Zeit</span><span class="stat-value" id="timer-val">00:00</span></div>
+      <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M7 4h10v3a5 5 0 0 1-5 5 5 5 0 0 1-5-5V4z" fill="#ffd54f"/><path d="M7 5H4a2 2 0 0 0 2 4h1M17 5h3a2 2 0 0 1-2 4h-1" stroke="#ffd54f" stroke-width="1.6" stroke-linecap="round"/><rect x="10" y="12" width="4" height="3" fill="#ffd54f"/><rect x="8" y="15" width="8" height="2.2" rx="1" fill="#ffd54f"/></svg></div>
+      <div class="stat-text"><span class="stat-label">Pokale</span><span class="stat-value" id="checkpoint-val">0</span></div>
     </div>
     <div class="stat-box" id="box-lives">
       <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M12 20s-7-4.4-9.5-9C1 7.5 3 4 6.5 4c2 0 3.5 1.2 4.5 2.6C12 5.2 13.5 4 15.5 4 19 4 21 7.5 20.5 11 18 15.6 12 20 12 20z" fill="#ff7a90"/></svg></div>
@@ -519,6 +509,7 @@
       <h1>Rankmann</h1>
     </div>
     <p class="heroTagline">Schwinge dich durch eine schwebende Fantasy-Welt</p>
+    <p id="totalTrophyLine">🏆 Insgesamt gesammelt: <span id="totalTrophyCount">0</span> Pokale</p>
 
     <div class="featureRow">
       <div class="featureCard">
@@ -527,9 +518,9 @@
         <span class="fSub">Punkte sammeln</span>
       </div>
       <div class="featureCard">
-        <span class="fIcon">🚩</span>
-        <span class="fLabel">6 Checkpoints</span>
-        <span class="fSub">Landen &amp; weiter</span>
+        <span class="fIcon">🏆</span>
+        <span class="fLabel">6 Pokale</span>
+        <span class="fSub">Einsammeln</span>
       </div>
       <div class="featureCard">
         <span class="fIcon">🛡️</span>
@@ -537,9 +528,9 @@
         <span class="fSub">Ausweichen</span>
       </div>
       <div class="featureCard">
-        <span class="fIcon">⏱️</span>
-        <span class="fLabel">Bestzeit</span>
-        <span class="fSub">Knacken</span>
+        <span class="fIcon">📈</span>
+        <span class="fLabel">1 bis 6</span>
+        <span class="fSub">Steigende Belohnung</span>
       </div>
     </div>
 
@@ -563,15 +554,15 @@
     <div id="updateTeaserGlow"></div>
     <span class="updateBadge">✨ Nächstes Update</span>
     <div class="updateFeature">
-      <span class="updateFeatureIcon">🏆</span>
+      <span class="updateFeatureIcon">📱</span>
       <div class="updateFeatureText">
-        <span class="updateFeatureTitle">Pokal-Plattformen</span>
-        <span class="updateFeatureSub">Checkpoints werden zu Plattformen, auf denen du Pokale sammelst — mit neuer Anzeige für deinen Pokal-Stand</span>
+        <span class="updateFeatureTitle">Touch-Steuerung</span>
+        <span class="updateFeatureSub">Virtuelle Steuerkreuze und Buttons für Handy &amp; Tablet — endlich mobil spielbar</span>
       </div>
     </div>
     <div id="updateEta">
       <span class="updateEtaLabel">Erscheint in</span>
-      <span class="updateEtaValue">1–2 Wochen</span>
+      <span class="updateEtaValue">Demnächst</span>
     </div>
   </div>
   </div>
@@ -582,7 +573,7 @@
     <div class="titleRow">
       <h1 style="font-size:32px;">Shop</h1>
     </div>
-    <p class="heroTagline" id="shopCoins">💰 0 Punkte</p>
+    <p class="heroTagline" id="shopCoins">🪙 0 Punkte</p>
     <button id="shopPreviewBtn" class="menuBtn" style="margin:10px 0;">🔍 Charakter in 3D ansehen</button>
     <p id="shopHint">Klick auf einen Farbkreis für eine Live-Vorschau am Charakter</p>
     <div id="shopGrid"></div>
@@ -599,12 +590,6 @@
   </div>
   <div id="previewSwatchRow"></div>
   <p id="previewDragHint">Ziehen zum Drehen<br>Mausrad zum Zoomen</p>
-</div>
-
-<div id="finishScreen">
-  <h1>🏆 Alle Checkpoints geschafft!</h1>
-  <p id="finalStats" style="font-size:20px; color:#d3c6ee;"></p>
-  <button id="restartBtn" style="margin-top:20px; padding:12px 30px; font-size:16px; border-radius:24px; border:none; background:linear-gradient(135deg,#8a5cff,#5c8cff); color:white; cursor:pointer;">Nochmal spielen</button>
 </div>
 
 <div id="pauseScreen" style="display:none;">
@@ -1512,6 +1497,9 @@
       playNoiseBurst(0.12, 500, 0.25);
       playTone(660, 0.1, 'triangle', 0.2, 1200);
     },
+    trophy: () => {
+      [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => playTone(f, 0.18, 'triangle', 0.24), i * 65));
+    },
   };
 
   // ---------- GRAPPLE STATE ----------
@@ -1637,11 +1625,7 @@
   // ---------- HUD ----------
   const scoreEl = document.getElementById('score-val');
   const checkEl = document.getElementById('checkpoint-val');
-  const timerEl = document.getElementById('timer-val');
   let score = 0;
-  let checkpointCount = 0;
-  let startTime = null;
-  let finished = false;
 
   // ---------- SHOP PERSISTENCE ----------
   // Uses localStorage so coins/skins survive reloads (best effort — if it's
@@ -1657,10 +1641,17 @@
   let coins = storageGet('rankmann_coins', 0);
   let ownedSkins = storageGet('rankmann_ownedSkins', ['standard']);
   let equippedSkin = storageGet('rankmann_equippedSkin', 'standard');
+  let totalTrophies = storageGet('rankmann_totalTrophies', 0);
+  function updateTrophyDisplay(){
+    const el = document.getElementById('totalTrophyCount');
+    if (el) el.textContent = totalTrophies;
+    if (checkEl) checkEl.textContent = totalTrophies;
+  }
+  updateTrophyDisplay();
 
   function addScore(amount){
     score += amount;
-    scoreEl.textContent = score;
+    if (scoreEl) scoreEl.textContent = score;
     coins += amount;
     storageSet('rankmann_coins', coins);
     updateShopUI();
@@ -1686,7 +1677,7 @@
   }
   function updateShopUI(){
     const coinsEl = document.getElementById('shopCoins');
-    if (coinsEl) coinsEl.textContent = '💰 ' + coins + ' Punkte';
+    if (coinsEl) coinsEl.textContent = '🪙 ' + coins + ' Punkte';
     const grid = document.getElementById('shopGrid');
     if (!grid) return;
     grid.innerHTML = '';
@@ -1705,7 +1696,7 @@
       name.textContent = skin.name;
       const cost = document.createElement('div');
       cost.className = 'skinCost';
-      cost.textContent = skin.cost === 0 ? 'Kostenlos' : '💰 ' + skin.cost;
+      cost.textContent = skin.cost === 0 ? 'Kostenlos' : '🪙 ' + skin.cost;
       const btn = document.createElement('button');
       btn.className = 'skinActionBtn' + (owned ? ' owned' : '');
       if (equipped) { btn.textContent = 'Ausgerüstet'; btn.disabled = true; }
@@ -1755,7 +1746,7 @@
     const owned = ownedSkins.includes(previewingSkinId);
     const equipped = equippedSkin === previewingSkinId;
     document.getElementById('previewSkinName').textContent = skin.name;
-    document.getElementById('previewSkinCost').textContent = skin.cost ? '💰 ' + skin.cost : 'Kostenlos';
+    document.getElementById('previewSkinCost').textContent = skin.cost ? '🪙 ' + skin.cost : 'Kostenlos';
     const btn = document.getElementById('previewActionBtn');
     btn.className = 'skinActionBtn' + (owned ? ' owned' : '');
     if (equipped) { btn.textContent = 'Ausgerüstet'; btn.disabled = true; btn.onclick = null; }
@@ -1771,6 +1762,7 @@
     previewMode = true;
     previewCamNeedsSnap = true;
     previewingSkinId = equippedSkin;
+    applySkin(equippedSkin); // clear any leftover preview from the shop grid's own swatch clicks
     previewZoomBeforehand = camZoom;
     camZoom = 3.4; // close full-body framing, still free to scroll-zoom further
     player.pitch = 0.12; // a sensible default framing angle regardless of prior camera state
@@ -1782,6 +1774,8 @@
     legPivots[1].rotation.x = 0;
     armPivots[0].rotation.x = 0;
     armPivots[1].rotation.x = 0;
+    armPivots[0].rotation.z = -0.24;
+    armPivots[1].rotation.z = 0.24;
     torsoGroup.rotation.x = 0;
     torsoGroup.rotation.z = 0;
     torsoGroup.position.y = 0.85;
@@ -1842,13 +1836,6 @@
     el.classList.add(cls);
   }
 
-  function formatTime(ms){
-    const s = Math.floor(ms/1000);
-    const m = Math.floor(s/60);
-    const sec = s%60;
-    return String(m).padStart(2,'0') + ':' + String(sec).padStart(2,'0');
-  }
-
   // ---------- GAME LOOP ----------
   const clock = new THREE.Clock();
   const GRAVITY = -22;
@@ -1856,7 +1843,7 @@
   let paused = false;
 
   function openPauseMenu(){
-    if (!running || finished || paused) return;
+    if (!running || paused) return;
     paused = true;
     document.getElementById('pauseScreen').style.display = 'flex';
     if (document.pointerLockElement) document.exitPointerLock();
@@ -2144,8 +2131,9 @@
     if (attackSwingT > 0){
       attackSwingT = Math.max(0, attackSwingT - dt * 4.5);
       const punchCurve = Math.sin((1 - attackSwingT) * Math.PI); // out and back
+      const armBaseZ = 0.24; // matches the shoulder's resting outward splay (side * 0.24)
       armPivots[1].rotation.x += (-2.3 * punchCurve - armPivots[1].rotation.x) * 0.6;
-      armPivots[1].rotation.z += (-0.3 * punchCurve - armPivots[1].rotation.z) * 0.6;
+      armPivots[1].rotation.z += (THREE.MathUtils.lerp(armBaseZ, -0.3, punchCurve) - armPivots[1].rotation.z) * 0.6;
     }
 
     // (hair sway removed — hair stays fixed in place, no motion)
@@ -2279,44 +2267,45 @@
       a.position.y += Math.sin(clock.elapsedTime*1.5 + i)*0.003;
     });
 
-    // checkpoints — landed on, not flown through
-    if (!finished){
-      for (const cp of checkpoints){
-        // gentle idle animation for the decorative holo-ring
-        cp.holoRing.rotation.y += dt * 0.6;
-        cp.holoRing.position.y = cp.holoRingY + Math.sin(anim.time * 1.3 + cp.index) * 0.12;
+    // trophy platforms — landed on, not flown through. Open-ended collecting,
+    // no "level complete" goal: platform N awards N trophies (1st=1, ..., 6th=6).
+    for (const cp of checkpoints){
+      // gentle idle animation for the decorative holo-ring
+      cp.holoRing.rotation.y += dt * 0.6;
+      cp.holoRing.position.y = cp.holoRingY + Math.sin(anim.time * 1.3 + cp.index) * 0.12;
 
-        if (!cp.passed){
-          const dx = player.pos.x - cp.pos.x;
-          const dz = player.pos.z - cp.pos.z;
-          const horizDist = Math.sqrt(dx*dx + dz*dz);
-          if (player.onGround && horizDist < cp.radius + 1.5){
-            cp.passed = true;
-            checkpointCount++;
-            checkEl.textContent = checkpointCount + ' / ' + checkpoints.length;
-            // completion glow: rim/base shift to gold, holo-ring brightens
-            cp.rimMat.color.set(0xffe27a);
-            cp.rimMat.emissive.set(0xd9a72f);
-            cp.baseMat.color.set(0x3a2f12);
-            cp.holoRing.material.color.set(0xffe27a);
-            cp.holoRing.material.emissive.set(0xd9a72f);
-            cp.glowLight.color.set(0xffe27a);
-            addScore(25);
-            pulseBox('box-checkpoints', 'glow-flash');
-            pulseBox('box-score', 'pulse');
-            if (checkpointCount === checkpoints.length){
-              finished = true;
-              const elapsed = performance.now() - startTime;
-              document.getElementById('finalStats').textContent =
-                'Punkte: ' + score + '  •  Zeit: ' + formatTime(elapsed);
-              document.getElementById('finishScreen').style.display = 'flex';
-              if (document.pointerLockElement) document.exitPointerLock();
-            }
-          }
+      if (!cp.passed){
+        const dx = player.pos.x - cp.pos.x;
+        const dz = player.pos.z - cp.pos.z;
+        const horizDist = Math.sqrt(dx*dx + dz*dz);
+        if (player.onGround && horizDist < cp.radius + 1.5){
+          cp.passed = true;
+          const reward = cp.index + 1; // 1st platform = 1 trophy, ..., 6th = 6 trophies
+          // completion glow: rim/base shift to gold, holo-ring brightens
+          cp.rimMat.color.set(0xffe27a);
+          cp.rimMat.emissive.set(0xd9a72f);
+          cp.baseMat.color.set(0x3a2f12);
+          cp.holoRing.material.color.set(0xffe27a);
+          cp.holoRing.material.emissive.set(0xd9a72f);
+          cp.glowLight.color.set(0xffe27a);
+          addScore(25);
+          totalTrophies += reward;
+          storageSet('rankmann_totalTrophies', totalTrophies);
+          updateTrophyDisplay();
+          pulseBox('box-checkpoints', 'glow-flash');
+          pulseBox('box-score', 'pulse');
+          sfx.trophy();
+
+          // send the player straight back to the spawn platform — instant, no effect
+          player.pos.set(0, islands[0].top + player.radius, 0);
+          player.vel.set(0, 0, 0);
+          player.onGround = true;
+          player.wasOnGround = true;
+          player.standingOn = islands[0].mesh;
+          grapple.active = false;
+          ropeLine.visible = false;
+          snapCameraToPlayer();
         }
-      }
-      if (startTime){
-        timerEl.textContent = formatTime(performance.now() - startTime);
       }
     }
 
@@ -2335,7 +2324,6 @@
     ensureAudio();
     stopMenuMusic();
     running = true;
-    startTime = performance.now();
     setTimeout(() => {
       document.getElementById('hint').classList.add('faded');
     }, 7000);
@@ -2343,9 +2331,6 @@
 
   document.getElementById('menuClickCatcher').addEventListener('mousedown', menuMusicUnlockAttempt);
   document.getElementById('startBtn').addEventListener('click', startGame);
-  document.getElementById('restartBtn').addEventListener('click', () => {
-    location.reload();
-  });
   document.getElementById('resumeBtn').addEventListener('click', closePauseMenu);
   document.getElementById('pauseRestartBtn').addEventListener('click', () => {
     location.reload();
