@@ -454,6 +454,66 @@
   #previewSwatchRow .skinSwatch { width: 46px; height: 46px; flex-shrink: 0; }
   #previewSwatchRow .skinSwatch.selected { border-color: rgba(255,226,122,0.85); box-shadow: 0 0 14px rgba(255,226,122,0.4); }
   #previewDragHint { font-size: 11.5px; color: rgba(255,255,255,0.55); margin: 0 0 4px; text-align: center; line-height: 1.5; }
+
+  /* ---------- TOUCH CONTROLS ---------- */
+  #touchControls { position: fixed; inset: 0; z-index: 50; }
+  #touchControls.hidden { display: none; }
+  #touchLookZone {
+    position: absolute; top: 0; right: 0; bottom: 0; width: 55%;
+    touch-action: none;
+  }
+  #touchJoystickBase {
+    position: fixed; left: 26px; bottom: 60px; z-index: 51;
+    width: 150px; height: 150px; border-radius: 50%;
+    background: rgba(20,10,38,0.45); border: 2px solid rgba(180,140,255,0.4);
+    backdrop-filter: blur(4px);
+    touch-action: none;
+  }
+  #touchJoystickNub {
+    position: absolute; top: 50%; left: 50%; width: 64px; height: 64px;
+    margin: -32px 0 0 -32px; border-radius: 50%;
+    background: linear-gradient(135deg, rgba(138,92,255,0.85), rgba(92,140,255,0.85));
+    box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+    transition: transform 0.05s linear;
+  }
+  #touchButtons {
+    position: fixed; right: 22px; bottom: 26px; z-index: 51;
+    display: flex; align-items: flex-end; gap: 18px;
+  }
+  .touchBtn {
+    border: 2px solid rgba(180,140,255,0.45);
+    background: rgba(20,10,38,0.55);
+    backdrop-filter: blur(4px);
+    color: #fff; font-size: 30px;
+    width: 78px; height: 78px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    touch-action: none; user-select: none;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+  }
+  .touchBtn:active, .touchBtn.pressed {
+    background: rgba(122,255,196,0.35); border-color: rgba(122,255,196,0.8);
+    transform: scale(0.92);
+  }
+  .touchBtnBig { width: 96px; height: 96px; font-size: 40px; }
+  #touchSprintBtn {
+    position: fixed; right: 22px; bottom: 136px; z-index: 51;
+    width: 62px; height: 62px; font-size: 24px;
+  }
+
+  #deviceSurvey {
+    position: fixed; inset: 0; z-index: 300;
+    background: rgba(6,3,14,0.75);
+    backdrop-filter: blur(6px) saturate(1.2);
+    -webkit-backdrop-filter: blur(6px) saturate(1.2);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; text-align: center; padding: 20px; box-sizing: border-box;
+    opacity: 1; transition: opacity 0.25s ease;
+  }
+  #deviceSurvey.hidden { opacity: 0; pointer-events: none; }
+  #deviceSurveyBtns { display: flex; gap: 14px; justify-content: center; margin-top: 22px; }
+  .deviceSurveyBtn {
+    flex: 1; padding: 22px 10px; font-size: 15px; font-weight: 700; line-height: 1.8;
+  }
 </style>
 </head>
 <body>
@@ -497,6 +557,19 @@
   <span class="key">Rechtsklick</span> Angreifen (in Reichweite)
   <span class="sep"></span>
   <span class="key">Leertaste</span> springen
+</div>
+
+<div id="touchControls" class="hidden">
+  <div id="touchLookZone"></div>
+  <div id="touchJoystickBase">
+    <div id="touchJoystickNub"></div>
+  </div>
+  <div id="touchButtons">
+    <button id="touchAttackBtn" class="touchBtn">⚔️</button>
+    <button id="touchGrappleBtn" class="touchBtn touchBtnBig">🕸️</button>
+    <button id="touchJumpBtn" class="touchBtn">⬆️</button>
+  </div>
+  <button id="touchSprintBtn" class="touchBtn touchToggleBtn">⚡</button>
 </div>
 
 
@@ -554,17 +627,30 @@
     <div id="updateTeaserGlow"></div>
     <span class="updateBadge">✨ Nächstes Update</span>
     <div class="updateFeature">
-      <span class="updateFeatureIcon">📱</span>
+      <span class="updateFeatureIcon">🌗</span>
       <div class="updateFeatureText">
-        <span class="updateFeatureTitle">Touch-Steuerung</span>
-        <span class="updateFeatureSub">Virtuelle Steuerkreuze und Buttons für Handy &amp; Tablet — endlich mobil spielbar</span>
+        <span class="updateFeatureTitle">Wetter &amp; Tag/Nacht</span>
+        <span class="updateFeatureSub">Dynamische Wettereffekte wie Regen und Sturm, plus ein Tag-Nacht-Zyklus, der die Welt in neuem Licht zeigt</span>
       </div>
     </div>
     <div id="updateEta">
       <span class="updateEtaLabel">Erscheint in</span>
-      <span class="updateEtaValue">Demnächst</span>
+      <span class="updateEtaValue">In einer Woche</span>
     </div>
   </div>
+  </div>
+</div>
+
+<div id="deviceSurvey" class="hidden">
+  <div class="startPanel" style="max-width:380px;">
+    <div class="titleRow">
+      <h1 style="font-size:26px;">Auf welchem Gerät spielst du?</h1>
+    </div>
+    <p class="heroTagline">Damit wir die Steuerung richtig einstellen können</p>
+    <div id="deviceSurveyBtns">
+      <button class="menuBtn deviceSurveyBtn" id="deviceBtnPC">🖥️<br>PC</button>
+      <button class="menuBtn deviceSurveyBtn" id="deviceBtnMobile">📱<br>Mobilgerät</button>
+    </div>
   </div>
 </div>
 
@@ -1285,6 +1371,111 @@
     player.pitch -= dy * 0.0035;
     player.pitch = Math.max(-1.2, Math.min(1.0, player.pitch));
   });
+
+  // ---------- TOUCH CONTROLS ----------
+  const isTouchDevice = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+  if (isTouchDevice) {
+    document.getElementById('touchControls').classList.remove('hidden');
+  }
+
+  // Virtual joystick — drives the same keys['KeyW'/'KeyA'/'KeyS'/'KeyD'] the
+  // keyboard uses, so all existing movement/animation code works unchanged.
+  // Uses Pointer Events (not touch-only events) so it also works with mouse
+  // clicks, not just real touch input.
+  (function setupJoystick(){
+    const base = document.getElementById('touchJoystickBase');
+    const nub = document.getElementById('touchJoystickNub');
+    let joyPointerId = null;
+    const maxRadius = 55;
+
+    function setKeysFromVector(dx, dy){
+      const dead = 0.28;
+      keys['KeyW'] = dy < -dead;
+      keys['KeyS'] = dy > dead;
+      keys['KeyA'] = dx < -dead;
+      keys['KeyD'] = dx > dead;
+    }
+    function resetJoyKeys(){
+      keys['KeyW'] = keys['KeyA'] = keys['KeyS'] = keys['KeyD'] = false;
+      nub.style.transform = 'translate(0px, 0px)';
+    }
+    base.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      joyPointerId = e.pointerId;
+      base.setPointerCapture(e.pointerId);
+    });
+    base.addEventListener('pointermove', e => {
+      if (joyPointerId === null || e.pointerId !== joyPointerId) return;
+      const rect = base.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      let dx = e.clientX - cx, dy = e.clientY - cy;
+      const dist = Math.min(Math.hypot(dx, dy), maxRadius);
+      const angle = Math.atan2(dy, dx);
+      const nx = Math.cos(angle) * dist, ny = Math.sin(angle) * dist;
+      nub.style.transform = `translate(${nx}px, ${ny}px)`;
+      setKeysFromVector(dx / maxRadius, dy / maxRadius);
+    });
+    function endJoy(e){
+      if (joyPointerId === null || e.pointerId !== joyPointerId) return;
+      joyPointerId = null;
+      resetJoyKeys();
+    }
+    base.addEventListener('pointerup', endJoy);
+    base.addEventListener('pointercancel', endJoy);
+  })();
+
+  // Look zone — drag anywhere on the right side of the screen to look around,
+  // same math as the mouse drag-to-look above.
+  (function setupTouchLook(){
+    const zone = document.getElementById('touchLookZone');
+    let lookPointerId = null;
+    let lastX = 0, lastY = 0;
+    zone.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      lookPointerId = e.pointerId;
+      lastX = e.clientX; lastY = e.clientY;
+      zone.setPointerCapture(e.pointerId);
+    });
+    zone.addEventListener('pointermove', e => {
+      if (lookPointerId === null || e.pointerId !== lookPointerId) return;
+      const dx = e.clientX - lastX, dy = e.clientY - lastY;
+      lastX = e.clientX; lastY = e.clientY;
+      player.yaw -= dx * 0.0055;
+      player.pitch -= dy * 0.0055;
+      player.pitch = Math.max(-1.2, Math.min(1.0, player.pitch));
+    });
+    function endLook(e){
+      if (e.pointerId === lookPointerId) lookPointerId = null;
+    }
+    zone.addEventListener('pointerup', endLook);
+    zone.addEventListener('pointercancel', endLook);
+  })();
+
+  // Action buttons — mirror the keyboard/mouse actions exactly.
+  function bindTouchBtn(id, onDown, onUp){
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      el.setPointerCapture(e.pointerId);
+      el.classList.add('pressed');
+      onDown && onDown();
+    });
+    el.addEventListener('pointerup', e => {
+      e.preventDefault();
+      el.classList.remove('pressed');
+      onUp && onUp();
+    });
+    el.addEventListener('pointercancel', () => {
+      el.classList.remove('pressed');
+      onUp && onUp();
+    });
+  }
+  bindTouchBtn('touchJumpBtn', () => { keys['Space'] = true; }, () => { keys['Space'] = false; });
+  bindTouchBtn('touchGrappleBtn', () => { if (running) attachGrapple(); }, () => { releaseGrapple(); });
+  bindTouchBtn('touchAttackBtn', () => { if (running) performAttack(); });
+  bindTouchBtn('touchSprintBtn', () => { keys['ShiftLeft'] = true; }, () => { keys['ShiftLeft'] = false; });
 
   // ---------- SOUND ----------
   // Small synthesized sound engine (Web Audio API) — also used to play the
@@ -2330,7 +2521,20 @@
   }
 
   document.getElementById('menuClickCatcher').addEventListener('mousedown', menuMusicUnlockAttempt);
-  document.getElementById('startBtn').addEventListener('click', startGame);
+  document.getElementById('startBtn').addEventListener('click', () => {
+    document.getElementById('deviceSurvey').classList.remove('hidden');
+  });
+  document.getElementById('deviceBtnPC').addEventListener('click', () => {
+    document.getElementById('touchControls').classList.add('hidden');
+    document.getElementById('deviceSurvey').classList.add('hidden');
+    startGame();
+  });
+  document.getElementById('deviceBtnMobile').addEventListener('click', () => {
+    document.getElementById('touchControls').classList.remove('hidden');
+    document.getElementById('deviceSurvey').classList.add('hidden');
+    document.getElementById('hint').style.display = 'none';
+    startGame();
+  });
   document.getElementById('resumeBtn').addEventListener('click', closePauseMenu);
   document.getElementById('pauseRestartBtn').addEventListener('click', () => {
     location.reload();
