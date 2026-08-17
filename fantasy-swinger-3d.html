@@ -682,6 +682,21 @@
   <h2>Nur auf PC &amp; Tablet spielbar</h2>
   <p>Rankmann läuft aktuell leider nicht auf Handys. Bitte öffne das Spiel auf einem Computer oder Tablet, um zu spielen.</p>
 </div>
+<script>
+  // Standalone, self-contained phone block — runs immediately, independent of
+  // the large game script further down, so it can never be skipped by an
+  // unrelated error later in that script.
+  (function(){
+    var isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+    function check(){
+      var blocked = isTouch && Math.min(window.innerWidth, window.innerHeight) < 600;
+      document.getElementById('phoneBlockScreen').classList.toggle('show', blocked);
+    }
+    check();
+    window.addEventListener('resize', check);
+    window.addEventListener('orientationchange', check);
+  })();
+</script>
 
 <div id="shopScreen" class="hidden">
   <div class="startPanel" id="shopPanel">
@@ -735,6 +750,11 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (function(){
+  // Phones are blocked (see the standalone script above) — don't even build
+  // the 3D engine for them.
+  var isTouchGuard = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+  if (isTouchGuard && Math.min(window.innerWidth, window.innerHeight) < 600) return;
+
   // ---------- BASIC SETUP ----------
   const scene = new THREE.Scene();
   const worldFog = new THREE.FogExp2(0x2a1b45, 0.0065);
