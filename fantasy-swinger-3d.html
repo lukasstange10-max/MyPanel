@@ -398,13 +398,16 @@
   }
   #shopScreen.hidden { opacity: 0; pointer-events: none; }
   #shopPanel {
-    max-width: 560px; max-height: 85vh; overflow-y: auto;
+    max-width: 560px;
+  }
+  #shopPanelScroll {
+    max-height: 80vh; max-height: 80dvh; overflow-y: auto;
     scrollbar-width: thin; scrollbar-color: rgba(180,140,255,0.5) rgba(20,10,38,0.4);
   }
-  #shopPanel::-webkit-scrollbar { width: 8px; }
-  #shopPanel::-webkit-scrollbar-track { background: rgba(20,10,38,0.4); border-radius: 8px; }
-  #shopPanel::-webkit-scrollbar-thumb { background: rgba(180,140,255,0.5); border-radius: 8px; }
-  #shopPanel::-webkit-scrollbar-thumb:hover { background: rgba(180,140,255,0.75); }
+  #shopPanelScroll::-webkit-scrollbar { width: 8px; }
+  #shopPanelScroll::-webkit-scrollbar-track { background: rgba(20,10,38,0.4); border-radius: 8px; }
+  #shopPanelScroll::-webkit-scrollbar-thumb { background: rgba(180,140,255,0.5); border-radius: 8px; }
+  #shopPanelScroll::-webkit-scrollbar-thumb:hover { background: rgba(180,140,255,0.75); }
   #shopCoins { color: #ffe27a !important; font-size: 16px !important; font-weight: 700; margin-top: 8px !important; }
   #shopHint { font-size: 11.5px; color: rgba(255,255,255,0.5); margin-top: 4px; }
   #shopGrid {
@@ -513,6 +516,20 @@
   #deviceSurveyBtns { display: flex; gap: 14px; justify-content: center; margin-top: 22px; }
   .deviceSurveyBtn {
     flex: 1; padding: 22px 10px; font-size: 15px; font-weight: 700; line-height: 1.8;
+  }
+
+  #rotatePrompt {
+    position: fixed; inset: 0; z-index: 400;
+    background: rgba(6,3,14,0.95);
+    display: none; flex-direction: column; align-items: center; justify-content: center;
+    color: #fff; text-align: center; padding: 30px; box-sizing: border-box;
+  }
+  #rotatePrompt.show { display: flex; }
+  #rotatePrompt .rotateIcon { font-size: 60px; animation: rotateHint 1.8s ease-in-out infinite; }
+  #rotatePrompt p { margin-top: 18px; font-size: 17px; font-weight: 700; max-width: 320px; }
+  @keyframes rotateHint {
+    0%, 100% { transform: rotate(0deg); }
+    50%      { transform: rotate(90deg); }
   }
 </style>
 </head>
@@ -654,16 +671,23 @@
   </div>
 </div>
 
+<div id="rotatePrompt">
+  <div class="rotateIcon">📱</div>
+  <p>Bitte drehe dein Handy ins Querformat, um zu spielen</p>
+</div>
+
 <div id="shopScreen" class="hidden">
   <div class="startPanel" id="shopPanel">
-    <div class="titleRow">
-      <h1 style="font-size:32px;">Shop</h1>
+    <div id="shopPanelScroll">
+      <div class="titleRow">
+        <h1 style="font-size:32px;">Shop</h1>
+      </div>
+      <p class="heroTagline" id="shopCoins">🪙 0 Punkte</p>
+      <button id="shopPreviewBtn" class="menuBtn" style="margin:10px 0;">🔍 Charakter in 3D ansehen</button>
+      <p id="shopHint">Klick auf einen Farbkreis für eine Live-Vorschau am Charakter</p>
+      <div id="shopGrid"></div>
+      <button id="shopCloseBtn" class="menuBtn" style="margin-top:20px;">Schließen</button>
     </div>
-    <p class="heroTagline" id="shopCoins">🪙 0 Punkte</p>
-    <button id="shopPreviewBtn" class="menuBtn" style="margin:10px 0;">🔍 Charakter in 3D ansehen</button>
-    <p id="shopHint">Klick auf einen Farbkreis für eine Live-Vorschau am Charakter</p>
-    <div id="shopGrid"></div>
-    <button id="shopCloseBtn" class="menuBtn" style="margin-top:20px;">Schließen</button>
   </div>
 </div>
 
@@ -1990,6 +2014,7 @@
     scene.background = new THREE.Color(0x1a3a7a);
     scene.fog = null;
     renderPreviewBar();
+    updateTouchControlsVisibility();
   }
   function exitPreview(){
     previewMode = false;
@@ -2001,11 +2026,12 @@
     if (!running) document.getElementById('startScreen').style.display = 'flex';
     else if (paused) document.getElementById('pauseScreen').style.display = 'flex';
     document.getElementById('hud').style.display = '';
-    document.getElementById('hint').style.display = '';
+    if (!mobileControlsWanted) document.getElementById('hint').style.display = '';
     setWorldVisible(true);
     scene.background = previewBgPrev;
     scene.fog = worldFog;
     updateShopUI();
+    updateTouchControlsVisibility();
   }
 
   const livesBarFill = document.getElementById('lives-bar-fill');
@@ -2039,12 +2065,14 @@
     document.getElementById('pauseScreen').style.display = 'flex';
     if (document.pointerLockElement) document.exitPointerLock();
     for (const k in keys) keys[k] = false;
+    updateTouchControlsVisibility();
   }
   function closePauseMenu(){
     if (!paused) return;
     paused = false;
     document.getElementById('pauseScreen').style.display = 'none';
     ensureAudio();
+    updateTouchControlsVisibility();
   }
   window.addEventListener('keydown', e => {
     if (e.code === 'Escape'){
@@ -2515,6 +2543,7 @@
     ensureAudio();
     stopMenuMusic();
     running = true;
+    updateTouchControlsVisibility();
     setTimeout(() => {
       document.getElementById('hint').classList.add('faded');
     }, 7000);
@@ -2524,17 +2553,42 @@
   document.getElementById('startBtn').addEventListener('click', () => {
     document.getElementById('deviceSurvey').classList.remove('hidden');
   });
+  let mobileControlsWanted = false;
+  function updateTouchControlsVisibility(){
+    const shouldShow = mobileControlsWanted && running && !paused && !previewMode;
+    document.getElementById('touchControls').classList.toggle('hidden', !shouldShow);
+  }
   document.getElementById('deviceBtnPC').addEventListener('click', () => {
-    document.getElementById('touchControls').classList.add('hidden');
+    mobileControlsWanted = false;
+    updateTouchControlsVisibility();
     document.getElementById('deviceSurvey').classList.add('hidden');
     startGame();
   });
   document.getElementById('deviceBtnMobile').addEventListener('click', () => {
-    document.getElementById('touchControls').classList.remove('hidden');
+    mobileControlsWanted = true;
+    updateTouchControlsVisibility();
     document.getElementById('deviceSurvey').classList.add('hidden');
     document.getElementById('hint').style.display = 'none';
     startGame();
   });
+
+  // Phones should play in landscape (tablets are fine either way — their
+  // screens are big enough that the layout already works in the screenshots
+  // we tested). Detect "phone" via a width/height heuristic, not tablet.
+  function checkOrientation(){
+    if (!mobileControlsWanted) {
+      document.getElementById('rotatePrompt').classList.remove('show');
+      return;
+    }
+    const w = window.innerWidth, h = window.innerHeight;
+    const isPortrait = h > w;
+    const isPhoneSized = Math.min(w, h) < 600; // tablets are wider than this even in portrait
+    document.getElementById('rotatePrompt').classList.toggle('show', isPortrait && isPhoneSized);
+  }
+  window.addEventListener('resize', checkOrientation);
+  window.addEventListener('orientationchange', checkOrientation);
+  setInterval(checkOrientation, 500); // some mobile browsers don't fire resize reliably on rotation
+
   document.getElementById('resumeBtn').addEventListener('click', closePauseMenu);
   document.getElementById('pauseRestartBtn').addEventListener('click', () => {
     location.reload();
@@ -2542,10 +2596,12 @@
   function openShop(){
     updateShopUI();
     document.getElementById('shopScreen').classList.remove('hidden');
+    updateTouchControlsVisibility();
   }
   function closeShop(){
     document.getElementById('shopScreen').classList.add('hidden');
     applySkin(equippedSkin); // undo any unbought preview
+    updateTouchControlsVisibility();
   }
   document.getElementById('shopBtn').addEventListener('click', openShop);
   document.getElementById('pauseShopBtn').addEventListener('click', openShop);
