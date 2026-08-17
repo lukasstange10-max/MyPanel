@@ -526,19 +526,16 @@
     flex: 1; padding: 22px 10px; font-size: 15px; font-weight: 700; line-height: 1.8;
   }
 
-  #rotatePrompt {
-    position: fixed; inset: 0; z-index: 400;
-    background: rgba(6,3,14,0.95);
+  #phoneBlockScreen {
+    position: fixed; inset: 0; z-index: 500;
+    background: #0a0518;
     display: none; flex-direction: column; align-items: center; justify-content: center;
     color: #fff; text-align: center; padding: 30px; box-sizing: border-box;
   }
-  #rotatePrompt.show { display: flex; }
-  #rotatePrompt .rotateIcon { font-size: 60px; animation: rotateHint 1.8s ease-in-out infinite; }
-  #rotatePrompt p { margin-top: 18px; font-size: 17px; font-weight: 700; max-width: 320px; }
-  @keyframes rotateHint {
-    0%, 100% { transform: rotate(0deg); }
-    50%      { transform: rotate(90deg); }
-  }
+  #phoneBlockScreen.show { display: flex; }
+  #phoneBlockScreen .blockIcon { font-size: 56px; margin-bottom: 18px; }
+  #phoneBlockScreen h2 { font-size: 22px; margin: 0 0 10px; }
+  #phoneBlockScreen p { font-size: 14.5px; color: rgba(211,198,238,0.8); max-width: 340px; line-height: 1.6; margin: 0; }
 </style>
 </head>
 <body>
@@ -680,9 +677,10 @@
   </div>
 </div>
 
-<div id="rotatePrompt">
-  <div class="rotateIcon">📱</div>
-  <p>Bitte drehe dein Handy ins Querformat, um zu spielen</p>
+<div id="phoneBlockScreen">
+  <div class="blockIcon">🖥️</div>
+  <h2>Nur auf PC &amp; Tablet spielbar</h2>
+  <p>Rankmann läuft aktuell leider nicht auf Handys. Bitte öffne das Spiel auf einem Computer oder Tablet, um zu spielen.</p>
 </div>
 
 <div id="shopScreen" class="hidden">
@@ -2587,22 +2585,16 @@
     startGame();
   });
 
-  // Phones should play in landscape (tablets are fine either way — their
-  // screens are big enough that the layout already works in the screenshots
-  // we tested). Detect "phone" via a width/height heuristic, not tablet.
-  function checkOrientation(){
-    if (!mobileControlsWanted) {
-      document.getElementById('rotatePrompt').classList.remove('show');
-      return;
-    }
-    const w = window.innerWidth, h = window.innerHeight;
-    const isPortrait = h > w;
-    const isPhoneSized = Math.min(w, h) < 600; // tablets are wider than this even in portrait
-    document.getElementById('rotatePrompt').classList.toggle('show', isPortrait && isPhoneSized);
+  // Phones aren't supported — block them outright with a clear message.
+  // Tablets (bigger screens) pass through untouched. Uses the smaller of
+  // width/height so it works correctly however the phone is currently held.
+  function checkPhoneBlock(){
+    const isPhoneSized = Math.min(window.innerWidth, window.innerHeight) < 600;
+    document.getElementById('phoneBlockScreen').classList.toggle('show', isTouchDevice && isPhoneSized);
   }
-  window.addEventListener('resize', checkOrientation);
-  window.addEventListener('orientationchange', checkOrientation);
-  setInterval(checkOrientation, 500); // some mobile browsers don't fire resize reliably on rotation
+  checkPhoneBlock();
+  window.addEventListener('resize', checkPhoneBlock);
+  window.addEventListener('orientationchange', checkPhoneBlock);
 
   document.getElementById('resumeBtn').addEventListener('click', closePauseMenu);
   document.getElementById('pauseRestartBtn').addEventListener('click', () => {
