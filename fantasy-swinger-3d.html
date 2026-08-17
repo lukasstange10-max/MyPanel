@@ -704,7 +704,7 @@
       <div class="titleRow">
         <h1 style="font-size:32px;">Shop</h1>
       </div>
-      <p class="heroTagline" id="shopCoins">🪙 0 Punkte</p>
+      <p class="heroTagline" id="shopCoins">🏆 0 Pokale</p>
       <button id="shopPreviewBtn" class="menuBtn" style="margin:10px 0;">🔍 Charakter in 3D ansehen</button>
       <p id="shopHint">Klick auf einen Farbkreis für eine Live-Vorschau am Charakter</p>
       <div id="shopGrid"></div>
@@ -1378,6 +1378,46 @@
     e.preventDefault();
   }, { passive: false });
 
+  // Pinch-to-zoom (two-finger touch) — coexists with the single-finger
+  // drag-to-look below. Tracks active touch pointers by id; when a second
+  // finger joins, distance-between-fingers changes drive camZoom instead.
+  const activeTouchPointers = new Map();
+  let pinchStartDist = null;
+  let pinchStartZoom = camZoom;
+  function pinchDistance(){
+    const pts = [...activeTouchPointers.values()];
+    if (pts.length < 2) return null;
+    return Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+  }
+  canvas.addEventListener('pointerdown', e => {
+    if (e.pointerType === 'touch'){
+      activeTouchPointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (activeTouchPointers.size === 2){
+        pinchStartDist = pinchDistance();
+        pinchStartZoom = camZoom;
+        dragLooking = false; // pinching takes over from single-finger look
+      }
+    }
+  });
+  window.addEventListener('pointermove', e => {
+    if (e.pointerType === 'touch' && activeTouchPointers.has(e.pointerId)){
+      activeTouchPointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (activeTouchPointers.size === 2 && pinchStartDist){
+        const dist = pinchDistance();
+        const scale = pinchStartDist / dist; // fingers apart = zoom in (lower camZoom)
+        camZoom = THREE.MathUtils.clamp(pinchStartZoom * scale, ZOOM_MIN, ZOOM_MAX);
+      }
+    }
+  });
+  function endTouchPointer(e){
+    if (e.pointerType === 'touch'){
+      activeTouchPointers.delete(e.pointerId);
+      if (activeTouchPointers.size < 2) pinchStartDist = null;
+    }
+  }
+  window.addEventListener('pointerup', endTouchPointer);
+  window.addEventListener('pointercancel', endTouchPointer);
+
   // Right-click is the ranke grapple — unless a small enemy is within attack
   // range, in which case it punches instead (spam it to finish them off).
   // Left-click/drag is purely for looking around, so an accidental small click
@@ -1431,6 +1471,7 @@
   if (isTouchDevice) {
     document.getElementById('touchControls').classList.remove('hidden');
     document.getElementById('startControlsGrid').style.display = 'none';
+    document.getElementById('previewDragHint').style.display = 'none';
   }
 
   // Virtual joystick — drives the same keys['KeyW'/'KeyA'/'KeyS'/'KeyD'] the
@@ -1885,7 +1926,6 @@
   function storageSet(key, value){
     try { localStorage.setItem(key, JSON.stringify(value)); } catch(e){}
   }
-  let coins = storageGet('rankmann_coins', 0);
   let ownedSkins = storageGet('rankmann_ownedSkins', ['standard']);
   let equippedSkin = storageGet('rankmann_equippedSkin', 'standard');
   let totalTrophies = storageGet('rankmann_totalTrophies', 0);
@@ -1893,26 +1933,28 @@
     const el = document.getElementById('totalTrophyCount');
     if (el) el.textContent = totalTrophies;
     if (checkEl) checkEl.textContent = totalTrophies;
+    updateShopUI();
   }
   updateTrophyDisplay();
 
   function addScore(amount){
     score += amount;
     if (scoreEl) scoreEl.textContent = score;
-    coins += amount;
-    storageSet('rankmann_coins', coins);
-    updateShopUI();
+    totalTrophies += amount;
+    storageSet('rankmann_totalTrophies', totalTrophies);
+    updateTrophyDisplay();
   }
 
   // ---------- SHOP UI ----------
   function buySkin(skinId){
     const skin = SKIN_DEFS.find(s => s.id === skinId);
     if (!skin || ownedSkins.includes(skinId)) return;
-    if (coins < skin.cost) return;
-    coins -= skin.cost;
+    if (totalTrophies < skin.cost) return;
+    totalTrophies -= skin.cost;
     ownedSkins.push(skinId);
-    storageSet('rankmann_coins', coins);
+    storageSet('rankmann_totalTrophies', totalTrophies);
     storageSet('rankmann_ownedSkins', ownedSkins);
+    updateTrophyDisplay();
     equipSkin(skinId);
   }
   function equipSkin(skinId){
@@ -1924,7 +1966,7 @@
   }
   function updateShopUI(){
     const coinsEl = document.getElementById('shopCoins');
-    if (coinsEl) coinsEl.textContent = '🪙 ' + coins + ' Punkte';
+    if (coinsEl) coinsEl.textContent = '🏆 ' + totalTrophies + ' Pokale';
     const grid = document.getElementById('shopGrid');
     if (!grid) return;
     grid.innerHTML = '';
@@ -1943,12 +1985,12 @@
       name.textContent = skin.name;
       const cost = document.createElement('div');
       cost.className = 'skinCost';
-      cost.textContent = skin.cost === 0 ? 'Kostenlos' : '🪙 ' + skin.cost;
+      cost.textContent = skin.cost === 0 ? 'Kostenlos' : '🏆 ' + skin.cost;
       const btn = document.createElement('button');
       btn.className = 'skinActionBtn' + (owned ? ' owned' : '');
       if (equipped) { btn.textContent = 'Ausgerüstet'; btn.disabled = true; }
       else if (owned) { btn.textContent = 'Ausrüsten'; btn.onclick = () => equipSkin(skin.id); }
-      else { btn.textContent = 'Kaufen'; btn.disabled = coins < skin.cost; btn.onclick = () => buySkin(skin.id); }
+      else { btn.textContent = 'Kaufen'; btn.disabled = totalTrophies < skin.cost; btn.onclick = () => buySkin(skin.id); }
       card.appendChild(swatch);
       card.appendChild(name);
       card.appendChild(cost);
@@ -1993,14 +2035,14 @@
     const owned = ownedSkins.includes(previewingSkinId);
     const equipped = equippedSkin === previewingSkinId;
     document.getElementById('previewSkinName').textContent = skin.name;
-    document.getElementById('previewSkinCost').textContent = skin.cost ? '🪙 ' + skin.cost : 'Kostenlos';
+    document.getElementById('previewSkinCost').textContent = skin.cost ? '🏆 ' + skin.cost : 'Kostenlos';
     const btn = document.getElementById('previewActionBtn');
     btn.className = 'skinActionBtn' + (owned ? ' owned' : '');
     if (equipped) { btn.textContent = 'Ausgerüstet'; btn.disabled = true; btn.onclick = null; }
     else if (owned) { btn.textContent = 'Ausrüsten'; btn.disabled = false; btn.onclick = () => { equipSkin(previewingSkinId); renderPreviewBar(); }; }
     else {
       btn.textContent = 'Kaufen';
-      btn.disabled = coins < skin.cost;
+      btn.disabled = totalTrophies < skin.cost;
       btn.onclick = () => { buySkin(previewingSkinId); renderPreviewBar(); };
     }
   }
@@ -2540,12 +2582,10 @@
           cp.holoRing.material.color.set(0xffe27a);
           cp.holoRing.material.emissive.set(0xd9a72f);
           cp.glowLight.color.set(0xffe27a);
-          addScore(25);
           totalTrophies += reward;
           storageSet('rankmann_totalTrophies', totalTrophies);
           updateTrophyDisplay();
           pulseBox('box-checkpoints', 'glow-flash');
-          pulseBox('box-score', 'pulse');
           sfx.trophy();
 
           // send the player straight back to the spawn platform — instant, no effect
