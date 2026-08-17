@@ -2,10 +2,11 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Rankmann — Fantasy 3D</title>
 <style>
   html, body { margin: 0; padding: 0; overflow: hidden; background: #0a0518; font-family: 'Poppins', 'Segoe UI', Arial, sans-serif; }
-  canvas { display: block; }
+  canvas { display: block; touch-action: none; }
   * { box-sizing: border-box; }
 
   #hud {
@@ -502,6 +503,10 @@
     position: fixed; right: 22px; bottom: 136px; z-index: 51;
     width: 62px; height: 62px; font-size: 24px;
   }
+  #touchPauseBtn {
+    position: fixed; top: 100px; right: 18px; z-index: 51;
+    width: 50px; height: 50px; font-size: 20px;
+  }
 
   #deviceSurvey {
     position: fixed; inset: 0; z-index: 300;
@@ -587,6 +592,7 @@
     <button id="touchJumpBtn" class="touchBtn">⬆️</button>
   </div>
   <button id="touchSprintBtn" class="touchBtn touchToggleBtn">⚡</button>
+  <button id="touchPauseBtn" class="touchBtn">⏸️</button>
 </div>
 
 
@@ -1356,14 +1362,17 @@
   // Left-click/drag is purely for looking around, so an accidental small click
   // while turning the camera never yanks the player toward a nearby anchor.
   canvas.addEventListener('contextmenu', e => e.preventDefault());
-  canvas.addEventListener('mousedown', e => {
-    if (e.button === 2) {
+  canvas.addEventListener('pointerdown', e => {
+    if (e.pointerType === 'mouse' && e.button === 2) {
       if (!running) return;
       if (findAttackableEnemy()) performAttack();
       else attachGrapple();
       return;
     }
-    if (e.button !== 0) return;
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    // touch (any button/pointerType other than a non-primary mouse button)
+    // also starts drag-looking — needed so dragging the canvas directly
+    // works too, e.g. rotating the character in the shop's 3D preview.
     dragLooking = true;
     lastMouseX = e.clientX;
     lastMouseY = e.clientY;
@@ -1375,11 +1384,11 @@
     pointerLocked = document.pointerLockElement === canvas;
   });
 
-  window.addEventListener('mouseup', e => {
-    if (e.button === 2) releaseGrapple();
-    if (e.button === 0) dragLooking = false;
+  window.addEventListener('pointerup', e => {
+    if (e.pointerType === 'mouse' && e.button === 2) releaseGrapple();
+    dragLooking = false;
   });
-  window.addEventListener('mousemove', e => {
+  window.addEventListener('pointermove', e => {
     let dx, dy;
     if (pointerLocked) {
       dx = e.movementX; dy = e.movementY;
@@ -1500,6 +1509,7 @@
   bindTouchBtn('touchGrappleBtn', () => { if (running) attachGrapple(); }, () => { releaseGrapple(); });
   bindTouchBtn('touchAttackBtn', () => { if (running) performAttack(); });
   bindTouchBtn('touchSprintBtn', () => { keys['ShiftLeft'] = true; }, () => { keys['ShiftLeft'] = false; });
+  bindTouchBtn('touchPauseBtn', () => { openPauseMenu(); });
 
   // ---------- SOUND ----------
   // Small synthesized sound engine (Web Audio API) — also used to play the
@@ -2065,6 +2075,7 @@
     document.getElementById('pauseScreen').style.display = 'flex';
     if (document.pointerLockElement) document.exitPointerLock();
     for (const k in keys) keys[k] = false;
+    document.getElementById('pauseControlsList').style.display = mobileControlsWanted ? 'none' : '';
     updateTouchControlsVisibility();
   }
   function closePauseMenu(){
