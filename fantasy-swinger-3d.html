@@ -2091,18 +2091,27 @@
     const valueEl = document.getElementById('updateEtaValue');
     if (!labelEl || !valueEl) return;
     const now = new Date();
-    const msLeft = WELT2_RELEASE - now;
-    if (msLeft <= 0){
+    if (now >= WELT2_RELEASE){
       labelEl.textContent = 'Erscheint um';
       valueEl.textContent = '15:00 Uhr';
       return;
     }
-    const daysLeft = Math.ceil(msLeft / 86400000);
+    // Whole calendar days remaining, based on LOCAL midnight (not UTC) — so
+    // "today" reads as a stable number all day and only steps down exactly
+    // at the user's own local midnight, not whenever UTC happens to roll over.
+    const localNowMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const localTargetMidnight = new Date(WELT2_RELEASE.getFullYear(), WELT2_RELEASE.getMonth(), WELT2_RELEASE.getDate());
+    const daysLeft = Math.round((localTargetMidnight - localNowMidnight) / 86400000);
+    if (daysLeft <= 0){
+      labelEl.textContent = 'Erscheint um';
+      valueEl.textContent = '15:00 Uhr';
+      return;
+    }
     labelEl.textContent = 'Erscheint in';
     valueEl.textContent = daysLeft + (daysLeft === 1 ? ' Tag' : ' Tage');
   }
   updateWelt2Countdown();
-  setInterval(updateWelt2Countdown, 60 * 60 * 1000); // refresh hourly is plenty
+  setInterval(updateWelt2Countdown, 60 * 1000); // check every minute so the day-step lands close to midnight
 
   function addScore(amount){
     score += amount;
@@ -2152,7 +2161,7 @@
       name.textContent = skin.name;
       const cost = document.createElement('div');
       cost.className = 'skinCost';
-      cost.textContent = skin.cost === 0 ? 'Kostenlos' : '🏆 ' + skin.cost;
+      cost.textContent = (owned && skin.cost > 0) ? '✅ In Besitz' : (skin.cost === 0 ? 'Kostenlos' : '🏆 ' + skin.cost);
       const btn = document.createElement('button');
       btn.className = 'skinActionBtn' + (owned ? ' owned' : '');
       if (equipped) { btn.textContent = 'Ausgerüstet'; btn.disabled = true; }
@@ -2203,7 +2212,12 @@
     const owned = ownedSkins.includes(previewingSkinId);
     const equipped = equippedSkin === previewingSkinId;
     document.getElementById('previewSkinName').textContent = skin.name;
-    document.getElementById('previewSkinCost').textContent = skin.cost ? '🏆 ' + skin.cost : 'Kostenlos';
+    const costEl = document.getElementById('previewSkinCost');
+    if (owned && skin.cost > 0) {
+      costEl.textContent = '✅ In Besitz';
+    } else {
+      costEl.textContent = skin.cost ? '🏆 ' + skin.cost : 'Kostenlos';
+    }
     const btn = document.getElementById('previewActionBtn');
     btn.className = 'skinActionBtn' + (owned ? ' owned' : '');
     if (equipped) { btn.textContent = 'Ausgerüstet'; btn.disabled = true; btn.onclick = null; }
