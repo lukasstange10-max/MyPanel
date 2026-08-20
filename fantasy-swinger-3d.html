@@ -157,15 +157,21 @@
   #introUnmuteHint.show { display: block; }
 
   #musicUnlockHint {
-    margin-bottom: 22px;
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(6,3,14,0.72);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    display: none; align-items: center; justify-content: center;
+  }
+  #musicUnlockHint.show { display: flex; }
+  #musicUnlockHint span {
     background: linear-gradient(135deg, rgba(122,255,196,0.25), rgba(122,255,196,0.1));
     border: 3px solid rgba(122,255,196,0.75);
     color: #fff; padding: 22px 46px; border-radius: 999px; font-size: 26px; font-weight: 800;
-    cursor: pointer; display: none;
+    cursor: pointer;
     box-shadow: 0 15px 50px rgba(0,0,0,0.55), 0 0 45px rgba(122,255,196,0.4);
     animation: statPulse 1.6s ease-in-out infinite;
   }
-  #musicUnlockHint.show { display: block; }
 
   #startScreen {
     position: fixed; inset: 0;
@@ -174,7 +180,7 @@
     -webkit-backdrop-filter: blur(6px) saturate(1.2);
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     color: #fff; z-index: 100; text-align: center; padding: 20px; box-sizing: border-box;
-    overflow: hidden;
+    overflow-y: auto;
     transition: opacity 0.5s ease;
   }
   #startScreen.fading { opacity: 0; pointer-events: none; }
@@ -216,10 +222,13 @@
     display: flex; flex-direction: row; align-items: flex-start; justify-content: center;
     gap: 22px; flex-wrap: wrap; max-width: 96vw;
   }
+  #sideColumn {
+    display: flex; flex-direction: column; gap: 18px;
+    width: 260px; flex-shrink: 0;
+  }
 
   #updateTeaser {
     position: relative; z-index: 2; overflow: hidden;
-    width: 260px; flex-shrink: 0;
     background: rgba(20, 12, 40, 0.62);
     border: 1px solid rgba(255,226,122,0.35);
     border-radius: 22px;
@@ -227,6 +236,19 @@
     box-shadow: 0 20px 55px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06);
     animation: panelIn 0.7s 0.15s cubic-bezier(.2,.8,.3,1.1) both;
     display: flex; flex-direction: column; align-items: center; gap: 16px; text-align: center;
+  }
+  #worldSelectBox {
+    position: relative; z-index: 2;
+    background: rgba(20, 12, 40, 0.62);
+    border: 1px solid rgba(180,140,255,0.35);
+    border-radius: 22px;
+    padding: 20px;
+    box-shadow: 0 20px 55px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06);
+    animation: panelIn 0.7s 0.25s cubic-bezier(.2,.8,.3,1.1) both;
+    display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center;
+  }
+  #worldSelectBadge {
+    color: #d9b8ff; background: rgba(180,140,255,0.14); border: 1px solid rgba(180,140,255,0.4);
   }
   #updateTeaserGlow {
     position: absolute; top: -60px; left: 50%; transform: translateX(-50%);
@@ -387,6 +409,41 @@
     transform: translateY(-2px) scale(1.02);
     background: linear-gradient(135deg, rgba(255,226,122,0.4), rgba(217,167,47,0.4));
   }
+  #achievementsBtn {
+    padding: 13px 24px; font-size: 15px; font-weight: 700;
+    background: linear-gradient(135deg, rgba(255,226,122,0.22), rgba(217,167,47,0.22));
+    border: 1px solid rgba(255,226,122,0.5);
+    border-radius: 34px; color: #fff; cursor: pointer;
+    transition: transform 0.15s ease, background 0.2s ease;
+  }
+  #achievementsBtn:hover {
+    transform: translateY(-2px) scale(1.02);
+    background: linear-gradient(135deg, rgba(255,226,122,0.4), rgba(217,167,47,0.4));
+  }
+
+  #worldSelectRow { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+  .worldBtn {
+    width: 100%; box-sizing: border-box;
+    padding: 14px 18px; font-size: 15px; font-weight: 700;
+    background: rgba(255,255,255,0.06); border: 2px solid rgba(180,140,255,0.3);
+    border-radius: 16px; color: #fff; cursor: pointer;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    transition: transform 0.15s ease, background 0.2s ease, border-color 0.2s ease;
+  }
+  .worldBtn:hover { transform: translateY(-1px); }
+  .worldBtn.selected {
+    background: linear-gradient(135deg, rgba(255,226,122,0.9), rgba(217,167,47,0.9));
+    border-color: #ffe27a; color: #241505;
+    box-shadow: 0 0 18px rgba(255,226,122,0.5);
+  }
+  .worldBtn.locked { color: rgba(255,255,255,0.65); border-color: rgba(180,140,255,0.2); }
+  .worldBtnCost { font-size: 13px; font-weight: 700; opacity: 0.85; white-space: nowrap; }
+  #worldSelectError {
+    margin: 0; font-size: 13px; font-weight: 700; color: #ff5c6c;
+    text-shadow: 0 0 10px rgba(255,92,108,0.5);
+    display: none; text-align: center;
+  }
+  #worldSelectError.show { display: block; animation: statPulse 0.4s ease-in-out 2; }
 
   #shopScreen {
     position: fixed; inset: 0; z-index: 250;
@@ -411,6 +468,56 @@
   #shopPanelScroll::-webkit-scrollbar-thumb:hover { background: rgba(180,140,255,0.75); }
   #shopCoins { color: #ffe27a !important; font-size: 16px !important; font-weight: 700; margin-top: 8px !important; }
   #shopHint { font-size: 11.5px; color: rgba(255,255,255,0.5); margin-top: 4px; }
+  #achievementsScreen {
+    position: fixed; inset: 0; z-index: 250;
+    background: rgba(6,3,14,0.5);
+    backdrop-filter: blur(3px) saturate(1.2);
+    -webkit-backdrop-filter: blur(3px) saturate(1.2);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; text-align: center; padding: 20px; box-sizing: border-box;
+    opacity: 1; transition: opacity 0.25s ease;
+  }
+  #achievementsScreen.hidden { opacity: 0; pointer-events: none; }
+  #achievementsPanel { max-width: 560px; }
+  #achievementsPanelScroll {
+    max-height: 80vh; max-height: 80dvh; overflow-y: auto;
+    scrollbar-width: thin; scrollbar-color: rgba(180,140,255,0.5) rgba(20,10,38,0.4);
+  }
+  #achievementsPanelScroll::-webkit-scrollbar { width: 8px; }
+  #achievementsPanelScroll::-webkit-scrollbar-track { background: rgba(20,10,38,0.4); border-radius: 8px; }
+  #achievementsPanelScroll::-webkit-scrollbar-thumb { background: rgba(180,140,255,0.5); border-radius: 8px; }
+  #achievementsGrid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+    margin-top: 14px;
+  }
+  .achCard {
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(180,140,255,0.2);
+    border-radius: 16px; padding: 14px; display: flex; flex-direction: column; align-items: center; gap: 5px;
+    opacity: 0.55;
+  }
+  .achCard.unlocked {
+    opacity: 1; border-color: rgba(255,226,122,0.55);
+    box-shadow: 0 0 16px rgba(255,226,122,0.2);
+    background: rgba(255,226,122,0.06);
+  }
+  .achIcon { font-size: 34px; margin-bottom: 2px; }
+  .achName { font-weight: 800; font-size: 14px; color: #fff; }
+  .achDesc { font-size: 11.5px; color: rgba(211,198,238,0.75); }
+  .achReward { font-size: 11px; font-weight: 700; color: #ffe27a; margin-top: 2px; }
+
+  #achievementToast {
+    position: fixed; top: 24px; left: 50%; transform: translateX(-50%) translateY(-220%);
+    z-index: 350; display: flex; align-items: center; gap: 14px;
+    background: rgba(20,10,38,0.92); border: 2px solid rgba(255,226,122,0.7);
+    border-radius: 18px; padding: 14px 24px; box-shadow: 0 15px 40px rgba(0,0,0,0.5), 0 0 30px rgba(255,226,122,0.3);
+    transition: transform 0.4s cubic-bezier(.2,.8,.3,1.2);
+    pointer-events: none;
+  }
+  #achievementToast.show { transform: translateX(-50%) translateY(0); }
+  .achToastIcon { font-size: 38px; }
+  .achToastTitle { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #ffe27a; font-weight: 700; }
+  .achToastName { font-size: 16px; font-weight: 800; color: #fff; text-align: left; }
+
   #shopGrid {
     display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
     margin-top: 14px;
@@ -452,11 +559,19 @@
   #previewSkinName { font-weight: 800; font-size: 17px; color: #fff; }
   #previewSkinCost { font-size: 13px; color: #ffe27a; }
   #previewSwatchRow {
-    display: flex; flex-direction: column; gap: 10px; align-items: center;
+    display: flex; flex-direction: column; gap: 6px; align-items: stretch;
     width: 100%; overflow-y: auto; padding: 4px;
   }
-  #previewSwatchRow .skinSwatch { width: 46px; height: 46px; flex-shrink: 0; }
+  .skinSwatchItem {
+    display: flex; align-items: center; gap: 12px;
+    padding: 6px 10px; border-radius: 12px; cursor: pointer;
+    transition: background 0.15s ease;
+  }
+  .skinSwatchItem:hover { background: rgba(255,255,255,0.06); }
+  .skinSwatchItem.selected { background: rgba(255,226,122,0.12); }
+  #previewSwatchRow .skinSwatch { width: 36px; height: 36px; flex-shrink: 0; }
   #previewSwatchRow .skinSwatch.selected { border-color: rgba(255,226,122,0.85); box-shadow: 0 0 14px rgba(255,226,122,0.4); }
+  .skinSwatchLabel { font-size: 13px; font-weight: 600; color: #fff; text-align: left; }
   #previewDragHint { font-size: 11.5px; color: rgba(255,255,255,0.55); margin: 0 0 4px; text-align: center; line-height: 1.5; }
 
   /* ---------- TOUCH CONTROLS ---------- */
@@ -596,9 +711,10 @@
 </div>
 
 
+<div id="musicUnlockHint"><span>🔊 Musik aktivieren</span></div>
+
 <div id="startScreen" style="display:none;">
   <div id="menuClickCatcher"></div>
-  <div id="musicUnlockHint">🔊 Musik aktivieren</div>
   <div id="startRow">
   <div class="startPanel">
     <div class="titleRow">
@@ -643,23 +759,36 @@
     <div id="startBtnRow">
       <button id="startBtn">Spiel starten</button>
       <button id="shopBtn">🛒 Shop</button>
+      <button id="achievementsBtn">🏅 Erfolge</button>
     </div>
   </div>
 
+  <div id="sideColumn">
   <div id="updateTeaser">
     <div id="updateTeaserGlow"></div>
     <span class="updateBadge">✨ Nächstes Update</span>
     <div class="updateFeature">
-      <span class="updateFeatureIcon">🗺️</span>
+      <span class="updateFeatureIcon">🏹</span>
       <div class="updateFeatureText">
-        <span class="updateFeatureTitle">Welt 2</span>
-        <span class="updateFeatureSub">Eine zusätzliche Welt mit mehr Pokal-Plattformen — freischaltbar ab einer bestimmten Pokal-Anzahl</span>
+        <span class="updateFeatureTitle">Fernkampf-Ranke</span>
+        <span class="updateFeatureSub">Triff Gegner aus der Distanz mit der Ranke, statt nur im Nahkampf anzugreifen — je weiter der Gegner entfernt ist, desto mehr Pokale gibt der Treffer</span>
       </div>
     </div>
     <div id="updateEta">
       <span class="updateEtaLabel" id="updateEtaLabel">Erscheint in</span>
       <span class="updateEtaValue" id="updateEtaValue">14 Tage</span>
     </div>
+  </div>
+
+  <div id="worldSelectBox">
+    <span class="updateBadge" id="worldSelectBadge">🗺️ Welt wählen</span>
+    <div id="worldSelectRow">
+      <button id="worldBtn1" class="worldBtn">Welt 1</button>
+      <button id="worldBtn2" class="worldBtn">Welt 2</button>
+    </div>
+    <p id="worldSelectError">Nicht genug Pokale!</p>
+  </div>
+
   </div>
   </div>
 </div>
@@ -697,6 +826,21 @@
     window.addEventListener('orientationchange', check);
   })();
 </script>
+
+<div id="achievementToast"></div>
+
+<div id="achievementsScreen" class="hidden">
+  <div class="startPanel" id="achievementsPanel">
+    <div id="achievementsPanelScroll">
+      <div class="titleRow">
+        <h1 style="font-size:32px;">🏅 Erfolge</h1>
+      </div>
+      <p class="heroTagline">Schalte Abzeichen und exklusive Skins frei</p>
+      <div id="achievementsGrid"></div>
+      <button id="achievementsCloseBtn" class="menuBtn" style="margin-top:20px;">Schließen</button>
+    </div>
+  </div>
+</div>
 
 <div id="shopScreen" class="hidden">
   <div class="startPanel" id="shopPanel">
@@ -804,10 +948,10 @@
   // ---------- DAY / NIGHT CYCLE ----------
   // dayTime cycles 0→1 continuously (0 = deep night, 0.5 = midday). Keyframes
   // below get interpolated smoothly between to drive sky, sun, hemisphere
-  // light, and fog — all in the game's existing stylized purple/orange palette.
+  // light, and fog — one palette per world.
   const DAY_CYCLE_SECONDS = 260;
   let dayTime = 0.32; // start close to the original look
-  const DAY_KEYFRAMES = [
+  const DAY_KEYFRAMES_W1 = [
     { t: 0.00, skyTop: 0x0a0620, skyBottom: 0x1a1035, sunColor: 0x4a5aa8, sunI: 0.18, hemiSky: 0x2a2050, hemiGround: 0x05030c, hemiI: 0.35, fog: 0x0e0a1f, fogD: 0.009 },
     { t: 0.20, skyTop: 0x140a30, skyBottom: 0x351a45, sunColor: 0x6a6ac0, sunI: 0.25, hemiSky: 0x35275f, hemiGround: 0x0a0716, hemiI: 0.4, fog: 0x160f2c, fogD: 0.0085 },
     { t: 0.32, skyTop: 0x3a1f5e, skyBottom: 0xff9d7a, sunColor: 0xffe0b3, sunI: 1.1, hemiSky: 0x9d7bff, hemiGround: 0x1a0f2e, hemiI: 0.9, fog: 0x2a1b45, fogD: 0.0065 },
@@ -816,14 +960,25 @@
     { t: 0.80, skyTop: 0x2a1240, skyBottom: 0x7a3550, sunColor: 0xff8a5c, sunI: 0.55, hemiSky: 0x6a3f7a, hemiGround: 0x120a20, hemiI: 0.6, fog: 0x25122f, fogD: 0.0075 },
     { t: 1.00, skyTop: 0x0a0620, skyBottom: 0x1a1035, sunColor: 0x4a5aa8, sunI: 0.18, hemiSky: 0x2a2050, hemiGround: 0x05030c, hemiI: 0.35, fog: 0x0e0a1f, fogD: 0.009 },
   ];
+  // World 2 — "Frostwelt": cool icy blues/whites instead of purple/orange.
+  const DAY_KEYFRAMES_W2 = [
+    { t: 0.00, skyTop: 0x040a18, skyBottom: 0x0f1f38, sunColor: 0x5a7ac0, sunI: 0.15, hemiSky: 0x203050, hemiGround: 0x03050c, hemiI: 0.35, fog: 0x0a1220, fogD: 0.01 },
+    { t: 0.20, skyTop: 0x0a1830, skyBottom: 0x1f3f5f, sunColor: 0x7fa8d8, sunI: 0.3, hemiSky: 0x2f4f7a, hemiGround: 0x08101c, hemiI: 0.45, fog: 0x101f38, fogD: 0.009 },
+    { t: 0.32, skyTop: 0x14284a, skyBottom: 0x8fc8e8, sunColor: 0xe8f4ff, sunI: 1.15, hemiSky: 0x9dd4ff, hemiGround: 0x14284a, hemiI: 0.95, fog: 0x1a3450, fogD: 0.0075 },
+    { t: 0.50, skyTop: 0x1f3a60, skyBottom: 0xc7ecff, sunColor: 0xffffff, sunI: 1.35, hemiSky: 0xcfeeff, hemiGround: 0x24406a, hemiI: 1.05, fog: 0x28486e, fogD: 0.0065 },
+    { t: 0.68, skyTop: 0x14284a, skyBottom: 0x8fc8e8, sunColor: 0xe8f4ff, sunI: 1.15, hemiSky: 0x9dd4ff, hemiGround: 0x14284a, hemiI: 0.95, fog: 0x1a3450, fogD: 0.0075 },
+    { t: 0.80, skyTop: 0x0f2038, skyBottom: 0x4a6f95, sunColor: 0xa8c8e8, sunI: 0.5, hemiSky: 0x4f7aa0, hemiGround: 0x0a1830, hemiI: 0.6, fog: 0x152a48, fogD: 0.0085 },
+    { t: 1.00, skyTop: 0x040a18, skyBottom: 0x0f1f38, sunColor: 0x5a7ac0, sunI: 0.15, hemiSky: 0x203050, hemiGround: 0x03050c, hemiI: 0.35, fog: 0x0a1220, fogD: 0.01 },
+  ];
   const _c1 = new THREE.Color(), _c2 = new THREE.Color();
   function lerpKeyColor(key, a, b, f){ _c1.setHex(a[key]); _c2.setHex(b[key]); return _c1.lerp(_c2, f); }
   function updateDayNight(dt){
     dayTime = (dayTime + dt / DAY_CYCLE_SECONDS) % 1;
-    let a = DAY_KEYFRAMES[0], b = DAY_KEYFRAMES[DAY_KEYFRAMES.length - 1], f = 0;
-    for (let i = 0; i < DAY_KEYFRAMES.length - 1; i++){
-      if (dayTime >= DAY_KEYFRAMES[i].t && dayTime <= DAY_KEYFRAMES[i+1].t){
-        a = DAY_KEYFRAMES[i]; b = DAY_KEYFRAMES[i+1];
+    const KEYFRAMES = selectedWorld === 2 ? DAY_KEYFRAMES_W2 : DAY_KEYFRAMES_W1;
+    let a = KEYFRAMES[0], b = KEYFRAMES[KEYFRAMES.length - 1], f = 0;
+    for (let i = 0; i < KEYFRAMES.length - 1; i++){
+      if (dayTime >= KEYFRAMES[i].t && dayTime <= KEYFRAMES[i+1].t){
+        a = KEYFRAMES[i]; b = KEYFRAMES[i+1];
         f = (dayTime - a.t) / (b.t - a.t);
         break;
       }
@@ -975,35 +1130,55 @@
     g.add(top);
     g.position.set(x,y,z);
     scene.add(g);
-    islands.push({mesh:g, pos:new THREE.Vector3(x,y,z), radius: scale*0.62, top: y + scale*0.27, bottom: y - scale*0.95});
-    return g;
+    const entry = {mesh:g, pos:new THREE.Vector3(x,y,z), radius: scale*0.62, top: y + scale*0.27, bottom: y - scale*0.95, rockMat, grassMat, baseHue: hue, topOffset: scale*0.27, bottomOffset: -scale*0.95, homeY: y};
+    islands.push(entry);
+    return entry;
   }
-  // scatter islands
-  const islandData = [
+  // World 1 — original scatter
+  const islandDataW1 = [
     [0,0,0,14,0.75],[28,4,-20,10,0.6],[-25,8,-30,11,0.55],[10,14,-55,9,0.8],
     [-18,18,-70,12,0.65],[20,22,-95,10,0.5],[-5,26,-120,13,0.7],[35,10,-10,8,0.45],
     [-35,6,10,9,0.6],[0,30,-150,15,0.72],[50,18,-60,8,0.55],[-45,20,-90,9,0.65]
   ];
-  islandData.forEach(d => makeIsland(...d));
+  const islandsW1 = islandDataW1.map(d => makeIsland(...d));
+  islandsW1.forEach(isl => isl.world = 1);
+
+  // World 2 — "Frostwelt": a genuinely different layout, not just a recolor.
+  // Wider zigzag spread, taller climb, bigger gaps, different island sizes.
+  const islandDataW2 = [
+    [0,0,0,15,0.75],[-32,6,-18,9,0.58],[30,10,-38,12,0.58],[-38,16,-58,8,0.58],
+    [34,22,-80,13,0.58],[-28,28,-100,9,0.58],[15,34,-118,11,0.58],[-8,40,-138,10,0.58],
+    [40,46,-155,13,0.58],[-42,30,-30,8,0.58],[55,8,-8,9,0.58],[-15,50,-175,10,0.58],[20,54,-195,14,0.58]
+  ];
+  const islandsW2 = islandDataW2.map(d => makeIsland(...d));
+  islandsW2.forEach(isl => { isl.world = 2; });
   const islandMeshes = islands.map(isl => isl.mesh);
 
   // ---------- GRAPPLE ANCHOR POINTS (glowing crystals in the sky) ----------
   const anchors = [];
   const anchorGeo = new THREE.OctahedronGeometry(1.3, 0);
-  function makeAnchor(x,y,z){
+  function makeAnchor(x,y,z,world){
     const mat = new THREE.MeshStandardMaterial({ color: 0x7affc4, emissive: 0x2fbf8a, emissiveIntensity: 0.9, roughness:0.2 });
     const m = new THREE.Mesh(anchorGeo, mat);
     m.position.set(x,y,z);
+    m.world = world;
     scene.add(m);
     anchors.push(m);
   }
-  // Path of anchors winding through islands, plus extras scattered around
-  const anchorPositions = [
+  // Path of anchors winding through World 1's islands, plus extras scattered around
+  const anchorPositionsW1 = [
     [8,14,-8],[20,18,-18],[0,20,-30],[-15,22,-40],[10,26,-55],[-5,30,-68],
     [15,30,-80],[-20,32,-95],[0,36,-108],[20,34,-125],[-10,38,-138],[5,42,-150],
     [30,16,-5],[-30,14,5],[40,20,-40],[-40,24,-60],[15,10,10],[-15,12,-15]
   ];
-  anchorPositions.forEach(p => makeAnchor(...p));
+  anchorPositionsW1.forEach(p => makeAnchor(p[0],p[1],p[2],1));
+  // Matching anchor path for World 2's wider, taller zigzag layout
+  const anchorPositionsW2 = [
+    [-16,10,-8],[16,16,-18],[-18,20,-30],[16,26,-42],[-20,32,-55],[18,38,-68],
+    [-14,42,-80],[10,46,-92],[-4,50,-108],[6,52,-128],[-8,44,-146],[10,48,-165],
+    [-22,20,-18],[24,14,-4],[30,26,-70],[-30,34,-95],[26,10,-8],[-10,56,-185]
+  ];
+  anchorPositionsW2.forEach(p => makeAnchor(p[0],p[1],p[2],2));
 
   // ---------- COLLECTIBLE ORBS ----------
   const orbs = [];
@@ -1127,6 +1302,26 @@
     return sprite;
   }
 
+  function makeTextSprite(text, color, widthScale){
+    const canvas = document.createElement('canvas');
+    canvas.width = 512; canvas.height = 128;
+    const ctx = canvas.getContext('2d');
+    ctx.font = 'bold 64px sans-serif';
+    ctx.fillStyle = color;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 18;
+    ctx.fillText(text, 256, 68);
+    ctx.fillText(text, 256, 68);
+    const texture = new THREE.CanvasTexture(canvas);
+    const material = new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false });
+    const sprite = new THREE.Sprite(material);
+    sprite.scale.set(widthScale || 6, (widthScale || 6) * 0.25, 1);
+    sprite.raycast = () => {};
+    return sprite;
+  }
+
   function makeCheckpointPlatform(pos, index){
     const RADIUS = 6.5, HEIGHT = 0.5;
     const group = new THREE.Group();
@@ -1189,21 +1384,71 @@
   }
 
   const checkpoints = [];
-  const ringPositions = [
+  function addCheckpointSet(positions, world){
+    positions.forEach((p, i) => {
+      const plat = makeCheckpointPlatform(p, i);
+      checkpoints.push({
+        group: plat.group, pos: new THREE.Vector3(...p), passed: false, index: i,
+        radius: plat.radius, rim: plat.rim, innerRing: plat.innerRing, center: plat.center,
+        rimMat: plat.rimMat, baseMat: plat.baseMat, holoRing: plat.holoRing, glowLight: plat.glowLight,
+        holoRingY: plat.holoRingY, world,
+      });
+      // register as solid ground, reusing the same collision system as the islands
+      const islandEntry = { mesh: plat.group, pos: new THREE.Vector3(p[0], p[1], p[2]), radius: plat.radius,
+        top: p[1] + plat.height/2, bottom: p[1] - plat.height/2 - 1, homeY: p[1], topOffset: plat.height/2, bottomOffset: -plat.height/2 - 1, world };
+      islands.push(islandEntry);
+      islandMeshes.push(plat.group);
+    });
+  }
+  // World 1 — original 6 platforms, rewards 1..6
+  const ringPositionsW1 = [
     [8,15,-15],[-5,22,-42],[10,28,-70],[-15,34,-98],[5,40,-128],[0,46,-152]
   ];
-  ringPositions.forEach((p, i) => {
-    const plat = makeCheckpointPlatform(p, i);
-    checkpoints.push({
-      group: plat.group, pos: new THREE.Vector3(...p), passed: false, index: i,
-      radius: plat.radius, rim: plat.rim, innerRing: plat.innerRing, center: plat.center,
-      rimMat: plat.rimMat, baseMat: plat.baseMat, holoRing: plat.holoRing, glowLight: plat.glowLight,
-      holoRingY: plat.holoRingY,
+  addCheckpointSet(ringPositionsW1, 1);
+  // World 2 — its own 8 platforms matching the new layout, rewards 7..14
+  const ringPositionsW2 = [
+    [-14,15,-16],[14,20,-36],[-16,26,-56],[16,32,-76],[-12,38,-96],[8,44,-116],
+    [-6,50,-140],[18,56,-172]
+  ];
+  addCheckpointSet(ringPositionsW2, 2);
+
+  // ---------- WORLD THEME SWITCHING ----------
+  // Fully swaps the active world: islands, anchors, and trophy platforms all
+  // get tagged with a .world number when created. Whichever world isn't
+  // selected gets hidden AND physically parked far away (not just invisible)
+  // so its geometry can never be collided with or grappled onto by mistake.
+  function applyWorldTheme(n){
+    islands.forEach(isl => {
+      if (isl.rockMat){
+        // real island — recolor for the Frost theme in World 2
+        if (n === 2){
+          isl.rockMat.color.setHSL(0.58 + isl.baseHue*0.04, 0.25, 0.38);
+          isl.grassMat.color.setHSL(0.53 + isl.baseHue*0.04, 0.35, 0.82);
+        } else {
+          isl.rockMat.color.setHSL(isl.baseHue, 0.35, 0.32);
+          isl.grassMat.color.setHSL(isl.baseHue + 0.28, 0.55, 0.42);
+        }
+      }
+      if (isl.world === undefined || isl.world === null) return; // shared geometry, always active
+      const active = isl.world === n;
+      isl.mesh.visible = active;
+      if (active){
+        isl.pos.y = isl.homeY;
+        isl.top = isl.homeY + isl.topOffset;
+        isl.bottom = isl.homeY + isl.bottomOffset;
+      } else {
+        isl.pos.y = -900;
+        isl.top = -899;
+        isl.bottom = -901;
+      }
     });
-    // register as solid ground, reusing the same collision system as the islands
-    islands.push({ mesh: plat.group, pos: new THREE.Vector3(p[0], p[1], p[2]), radius: plat.radius, top: p[1] + plat.height/2, bottom: p[1] - plat.height/2 - 1 });
-    islandMeshes.push(plat.group);
-  });
+    checkpoints.forEach(cp => { cp.group.visible = (cp.world === n); });
+    anchors.forEach(a => { a.visible = (a.world === n); });
+  }
+
+  applyWorldTheme(1); // safe default until startGame() applies the actual selected world
+
+
 
   // ---------- PLAYER ----------
   const player = {
@@ -1254,6 +1499,22 @@
       back: 0x0d0d14, front: 0x2a0a3a, limb: 0x0d0d14, boot: 0x050508, glow: 0xb088ff, glowEm: 0x7a3dff },
     { id: 'gold', name: 'Gold', cost: 220,
       back: 0x3a2f0a, front: 0xd4af37, limb: 0x3a2f0a, boot: 0x1a1505, glow: 0xffe27a, glowEm: 0xd9a72f },
+    { id: 'kosmos', name: 'Kosmos', cost: 320,
+      back: 0x0d0a2e, front: 0x3a1f6e, limb: 0x0d0a2e, boot: 0x05041a, glow: 0x9d7bff, glowEm: 0x6a3dff },
+    { id: 'drache', name: 'Drache', cost: 400,
+      back: 0x0e3a1f, front: 0x1f7a3a, limb: 0x0e3a1f, boot: 0x051a0d, glow: 0xff3d3d, glowEm: 0xcc1f1f },
+    { id: 'diamant', name: 'Diamant', cost: 480,
+      back: 0x1a3a4a, front: 0xdff5ff, limb: 0x1a3a4a, boot: 0x0d1f28, glow: 0xffffff, glowEm: 0x9adfff },
+    { id: 'koenig', name: 'Königlich', cost: 550,
+      back: 0x2a0a3a, front: 0xd4af37, limb: 0x2a0a3a, boot: 0x150520, glow: 0xffe27a, glowEm: 0xb088ff },
+    { id: 'sammler', name: 'Sammler', cost: 0, achievement: true,
+      back: 0x2f1a0a, front: 0xcd7f32, limb: 0x2f1a0a, boot: 0x160c05, glow: 0xffb347, glowEm: 0xcd7f32 },
+    { id: 'wanderer', name: 'Wanderer', cost: 0, achievement: true,
+      back: 0x0a2a3a, front: 0x2fbfaf, limb: 0x0a2a3a, boot: 0x051620, glow: 0x7affe4, glowEm: 0x2fbfaf },
+    { id: 'jaeger', name: 'Jäger', cost: 0, achievement: true,
+      back: 0x1a0a0a, front: 0x6e1f1f, limb: 0x1a0a0a, boot: 0x0d0505, glow: 0xff5c5c, glowEm: 0x8f1f1f },
+    { id: 'legende', name: 'Legende', cost: 0, achievement: true,
+      back: 0x1a1a2a, front: 0xf0e6ff, limb: 0x1a1a2a, boot: 0x0d0d16, glow: 0xffffff, glowEm: 0xd9b8ff },
   ];
   function applySkin(skinId){
     const skin = SKIN_DEFS.find(s => s.id === skinId) || SKIN_DEFS[0];
@@ -1969,6 +2230,7 @@
     const TOLERANCE = 5;   // world units — how far off-center the aim can be
     const MAX_RANGE = 70;
     for (const a of anchors){
+      if (a.world !== selectedWorld) continue;
       const toA = new THREE.Vector3().subVectors(a.position, origin);
       const along = toA.dot(dir);
       if (along <= 0.5 || along > MAX_RANGE) continue; // behind camera or too far
@@ -1984,6 +2246,7 @@
   function nearestAnchorWithin(range){
     let best = null, bestDist = Infinity;
     for (const a of anchors){
+      if (a.world !== selectedWorld) continue;
       const d = player.pos.distanceTo(a.position);
       if (d < range && d < bestDist){ bestDist = d; best = a; }
     }
@@ -2048,9 +2311,12 @@
     if (target.hp <= 0){
       target.alive = false;
       target.mesh.visible = false;
-      addScore(15);
+      addScore(1);
       pulseBox('box-score', 'pulse');
       sfx.enemyDefeat();
+      enemiesDefeated++;
+      storageSet('rankmann_enemiesDefeated', enemiesDefeated);
+      checkAchievements();
     }
   }
 
@@ -2073,25 +2339,148 @@
   let ownedSkins = storageGet('rankmann_ownedSkins', ['standard']);
   let equippedSkin = storageGet('rankmann_equippedSkin', 'standard');
   let totalTrophies = storageGet('rankmann_totalTrophies', 0);
+  let world2Unlocked = storageGet('rankmann_world2Unlocked', false);
+  let selectedWorld = storageGet('rankmann_selectedWorld', 1);
+  let enemiesDefeated = storageGet('rankmann_enemiesDefeated', 0);
+  let orbsCollected = storageGet('rankmann_orbsCollected', 0);
+  const WORLD2_COST = 250;
+
+  // ---------- ACHIEVEMENTS ----------
+  let unlockedAchievements = storageGet('rankmann_unlockedAchievements', []);
+  const ACHIEVEMENT_DEFS = [
+    { id: 'trophies10', icon: '🥉', name: 'Pokal-Neuling', desc: 'Sammle 10 Pokale insgesamt',
+      check: () => totalTrophies >= 10 },
+    { id: 'trophies50', icon: '🥈', name: 'Pokal-Sammler', desc: 'Sammle 50 Pokale insgesamt', rewardSkin: 'sammler',
+      check: () => totalTrophies >= 50 },
+    { id: 'trophies150', icon: '🥇', name: 'Pokal-Meister', desc: 'Sammle 150 Pokale insgesamt', rewardSkin: 'legende',
+      check: () => totalTrophies >= 150 },
+    { id: 'world2', icon: '🗺️', name: 'Weltenwanderer', desc: 'Schalte Welt 2 frei', rewardSkin: 'wanderer',
+      check: () => world2Unlocked },
+    { id: 'enemies20', icon: '⚔️', name: 'Gegnerjäger', desc: 'Besiege 20 Gegner', rewardSkin: 'jaeger',
+      check: () => enemiesDefeated >= 20 },
+    { id: 'orbs50', icon: '💎', name: 'Kristalljäger', desc: 'Sammle 50 Kristalle',
+      check: () => orbsCollected >= 50 },
+  ];
+  function checkAchievements(){
+    ACHIEVEMENT_DEFS.forEach(ach => {
+      if (unlockedAchievements.includes(ach.id)) return;
+      if (!ach.check()) return;
+      unlockedAchievements.push(ach.id);
+      storageSet('rankmann_unlockedAchievements', unlockedAchievements);
+      if (ach.rewardSkin && !ownedSkins.includes(ach.rewardSkin)){
+        ownedSkins.push(ach.rewardSkin);
+        storageSet('rankmann_ownedSkins', ownedSkins);
+      }
+      showAchievementUnlock(ach);
+    });
+    updateAchievementsUI();
+  }
+  function showAchievementUnlock(ach){
+    const el = document.getElementById('achievementToast');
+    if (!el) return;
+    const skinNote = ach.rewardSkin ? ' + neuer Skin freigeschaltet!' : '';
+    el.innerHTML = `<span class="achToastIcon">${ach.icon}</span><div><div class="achToastTitle">Erfolg freigeschaltet!</div><div class="achToastName">${ach.name}${skinNote}</div></div>`;
+    el.classList.remove('show');
+    void el.offsetWidth;
+    el.classList.add('show');
+    clearTimeout(showAchievementUnlock._t);
+    showAchievementUnlock._t = setTimeout(() => el.classList.remove('show'), 4500);
+  }
+  function updateAchievementsUI(){
+    const grid = document.getElementById('achievementsGrid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    ACHIEVEMENT_DEFS.forEach(ach => {
+      const unlocked = unlockedAchievements.includes(ach.id);
+      const card = document.createElement('div');
+      card.className = 'achCard' + (unlocked ? ' unlocked' : '');
+      card.innerHTML = `
+        <span class="achIcon">${unlocked ? ach.icon : '🔒'}</span>
+        <span class="achName">${ach.name}</span>
+        <span class="achDesc">${ach.desc}</span>
+        ${ach.rewardSkin ? `<span class="achReward">${unlocked ? '✅ Skin freigeschaltet' : '🎁 Skin-Belohnung'}</span>` : ''}
+      `;
+      grid.appendChild(card);
+    });
+  }
+
   function updateTrophyDisplay(){
     const el = document.getElementById('totalTrophyCount');
     if (el) el.textContent = totalTrophies;
     if (checkEl) checkEl.textContent = totalTrophies;
     updateShopUI();
+    updateWorldSelectUI();
+    checkAchievements();
   }
   updateTrophyDisplay();
 
-  // ---------- WELT 2 RELEASE COUNTDOWN ----------
-  // Fixed target date/time — 14 days out from when this was set, at 10:00.
-  // Counts down a whole day at a time (14, 13, ... 0), then shows the exact
-  // release clock time once release day arrives.
-  const WELT2_RELEASE = new Date('2026-08-25T15:00:00');
-  function updateWelt2Countdown(){
+  // ---------- WORLD SELECTION ----------
+  function updateWorldSelectUI(){
+    const btn1 = document.getElementById('worldBtn1');
+    const btn2 = document.getElementById('worldBtn2');
+    if (!btn1 || !btn2) return;
+    btn1.textContent = 'Welt 1';
+    btn1.className = 'worldBtn' + (selectedWorld === 1 ? ' selected' : '');
+    if (world2Unlocked) {
+      btn2.textContent = 'Welt 2';
+      btn2.className = 'worldBtn' + (selectedWorld === 2 ? ' selected' : '');
+    } else {
+      btn2.innerHTML = '<span>🔒 Welt 2</span><span class="worldBtnCost">' + WORLD2_COST + ' 🏆</span>';
+      btn2.className = 'worldBtn locked';
+    }
+  }
+  function selectWorld(n){
+    selectedWorld = n;
+    storageSet('rankmann_selectedWorld', selectedWorld);
+    updateWorldSelectUI();
+  }
+  let worldErrorTimeout = null;
+  function showWorldSelectError(msg){
+    const el = document.getElementById('worldSelectError');
+    if (!el) return;
+    el.textContent = msg;
+    el.classList.remove('show');
+    void el.offsetWidth; // restart animation
+    el.classList.add('show');
+    clearTimeout(worldErrorTimeout);
+    worldErrorTimeout = setTimeout(() => el.classList.remove('show'), 3000);
+  }
+  function handleWorld2Click(){
+    if (world2Unlocked) {
+      selectWorld(2);
+      return;
+    }
+    if (totalTrophies < WORLD2_COST) {
+      const btn2 = document.getElementById('worldBtn2');
+      if (btn2) {
+        btn2.animate(
+          [{ transform: 'translateX(0)' }, { transform: 'translateX(-4px)' }, { transform: 'translateX(4px)' }, { transform: 'translateX(0)' }],
+          { duration: 250 }
+        );
+      }
+      const missing = WORLD2_COST - totalTrophies;
+      showWorldSelectError(`Nicht genug Pokale! Dir fehlen noch ${missing} 🏆`);
+      return;
+    }
+    totalTrophies -= WORLD2_COST;
+    world2Unlocked = true;
+    storageSet('rankmann_totalTrophies', totalTrophies);
+    storageSet('rankmann_world2Unlocked', true);
+    updateTrophyDisplay();
+    selectWorld(2);
+  }
+  updateWorldSelectUI();
+
+  // ---------- NEXT UPDATE RELEASE COUNTDOWN ----------
+  // Fixed target date/time. Counts down a whole day at a time, then shows the
+  // exact release clock time once release day arrives.
+  const NEXT_UPDATE_RELEASE = new Date('2026-08-26T15:00:00');
+  function updateNextUpdateCountdown(){
     const labelEl = document.getElementById('updateEtaLabel');
     const valueEl = document.getElementById('updateEtaValue');
     if (!labelEl || !valueEl) return;
     const now = new Date();
-    if (now >= WELT2_RELEASE){
+    if (now >= NEXT_UPDATE_RELEASE){
       labelEl.textContent = 'Erscheint um';
       valueEl.textContent = '15:00 Uhr';
       return;
@@ -2100,7 +2489,7 @@
     // "today" reads as a stable number all day and only steps down exactly
     // at the user's own local midnight, not whenever UTC happens to roll over.
     const localNowMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const localTargetMidnight = new Date(WELT2_RELEASE.getFullYear(), WELT2_RELEASE.getMonth(), WELT2_RELEASE.getDate());
+    const localTargetMidnight = new Date(NEXT_UPDATE_RELEASE.getFullYear(), NEXT_UPDATE_RELEASE.getMonth(), NEXT_UPDATE_RELEASE.getDate());
     const daysLeft = Math.round((localTargetMidnight - localNowMidnight) / 86400000);
     if (daysLeft <= 0){
       labelEl.textContent = 'Erscheint um';
@@ -2110,8 +2499,8 @@
     labelEl.textContent = 'Erscheint in';
     valueEl.textContent = daysLeft + (daysLeft === 1 ? ' Tag' : ' Tage');
   }
-  updateWelt2Countdown();
-  setInterval(updateWelt2Countdown, 60 * 1000); // check every minute so the day-step lands close to midnight
+  updateNextUpdateCountdown();
+  setInterval(updateNextUpdateCountdown, 60 * 1000); // check every minute so the day-step lands close to midnight
 
   function addScore(amount){
     score += amount;
@@ -2147,6 +2536,7 @@
     if (!grid) return;
     grid.innerHTML = '';
     SKIN_DEFS.forEach(skin => {
+      if (skin.achievement && !ownedSkins.includes(skin.id)) return; // hidden until unlocked via achievement
       const owned = ownedSkins.includes(skin.id);
       const equipped = equippedSkin === skin.id;
       const card = document.createElement('div');
@@ -2201,12 +2591,22 @@
     const row = document.getElementById('previewSwatchRow');
     row.innerHTML = '';
     SKIN_DEFS.forEach(skin => {
+      if (skin.achievement && !ownedSkins.includes(skin.id)) return; // hidden until unlocked via achievement
+      const item = document.createElement('div');
+      item.className = 'skinSwatchItem' + (previewingSkinId === skin.id ? ' selected' : '');
+      item.onclick = () => { previewingSkinId = skin.id; applySkin(skin.id); renderPreviewBar(); };
+
       const sw = document.createElement('div');
       sw.className = 'skinSwatch' + (previewingSkinId === skin.id ? ' selected' : '');
       sw.style.background = `linear-gradient(135deg, #${skin.back.toString(16).padStart(6,'0')}, #${skin.front.toString(16).padStart(6,'0')})`;
-      sw.title = skin.name;
-      sw.onclick = () => { previewingSkinId = skin.id; applySkin(skin.id); renderPreviewBar(); };
-      row.appendChild(sw);
+
+      const label = document.createElement('span');
+      label.className = 'skinSwatchLabel';
+      label.textContent = skin.name;
+
+      item.appendChild(sw);
+      item.appendChild(label);
+      row.appendChild(item);
     });
     const skin = SKIN_DEFS.find(s => s.id === previewingSkinId);
     const owned = ownedSkins.includes(previewingSkinId);
@@ -2352,7 +2752,8 @@
   }
 
   function respawnPlayer(){
-    player.pos.set(0, 20, 0);
+    const hub = selectedWorld === 2 ? islandsW2[0] : islandsW1[0];
+    player.pos.set(hub.pos.x, hub.top + 5, hub.pos.z);
     player.vel.set(0,0,0);
     player.wasOnGround = false;
     player.onGround = false;
@@ -2671,6 +3072,9 @@
         o.mesh.visible = false;
         addScore(10);
         pulseBox('box-score', 'pulse');
+        orbsCollected++;
+        storageSet('rankmann_orbsCollected', orbsCollected);
+        checkAchievements();
       }
     }
 
@@ -2746,6 +3150,7 @@
     // trophy platforms — landed on, not flown through. Open-ended collecting,
     // no "level complete" goal: platform N awards N trophies (1st=1, ..., 6th=6).
     for (const cp of checkpoints){
+      if (cp.world !== selectedWorld) continue; // belongs to the other world, inactive here
       // gentle idle animation for the decorative holo-ring
       cp.holoRing.rotation.y += dt * 0.6;
       cp.holoRing.position.y = cp.holoRingY + Math.sin(anim.time * 1.3 + cp.index) * 0.12;
@@ -2756,7 +3161,7 @@
         const horizDist = Math.sqrt(dx*dx + dz*dz);
         if (player.onGround && horizDist < cp.radius + 1.5){
           cp.passed = true;
-          const reward = cp.index + 1; // 1st platform = 1 trophy, ..., 6th = 6 trophies
+          const reward = cp.index + 1 + (cp.world === 2 ? 6 : 0); // World 1: 1..6, World 2: 7..14
           // completion glow: rim/base shift to gold, holo-ring brightens
           cp.rimMat.color.set(0xffe27a);
           cp.rimMat.emissive.set(0xd9a72f);
@@ -2771,11 +3176,12 @@
           sfx.trophy();
 
           // send the player straight back to the spawn platform — instant, no effect
-          player.pos.set(0, islands[0].top + player.radius, 0);
+          const hub = selectedWorld === 2 ? islandsW2[0] : islandsW1[0];
+          player.pos.set(0, hub.top + player.radius, 0);
           player.vel.set(0, 0, 0);
           player.onGround = true;
           player.wasOnGround = true;
-          player.standingOn = islands[0].mesh;
+          player.standingOn = hub.mesh;
           grapple.active = false;
           ropeLine.visible = false;
           snapCameraToPlayer();
@@ -2796,6 +3202,7 @@
     const startScreen = document.getElementById('startScreen');
     startScreen.classList.add('fading');
     setTimeout(() => { startScreen.style.display = 'none'; }, 500);
+    applyWorldTheme(selectedWorld);
     snapCameraToPlayer();
     ensureAudio();
     stopMenuMusic();
@@ -2854,9 +3261,22 @@
     applySkin(equippedSkin); // undo any unbought preview
     updateTouchControlsVisibility();
   }
+  function openAchievements(){
+    updateAchievementsUI();
+    document.getElementById('achievementsScreen').classList.remove('hidden');
+    updateTouchControlsVisibility();
+  }
+  function closeAchievements(){
+    document.getElementById('achievementsScreen').classList.add('hidden');
+    updateTouchControlsVisibility();
+  }
   document.getElementById('shopBtn').addEventListener('click', openShop);
   document.getElementById('pauseShopBtn').addEventListener('click', openShop);
   document.getElementById('shopCloseBtn').addEventListener('click', closeShop);
+  document.getElementById('achievementsBtn').addEventListener('click', openAchievements);
+  document.getElementById('achievementsCloseBtn').addEventListener('click', closeAchievements);
+  document.getElementById('worldBtn1').addEventListener('click', () => selectWorld(1));
+  document.getElementById('worldBtn2').addEventListener('click', handleWorld2Click);
   document.getElementById('shopPreviewBtn').addEventListener('click', enterPreview);
   document.getElementById('previewBackBtn').addEventListener('click', exitPreview);
 
