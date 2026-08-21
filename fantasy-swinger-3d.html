@@ -1030,10 +1030,10 @@
     <div id="updateTeaserGlow"></div>
     <span class="updateBadge">✨ Nächstes Update</span>
     <div class="updateFeature">
-      <span class="updateFeatureIcon">📸</span>
+      <span class="updateFeatureIcon">🎨</span>
       <div class="updateFeatureText">
-        <span class="updateFeatureTitle">Foto-Modus</span>
-        <span class="updateFeatureSub">Halte deine Abenteuer mit coolen Posen, Filtern und freier Kamera als Screenshot fest</span>
+        <span class="updateFeatureTitle">Ranken-Skins</span>
+        <span class="updateFeatureSub">Nicht nur die Figur — jetzt wird auch die Ranke selbst farbig und thematisch anpassbar, z.B. Feuer-, Eis- oder Regenbogen-Ranke</span>
       </div>
     </div>
     <div id="updateEta">
@@ -3014,15 +3014,16 @@
   // ---------- NEXT UPDATE RELEASE COUNTDOWN ----------
   // Fixed target date/time. Counts down a whole day at a time, then shows the
   // exact release clock time once release day arrives.
-  const NEXT_UPDATE_RELEASE = new Date('2026-08-28T15:00:00');
+  const NEXT_UPDATE_RELEASE = new Date('2026-08-22T15:30:00');
   function updateNextUpdateCountdown(){
     const labelEl = document.getElementById('updateEtaLabel');
     const valueEl = document.getElementById('updateEtaValue');
     if (!labelEl || !valueEl) return;
+    const releaseTimeStr = NEXT_UPDATE_RELEASE.getHours().toString().padStart(2,'0') + ':' + NEXT_UPDATE_RELEASE.getMinutes().toString().padStart(2,'0') + ' Uhr';
     const now = new Date();
     if (now >= NEXT_UPDATE_RELEASE){
       labelEl.textContent = 'Erscheint um';
-      valueEl.textContent = '15:00 Uhr';
+      valueEl.textContent = releaseTimeStr;
       return;
     }
     // Whole calendar days remaining, based on LOCAL midnight (not UTC) — so
@@ -3033,7 +3034,7 @@
     const daysLeft = Math.round((localTargetMidnight - localNowMidnight) / 86400000);
     if (daysLeft <= 0){
       labelEl.textContent = 'Erscheint um';
-      valueEl.textContent = '15:00 Uhr';
+      valueEl.textContent = releaseTimeStr;
       return;
     }
     labelEl.textContent = 'Erscheint in';
