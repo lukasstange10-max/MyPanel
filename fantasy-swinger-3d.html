@@ -502,6 +502,17 @@
     display: none; animation: claimablePulse 1.6s ease-in-out infinite;
   }
   #achievementsBadge.show { display: block; }
+
+  #settingsFab {
+    position: fixed; top: 20px; right: 20px; z-index: 60;
+    width: 52px; height: 52px; border-radius: 50%;
+    background: rgba(20,10,38,0.75); border: 1px solid rgba(180,140,255,0.4);
+    backdrop-filter: blur(6px);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; cursor: pointer;
+    transition: transform 0.15s ease, background 0.2s ease;
+  }
+  #settingsFab:hover { transform: translateY(-2px) rotate(25deg) scale(1.05); background: rgba(40,22,64,0.85); }
   #galleryBtn {
     padding: 13px 24px; font-size: 15px; font-weight: 700;
     background: linear-gradient(135deg, rgba(122,255,196,0.22), rgba(47,191,138,0.22));
@@ -588,17 +599,134 @@
     max-height: 80vh; max-height: 80dvh; overflow-y: auto;
     scrollbar-width: thin; scrollbar-color: rgba(180,140,255,0.5) rgba(20,10,38,0.4);
   }
+  #galleryScreen .titleRow { position: relative; justify-content: center; }
+  #gallerySelectBtn {
+    position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+    padding: 8px 16px; font-size: 12.5px; font-weight: 700;
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(180,140,255,0.3);
+    border-radius: 999px; color: rgba(255,255,255,0.8); cursor: pointer;
+  }
+  #gallerySelectBtn:hover { background: rgba(255,255,255,0.12); }
+  #gallerySelectBtn.active {
+    background: linear-gradient(135deg, rgba(255,226,122,0.3), rgba(217,167,47,0.3));
+    border-color: rgba(255,226,122,0.6); color: #fff;
+  }
+  #gallerySelectBar {
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+    margin-top: 14px; padding: 10px 14px; border-radius: 12px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(180,140,255,0.25);
+  }
+  #gallerySelectBar.hidden { display: none; }
+  #gallerySelectCount { font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.85); }
+  #gallerySelectActions { display: flex; gap: 8px; flex-wrap: wrap; }
+  #gallerySelectActions button {
+    padding: 7px 14px; font-size: 12px; font-weight: 700;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(180,140,255,0.3);
+    border-radius: 999px; color: #fff; cursor: pointer;
+  }
+  #gallerySelectDeleteBtn { border-color: rgba(255,92,108,0.5); color: #ff9aa2; }
+  #gallerySelectActions button:hover { background: rgba(255,255,255,0.15); }
+  #gallerySelectActions button:disabled { opacity: 0.4; cursor: default; }
+
   #galleryGrid {
     display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
     margin-top: 16px;
   }
+  .galleryThumbWrap { position: relative; }
   .galleryThumb {
     aspect-ratio: 1; width: 100%; object-fit: cover; border-radius: 10px;
     border: 1px solid rgba(180,140,255,0.3); cursor: pointer;
-    transition: transform 0.15s ease;
+    transition: transform 0.15s ease, border-color 0.15s ease;
+    display: block;
   }
   .galleryThumb:hover { transform: scale(1.05); }
+  .galleryThumbWrap.selected .galleryThumb { border-color: rgba(122,255,196,0.8); opacity: 0.7; }
+  .galleryThumbCheck {
+    display: none; position: absolute; top: 6px; right: 6px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: rgba(20,10,38,0.85); border: 2px solid rgba(255,255,255,0.6);
+    align-items: center; justify-content: center; font-size: 12px; color: #fff;
+  }
+  .galleryThumbWrap.selectMode .galleryThumbCheck { display: flex; }
+  .galleryThumbWrap.selected .galleryThumbCheck { background: #2fbf8a; border-color: #7affc4; }
   #galleryEmptyMsg { display: none; margin-top: 20px; font-size: 13px; color: rgba(255,255,255,0.6); }
+
+  #settingsScreen {
+    position: fixed; inset: 0; z-index: 250;
+    background: rgba(6,3,14,0.5);
+    backdrop-filter: blur(3px) saturate(1.2);
+    -webkit-backdrop-filter: blur(3px) saturate(1.2);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; text-align: center; padding: 20px; box-sizing: border-box;
+    opacity: 1; transition: opacity 0.25s ease;
+  }
+  #settingsScreen.hidden { opacity: 0; pointer-events: none; }
+  #settingsPanel { max-width: 460px; }
+  #settingsPanelScroll {
+    max-height: 80vh; max-height: 80dvh; overflow-y: auto;
+    scrollbar-width: thin; scrollbar-color: rgba(180,140,255,0.5) rgba(20,10,38,0.4);
+  }
+  .settingsGroup { margin-top: 18px; text-align: left; }
+  .settingsLabel {
+    display: flex; justify-content: space-between; font-size: 13px; font-weight: 700;
+    color: rgba(255,255,255,0.85); margin-bottom: 8px;
+  }
+  .settingsLabel span { color: #ffe27a; font-weight: 800; }
+  .settingsSlider {
+    -webkit-appearance: none; appearance: none; width: 100%; height: 6px;
+    border-radius: 999px; background: rgba(255,255,255,0.15); outline: none; cursor: pointer;
+  }
+  .settingsSlider::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none; width: 20px; height: 20px; border-radius: 50%;
+    background: linear-gradient(135deg, #ffe27a, #d9a72f); cursor: pointer;
+    border: 2px solid rgba(20,10,38,0.9);
+  }
+  .settingsSlider::-moz-range-thumb {
+    width: 20px; height: 20px; border-radius: 50%;
+    background: linear-gradient(135deg, #ffe27a, #d9a72f); cursor: pointer; border: 2px solid rgba(20,10,38,0.9);
+  }
+  .settingsToggleRow {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 16px; font-size: 13.5px; font-weight: 700; color: rgba(255,255,255,0.85);
+  }
+  .settingsToggle {
+    position: relative; width: 46px; height: 26px; border-radius: 999px;
+    background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25);
+    cursor: pointer; transition: background 0.2s ease;
+  }
+  .settingsToggle[data-on="true"] { background: linear-gradient(135deg, #7affc4, #2fbf8a); border-color: rgba(122,255,196,0.6); }
+  .settingsToggleDot {
+    position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%;
+    background: #fff; transition: transform 0.2s ease;
+  }
+  .settingsToggle[data-on="true"] .settingsToggleDot { transform: translateX(20px); }
+  #settingsResetBtn {
+    margin-top: 26px; width: 100%; padding: 12px; font-size: 13.5px; font-weight: 700;
+    background: rgba(255,92,108,0.15); border: 1px solid rgba(255,92,108,0.5);
+    border-radius: 12px; color: #ff9aa2; cursor: pointer;
+  }
+  #settingsResetBtn:hover { background: rgba(255,92,108,0.25); }
+
+  #resetConfirmOverlay {
+    position: fixed; inset: 0; z-index: 400;
+    background: rgba(5,3,12,0.8); backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box;
+  }
+  #resetConfirmOverlay.hidden { display: none; }
+  #resetConfirmCard {
+    max-width: 360px; padding: 26px 22px; border-radius: 20px;
+    background: linear-gradient(160deg, rgba(40,22,64,0.97), rgba(20,10,38,0.98));
+    border: 2px solid rgba(255,92,108,0.5);
+    box-shadow: 0 25px 60px rgba(0,0,0,0.55);
+    color: #fff; text-align: center;
+  }
+  #resetConfirmCard p { font-size: 14px; line-height: 1.6; margin: 0 0 20px; }
+  #resetConfirmActions { display: flex; gap: 10px; justify-content: center; }
+  #resetConfirmActions button {
+    padding: 10px 18px; font-size: 13px; font-weight: 700; border-radius: 999px; cursor: pointer;
+  }
+  #resetConfirmYes { background: linear-gradient(135deg, #ff5c6c, #aa1f2a); border: none; color: #fff; }
+  #resetConfirmNo { background: rgba(255,255,255,0.08); border: 1px solid rgba(180,140,255,0.3); color: #fff; }
 
   #galleryViewer {
     position: fixed; inset: 0; z-index: 350;
@@ -607,7 +735,17 @@
     gap: 16px; padding: 20px; box-sizing: border-box;
   }
   #galleryViewer.hidden { display: none; }
-  #galleryViewerImg { max-width: min(90vw, 900px); max-height: 70vh; border-radius: 12px; box-shadow: 0 25px 60px rgba(0,0,0,0.6); }
+  #galleryViewerImg { max-width: min(90vw, 900px); max-height: 70vh; border-radius: 12px; box-shadow: 0 25px 60px rgba(0,0,0,0.6); touch-action: pan-y; }
+  .galleryNavBtn {
+    position: fixed; top: 50%; transform: translateY(-50%); z-index: 351;
+    width: 48px; height: 48px; border-radius: 50%;
+    background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.25);
+    color: #fff; font-size: 26px; cursor: pointer; line-height: 1;
+  }
+  .galleryNavBtn:hover { background: rgba(255,255,255,0.2); }
+  .galleryNavBtn:disabled { opacity: 0.25; cursor: default; }
+  #galleryPrevBtn { left: 16px; }
+  .galleryNavBtnRight { right: 16px; }
   #galleryViewerBar { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
   #galleryMobileHint { display: none; font-size: 12px; color: rgba(255,255,255,0.6); max-width: 320px; text-align: center; margin: 0; }
   #galleryMobileHint.show { display: block; }
@@ -740,9 +878,28 @@
     100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) rotate(var(--rot)); opacity: 0; }
   }
 
+  #shopTabs { display: flex; gap: 8px; justify-content: center; margin-top: 10px; }
+  .shopTabBtn {
+    padding: 9px 20px; font-size: 13px; font-weight: 700;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(180,140,255,0.3);
+    border-radius: 999px; color: rgba(255,255,255,0.75); cursor: pointer;
+  }
+  .shopTabBtn:hover { background: rgba(255,255,255,0.1); }
+  .shopTabBtn.active {
+    background: linear-gradient(135deg, rgba(255,226,122,0.3), rgba(217,167,47,0.3));
+    border-color: rgba(255,226,122,0.6); color: #fff;
+  }
   #shopGrid {
     display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
     margin-top: 14px;
+  }
+  #vineShopGrid {
+    display: none; grid-template-columns: 1fr 1fr; gap: 14px;
+    margin-top: 14px;
+  }
+  .vineSwatch { border-radius: 999px !important; height: 14px !important; width: 70px !important; }
+  .vineSwatch.rainbow {
+    background: linear-gradient(90deg, red, orange, yellow, #3f3, #39f, #93f, red) !important;
   }
   .skinCard {
     background: rgba(255,255,255,0.05); border: 1px solid rgba(180,140,255,0.25);
@@ -1025,15 +1182,17 @@
     </div>
   </div>
 
+  <button id="settingsFab" style="display:none;">⚙️</button>
+
   <div id="sideColumn">
   <div id="updateTeaser">
     <div id="updateTeaserGlow"></div>
     <span class="updateBadge">✨ Nächstes Update</span>
     <div class="updateFeature">
-      <span class="updateFeatureIcon">🎨</span>
+      <span class="updateFeatureIcon">⚙️</span>
       <div class="updateFeatureText">
-        <span class="updateFeatureTitle">Ranken-Skins</span>
-        <span class="updateFeatureSub">Nicht nur die Figur — jetzt wird auch die Ranke selbst farbig und thematisch anpassbar, z.B. Feuer-, Eis- oder Regenbogen-Ranke</span>
+        <span class="updateFeatureTitle">Einstellungen</span>
+        <span class="updateFeatureSub">Regle Musik- und Sound-Lautstärke getrennt, Maus-Empfindlichkeit, Wetter-Effekte, Benachrichtigungen und mehr ganz nach deinem Geschmack</span>
       </div>
     </div>
     <div id="updateEta">
@@ -1121,9 +1280,18 @@
   <div class="startPanel" id="galleryPanel">
     <div id="galleryPanelScroll">
       <div class="titleRow">
+        <button id="gallerySelectBtn">☑️ Auswählen</button>
         <h1 style="font-size:32px;">🖼️ Galerie</h1>
       </div>
       <p class="heroTagline">Deine gemachten Fotos aus dem Foto-Modus</p>
+      <div id="gallerySelectBar" class="hidden">
+        <span id="gallerySelectCount">0 ausgewählt</span>
+        <div id="gallerySelectActions">
+          <button id="gallerySelectDeleteBtn">🗑️ Löschen</button>
+          <button id="gallerySelectDownloadBtn">⬇️ Herunterladen</button>
+          <button id="gallerySelectCancelBtn">✕ Abbrechen</button>
+        </div>
+      </div>
       <div id="galleryGrid"></div>
       <p id="galleryEmptyMsg">Noch keine Fotos — geh in den Foto-Modus (Pause-Menü) und mach welche!</p>
       <button id="galleryCloseBtn" class="menuBtn" style="margin-top:20px;">Schließen</button>
@@ -1131,8 +1299,60 @@
   </div>
 </div>
 
+<div id="settingsScreen" class="hidden">
+  <div class="startPanel" id="settingsPanel">
+    <div id="settingsPanelScroll">
+      <div class="titleRow">
+        <h1 style="font-size:32px;">⚙️ Einstellungen</h1>
+      </div>
+      <p class="heroTagline">Passe das Spiel nach deinem Geschmack an</p>
+
+      <div class="settingsGroup">
+        <label class="settingsLabel">🎵 Musik-Lautstärke <span id="musicVolumeVal">80%</span></label>
+        <input type="range" id="musicVolumeSlider" min="0" max="100" value="80" class="settingsSlider">
+      </div>
+      <div class="settingsGroup">
+        <label class="settingsLabel">🔊 Sound-Lautstärke <span id="sfxVolumeVal">100%</span></label>
+        <input type="range" id="sfxVolumeSlider" min="0" max="100" value="100" class="settingsSlider">
+      </div>
+      <div class="settingsGroup">
+        <label class="settingsLabel">🖱️ Maus-Empfindlichkeit <span id="mouseSensVal">100%</span></label>
+        <input type="range" id="mouseSensSlider" min="30" max="250" value="100" class="settingsSlider">
+      </div>
+
+      <div class="settingsToggleRow">
+        <span>🌧️ Wetter-Effekte</span>
+        <button class="settingsToggle" id="toggleWeather" data-on="true"><span class="settingsToggleDot"></span></button>
+      </div>
+      <div class="settingsToggleRow">
+        <span>🔔 Erfolgs-Benachrichtigungen</span>
+        <button class="settingsToggle" id="toggleAchToasts" data-on="true"><span class="settingsToggleDot"></span></button>
+      </div>
+      <div class="settingsToggleRow">
+        <span>📳 Bildschirmwackeln</span>
+        <button class="settingsToggle" id="toggleCamShake" data-on="true"><span class="settingsToggleDot"></span></button>
+      </div>
+
+      <button id="settingsResetBtn">🗑️ Spielstand zurücksetzen</button>
+      <button id="settingsCloseBtn" class="menuBtn" style="margin-top:14px;">Schließen</button>
+    </div>
+  </div>
+</div>
+
+<div id="resetConfirmOverlay" class="hidden">
+  <div id="resetConfirmCard">
+    <p>⚠️ Wirklich <b>alles</b> zurücksetzen? Pokale, Skins, Erfolge, Fotos — alles wird unwiderruflich gelöscht.</p>
+    <div id="resetConfirmActions">
+      <button id="resetConfirmYes">Ja, alles löschen</button>
+      <button id="resetConfirmNo">Abbrechen</button>
+    </div>
+  </div>
+</div>
+
 <div id="galleryViewer" class="hidden">
   <img id="galleryViewerImg" src="" alt="">
+  <button id="galleryPrevBtn" class="galleryNavBtn">‹</button>
+  <button id="galleryNextBtn" class="galleryNavBtn galleryNavBtnRight">›</button>
   <div id="galleryViewerBar">
     <button id="galleryDownloadBtn">⬇️ Herunterladen</button>
     <button id="galleryDeleteBtn">🗑️ Löschen</button>
@@ -1148,9 +1368,14 @@
         <h1 style="font-size:32px;">Shop</h1>
       </div>
       <p class="heroTagline" id="shopCoins">🏆 0 Pokale</p>
+      <div id="shopTabs">
+        <button class="shopTabBtn active" id="shopTabCharacter">🧑 Charakter</button>
+        <button class="shopTabBtn" id="shopTabVine">🕸️ Netz</button>
+      </div>
       <button id="shopPreviewBtn" class="menuBtn" style="margin:10px 0;">🔍 Charakter in 3D ansehen</button>
       <p id="shopHint">Klick auf einen Farbkreis für eine Live-Vorschau am Charakter</p>
       <div id="shopGrid"></div>
+      <div id="vineShopGrid"></div>
       <button id="shopCloseBtn" class="menuBtn" style="margin-top:20px;">Schließen</button>
     </div>
   </div>
@@ -1176,6 +1401,7 @@
       <button class="menuBtn" id="resumeBtn">▶ Fortsetzen</button>
       <button class="menuBtn" id="pausePhotoBtn">📸 Foto-Modus</button>
       <button class="menuBtn" id="pauseShopBtn">🛒 Shop</button>
+      <button class="menuBtn" id="pauseSettingsBtn" style="display:none;">⚙️ Einstellungen</button>
       <button class="menuBtn" id="pauseRestartBtn">⟲ Neu starten</button>
     </div>
     <div id="pauseControlsList">
@@ -1362,7 +1588,7 @@
     filter.type = 'lowpass'; filter.frequency.value = 1800;
     const gain = ctx.createGain();
     gain.gain.value = 0;
-    src.connect(filter).connect(gain).connect(masterGain);
+    src.connect(filter).connect(gain).connect(sfxVolumeGain);
     src.start();
     rainAudioNodes = { gain };
   }
@@ -1370,7 +1596,7 @@
   function updateWeather(dt){
     weatherTimer -= dt;
     if (weatherTimer <= 0){
-      if (weatherTarget === 0){
+      if (weatherTarget === 0 && gameSettings.weatherEnabled){
         // start a weather event
         weatherTarget = 1;
         isStorm = Math.random() < 0.4;
@@ -1382,6 +1608,7 @@
         weatherTimer = 45 + Math.random() * 60;
       }
     }
+    if (!gameSettings.weatherEnabled) weatherTarget = 0; // force any active rain to fade out if the player just turned this off
     rainIntensity += (weatherTarget - rainIntensity) * Math.min(1, dt * 0.35);
     if (rainIntensity > 0.01){
       ensureRainAudio();
@@ -1824,6 +2051,18 @@
     { id: 'legende', name: 'Legende', cost: 0, achievement: true,
       back: 0x1a1a2a, front: 0xf0e6ff, limb: 0x1a1a2a, boot: 0x0d0d16, glow: 0xffffff, glowEm: 0xd9b8ff },
   ];
+
+  // ---------- VINE SKINS ----------
+  const VINE_SKIN_DEFS = [
+    { id: 'standard', name: 'Standard', cost: 0, color: 0x7affc4 },
+    { id: 'feuer', name: 'Feuer-Netz', cost: 100, color: 0xff6a2d },
+    { id: 'eis', name: 'Eis-Netz', cost: 140, color: 0x9adfff },
+    { id: 'blitz', name: 'Blitz-Netz', cost: 180, color: 0xf0ff5c },
+    { id: 'kosmos', name: 'Kosmos-Netz', cost: 220, color: 0x9d7bff },
+    { id: 'schatten', name: 'Schatten-Netz', cost: 0, color: 0x6a1fbf, achievement: true },
+    { id: 'kristall', name: 'Kristall-Netz', cost: 0, color: 0xff7ad1, achievement: true },
+    { id: 'regenbogen', name: 'Regenbogen-Netz', cost: 0, color: 0xffffff, rainbow: true, achievement: true },
+  ];
   function applySkin(skinId){
     const skin = SKIN_DEFS.find(s => s.id === skinId) || SKIN_DEFS[0];
     backMat.color.setHex(skin.back);
@@ -1832,6 +2071,10 @@
     bootMat.color.setHex(skin.boot);
     glowMat.color.setHex(skin.glow);
     glowMat.emissive.setHex(skin.glowEm);
+  }
+  function applyVineSkin(vineId){
+    const vine = VINE_SKIN_DEFS.find(v => v.id === vineId) || VINE_SKIN_DEFS[0];
+    ropeMat.color.setHex(vine.color);
   }
 
   // legs — blocky Roblox-style rectangular limbs, each hanging from a hip pivot
@@ -2085,6 +2328,7 @@
   const ZOOM_MIN = 0;
   const ZOOM_MAX = 14;
   let camZoom = 8;
+  let camShakeT = 0; // counts down from a trigger value; 0 = no shake
   const smoothedHeadTarget = new THREE.Vector3();
   canvas.addEventListener('wheel', e => {
     if (photoModeActive){
@@ -2181,13 +2425,13 @@
       return;
     }
     if (photoModeActive){
-      photoCamYaw -= dx * 0.0035;
-      photoCamPitch -= dy * 0.0035;
+      photoCamYaw -= dx * 0.0035 * gameSettings.mouseSensitivity;
+      photoCamPitch -= dy * 0.0035 * gameSettings.mouseSensitivity;
       photoCamPitch = Math.max(-1.3, Math.min(1.3, photoCamPitch));
       return;
     }
-    player.yaw -= dx * 0.0035;
-    player.pitch -= dy * 0.0035;
+    player.yaw -= dx * 0.0035 * gameSettings.mouseSensitivity;
+    player.pitch -= dy * 0.0035 * gameSettings.mouseSensitivity;
     player.pitch = Math.max(-1.2, Math.min(1.0, player.pitch));
   });
 
@@ -2311,6 +2555,8 @@
   // since that mechanism is already confirmed to work reliably here.
   let audioCtx = null;
   let masterGain = null;
+  let musicVolumeGain = null;
+  let sfxVolumeGain = null;
   function ensureAudio(){
     if (!audioCtx) {
       try {
@@ -2318,6 +2564,12 @@
         masterGain = audioCtx.createGain();
         masterGain.gain.value = 1;
         masterGain.connect(audioCtx.destination);
+        musicVolumeGain = audioCtx.createGain();
+        musicVolumeGain.gain.value = gameSettings.musicVolume;
+        musicVolumeGain.connect(masterGain);
+        sfxVolumeGain = audioCtx.createGain();
+        sfxVolumeGain.gain.value = gameSettings.sfxVolume;
+        sfxVolumeGain.connect(masterGain);
       }
       catch(e) { return null; }
     }
@@ -2368,7 +2620,7 @@
     if (playbackRate) src.playbackRate.value = playbackRate;
     const gain = ctx.createGain();
     gain.gain.value = gainValue != null ? gainValue : 0.9;
-    src.connect(gain).connect(masterGain);
+    src.connect(gain).connect(sfxVolumeGain);
     src.start();
   }
   window.addEventListener('keydown', () => { Object.keys(SOUND_CLIPS).forEach(n => loadSoundBuffer(n)); }, { once: true });
@@ -2413,7 +2665,7 @@
     menuMusicGain = ctx.createGain();
     menuMusicGain.gain.value = 0.0001;
     menuMusicGain.gain.exponentialRampToValueAtTime(1.1, ctx.currentTime + 1.5);
-    menuMusicSource.connect(menuMusicGain).connect(masterGain);
+    menuMusicSource.connect(menuMusicGain).connect(musicVolumeGain);
     menuMusicSource.start();
   }
   function stopMenuMusic(){
@@ -2461,7 +2713,7 @@
     gain.gain.setValueAtTime(0.0001, ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(peakGain || 0.3, ctx.currentTime + 0.012);
     gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
-    osc.connect(gain).connect(masterGain);
+    osc.connect(gain).connect(sfxVolumeGain);
     osc.start();
     osc.stop(ctx.currentTime + duration + 0.02);
   }
@@ -2480,7 +2732,7 @@
     const gain = ctx.createGain();
     gain.gain.setValueAtTime(peakGain || 0.3, ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
-    noise.connect(filter).connect(gain).connect(masterGain);
+    noise.connect(filter).connect(gain).connect(sfxVolumeGain);
     noise.start();
     noise.stop(ctx.currentTime + duration + 0.02);
   }
@@ -2502,7 +2754,7 @@
     gain.gain.setValueAtTime(0.0001, ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(peakGain || 0.25, ctx.currentTime + duration*0.35);
     gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
-    noise.connect(filter).connect(gain).connect(masterGain);
+    noise.connect(filter).connect(gain).connect(sfxVolumeGain);
     noise.start();
     noise.stop(ctx.currentTime + duration + 0.02);
   }
@@ -2671,8 +2923,30 @@
   function storageSet(key, value){
     try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch(e){ return false; }
   }
+  const DEFAULT_SETTINGS = {
+    musicVolume: 0.8,
+    sfxVolume: 1.0,
+    weatherEnabled: true,
+    achievementToastsEnabled: true,
+    cameraShakeEnabled: true,
+    mouseSensitivity: 1.0,
+  };
+  let gameSettings = Object.assign({}, DEFAULT_SETTINGS, storageGet('rankmann_settings', {}));
+  function saveSettings(){ storageSet('rankmann_settings', gameSettings); }
+  function applyVolumeSettings(){
+    if (musicVolumeGain) musicVolumeGain.gain.value = gameSettings.musicVolume;
+    if (sfxVolumeGain) sfxVolumeGain.gain.value = gameSettings.sfxVolume;
+  }
+  function resetGameProgress(){
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('rankmann_')) localStorage.removeItem(key);
+    });
+    location.reload();
+  }
   let ownedSkins = storageGet('rankmann_ownedSkins', ['standard']);
   let equippedSkin = storageGet('rankmann_equippedSkin', 'standard');
+  let ownedVineSkins = storageGet('rankmann_ownedVineSkins', ['standard']);
+  let equippedVineSkin = storageGet('rankmann_equippedVineSkin', 'standard');
   let totalTrophies = storageGet('rankmann_totalTrophies', 0);
   let world2Unlocked = storageGet('rankmann_world2Unlocked', false);
   let selectedWorld = storageGet('rankmann_selectedWorld', 1);
@@ -2709,6 +2983,12 @@
     { id: 'ms_legende', skin: 'legende', check: () => totalTrophies >= 150 },
     { id: 'ms_jaeger', skin: 'jaeger', check: () => enemiesDefeated >= 20 },
   ];
+  const VINE_SKIN_MILESTONES = [
+    { id: 'ms_schatten_ranke', vineSkin: 'schatten', check: () => enemiesDefeated >= 150 },
+    { id: 'ms_kristall_ranke', vineSkin: 'kristall', check: () => orbsCollected >= 300 },
+    { id: 'ms_regenbogen_ranke', vineSkin: 'regenbogen',
+      check: () => ['feuer','eis','blitz','kosmos','schatten','kristall'].every(id => ownedVineSkins.includes(id)) },
+  ];
   let claimedMilestones = storageGet('rankmann_claimedMilestones', []);
   function checkSkinMilestones(){
     SKIN_MILESTONES.forEach(ms => {
@@ -2720,6 +3000,16 @@
         storageSet('rankmann_ownedSkins', ownedSkins);
         const skinDef = SKIN_DEFS.find(s => s.id === ms.skin);
         showRewardAnimation({ icon: '🎁', name: 'Neuer Skin freigeschaltet!', rewardSkin: ms.skin });
+      }
+    });
+    VINE_SKIN_MILESTONES.forEach(ms => {
+      if (claimedMilestones.includes(ms.id) || !ms.check()) return;
+      claimedMilestones.push(ms.id);
+      storageSet('rankmann_claimedMilestones', claimedMilestones);
+      if (!ownedVineSkins.includes(ms.vineSkin)){
+        ownedVineSkins.push(ms.vineSkin);
+        storageSet('rankmann_ownedVineSkins', ownedVineSkins);
+        showRewardAnimation({ icon: '🌿', name: 'Neue Ranke freigeschaltet!', rewardVineSkin: ms.vineSkin });
       }
     });
   }
@@ -2821,9 +3111,11 @@
     updateAchievementsUI();
   }
   function showRewardAnimation(ach){
+    if (!gameSettings.achievementToastsEnabled) return;
     const overlay = document.getElementById('rewardOverlay');
     if (!overlay) return;
     const skinDef = ach.rewardSkin ? SKIN_DEFS.find(s => s.id === ach.rewardSkin) : null;
+    const vineDef = ach.rewardVineSkin ? VINE_SKIN_DEFS.find(v => v.id === ach.rewardVineSkin) : null;
     document.getElementById('rewardIcon').textContent = ach.icon;
     document.getElementById('rewardName').textContent = ach.name;
     const skinRow = document.getElementById('rewardSkinRow');
@@ -2832,6 +3124,12 @@
       document.getElementById('rewardSkinSwatch').style.background =
         `linear-gradient(135deg, #${skinDef.back.toString(16).padStart(6,'0')}, #${skinDef.front.toString(16).padStart(6,'0')})`;
       document.getElementById('rewardSkinName').textContent = 'Neuer Skin: ' + skinDef.name;
+    } else if (vineDef){
+      skinRow.style.display = 'flex';
+      document.getElementById('rewardSkinSwatch').style.background = vineDef.rainbow
+        ? 'linear-gradient(90deg, red, orange, yellow, #3f3, #39f, #93f, red)'
+        : '#' + vineDef.color.toString(16).padStart(6,'0');
+      document.getElementById('rewardSkinName').textContent = 'Neue Ranke: ' + vineDef.name;
     } else {
       skinRow.style.display = 'none';
     }
@@ -3014,7 +3312,7 @@
   // ---------- NEXT UPDATE RELEASE COUNTDOWN ----------
   // Fixed target date/time. Counts down a whole day at a time, then shows the
   // exact release clock time once release day arrives.
-  const NEXT_UPDATE_RELEASE = new Date('2026-08-22T15:30:00');
+  const NEXT_UPDATE_RELEASE = new Date('2026-08-23T11:30:00');
   function updateNextUpdateCountdown(){
     const labelEl = document.getElementById('updateEtaLabel');
     const valueEl = document.getElementById('updateEtaValue');
@@ -3076,6 +3374,7 @@
   function updateShopUI(){
     const coinsEl = document.getElementById('shopCoins');
     if (coinsEl) coinsEl.textContent = '🏆 ' + totalTrophies + ' Pokale';
+    updateVineShopUI();
     const grid = document.getElementById('shopGrid');
     if (!grid) return;
     grid.innerHTML = '';
@@ -3108,7 +3407,57 @@
       grid.appendChild(card);
     });
   }
+  function buyVineSkin(vineId){
+    const vine = VINE_SKIN_DEFS.find(v => v.id === vineId);
+    if (!vine || ownedVineSkins.includes(vineId)) return;
+    if (totalTrophies < vine.cost) return;
+    totalTrophies -= vine.cost;
+    ownedVineSkins.push(vineId);
+    storageSet('rankmann_totalTrophies', totalTrophies);
+    storageSet('rankmann_ownedVineSkins', ownedVineSkins);
+    updateTrophyDisplay();
+    equipVineSkin(vineId);
+  }
+  function equipVineSkin(vineId){
+    if (!ownedVineSkins.includes(vineId)) return;
+    equippedVineSkin = vineId;
+    storageSet('rankmann_equippedVineSkin', equippedVineSkin);
+    applyVineSkin(equippedVineSkin);
+    updateVineShopUI();
+  }
+  function updateVineShopUI(){
+    const grid = document.getElementById('vineShopGrid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    VINE_SKIN_DEFS.forEach(vine => {
+      if (vine.achievement && !ownedVineSkins.includes(vine.id)) return; // hidden until unlocked via achievement
+      const owned = ownedVineSkins.includes(vine.id);
+      const equipped = equippedVineSkin === vine.id;
+      const card = document.createElement('div');
+      card.className = 'skinCard' + (equipped ? ' equipped' : '');
+      const swatch = document.createElement('div');
+      swatch.className = 'skinSwatch vineSwatch' + (vine.rainbow ? ' rainbow' : '');
+      if (!vine.rainbow) swatch.style.background = '#' + vine.color.toString(16).padStart(6,'0');
+      const name = document.createElement('div');
+      name.className = 'skinName';
+      name.textContent = vine.name;
+      const cost = document.createElement('div');
+      cost.className = 'skinCost';
+      cost.textContent = (owned && vine.cost > 0) ? '✅ In Besitz' : (vine.cost === 0 ? 'Kostenlos' : '🏆 ' + vine.cost);
+      const btn = document.createElement('button');
+      btn.className = 'skinActionBtn' + (owned ? ' owned' : '');
+      if (equipped) { btn.textContent = 'Ausgerüstet'; btn.disabled = true; }
+      else if (owned) { btn.textContent = 'Ausrüsten'; btn.onclick = () => equipVineSkin(vine.id); }
+      else { btn.textContent = 'Kaufen'; btn.disabled = totalTrophies < vine.cost; btn.onclick = () => buyVineSkin(vine.id); }
+      card.appendChild(swatch);
+      card.appendChild(name);
+      card.appendChild(cost);
+      card.appendChild(btn);
+      grid.appendChild(card);
+    });
+  }
   applySkin(equippedSkin); // apply the saved skin as soon as materials exist
+  applyVineSkin(equippedVineSkin);
 
   // ---------- PHOTO MODE ----------
   let photoModeActive = false;
@@ -3133,6 +3482,7 @@
     if (!running) return;
     photoModeActive = true;
     photoPrevPaused = paused;
+    muteRainAudio();
     document.getElementById('pauseScreen').style.display = 'none';
     document.getElementById('photoModeUI').classList.remove('hidden');
     document.getElementById('hud').style.display = 'none';
@@ -3186,12 +3536,6 @@
       saved = storageSet('rankmann_galleryPhotos', galleryPhotos);
     }
     showGallerySavedToast(galleryDataUrl);
-
-    // also offer the full-quality download, same as before
-    const link = document.createElement('a');
-    link.download = 'rankmann-foto-' + Date.now() + '.png';
-    link.href = canvas.toDataURL('image/png');
-    link.click();
   }
   function showGallerySavedToast(imgUrl){
     const toast = document.getElementById('galleryToast');
@@ -3353,9 +3697,13 @@
   let running = false;
   let paused = false;
 
+  function muteRainAudio(){
+    if (rainAudioNodes) rainAudioNodes.gain.gain.value = 0;
+  }
   function openPauseMenu(){
     if (!running || paused) return;
     paused = true;
+    muteRainAudio(); // rain otherwise keeps playing at its last volume — updateWeather() only runs during active gameplay
     document.getElementById('pauseScreen').style.display = 'flex';
     if (document.pointerLockElement) document.exitPointerLock();
     for (const k in keys) keys[k] = false;
@@ -3555,6 +3903,7 @@
     if (!player.wasOnGround && player.onGround && player.lastImpactSpeed > HERO_LAND_MIN_SPEED && !player.grappledSinceGrounded){
       anim.heroLandT = HERO_LAND_DURATION;
       sfx.land();
+      if (gameSettings.cameraShakeEnabled) camShakeT = 0.35;
     }
     if (player.onGround) {
       player.fallSoundPlayed = false;
@@ -3683,6 +4032,9 @@
       armHands[1].getWorldPosition(handPos);
       ropeLine.geometry.setFromPoints([handPos, grapple.anchor.position.clone()]);
       ropeLine.geometry.computeBoundingSphere();
+      if (equippedVineSkin === 'regenbogen'){
+        ropeMat.color.setHSL((anim.time * 0.5) % 1, 0.85, 0.6);
+      }
     }
 
     // camera: unified third-person ↔ first-person via camZoom (mouse wheel)
@@ -3704,6 +4056,12 @@
     const safeZoom = getCollisionSafeZoom(smoothedHeadTarget, lookDir, camZoom);
     camera.position.copy(smoothedHeadTarget).addScaledVector(lookDir, safeZoom);
     camera.lookAt(camera.position.clone().addScaledVector(lookDir, -5));
+    if (camShakeT > 0){
+      camShakeT = Math.max(0, camShakeT - dt);
+      const shakeAmt = (camShakeT / 0.35) * 0.12; // decays smoothly to 0
+      camera.position.x += (Math.random() - 0.5) * shakeAmt;
+      camera.position.y += (Math.random() - 0.5) * shakeAmt;
+    }
 
     // hide the body once the camera is close enough to be "inside" the head,
     // so first person doesn't show the inside of the model
@@ -3923,6 +4281,7 @@
     // though the player already unlocked it once this session.
     closePauseMenu();
     running = false;
+    muteRainAudio();
     player.lives = 3;
     updateLivesDisplay();
     respawnPlayer();
@@ -3954,21 +4313,69 @@
     document.getElementById('achievementsScreen').classList.add('hidden');
     updateTouchControlsVisibility();
   }
+  let gallerySelectMode = false;
+  let gallerySelected = new Set();
   function updateGalleryUI(){
     const grid = document.getElementById('galleryGrid');
     if (!grid) return;
     grid.innerHTML = '';
     galleryPhotos.forEach((photo, i) => {
+      const wrap = document.createElement('div');
+      wrap.className = 'galleryThumbWrap' + (gallerySelectMode ? ' selectMode' : '') + (gallerySelected.has(i) ? ' selected' : '');
       const img = document.createElement('img');
       img.className = 'galleryThumb';
       img.src = photo.url;
-      img.addEventListener('click', () => openGalleryViewer(i));
-      grid.appendChild(img);
+      img.addEventListener('click', () => {
+        if (gallerySelectMode) toggleGallerySelect(i);
+        else openGalleryViewer(i);
+      });
+      const check = document.createElement('div');
+      check.className = 'galleryThumbCheck';
+      check.textContent = gallerySelected.has(i) ? '✓' : '';
+      wrap.appendChild(img);
+      wrap.appendChild(check);
+      grid.appendChild(wrap);
     });
     document.getElementById('galleryEmptyMsg').style.display = galleryPhotos.length === 0 ? 'block' : 'none';
+    document.getElementById('gallerySelectCount').textContent = gallerySelected.size + ' ausgewählt';
+    const delBtn = document.getElementById('gallerySelectDeleteBtn');
+    const dlBtn = document.getElementById('gallerySelectDownloadBtn');
+    delBtn.disabled = gallerySelected.size === 0;
+    dlBtn.disabled = gallerySelected.size === 0;
+    dlBtn.style.display = isTouchDevice ? 'none' : ''; // bulk download needs a real click-download flow, not viable on mobile
+  }
+  function toggleGallerySelect(i){
+    if (gallerySelected.has(i)) gallerySelected.delete(i); else gallerySelected.add(i);
+    updateGalleryUI();
+  }
+  function setGallerySelectMode(on){
+    gallerySelectMode = on;
+    gallerySelected.clear();
+    document.getElementById('gallerySelectBtn').classList.toggle('active', on);
+    document.getElementById('gallerySelectBar').classList.toggle('hidden', !on);
+    updateGalleryUI();
+  }
+  function deleteSelectedGalleryPhotos(){
+    if (gallerySelected.size === 0) return;
+    galleryPhotos = galleryPhotos.filter((_, i) => !gallerySelected.has(i));
+    storageSet('rankmann_galleryPhotos', galleryPhotos);
+    setGallerySelectMode(false);
+  }
+  function downloadSelectedGalleryPhotos(){
+    if (gallerySelected.size === 0) return;
+    // stagger the downloads slightly — firing many <a>.click() calls in the
+    // same tick makes most browsers silently drop all but the first one
+    [...gallerySelected].forEach((i, n) => {
+      setTimeout(() => {
+        const link = document.createElement('a');
+        link.download = 'rankmann-foto-' + galleryPhotos[i].time + '.jpg';
+        link.href = galleryPhotos[i].url;
+        link.click();
+      }, n * 300);
+    });
   }
   function openGallery(){
-    updateGalleryUI();
+    setGallerySelectMode(false);
     document.getElementById('galleryScreen').classList.remove('hidden');
     updateTouchControlsVisibility();
   }
@@ -3982,16 +4389,28 @@
     document.getElementById('galleryViewerImg').src = galleryPhotos[i].url;
     document.getElementById('galleryViewer').classList.remove('hidden');
     document.getElementById('galleryMobileHint').classList.toggle('show', isTouchDevice);
+    updateGalleryNavButtons();
   }
   function closeGalleryViewer(){
     document.getElementById('galleryViewer').classList.add('hidden');
     galleryViewerIndex = -1;
   }
+  function updateGalleryNavButtons(){
+    document.getElementById('galleryPrevBtn').disabled = galleryViewerIndex <= 0;
+    document.getElementById('galleryNextBtn').disabled = galleryViewerIndex >= galleryPhotos.length - 1;
+  }
+  function showGalleryPhotoAt(i){
+    if (i < 0 || i >= galleryPhotos.length) return;
+    galleryViewerIndex = i;
+    document.getElementById('galleryViewerImg').src = galleryPhotos[i].url;
+    updateGalleryNavButtons();
+  }
   function deleteCurrentGalleryPhoto(){
     if (galleryViewerIndex < 0) return;
     galleryPhotos.splice(galleryViewerIndex, 1);
     storageSet('rankmann_galleryPhotos', galleryPhotos);
-    closeGalleryViewer();
+    if (galleryPhotos.length === 0) { closeGalleryViewer(); }
+    else { showGalleryPhotoAt(Math.min(galleryViewerIndex, galleryPhotos.length - 1)); }
     updateGalleryUI();
   }
   function downloadCurrentGalleryPhoto(){
@@ -4001,11 +4420,98 @@
     link.href = galleryPhotos[galleryViewerIndex].url;
     link.click();
   }
+  function initSettingsUI(){
+    document.getElementById('musicVolumeSlider').value = Math.round(gameSettings.musicVolume * 100);
+    document.getElementById('musicVolumeVal').textContent = Math.round(gameSettings.musicVolume * 100) + '%';
+    document.getElementById('sfxVolumeSlider').value = Math.round(gameSettings.sfxVolume * 100);
+    document.getElementById('sfxVolumeVal').textContent = Math.round(gameSettings.sfxVolume * 100) + '%';
+    document.getElementById('mouseSensSlider').value = Math.round(gameSettings.mouseSensitivity * 100);
+    document.getElementById('mouseSensVal').textContent = Math.round(gameSettings.mouseSensitivity * 100) + '%';
+    document.getElementById('toggleWeather').dataset.on = gameSettings.weatherEnabled;
+    document.getElementById('toggleAchToasts').dataset.on = gameSettings.achievementToastsEnabled;
+    document.getElementById('toggleCamShake').dataset.on = gameSettings.cameraShakeEnabled;
+  }
+  function openSettings(){
+    initSettingsUI();
+    document.getElementById('settingsScreen').classList.remove('hidden');
+    updateTouchControlsVisibility();
+  }
+  function closeSettings(){
+    document.getElementById('settingsScreen').classList.add('hidden');
+    updateTouchControlsVisibility();
+  }
+  document.getElementById('settingsFab').addEventListener('click', openSettings);
+  document.getElementById('pauseSettingsBtn').addEventListener('click', openSettings);
+  document.getElementById('settingsCloseBtn').addEventListener('click', closeSettings);
+
+  document.getElementById('musicVolumeSlider').addEventListener('input', e => {
+    gameSettings.musicVolume = e.target.value / 100;
+    document.getElementById('musicVolumeVal').textContent = e.target.value + '%';
+    applyVolumeSettings();
+    saveSettings();
+  });
+  document.getElementById('sfxVolumeSlider').addEventListener('input', e => {
+    gameSettings.sfxVolume = e.target.value / 100;
+    document.getElementById('sfxVolumeVal').textContent = e.target.value + '%';
+    applyVolumeSettings();
+    saveSettings();
+  });
+  document.getElementById('mouseSensSlider').addEventListener('input', e => {
+    gameSettings.mouseSensitivity = e.target.value / 100;
+    document.getElementById('mouseSensVal').textContent = e.target.value + '%';
+    saveSettings();
+  });
+  function bindSettingsToggle(btnId, settingKey){
+    document.getElementById(btnId).addEventListener('click', () => {
+      gameSettings[settingKey] = !gameSettings[settingKey];
+      document.getElementById(btnId).dataset.on = gameSettings[settingKey];
+      saveSettings();
+    });
+  }
+  bindSettingsToggle('toggleWeather', 'weatherEnabled');
+  bindSettingsToggle('toggleAchToasts', 'achievementToastsEnabled');
+  bindSettingsToggle('toggleCamShake', 'cameraShakeEnabled');
+
+  document.getElementById('settingsResetBtn').addEventListener('click', () => {
+    document.getElementById('resetConfirmOverlay').classList.remove('hidden');
+  });
+  document.getElementById('resetConfirmNo').addEventListener('click', () => {
+    document.getElementById('resetConfirmOverlay').classList.add('hidden');
+  });
+  document.getElementById('resetConfirmYes').addEventListener('click', resetGameProgress);
+
   document.getElementById('galleryBtn').addEventListener('click', openGallery);
   document.getElementById('galleryCloseBtn').addEventListener('click', closeGallery);
   document.getElementById('galleryViewerCloseBtn').addEventListener('click', closeGalleryViewer);
   document.getElementById('galleryDeleteBtn').addEventListener('click', deleteCurrentGalleryPhoto);
   document.getElementById('galleryDownloadBtn').addEventListener('click', downloadCurrentGalleryPhoto);
+  document.getElementById('gallerySelectBtn').addEventListener('click', () => setGallerySelectMode(!gallerySelectMode));
+  document.getElementById('gallerySelectCancelBtn').addEventListener('click', () => setGallerySelectMode(false));
+  document.getElementById('gallerySelectDeleteBtn').addEventListener('click', deleteSelectedGalleryPhotos);
+  document.getElementById('gallerySelectDownloadBtn').addEventListener('click', downloadSelectedGalleryPhotos);
+  document.getElementById('galleryPrevBtn').addEventListener('click', () => showGalleryPhotoAt(galleryViewerIndex - 1));
+  document.getElementById('galleryNextBtn').addEventListener('click', () => showGalleryPhotoAt(galleryViewerIndex + 1));
+  window.addEventListener('keydown', e => {
+    if (document.getElementById('galleryViewer').classList.contains('hidden')) return;
+    if (e.code === 'ArrowRight') showGalleryPhotoAt(galleryViewerIndex + 1);
+    if (e.code === 'ArrowLeft') showGalleryPhotoAt(galleryViewerIndex - 1);
+    if (e.code === 'Escape') closeGalleryViewer();
+  });
+  // swipe left/right on the image to move between photos, mirroring how
+  // taking the photo itself works on touch — a natural next/prev gesture
+  (function setupGallerySwipe(){
+    const img = document.getElementById('galleryViewerImg');
+    let startX = null;
+    img.addEventListener('touchstart', e => { startX = e.touches[0].clientX; }, { passive: true });
+    img.addEventListener('touchend', e => {
+      if (startX === null) return;
+      const dx = e.changedTouches[0].clientX - startX;
+      startX = null;
+      if (Math.abs(dx) < 40) return; // ignore small taps/jitter
+      if (dx < 0) showGalleryPhotoAt(galleryViewerIndex + 1); // swipe left -> next
+      else showGalleryPhotoAt(galleryViewerIndex - 1); // swipe right -> previous
+    }, { passive: true });
+  })();
   document.getElementById('shopBtn').addEventListener('click', openShop);
   document.getElementById('pauseShopBtn').addEventListener('click', openShop);
   document.getElementById('pausePhotoBtn').addEventListener('click', enterPhotoMode);
@@ -4032,6 +4538,22 @@
   });
   document.getElementById('worldBtn1').addEventListener('click', () => selectWorld(1));
   document.getElementById('worldBtn2').addEventListener('click', handleWorld2Click);
+  document.getElementById('shopTabCharacter').addEventListener('click', () => {
+    document.getElementById('shopTabCharacter').classList.add('active');
+    document.getElementById('shopTabVine').classList.remove('active');
+    document.getElementById('shopGrid').style.display = 'grid';
+    document.getElementById('vineShopGrid').style.display = 'none';
+    document.getElementById('shopPreviewBtn').style.display = '';
+    document.getElementById('shopHint').style.display = '';
+  });
+  document.getElementById('shopTabVine').addEventListener('click', () => {
+    document.getElementById('shopTabVine').classList.add('active');
+    document.getElementById('shopTabCharacter').classList.remove('active');
+    document.getElementById('shopGrid').style.display = 'none';
+    document.getElementById('vineShopGrid').style.display = 'grid';
+    document.getElementById('shopPreviewBtn').style.display = 'none';
+    document.getElementById('shopHint').style.display = 'none';
+  });
   document.getElementById('shopPreviewBtn').addEventListener('click', enterPreview);
   document.getElementById('previewBackBtn').addEventListener('click', exitPreview);
 
