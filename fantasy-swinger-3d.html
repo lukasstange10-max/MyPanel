@@ -1925,7 +1925,7 @@
     positions.forEach((p, i) => {
       const plat = makeCheckpointPlatform(p, i);
       checkpoints.push({
-        group: plat.group, pos: new THREE.Vector3(...p), passed: false, index: i,
+        group: plat.group, pos: new THREE.Vector3(...p), passed: false, wasOnPlatform: false, index: i,
         radius: plat.radius, rim: plat.rim, innerRing: plat.innerRing, center: plat.center,
         rimMat: plat.rimMat, baseMat: plat.baseMat, holoRing: plat.holoRing, glowLight: plat.glowLight,
         holoRingY: plat.holoRingY, world,
@@ -4176,11 +4176,13 @@
       cp.holoRing.rotation.y += dt * 0.6;
       cp.holoRing.position.y = cp.holoRingY + Math.sin(anim.time * 1.3 + cp.index) * 0.12;
 
-      if (!cp.passed){
-        const dx = player.pos.x - cp.pos.x;
-        const dz = player.pos.z - cp.pos.z;
-        const horizDist = Math.sqrt(dx*dx + dz*dz);
-        if (player.onGround && horizDist < cp.radius + 1.5){
+      const dx = player.pos.x - cp.pos.x;
+      const dz = player.pos.z - cp.pos.z;
+      const horizDist = Math.sqrt(dx*dx + dz*dz);
+      const isOnPlatformNow = player.onGround && horizDist < cp.radius + 1.5;
+      if (isOnPlatformNow && !cp.wasOnPlatform){
+        // rising edge only — landing once, not every frame while standing still
+        if (!cp.passed){
           cp.passed = true;
           const reward = cp.index + 1 + (cp.world === 2 ? 6 : 0); // World 1: 1..6, World 2: 7..14
           // completion glow: rim/base shift to gold, holo-ring brightens
@@ -4195,19 +4197,27 @@
           updateTrophyDisplay();
           pulseBox('box-checkpoints', 'glow-flash');
           sfx.trophy();
-
-          // send the player straight back to the spawn platform — instant, no effect
-          const hub = selectedWorld === 2 ? islandsW2[0] : islandsW1[0];
-          player.pos.set(0, hub.top + player.radius, 0);
-          player.vel.set(0, 0, 0);
-          player.onGround = true;
-          player.wasOnGround = true;
-          player.standingOn = hub.mesh;
-          grapple.active = false;
-          ropeLine.visible = false;
-          snapCameraToPlayer();
+        } else {
+          // already claimed once — platform stays re-collectible for a small flat reward
+          totalTrophies += 1;
+          storageSet('rankmann_totalTrophies', totalTrophies);
+          updateTrophyDisplay();
+          pulseBox('box-checkpoints', 'glow-flash');
+          sfx.trophy();
         }
+
+        // send the player straight back to the spawn platform — instant, no effect
+        const hub = selectedWorld === 2 ? islandsW2[0] : islandsW1[0];
+        player.pos.set(0, hub.top + player.radius, 0);
+        player.vel.set(0, 0, 0);
+        player.onGround = true;
+        player.wasOnGround = true;
+        player.standingOn = hub.mesh;
+        grapple.active = false;
+        ropeLine.visible = false;
+        snapCameraToPlayer();
       }
+      cp.wasOnPlatform = isOnPlatformNow;
     }
 
     updateDayNight(dt);
