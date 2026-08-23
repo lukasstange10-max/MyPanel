@@ -700,6 +700,22 @@
     background: #fff; transition: transform 0.2s ease;
   }
   .settingsToggle[data-on="true"] .settingsToggleDot { transform: translateX(20px); }
+  #settingsSaveBtn {
+    margin-top: 26px; width: 100%; padding: 12px; font-size: 13.5px; font-weight: 700;
+    background: linear-gradient(135deg, #7affc4, #2fbf8a); border: none;
+    border-radius: 12px; color: #0a2818; cursor: pointer;
+  }
+  #settingsSaveBtn:hover { transform: translateY(-1px); }
+  #settingsSavedToast {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-140%);
+    z-index: 500; display: flex; align-items: center; gap: 8px;
+    background: rgba(20,10,38,0.92); border: 2px solid rgba(122,255,196,0.6);
+    border-radius: 999px; padding: 10px 22px; font-size: 13px; font-weight: 700; color: #fff;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.5), 0 0 25px rgba(122,255,196,0.25);
+    transition: transform 0.35s cubic-bezier(.2,.8,.3,1.2);
+    pointer-events: none;
+  }
+  #settingsSavedToast.show { transform: translateX(-50%) translateY(0); }
   #settingsResetBtn {
     margin-top: 26px; width: 100%; padding: 12px; font-size: 13.5px; font-weight: 700;
     background: rgba(255,92,108,0.15); border: 1px solid rgba(255,92,108,0.5);
@@ -1315,7 +1331,7 @@
         <label class="settingsLabel">🔊 Sound-Lautstärke <span id="sfxVolumeVal">100%</span></label>
         <input type="range" id="sfxVolumeSlider" min="0" max="100" value="100" class="settingsSlider">
       </div>
-      <div class="settingsGroup">
+      <div class="settingsGroup" id="mouseSensGroup">
         <label class="settingsLabel">🖱️ Maus-Empfindlichkeit <span id="mouseSensVal">100%</span></label>
         <input type="range" id="mouseSensSlider" min="30" max="250" value="100" class="settingsSlider">
       </div>
@@ -1333,12 +1349,14 @@
         <button class="settingsToggle" id="toggleCamShake" data-on="true"><span class="settingsToggleDot"></span></button>
       </div>
 
+      <button id="settingsSaveBtn">💾 Speichern</button>
       <button id="settingsResetBtn">🗑️ Spielstand zurücksetzen</button>
       <button id="settingsCloseBtn" class="menuBtn" style="margin-top:14px;">Schließen</button>
     </div>
   </div>
 </div>
 
+<div id="settingsSavedToast">✅ Gespeichert</div>
 <div id="resetConfirmOverlay" class="hidden">
   <div id="resetConfirmCard">
     <p>⚠️ Wirklich <b>alles</b> zurücksetzen? Pokale, Skins, Erfolge, Fotos — alles wird unwiderruflich gelöscht.</p>
@@ -4440,6 +4458,7 @@
     document.getElementById('toggleWeather').dataset.on = gameSettings.weatherEnabled;
     document.getElementById('toggleAchToasts').dataset.on = gameSettings.achievementToastsEnabled;
     document.getElementById('toggleCamShake').dataset.on = gameSettings.cameraShakeEnabled;
+    document.getElementById('mouseSensGroup').style.display = isTouchDevice ? 'none' : '';
   }
   function openSettings(){
     initSettingsUI();
@@ -4482,6 +4501,15 @@
   bindSettingsToggle('toggleAchToasts', 'achievementToastsEnabled');
   bindSettingsToggle('toggleCamShake', 'cameraShakeEnabled');
 
+  document.getElementById('settingsSaveBtn').addEventListener('click', () => {
+    saveSettings(); // settings already auto-save on every change; this just gives explicit, reassuring confirmation
+    const toast = document.getElementById('settingsSavedToast');
+    toast.classList.remove('show');
+    void toast.offsetWidth;
+    toast.classList.add('show');
+    clearTimeout(document.getElementById('settingsSavedToast')._t);
+    document.getElementById('settingsSavedToast')._t = setTimeout(() => toast.classList.remove('show'), 2500);
+  });
   document.getElementById('settingsResetBtn').addEventListener('click', () => {
     document.getElementById('resetConfirmOverlay').classList.remove('hidden');
   });
