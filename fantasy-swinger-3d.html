@@ -649,7 +649,7 @@
   #settingsScreen.hidden { opacity: 0; pointer-events: none; }
   #settingsPanel { max-width: 460px; }
   #settingsPanelScroll {
-    max-height: 80vh; max-height: 80dvh; overflow-y: auto;
+    max-height: 80vh; max-height: 80dvh; overflow-y: auto; overflow-x: hidden;
     scrollbar-width: thin; scrollbar-color: rgba(180,140,255,0.5) rgba(20,10,38,0.4);
   }
   .settingsGroup { margin-top: 18px; text-align: left; }
@@ -731,6 +731,27 @@
   }
   #resetConfirmYes { background: linear-gradient(135deg, #ff5c6c, #aa1f2a); border: none; color: #fff; }
   #resetConfirmNo { background: rgba(255,255,255,0.08); border: 1px solid rgba(180,140,255,0.3); color: #fff; }
+
+  #unsavedConfirmOverlay {
+    position: fixed; inset: 0; z-index: 400;
+    background: rgba(5,3,12,0.8); backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box;
+  }
+  #unsavedConfirmOverlay.hidden { display: none; }
+  #unsavedConfirmCard {
+    max-width: 360px; padding: 26px 22px; border-radius: 20px;
+    background: linear-gradient(160deg, rgba(40,22,64,0.97), rgba(20,10,38,0.98));
+    border: 2px solid rgba(122,255,196,0.5);
+    box-shadow: 0 25px 60px rgba(0,0,0,0.55);
+    color: #fff; text-align: center;
+  }
+  #unsavedConfirmCard p { font-size: 14px; line-height: 1.6; margin: 0 0 20px; }
+  #unsavedConfirmActions { display: flex; gap: 10px; justify-content: center; }
+  #unsavedConfirmActions button {
+    padding: 10px 18px; font-size: 13px; font-weight: 700; border-radius: 999px; cursor: pointer;
+  }
+  #unsavedSaveBtn { background: linear-gradient(135deg, #7affc4, #2fbf8a); border: none; color: #0a2818; }
+  #unsavedDiscardBtn { background: rgba(255,255,255,0.08); border: 1px solid rgba(180,140,255,0.3); color: #fff; }
 
   #galleryViewer {
     position: fixed; inset: 0; z-index: 350;
@@ -1351,6 +1372,16 @@
     <div id="resetConfirmActions">
       <button id="resetConfirmYes">Ja, alles löschen</button>
       <button id="resetConfirmNo">Abbrechen</button>
+    </div>
+  </div>
+</div>
+
+<div id="unsavedConfirmOverlay" class="hidden">
+  <div id="unsavedConfirmCard">
+    <p>💾 Du hast Änderungen, die noch nicht gespeichert wurden.</p>
+    <div id="unsavedConfirmActions">
+      <button id="unsavedSaveBtn">Speichern</button>
+      <button id="unsavedDiscardBtn">Verwerfen</button>
     </div>
   </div>
 </div>
@@ -4448,14 +4479,34 @@
     document.getElementById('toggleCamShake').dataset.on = gameSettings.cameraShakeEnabled;
     document.getElementById('mouseSensGroup').style.display = isTouchDevice ? 'none' : '';
   }
+  let settingsSnapshot = null;
+  let settingsDirty = false;
   function openSettings(){
     initSettingsUI();
+    settingsSnapshot = Object.assign({}, gameSettings);
+    settingsDirty = false;
     document.getElementById('settingsScreen').classList.remove('hidden');
     updateTouchControlsVisibility();
   }
-  function closeSettings(){
+  function closeSettingsImmediately(){
     document.getElementById('settingsScreen').classList.add('hidden');
     updateTouchControlsVisibility();
+  }
+  function closeSettings(){
+    if (settingsDirty){
+      document.getElementById('unsavedConfirmOverlay').classList.remove('hidden');
+      return;
+    }
+    closeSettingsImmediately();
+  }
+  function discardSettingsChanges(){
+    gameSettings = Object.assign({}, settingsSnapshot);
+    saveSettings();
+    applyVolumeSettings();
+    initSettingsUI();
+    settingsDirty = false;
+    document.getElementById('unsavedConfirmOverlay').classList.add('hidden');
+    closeSettingsImmediately();
   }
   document.getElementById('settingsFab').addEventListener('click', openSettings);
   document.getElementById('pauseSettingsBtn').addEventListener('click', openSettings);
@@ -4466,38 +4517,54 @@
     document.getElementById('musicVolumeVal').textContent = e.target.value + '%';
     applyVolumeSettings();
     saveSettings();
+    settingsDirty = true;
   });
   document.getElementById('sfxVolumeSlider').addEventListener('input', e => {
     gameSettings.sfxVolume = e.target.value / 100;
     document.getElementById('sfxVolumeVal').textContent = e.target.value + '%';
     applyVolumeSettings();
     saveSettings();
+    settingsDirty = true;
   });
   document.getElementById('mouseSensSlider').addEventListener('input', e => {
     gameSettings.mouseSensitivity = e.target.value / 100;
     document.getElementById('mouseSensVal').textContent = e.target.value + '%';
     saveSettings();
+    settingsDirty = true;
   });
   function bindSettingsToggle(btnId, settingKey){
     document.getElementById(btnId).addEventListener('click', () => {
       gameSettings[settingKey] = !gameSettings[settingKey];
       document.getElementById(btnId).dataset.on = gameSettings[settingKey];
       saveSettings();
+      settingsDirty = true;
     });
   }
   bindSettingsToggle('toggleWeather', 'weatherEnabled');
   bindSettingsToggle('toggleAchToasts', 'achievementToastsEnabled');
   bindSettingsToggle('toggleCamShake', 'cameraShakeEnabled');
 
-  document.getElementById('settingsSaveBtn').addEventListener('click', () => {
-    saveSettings(); // settings already auto-save on every change; this just gives explicit, reassuring confirmation
+  function showSettingsSavedToast(){
     const toast = document.getElementById('settingsSavedToast');
     toast.classList.remove('show');
     void toast.offsetWidth;
     toast.classList.add('show');
-    clearTimeout(document.getElementById('settingsSavedToast')._t);
-    document.getElementById('settingsSavedToast')._t = setTimeout(() => toast.classList.remove('show'), 2500);
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => toast.classList.remove('show'), 2500);
+  }
+  document.getElementById('settingsSaveBtn').addEventListener('click', () => {
+    saveSettings(); // settings already auto-save on every change; this just gives explicit, reassuring confirmation
+    settingsDirty = false;
+    showSettingsSavedToast();
   });
+  document.getElementById('unsavedSaveBtn').addEventListener('click', () => {
+    saveSettings();
+    settingsDirty = false;
+    document.getElementById('unsavedConfirmOverlay').classList.add('hidden');
+    closeSettingsImmediately();
+    showSettingsSavedToast();
+  });
+  document.getElementById('unsavedDiscardBtn').addEventListener('click', discardSettingsChanges);
   document.getElementById('settingsResetBtn').addEventListener('click', () => {
     document.getElementById('resetConfirmOverlay').classList.remove('hidden');
   });
