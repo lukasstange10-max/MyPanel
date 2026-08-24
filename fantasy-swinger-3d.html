@@ -2754,6 +2754,13 @@
     if (!menuMusicWanted || running || paused || menuMusicSource) return;
     const ctx = ensureAudio();
     if (!ctx) return;
+    if (ctx.state !== 'running') {
+      // don't start playback until the context is actually confirmed
+      // running — starting a buffer source on a still-suspended context
+      // produces no audible sound even once it resumes moments later
+      ctx.resume().then(tryStartMenuMusic).catch(() => {});
+      return;
+    }
     if (!menuMusicBuffer) { loadMenuMusicBuffer(tryStartMenuMusic); return; }
     menuMusicSource = ctx.createBufferSource();
     menuMusicSource.buffer = menuMusicBuffer;
@@ -2784,22 +2791,15 @@
   // listener without ever actually starting playback.
   function menuMusicUnlockAttempt(){
     // Hide the hint and remove these listeners immediately on the very first
-    // tap — this is just feedback that the tap registered. The actual audio
-    // unlock/resume happens in the background regardless of how long the
-    // browser takes to settle it, so this doesn't need to wait for that.
+    // tap — this is just feedback that the tap registered.
     window.removeEventListener('keydown', menuMusicUnlockAttempt);
     window.removeEventListener('mousedown', menuMusicUnlockAttempt);
     window.removeEventListener('touchstart', menuMusicUnlockAttempt);
     window.removeEventListener('pointerdown', menuMusicUnlockAttempt);
     const hint = document.getElementById('musicUnlockHint');
     if (hint) hint.classList.remove('show');
-    const ctx = ensureAudio();
-    if (!ctx) return;
-    if (ctx.state === 'running' || running) {
-      tryStartMenuMusic();
-    } else {
-      ctx.resume().then(tryStartMenuMusic).catch(() => {});
-    }
+    ensureAudio();
+    tryStartMenuMusic(); // internally waits for the context to actually resume before playing
   }
   window.addEventListener('keydown', menuMusicUnlockAttempt);
   window.addEventListener('mousedown', menuMusicUnlockAttempt);
