@@ -2741,8 +2741,9 @@
       const binary = atob(MENU_MUSIC_B64);
       const bytes = new Uint8Array(binary.length);
       for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-      const done = (buf) => { menuMusicBuffer = buf; menuMusicLoading = false; onReady && onReady(); };
-      const fail = (err) => { console.error('menu music decode failed', err); menuMusicLoading = false; };
+      let settled = false;
+      const done = (buf) => { if (settled) return; settled = true; menuMusicBuffer = buf; menuMusicLoading = false; onReady && onReady(); };
+      const fail = (err) => { if (settled) return; settled = true; console.error('menu music decode failed', err); menuMusicLoading = false; };
       const decodePromise = ctx.decodeAudioData(bytes.buffer, done, fail);
       if (decodePromise && decodePromise.then) decodePromise.then(done).catch(fail);
     } catch (err) {
@@ -4758,6 +4759,18 @@
   });
   document.getElementById('shopPreviewBtn').addEventListener('click', enterPreview);
   document.getElementById('previewBackBtn').addEventListener('click', exitPreview);
+
+  // Start decoding the menu music in the background as early as possible —
+  // decoding doesn't require an unlocked/running AudioContext, only actual
+  // playback does. Kicking this off now (during the intro) means the heavy
+  // decode work is usually already finished by the time the player taps to
+  // unlock audio, instead of only starting at that point and causing a
+  // noticeable multi-second delay before the song audibly begins, especially
+  // on slower mobile CPUs.
+  (function preloadMenuMusic(){
+    const ctx = ensureAudio();
+    if (ctx) loadMenuMusicBuffer();
+  })();
 
   // ---------- INTRO VIDEO ----------
   // Plays fullscreen on load, then reveals the start menu. Falls back
