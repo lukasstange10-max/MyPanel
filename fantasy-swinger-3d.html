@@ -1214,10 +1214,10 @@
     <div id="updateTeaserGlow"></div>
     <span class="updateBadge">✨ Nächstes Update</span>
     <div class="updateFeature">
-      <span class="updateFeatureIcon">🌍</span>
+      <span class="updateFeatureIcon">🎵</span>
       <div class="updateFeatureText">
-        <span class="updateFeatureTitle">Welt 3</span>
-        <span class="updateFeatureSub">Eine komplett neue Insel-Welt mit eigenen Trophäen-Plattformen und eigener Atmosphäre wartet auf dich</span>
+        <span class="updateFeatureTitle">Chill-Musik &amp; Emotes</span>
+        <span class="updateFeatureSub">Ein ruhigerer Soundtrack zur Auswahl, dazu kleine Gesten wie Winken und Tanzen direkt im Spiel</span>
       </div>
     </div>
     <div id="updateEta">
@@ -1229,8 +1229,9 @@
   <div id="worldSelectBox">
     <span class="updateBadge" id="worldSelectBadge">🗺️ Welt wählen</span>
     <div id="worldSelectRow">
-      <button id="worldBtn1" class="worldBtn">Welt 1</button>
-      <button id="worldBtn2" class="worldBtn">Welt 2</button>
+      <button id="worldBtn1" class="worldBtn">Welt 1 · Zauberreich</button>
+      <button id="worldBtn2" class="worldBtn">Welt 2 · Frostreich</button>
+      <button id="worldBtn3" class="worldBtn">Welt 3 · Sternenreich</button>
     </div>
     <p id="worldSelectError">Nicht genug Pokale!</p>
   </div>
@@ -1533,11 +1534,22 @@
     { t: 0.80, skyTop: 0x0f2038, skyBottom: 0x4a6f95, sunColor: 0xa8c8e8, sunI: 0.5, hemiSky: 0x4f7aa0, hemiGround: 0x0a1830, hemiI: 0.6, fog: 0x152a48, fogD: 0.0085 },
     { t: 1.00, skyTop: 0x040a18, skyBottom: 0x0f1f38, sunColor: 0x5a7ac0, sunI: 0.15, hemiSky: 0x203050, hemiGround: 0x03050c, hemiI: 0.35, fog: 0x0a1220, fogD: 0.01 },
   ];
+  // World 3 — "Sternenreich": deep space void, near-black with cool violet/cyan
+  // accents. The "day cycle" barely brightens — this is a starfield, not a sky.
+  const DAY_KEYFRAMES_W3 = [
+    { t: 0.00, skyTop: 0x030308, skyBottom: 0x0a0818, sunColor: 0x8fa8ff, sunI: 0.4, hemiSky: 0x2a1f4a, hemiGround: 0x020204, hemiI: 0.3, fog: 0x040410, fogD: 0.0035 },
+    { t: 0.20, skyTop: 0x05050f, skyBottom: 0x120a28, sunColor: 0x9fb8ff, sunI: 0.55, hemiSky: 0x3a2a5f, hemiGround: 0x030308, hemiI: 0.38, fog: 0x06061a, fogD: 0.003 },
+    { t: 0.32, skyTop: 0x0a0818, skyBottom: 0x1f1440, sunColor: 0xc8d4ff, sunI: 0.85, hemiSky: 0x6a4fbf, hemiGround: 0x0a0818, hemiI: 0.55, fog: 0x0d0b26, fogD: 0.0025 },
+    { t: 0.50, skyTop: 0x0f0c22, skyBottom: 0x2a1a52, sunColor: 0xe8ecff, sunI: 1.0, hemiSky: 0x8a6fdf, hemiGround: 0x120e2a, hemiI: 0.65, fog: 0x120f30, fogD: 0.002 },
+    { t: 0.68, skyTop: 0x0a0818, skyBottom: 0x1f1440, sunColor: 0xc8d4ff, sunI: 0.85, hemiSky: 0x6a4fbf, hemiGround: 0x0a0818, hemiI: 0.55, fog: 0x0d0b26, fogD: 0.0025 },
+    { t: 0.80, skyTop: 0x05050f, skyBottom: 0x140a2c, sunColor: 0x9fb8ff, sunI: 0.5, hemiSky: 0x3f2f6a, hemiGround: 0x030308, hemiI: 0.4, fog: 0x08071c, fogD: 0.003 },
+    { t: 1.00, skyTop: 0x030308, skyBottom: 0x0a0818, sunColor: 0x8fa8ff, sunI: 0.4, hemiSky: 0x2a1f4a, hemiGround: 0x020204, hemiI: 0.3, fog: 0x040410, fogD: 0.0035 },
+  ];
   const _c1 = new THREE.Color(), _c2 = new THREE.Color();
   function lerpKeyColor(key, a, b, f){ _c1.setHex(a[key]); _c2.setHex(b[key]); return _c1.lerp(_c2, f); }
   function updateDayNight(dt){
     dayTime = (dayTime + dt / DAY_CYCLE_SECONDS) % 1;
-    const KEYFRAMES = selectedWorld === 2 ? DAY_KEYFRAMES_W2 : DAY_KEYFRAMES_W1;
+    const KEYFRAMES = selectedWorld === 3 ? DAY_KEYFRAMES_W3 : selectedWorld === 2 ? DAY_KEYFRAMES_W2 : DAY_KEYFRAMES_W1;
     let a = KEYFRAMES[0], b = KEYFRAMES[KEYFRAMES.length - 1], f = 0;
     for (let i = 0; i < KEYFRAMES.length - 1; i++){
       if (dayTime >= KEYFRAMES[i].t && dayTime <= KEYFRAMES[i+1].t){
@@ -1570,6 +1582,25 @@
   const dustMat = new THREE.PointsMaterial({ color: 0xd9b8ff, size: 0.6, transparent:true, opacity:0.6 });
   const dust = new THREE.Points(dustGeo, dustMat);
   scene.add(dust);
+
+  // ---------- WORLD 3 STARFIELD ----------
+  const starGeo = new THREE.BufferGeometry();
+  const starCount = 1400;
+  const starPos = new Float32Array(starCount*3);
+  for (let i=0;i<starCount;i++){
+    // spread far and wide in a big sphere-ish shell so stars surround the player
+    const r = 200 + Math.random()*450;
+    const theta = Math.random()*Math.PI*2;
+    const phi = Math.acos(Math.random()*2-1);
+    starPos[i*3]   = r * Math.sin(phi) * Math.cos(theta);
+    starPos[i*3+1] = Math.abs(r * Math.cos(phi)) * 0.6 + 5; // keep mostly above the horizon
+    starPos[i*3+2] = r * Math.sin(phi) * Math.sin(theta);
+  }
+  starGeo.setAttribute('position', new THREE.BufferAttribute(starPos,3));
+  const starMat = new THREE.PointsMaterial({ color: 0xe8ecff, size: 1.1, transparent:true, opacity:0.85, sizeAttenuation:false });
+  const starfield = new THREE.Points(starGeo, starMat);
+  starfield.visible = false;
+  scene.add(starfield);
 
   // ---------- WEATHER ----------
   let rainIntensity = 0; // 0 = clear, 1 = full rain/storm, smoothed toward weatherTarget
@@ -1645,7 +1676,7 @@
         weatherTimer = 45 + Math.random() * 60;
       }
     }
-    if (!gameSettings.weatherEnabled) weatherTarget = 0; // force any active rain to fade out if the player just turned this off
+    if (!gameSettings.weatherEnabled || selectedWorld === 3) weatherTarget = 0; // no rain in the void of space, and respects the weather-effects setting
     rainIntensity += (weatherTarget - rainIntensity) * Math.min(1, dt * 0.35);
     if (rainIntensity > 0.01){
       ensureRainAudio();
@@ -1716,6 +1747,17 @@
   ];
   const islandsW2 = islandDataW2.map(d => makeIsland(...d));
   islandsW2.forEach(isl => { isl.world = 2; });
+
+  // World 3 — "Sternenreich": zero-g asteroid islands. Gaps are much larger
+  // than the other two worlds because low gravity carries the player far
+  // further per jump — a tight layout here would feel wrong, not hard.
+  const islandDataW3 = [
+    [0,0,0,15,0.68],[48,16,-26,10,0.64],[-42,26,-52,11,0.64],[52,42,-84,9,0.64],
+    [-46,58,-116,12,0.64],[36,74,-150,10,0.64],[-32,90,-182,13,0.64],[12,106,-214,9,0.64],
+    [-52,62,-32,8,0.64],[62,26,-6,9,0.64],[-16,120,-244,14,0.64],[26,136,-270,10,0.64]
+  ];
+  const islandsW3 = islandDataW3.map(d => makeIsland(...d));
+  islandsW3.forEach(isl => { isl.world = 3; });
   const islandMeshes = islands.map(isl => isl.mesh);
 
   // ---------- GRAPPLE ANCHOR POINTS (glowing crystals in the sky) ----------
@@ -1743,6 +1785,13 @@
     [-22,20,-18],[24,14,-4],[30,26,-70],[-30,34,-95],[26,10,-8],[-10,56,-185]
   ];
   anchorPositionsW2.forEach(p => makeAnchor(p[0],p[1],p[2],2));
+  // Matching anchor path for World 3's wide, tall low-gravity spread
+  const anchorPositionsW3 = [
+    [24,10,-12],[-22,20,-26],[26,32,-40],[-24,46,-56],[22,60,-72],[-26,74,-90],
+    [18,88,-108],[-16,102,-126],[8,116,-144],[-10,128,-164],[14,110,-190],[-18,96,-210],
+    [30,16,-4],[-32,24,-18],[36,50,-100],[-38,66,-130],[20,20,-2],[-14,132,-250]
+  ];
+  anchorPositionsW3.forEach(p => makeAnchor(p[0],p[1],p[2],3));
 
   // ---------- COLLECTIBLE ORBS ----------
   const orbs = [];
@@ -1985,6 +2034,12 @@
     [-6,50,-140],[18,56,-172]
   ];
   addCheckpointSet(ringPositionsW2, 2);
+  // World 3 — 10 platforms across the wide low-gravity spread, rewards 15..24
+  const ringPositionsW3 = [
+    [10,15,-18],[-12,28,-44],[14,42,-72],[-16,56,-102],[12,70,-134],
+    [-14,84,-166],[8,98,-198],[-10,112,-224],[16,58,-16],[-18,20,-8]
+  ];
+  addCheckpointSet(ringPositionsW3, 3);
 
   // ---------- WORLD THEME SWITCHING ----------
   // Fully swaps the active world: islands, anchors, and trophy platforms all
@@ -1994,10 +2049,13 @@
   function applyWorldTheme(n){
     islands.forEach(isl => {
       if (isl.rockMat){
-        // real island — recolor for the Frost theme in World 2
+        // real island — recolor for the active world's theme
         if (n === 2){
           isl.rockMat.color.setHSL(0.58 + isl.baseHue*0.04, 0.25, 0.38);
           isl.grassMat.color.setHSL(0.53 + isl.baseHue*0.04, 0.35, 0.82);
+        } else if (n === 3){
+          isl.rockMat.color.setHSL(0.72, 0.12, 0.16); // dark grey-violet asteroid rock
+          isl.grassMat.color.setHSL(0.62, 0.7, 0.55); // glowing cyan-violet crystal cap
         } else {
           isl.rockMat.color.setHSL(isl.baseHue, 0.35, 0.32);
           isl.grassMat.color.setHSL(isl.baseHue + 0.28, 0.55, 0.42);
@@ -2018,6 +2076,7 @@
     });
     checkpoints.forEach(cp => { cp.group.visible = (cp.world === n); });
     anchors.forEach(a => { a.visible = (a.world === n); });
+    starfield.visible = (n === 3);
   }
 
   applyWorldTheme(1); // safe default until startGame() applies the actual selected world
@@ -2990,6 +3049,8 @@
   let enemiesDefeated = storageGet('rankmann_enemiesDefeated', 0);
   let orbsCollected = storageGet('rankmann_orbsCollected', 0);
   const WORLD2_COST = 250;
+  let world3Unlocked = storageGet('rankmann_world3Unlocked', false);
+  const WORLD3_COST = 400;
 
   // ---------- ACHIEVEMENTS ----------
   let unlockedAchievements = storageGet('rankmann_unlockedAchievements', []);
@@ -3003,8 +3064,10 @@
   // Pokale/Kampf/Sammeln are fully rotating now (regenerate every 12h, see
   // below) — only permanent, one-time milestones live in this list.
   const ACHIEVEMENT_DEFS = [
-    { id: 'world2', icon: '🗺️', name: 'Weltenwanderer', desc: 'Schalte Welt 2 frei', rewardSkin: 'wanderer', category: 'exploration',
+    { id: 'world2', icon: '🗺️', name: 'Weltenwanderer', desc: 'Schalte das Frostreich frei', rewardSkin: 'wanderer', category: 'exploration',
       check: () => world2Unlocked },
+    { id: 'world3', icon: '🌌', name: 'Sternenwanderer', desc: 'Schalte das Sternenreich frei', category: 'exploration',
+      check: () => world3Unlocked },
     { id: 'ownSkins3', icon: '🎨', name: 'Kleiderschrank', desc: 'Besitze 3 verschiedene Skins', category: 'cosmetic',
       check: () => ownedSkins.length >= 3 },
     { id: 'ownSkins6', icon: '👗', name: 'Modekönig', desc: 'Besitze 6 verschiedene Skins', category: 'cosmetic',
@@ -3293,15 +3356,23 @@
   function updateWorldSelectUI(){
     const btn1 = document.getElementById('worldBtn1');
     const btn2 = document.getElementById('worldBtn2');
-    if (!btn1 || !btn2) return;
-    btn1.textContent = 'Welt 1';
+    const btn3 = document.getElementById('worldBtn3');
+    if (!btn1 || !btn2 || !btn3) return;
+    btn1.textContent = 'Welt 1 · Zauberreich';
     btn1.className = 'worldBtn' + (selectedWorld === 1 ? ' selected' : '');
     if (world2Unlocked) {
-      btn2.textContent = 'Welt 2';
+      btn2.textContent = 'Welt 2 · Frostreich';
       btn2.className = 'worldBtn' + (selectedWorld === 2 ? ' selected' : '');
     } else {
-      btn2.innerHTML = '<span>🔒 Welt 2</span><span class="worldBtnCost">' + WORLD2_COST + ' 🏆</span>';
+      btn2.innerHTML = '<span>🔒 Welt 2 · Frostreich</span><span class="worldBtnCost">' + WORLD2_COST + ' 🏆</span>';
       btn2.className = 'worldBtn locked';
+    }
+    if (world3Unlocked) {
+      btn3.textContent = 'Welt 3 · Sternenreich';
+      btn3.className = 'worldBtn' + (selectedWorld === 3 ? ' selected' : '');
+    } else {
+      btn3.innerHTML = '<span>🔒 Welt 3 · Sternenreich</span><span class="worldBtnCost">' + WORLD3_COST + ' 🏆</span>';
+      btn3.className = 'worldBtn locked';
     }
   }
   function selectWorld(n){
@@ -3344,12 +3415,36 @@
     updateTrophyDisplay();
     selectWorld(2);
   }
+  function handleWorld3Click(){
+    if (world3Unlocked) {
+      selectWorld(3);
+      return;
+    }
+    if (totalTrophies < WORLD3_COST) {
+      const btn3 = document.getElementById('worldBtn3');
+      if (btn3) {
+        btn3.animate(
+          [{ transform: 'translateX(0)' }, { transform: 'translateX(-4px)' }, { transform: 'translateX(4px)' }, { transform: 'translateX(0)' }],
+          { duration: 250 }
+        );
+      }
+      const missing = WORLD3_COST - totalTrophies;
+      showWorldSelectError(`Nicht genug Pokale! Dir fehlen noch ${missing} 🏆`);
+      return;
+    }
+    totalTrophies -= WORLD3_COST;
+    world3Unlocked = true;
+    storageSet('rankmann_totalTrophies', totalTrophies);
+    storageSet('rankmann_world3Unlocked', true);
+    updateTrophyDisplay();
+    selectWorld(3);
+  }
   updateWorldSelectUI();
 
   // ---------- NEXT UPDATE RELEASE COUNTDOWN ----------
   // Fixed target date/time. Counts down a whole day at a time, then shows the
   // exact release clock time once release day arrives.
-  const NEXT_UPDATE_RELEASE = new Date('2026-08-24T11:30:00');
+  const NEXT_UPDATE_RELEASE = new Date('2026-08-25T11:30:00');
   function updateNextUpdateCountdown(){
     const labelEl = document.getElementById('updateEtaLabel');
     const valueEl = document.getElementById('updateEtaValue');
@@ -3776,7 +3871,7 @@
   }
 
   function respawnPlayer(){
-    const hub = selectedWorld === 2 ? islandsW2[0] : islandsW1[0];
+    const hub = selectedWorld === 3 ? islandsW3[0] : selectedWorld === 2 ? islandsW2[0] : islandsW1[0];
     player.pos.set(hub.pos.x, hub.top + 5, hub.pos.z);
     player.vel.set(0,0,0);
     player.wasOnGround = false;
@@ -3860,8 +3955,9 @@
     player.vel.x += moveDir.x * accel * dt;
     player.vel.z += moveDir.z * accel * dt;
 
-    // gravity
-    player.vel.y += GRAVITY * dt;
+    // gravity — World 3 ("Sternenreich") uses much lower gravity, giving
+    // higher, slower-falling jumps that suit its wide low-g island spread
+    player.vel.y += (selectedWorld === 3 ? GRAVITY * 0.45 : GRAVITY) * dt;
 
     // jump
     if (keys['Space'] && player.onGround){
@@ -4221,7 +4317,7 @@
         // rising edge only — landing once, not every frame while standing still
         if (!cp.passed){
           cp.passed = true;
-          const reward = cp.index + 1 + (cp.world === 2 ? 6 : 0); // World 1: 1..6, World 2: 7..14
+          const reward = cp.index + 1 + (cp.world === 3 ? 14 : cp.world === 2 ? 6 : 0); // World 1: 1..6, World 2: 7..14, World 3: 15..24
           // completion glow: rim/base shift to gold, holo-ring brightens
           cp.rimMat.color.set(0xffe27a);
           cp.rimMat.emissive.set(0xd9a72f);
@@ -4244,7 +4340,7 @@
         }
 
         // send the player straight back to the spawn platform — instant, no effect
-        const hub = selectedWorld === 2 ? islandsW2[0] : islandsW1[0];
+        const hub = selectedWorld === 3 ? islandsW3[0] : selectedWorld === 2 ? islandsW2[0] : islandsW1[0];
         player.pos.set(0, hub.top + player.radius, 0);
         player.vel.set(0, 0, 0);
         player.onGround = true;
@@ -4260,6 +4356,10 @@
     updateDayNight(dt);
     updateWeather(dt);
     dust.rotation.y += dt*0.01;
+    if (starfield.visible){
+      starfield.position.set(player.pos.x, 0, player.pos.z);
+      starfield.rotation.y += dt*0.004;
+    }
 
     renderer.render(scene, camera);
   }
@@ -4631,6 +4731,7 @@
   });
   document.getElementById('worldBtn1').addEventListener('click', () => selectWorld(1));
   document.getElementById('worldBtn2').addEventListener('click', handleWorld2Click);
+  document.getElementById('worldBtn3').addEventListener('click', handleWorld3Click);
   document.getElementById('shopTabCharacter').addEventListener('click', () => {
     document.getElementById('shopTabCharacter').classList.add('active');
     document.getElementById('shopTabVine').classList.remove('active');
