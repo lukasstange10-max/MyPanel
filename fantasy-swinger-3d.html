@@ -2669,7 +2669,7 @@
       }
       catch(e) { return null; }
     }
-    if (audioCtx.state === 'suspended') audioCtx.resume();
+    if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
     return audioCtx;
   }
   // Unlock/resume audio on the first real user interaction, since browsers
@@ -2782,15 +2782,33 @@
   // actually starts — a single click that happens before the menu is even
   // shown (e.g. during the intro video) would otherwise "use up" a one-time
   // listener without ever actually starting playback.
+  let musicUnlockInProgress = false;
   function menuMusicUnlockAttempt(){
-    tryStartMenuMusic();
-    if ((audioCtx && audioCtx.state === 'running') || running) {
+    if (musicUnlockInProgress) return;
+    const ctx = ensureAudio();
+    if (!ctx) return;
+    const finishUnlock = () => {
+      musicUnlockInProgress = false;
+      tryStartMenuMusic();
       window.removeEventListener('keydown', menuMusicUnlockAttempt);
       window.removeEventListener('mousedown', menuMusicUnlockAttempt);
       window.removeEventListener('touchstart', menuMusicUnlockAttempt);
       window.removeEventListener('pointerdown', menuMusicUnlockAttempt);
       const hint = document.getElementById('musicUnlockHint');
       if (hint) hint.classList.remove('show');
+    };
+    if (ctx.state === 'running' || running) {
+      finishUnlock();
+    } else {
+      musicUnlockInProgress = true;
+      // wait for the actual resume to finish instead of checking state
+      // synchronously right after firing it — on mobile this can take a
+      // noticeable moment, and checking too early was the root cause of
+      // needing a second tap before anything visibly happened
+      ctx.resume().then(finishUnlock).catch(() => {
+        musicUnlockInProgress = false;
+        // resume failed — leave the hint up so the player can simply tap again
+      });
     }
   }
   window.addEventListener('keydown', menuMusicUnlockAttempt);
