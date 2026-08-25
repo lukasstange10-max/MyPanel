@@ -490,7 +490,7 @@
   #achievementsBadge.show { display: block; }
 
   #settingsFab {
-    position: fixed; top: 20px; right: 20px; z-index: 60;
+    position: fixed; top: 20px; right: 20px; z-index: 101;
     width: 52px; height: 52px; border-radius: 50%;
     background: rgba(20,10,38,0.75); border: 1px solid rgba(180,140,255,0.4);
     backdrop-filter: blur(6px);
@@ -499,9 +499,10 @@
     transition: transform 0.15s ease, background 0.2s ease;
   }
   #settingsFab:hover { transform: translateY(-2px) rotate(25deg) scale(1.05); background: rgba(40,22,64,0.85); }
+  #settingsFab.hidden { display: none; }
 
   #musicFab {
-    position: fixed; bottom: 26px; right: 22px; z-index: 62;
+    position: fixed; bottom: 26px; right: 22px; z-index: 103;
     width: 66px; height: 66px; border-radius: 50%;
     background: linear-gradient(135deg, rgba(138,92,255,0.85), rgba(92,140,255,0.85));
     border: 1px solid rgba(255,255,255,0.35);
@@ -511,6 +512,7 @@
     transition: transform 0.15s ease, box-shadow 0.2s ease;
   }
   #musicFab:hover { transform: translateY(-2px) scale(1.06); box-shadow: 0 8px 26px rgba(0,0,0,0.5); }
+  #musicFab.hidden { display: none; }
   #musicFab.active { animation: musicFabPulse 2.4s ease-in-out infinite; }
   @keyframes musicFabPulse {
     0%, 100% { box-shadow: 0 6px 20px rgba(0,0,0,0.4), 0 0 0 0 rgba(138,92,255,0.5); }
@@ -518,7 +520,7 @@
   }
 
   #musicPanel {
-    position: fixed; bottom: 0; right: 0; left: 0; z-index: 61;
+    position: fixed; bottom: 0; right: 0; left: 0; z-index: 102;
     display: flex; justify-content: flex-end;
     pointer-events: none;
   }
@@ -1341,47 +1343,16 @@
     </div>
   </div>
 
-  <button id="settingsFab">⚙️</button>
-
-  <button id="musicFab" title="Musik">🎵</button>
-  <div id="musicPanel">
-    <div id="musicPanelCard">
-      <div id="musicPanelHeader">
-        <h3>🎼 Musik</h3>
-        <button id="musicPanelCloseBtn">✕</button>
-      </div>
-      <div id="musicPanelTrackList"></div>
-    </div>
-  </div>
-
-  <div id="emoteWheelOverlay">
-    <div id="emoteWheelWrap">
-      <div id="emoteWheelTitle">✦ EMOTES ✦</div>
-      <div id="emoteWheelSvgBox">
-        <svg viewBox="0 0 320 320"></svg>
-        <div id="emoteWheelCenter">
-          <div class="emoteCenterIcon" id="emoteWheelCenterIcon">🎭</div>
-          <div class="emoteCenterName" id="emoteWheelCenterName">Emote wählen</div>
-        </div>
-      </div>
-      <div id="emoteWheelHint">Taste <b>B</b> zum Schließen · Klick zum Abspielen</div>
-    </div>
-  </div>
-
   <div id="sideColumn">
   <div id="updateTeaser">
     <div id="updateTeaserGlow"></div>
-    <span class="updateBadge">✨ Nächstes Update</span>
+    <span class="updateBadge">⏸️ Updates pausiert</span>
     <div class="updateFeature">
-      <span class="updateFeatureIcon">🎵</span>
+      <span class="updateFeatureIcon">🛠️</span>
       <div class="updateFeatureText">
-        <span class="updateFeatureTitle">Chill-Musik &amp; Emotes</span>
-        <span class="updateFeatureSub">Ein ruhigerer Soundtrack zur Auswahl, dazu kleine Gesten wie Winken und Tanzen direkt im Spiel</span>
+        <span class="updateFeatureTitle">Derzeit keine Updates geplant</span>
+        <span class="updateFeatureSub">Wir machen gerade eine Pause. Neue Inhalte folgen, sobald es wieder losgeht</span>
       </div>
-    </div>
-    <div id="updateEta">
-      <span class="updateEtaLabel" id="updateEtaLabel">Erscheint in</span>
-      <span class="updateEtaValue" id="updateEtaValue">14 Tage</span>
     </div>
   </div>
 
@@ -1396,6 +1367,33 @@
   </div>
 
   </div>
+  </div>
+</div>
+
+<button id="settingsFab">⚙️</button>
+
+<button id="musicFab" title="Musik">🎵</button>
+<div id="musicPanel">
+  <div id="musicPanelCard">
+    <div id="musicPanelHeader">
+      <h3>🎼 Musik</h3>
+      <button id="musicPanelCloseBtn">✕</button>
+    </div>
+    <div id="musicPanelTrackList"></div>
+  </div>
+</div>
+
+<div id="emoteWheelOverlay">
+  <div id="emoteWheelWrap">
+    <div id="emoteWheelTitle">✦ EMOTES ✦</div>
+    <div id="emoteWheelSvgBox">
+      <svg viewBox="0 0 320 320"></svg>
+      <div id="emoteWheelCenter">
+        <div class="emoteCenterIcon" id="emoteWheelCenterIcon">🎭</div>
+        <div class="emoteCenterName" id="emoteWheelCenterName">Emote wählen</div>
+      </div>
+    </div>
+    <div id="emoteWheelHint">Taste <b>B</b> zum Schließen · Klick zum Abspielen</div>
   </div>
 </div>
 
@@ -3670,37 +3668,8 @@
   updateWorldSelectUI();
 
   // ---------- NEXT UPDATE RELEASE COUNTDOWN ----------
-  // Fixed target date/time. Counts down a whole day at a time, then shows the
-  // exact release clock time once release day arrives.
-  const NEXT_UPDATE_RELEASE = new Date('2026-08-25T11:30:00');
-  function updateNextUpdateCountdown(){
-    const labelEl = document.getElementById('updateEtaLabel');
-    const valueEl = document.getElementById('updateEtaValue');
-    if (!labelEl || !valueEl) return;
-    const releaseTimeStr = NEXT_UPDATE_RELEASE.getHours().toString().padStart(2,'0') + ':' + NEXT_UPDATE_RELEASE.getMinutes().toString().padStart(2,'0') + ' Uhr';
-    const now = new Date();
-    if (now >= NEXT_UPDATE_RELEASE){
-      labelEl.textContent = 'Erscheint um';
-      valueEl.textContent = releaseTimeStr;
-      return;
-    }
-    // Whole calendar days remaining, based on LOCAL midnight (not UTC) — so
-    // "today" reads as a stable number all day and only steps down exactly
-    // at the user's own local midnight, not whenever UTC happens to roll over.
-    const localNowMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const localTargetMidnight = new Date(NEXT_UPDATE_RELEASE.getFullYear(), NEXT_UPDATE_RELEASE.getMonth(), NEXT_UPDATE_RELEASE.getDate());
-    const daysLeft = Math.round((localTargetMidnight - localNowMidnight) / 86400000);
-    if (daysLeft <= 0){
-      labelEl.textContent = 'Erscheint um';
-      valueEl.textContent = releaseTimeStr;
-      return;
-    }
-    labelEl.textContent = 'Erscheint in';
-    valueEl.textContent = daysLeft + (daysLeft === 1 ? ' Tag' : ' Tage');
-  }
-  updateNextUpdateCountdown();
-  setInterval(updateNextUpdateCountdown, 60 * 1000); // check every minute so the day-step lands close to midnight
-
+  // Currently paused — no release date to count down to (see updateTeaser
+  // in the HTML, which now shows a static "no updates planned" message).
   function addScore(amount){
     score += amount;
     if (scoreEl) scoreEl.textContent = score;
@@ -3940,14 +3909,6 @@
   function openEmoteWheel(){
     if (!running || paused || photoModeActive || previewMode) return;
     if (emoteWheelOpen) return;
-    // Emotes are played standing still, so the wheel only opens on solid ground —
-    // mid-air or mid-swing it would just get cancelled next frame anyway (see the
-    // !player.onGround check in the animation loop). Give a short "denied" beep
-    // instead of silently doing nothing, since B otherwise looks broken while swinging.
-    if (!player.onGround || (grapple && grapple.active)){
-      sfx.denied();
-      return;
-    }
     emoteWheelOpen = true;
     buildEmoteWheel();
     document.getElementById('emoteWheelOverlay').classList.add('show');
@@ -4541,6 +4502,11 @@
       legPivots[1].rotation.x = -swing * 0.65;
       armPivots[0].rotation.x += (-swing * 0.55 - armPivots[0].rotation.x) * 0.4;
       armPivots[1].rotation.x += (swing * 0.55 - armPivots[1].rotation.x) * 0.4;
+      // arms can be left rotated sideways by an emote (e.g. flexing) — always
+      // ease the sideways splay back to the resting angle here too, so a
+      // player who starts walking right after an emote doesn't stay lopsided.
+      armPivots[0].rotation.z += (-0.24 - armPivots[0].rotation.z) * 0.3;
+      armPivots[1].rotation.z += (0.24 - armPivots[1].rotation.z) * 0.3;
       torsoGroup.position.y += (0.85 + Math.abs(swing) * 0.05 - torsoGroup.position.y) * 0.4;
       torsoGroup.rotation.z += (swing * 0.05 - torsoGroup.rotation.z) * 0.4;
       torsoGroup.rotation.x += (0 - torsoGroup.rotation.x) * 0.2;
@@ -4561,6 +4527,9 @@
       const leanTarget = THREE.MathUtils.clamp(horizSpeed * 0.03, 0, 0.5);
       armPivots[1].rotation.x += (-2.0 - armPivots[1].rotation.x) * 0.25;
       armPivots[0].rotation.x += (-0.5 - armPivots[0].rotation.x) * 0.25;
+      // same sideways-splay recovery as the walking pose above.
+      armPivots[0].rotation.z += (-0.24 - armPivots[0].rotation.z) * 0.25;
+      armPivots[1].rotation.z += (0.24 - armPivots[1].rotation.z) * 0.25;
       legPivots[0].rotation.x += (0.85 - legPivots[0].rotation.x) * 0.25;
       legPivots[1].rotation.x += (0.65 - legPivots[1].rotation.x) * 0.25;
       torsoGroup.rotation.x += (0.3 + leanTarget - torsoGroup.rotation.x) * 0.25;
@@ -4572,6 +4541,11 @@
       legPivots[1].rotation.x *= 0.85;
       armPivots[0].rotation.x *= 0.85;
       armPivots[1].rotation.x *= 0.85;
+      // an emote (e.g. flexing, dancing) can leave the arms rotated sideways —
+      // always ease that back to the resting splay here so idle/airborne
+      // always converges on a symmetric pose instead of staying lopsided.
+      armPivots[0].rotation.z += (-0.24 - armPivots[0].rotation.z) * 0.15;
+      armPivots[1].rotation.z += (0.24 - armPivots[1].rotation.z) * 0.15;
       torsoGroup.rotation.x *= 0.85;
       torsoGroup.rotation.z *= 0.85;
       body.rotation.z *= 0.85;
@@ -4858,6 +4832,11 @@
     // so it works as an on-screen alternative to pressing B.
     const showEmoteBtn = running && !paused && !photoModeActive && !previewMode;
     document.getElementById('emoteHudBtn').classList.toggle('hidden', !showEmoteBtn);
+    // Settings and music fabs belong to the start menu only — hide them
+    // once a run is actually in progress (still shown while paused, since
+    // the pause menu itself sits on top of the game).
+    document.getElementById('settingsFab').classList.toggle('hidden', running && !paused);
+    document.getElementById('musicFab').classList.toggle('hidden', running && !paused);
   }
   document.getElementById('deviceBtnPC').addEventListener('click', () => {
     mobileControlsWanted = false;
