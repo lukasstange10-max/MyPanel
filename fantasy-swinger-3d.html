@@ -845,6 +845,27 @@
   #resetConfirmYes { background: linear-gradient(135deg, #ff5c6c, #aa1f2a); border: none; color: #fff; }
   #resetConfirmNo { background: rgba(255,255,255,0.08); border: 1px solid rgba(180,140,255,0.3); color: #fff; }
 
+  #langConfirmOverlay {
+    position: fixed; inset: 0; z-index: 400;
+    background: rgba(5,3,12,0.8); backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box;
+  }
+  #langConfirmOverlay.hidden { display: none; }
+  #langConfirmCard {
+    max-width: 360px; padding: 26px 22px; border-radius: 20px;
+    background: linear-gradient(160deg, rgba(40,22,64,0.97), rgba(20,10,38,0.98));
+    border: 2px solid rgba(122,255,196,0.5);
+    box-shadow: 0 25px 60px rgba(0,0,0,0.55);
+    color: #fff; text-align: center;
+  }
+  #langConfirmCard p { font-size: 15px; line-height: 1.6; margin: 0 0 20px; font-weight: 700; }
+  #langConfirmActions { display: flex; gap: 10px; justify-content: center; }
+  #langConfirmActions button {
+    padding: 10px 18px; font-size: 13px; font-weight: 700; border-radius: 999px; cursor: pointer;
+  }
+  #langConfirmYes { background: linear-gradient(135deg, #7affc4, #2fbf8a); border: none; color: #0a1a12; }
+  #langConfirmNo { background: rgba(255,255,255,0.08); border: 1px solid rgba(180,140,255,0.3); color: #fff; }
+
   #unsavedConfirmOverlay {
     position: fixed; inset: 0; z-index: 400;
     background: rgba(5,3,12,0.8); backdrop-filter: blur(4px);
@@ -1027,6 +1048,17 @@
     background: linear-gradient(135deg, rgba(255,226,122,0.3), rgba(217,167,47,0.3));
     border-color: rgba(255,226,122,0.6); color: #fff;
   }
+  .langBtn {
+    padding: 9px 18px; font-size: 13px; font-weight: 700;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(180,140,255,0.3);
+    border-radius: 999px; color: rgba(255,255,255,0.75); cursor: pointer;
+  }
+  .langBtn:hover { background: rgba(255,255,255,0.1); }
+  .langBtn.active {
+    background: linear-gradient(135deg, rgba(122,255,196,0.3), rgba(47,191,138,0.3));
+    border-color: rgba(122,255,196,0.6); color: #fff;
+  }
+
   #shopGrid {
     display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
     margin-top: 14px;
@@ -1196,19 +1228,19 @@
 
 <div id="introScreen">
   <video id="introVideo" src="intro.mp4" playsinline></video>
-  <div id="introUnmuteHint">🔇 Ton ist stumm — klicken zum Aktivieren</div>
+  <div id="introUnmuteHint" data-i18n="introUnmuteHint">🔇 Ton ist stumm — klicken zum Aktivieren</div>
 </div>
 
 <div id="hud">
   <div id="topbar">
     <div class="stat-box" id="box-checkpoints">
       <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M7 4h10v3a5 5 0 0 1-5 5 5 5 0 0 1-5-5V4z" fill="#ffd54f"/><path d="M7 5H4a2 2 0 0 0 2 4h1M17 5h3a2 2 0 0 1-2 4h-1" stroke="#ffd54f" stroke-width="1.6" stroke-linecap="round"/><rect x="10" y="12" width="4" height="3" fill="#ffd54f"/><rect x="8" y="15" width="8" height="2.2" rx="1" fill="#ffd54f"/></svg></div>
-      <div class="stat-text"><span class="stat-label">Pokale</span><span class="stat-value" id="checkpoint-val">0</span></div>
+      <div class="stat-text"><span class="stat-label" data-i18n="statTrophies">Pokale</span><span class="stat-value" id="checkpoint-val">0</span></div>
     </div>
     <div class="stat-box" id="box-lives">
       <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M12 20s-7-4.4-9.5-9C1 7.5 3 4 6.5 4c2 0 3.5 1.2 4.5 2.6C12 5.2 13.5 4 15.5 4 19 4 21 7.5 20.5 11 18 15.6 12 20 12 20z" fill="#ff7a90"/></svg></div>
       <div class="stat-text">
-        <span class="stat-label">Leben</span>
+        <span class="stat-label" data-i18n="statLives">Leben</span>
         <div id="lives-bar-bg"><div id="lives-bar-fill"></div></div>
       </div>
     </div>
@@ -1218,37 +1250,37 @@
 <div id="photoFlash"></div>
 <div id="galleryToast">
   <img id="galleryToastThumb" src="" alt="">
-  <span>📸 In Galerie gespeichert</span>
+  <span data-i18n="galleryToastSaved">📸 In Galerie gespeichert</span>
 </div>
 
 <div id="photoModeUI" class="hidden">
   <div id="photoTopBar">
-    <span>📸 Foto-Modus</span>
-    <button id="photoExitBtn">✕ Verlassen</button>
+    <span data-i18n="photoModeLabel">📸 Foto-Modus</span>
+    <button id="photoExitBtn" data-i18n="photoExitBtn">✕ Verlassen</button>
   </div>
   <div id="photoBottomPanel">
     <div class="photoSection">
-      <span class="photoSectionLabel">Filter</span>
+      <span class="photoSectionLabel" data-i18n="photoFilterLabel">Filter</span>
       <div class="photoBtnRow" id="photoFilterRow">
-        <button class="photoOptBtn active" data-filter="none">Normal</button>
-        <button class="photoOptBtn" data-filter="warm">Warm</button>
-        <button class="photoOptBtn" data-filter="cool">Kühl</button>
-        <button class="photoOptBtn" data-filter="bw">S/W</button>
-        <button class="photoOptBtn" data-filter="vintage">Vintage</button>
+        <button class="photoOptBtn active" data-filter="none" data-i18n="photoFilterNormal">Normal</button>
+        <button class="photoOptBtn" data-filter="warm" data-i18n="photoFilterWarm">Warm</button>
+        <button class="photoOptBtn" data-filter="cool" data-i18n="photoFilterCool">Kühl</button>
+        <button class="photoOptBtn" data-filter="bw" data-i18n="photoFilterBW">S/W</button>
+        <button class="photoOptBtn" data-filter="vintage" data-i18n="photoFilterVintage">Vintage</button>
       </div>
     </div>
     <div class="photoSection">
-      <span class="photoSectionLabel">Pose</span>
+      <span class="photoSectionLabel" data-i18n="photoPoseLabel">Pose</span>
       <div class="photoBtnRow" id="photoPoseRow">
-        <button class="photoOptBtn active" data-pose="none">Normal</button>
-        <button class="photoOptBtn" data-pose="wave">Winken</button>
-        <button class="photoOptBtn" data-pose="flex">Posieren</button>
-        <button class="photoOptBtn" data-pose="sit">Sitzen</button>
-        <button class="photoOptBtn" data-pose="jump">Sprung</button>
+        <button class="photoOptBtn active" data-pose="none" data-i18n="photoPoseNormal">Normal</button>
+        <button class="photoOptBtn" data-pose="wave" data-i18n="photoPoseWave">Winken</button>
+        <button class="photoOptBtn" data-pose="flex" data-i18n="photoPoseFlex">Posieren</button>
+        <button class="photoOptBtn" data-pose="sit" data-i18n="photoPoseSit">Sitzen</button>
+        <button class="photoOptBtn" data-pose="jump" data-i18n="photoPoseJump">Sprung</button>
       </div>
     </div>
-    <button id="photoCaptureBtn">📸 Foto speichern</button>
-    <p id="photoHintText">WASD zum Fliegen, Maus ziehen zum Umsehen, Mausrad zum Zoomen</p>
+    <button id="photoCaptureBtn" data-i18n="photoCaptureBtn">📸 Foto speichern</button>
+    <p id="photoHintText" data-i18n="photoHintText">WASD zum Fliegen, Maus ziehen zum Umsehen, Mausrad zum Zoomen</p>
   </div>
 </div>
 
@@ -1257,7 +1289,7 @@
   <div class="ring"></div>
   <div class="dot"></div>
 </div>
-<div id="hint">
+<div id="hint" data-i18n="hintBar">
 
   <span class="key">WASD</span> bewegen
   <span class="sep"></span>
@@ -1287,10 +1319,10 @@
   <button id="touchSprintBtn" class="touchBtn touchToggleBtn">⚡</button>
   <button id="touchPauseBtn" class="touchBtn">⏸️</button>
 </div>
-<button id="emoteHudBtn" class="hidden" title="Emotes (B)">🎭</button>
+<button id="emoteHudBtn" class="hidden" title="Emotes (B)" data-i18n-title="emoteHudBtnTitle">🎭</button>
 
 
-<div id="musicUnlockHint"><span>🔊 Musik aktivieren</span></div>
+<div id="musicUnlockHint"><span data-i18n="musicUnlockHint">🔊 Musik aktivieren</span></div>
 
 <div id="startScreen" style="display:none;">
   <div id="menuClickCatcher"></div>
@@ -1299,71 +1331,71 @@
     <div class="titleRow">
       <h1>Rankmann</h1>
     </div>
-    <p class="heroTagline">Schwinge dich durch eine schwebende Fantasy-Welt</p>
-    <p id="totalTrophyLine">🏆 Insgesamt gesammelt: <span id="totalTrophyCount">0</span> Pokale</p>
+    <p class="heroTagline" data-i18n="heroTagline">Schwinge dich durch eine schwebende Fantasy-Welt</p>
+    <p id="totalTrophyLine"><span data-i18n="totalTrophyLinePre">🏆 Insgesamt gesammelt:</span> <span id="totalTrophyCount">0</span> <span data-i18n="totalTrophyLinePost">Pokale</span></p>
 
     <div class="featureRow">
       <div class="featureCard">
         <span class="fIcon">💎</span>
-        <span class="fLabel">Kristalle</span>
-        <span class="fSub">Punkte sammeln</span>
+        <span class="fLabel" data-i18n="fLabelCrystals">Kristalle</span>
+        <span class="fSub" data-i18n="fSubCrystals">Punkte sammeln</span>
       </div>
       <div class="featureCard">
         <span class="fIcon">🏆</span>
-        <span class="fLabel">6 Pokale</span>
-        <span class="fSub">Einsammeln</span>
+        <span class="fLabel" data-i18n="fLabelTrophies">6 Pokale</span>
+        <span class="fSub" data-i18n="fSubTrophies">Einsammeln</span>
       </div>
       <div class="featureCard">
         <span class="fIcon">🛡️</span>
-        <span class="fLabel">Wächter</span>
-        <span class="fSub">Ausweichen</span>
+        <span class="fLabel" data-i18n="fLabelGuards">Wächter</span>
+        <span class="fSub" data-i18n="fSubGuards">Ausweichen</span>
       </div>
       <div class="featureCard">
         <span class="fIcon">📈</span>
-        <span class="fLabel">1 bis 6</span>
-        <span class="fSub">Steigende Belohnung</span>
+        <span class="fLabel" data-i18n="fLabelReward">1 bis 6</span>
+        <span class="fSub" data-i18n="fSubReward">Steigende Belohnung</span>
       </div>
     </div>
 
     <div class="startControlsGrid" id="startControlsGrid">
-      <div class="startControlRow"><span class="key">WASD</span><span>Bewegen</span></div>
-      <div class="startControlRow"><span class="key">Shift</span><span>Sprinten</span></div>
-      <div class="startControlRow"><span class="key">Maus</span><span>Umsehen / Zoom</span></div>
-      <div class="startControlRow"><span class="key">E</span><span>Ranke halten</span></div>
-      <div class="startControlRow"><span class="key">Rechtsklick</span><span>Angreifen (Reichweite)</span></div>
-      <div class="startControlRow"><span class="key">Leertaste</span><span>Springen</span></div>
-      <div class="startControlRow"><span class="key">ESC</span><span>Pause</span></div>
+      <div class="startControlRow"><span class="key">WASD</span><span data-i18n="ctrlMove">Bewegen</span></div>
+      <div class="startControlRow"><span class="key">Shift</span><span data-i18n="ctrlSprint">Sprinten</span></div>
+      <div class="startControlRow"><span class="key" data-i18n="ctrlMouseKey">Maus</span><span data-i18n="ctrlLook">Umsehen / Zoom</span></div>
+      <div class="startControlRow"><span class="key">E</span><span data-i18n="ctrlVine">Ranke halten</span></div>
+      <div class="startControlRow"><span class="key" data-i18n="ctrlRightClickKey">Rechtsklick</span><span data-i18n="ctrlAttack">Angreifen (Reichweite)</span></div>
+      <div class="startControlRow"><span class="key" data-i18n="ctrlSpaceKey">Leertaste</span><span data-i18n="ctrlJump">Springen</span></div>
+      <div class="startControlRow"><span class="key">ESC</span><span data-i18n="ctrlPause">Pause</span></div>
     </div>
 
     <div id="startBtnRow">
-      <button id="startBtn">Spiel starten</button>
-      <button id="shopBtn">🛒 Shop</button>
-      <button id="achievementsBtn">🏅 Erfolge<span id="achievementsBadge"></span></button>
-      <button id="galleryBtn">🖼️ Galerie</button>
+      <button id="startBtn" data-i18n="startBtn">Spiel starten</button>
+      <button id="shopBtn" data-i18n="shopBtnMenu">🛒 Shop</button>
+      <button id="achievementsBtn"><span data-i18n="achievementsBtnMenu">🏅 Erfolge</span><span id="achievementsBadge"></span></button>
+      <button id="galleryBtn" data-i18n="galleryBtnMenu">🖼️ Galerie</button>
     </div>
   </div>
 
   <div id="sideColumn">
   <div id="updateTeaser">
     <div id="updateTeaserGlow"></div>
-    <span class="updateBadge">⏸️ Updates pausiert</span>
+    <span class="updateBadge" data-i18n="updatePausedBadge">⏸️ Updates pausiert</span>
     <div class="updateFeature">
       <span class="updateFeatureIcon">🛠️</span>
       <div class="updateFeatureText">
-        <span class="updateFeatureTitle">Derzeit keine Updates geplant</span>
-        <span class="updateFeatureSub">Wir machen gerade eine Pause. Neue Inhalte folgen, sobald es wieder losgeht</span>
+        <span class="updateFeatureTitle" data-i18n="updatePausedTitle">Derzeit keine Updates geplant</span>
+        <span class="updateFeatureSub" data-i18n="updatePausedSub">Wir machen gerade eine Pause. Neue Inhalte folgen, sobald es wieder losgeht</span>
       </div>
     </div>
   </div>
 
   <div id="worldSelectBox">
-    <span class="updateBadge" id="worldSelectBadge">🗺️ Welt wählen</span>
+    <span class="updateBadge" id="worldSelectBadge" data-i18n="worldSelectBadge">🗺️ Welt wählen</span>
     <div id="worldSelectRow">
-      <button id="worldBtn1" class="worldBtn">Welt 1 · Zauberreich</button>
-      <button id="worldBtn2" class="worldBtn">Welt 2 · Frostreich</button>
-      <button id="worldBtn3" class="worldBtn">Welt 3 · Sternenreich</button>
+      <button id="worldBtn1" class="worldBtn" data-i18n="world1Btn">Welt 1 · Zauberreich</button>
+      <button id="worldBtn2" class="worldBtn" data-i18n="world2Btn">Welt 2 · Frostreich</button>
+      <button id="worldBtn3" class="worldBtn" data-i18n="world3Btn">Welt 3 · Sternenreich</button>
     </div>
-    <p id="worldSelectError">Nicht genug Pokale!</p>
+    <p id="worldSelectError" data-i18n="worldSelectError">Nicht genug Pokale!</p>
   </div>
 
   </div>
@@ -1372,11 +1404,11 @@
 
 <button id="settingsFab">⚙️</button>
 
-<button id="musicFab" title="Musik">🎵</button>
+<button id="musicFab" title="Musik" data-i18n-title="musicFabTitle">🎵</button>
 <div id="musicPanel">
   <div id="musicPanelCard">
     <div id="musicPanelHeader">
-      <h3>🎼 Musik</h3>
+      <h3 data-i18n="musicPanelTitle">🎼 Musik</h3>
       <button id="musicPanelCloseBtn">✕</button>
     </div>
     <div id="musicPanelTrackList"></div>
@@ -1385,35 +1417,35 @@
 
 <div id="emoteWheelOverlay">
   <div id="emoteWheelWrap">
-    <div id="emoteWheelTitle">✦ EMOTES ✦</div>
+    <div id="emoteWheelTitle" data-i18n="emoteWheelTitle">✦ EMOTES ✦</div>
     <div id="emoteWheelSvgBox">
       <svg viewBox="0 0 320 320"></svg>
       <div id="emoteWheelCenter">
         <div class="emoteCenterIcon" id="emoteWheelCenterIcon">🎭</div>
-        <div class="emoteCenterName" id="emoteWheelCenterName">Emote wählen</div>
+        <div class="emoteCenterName" id="emoteWheelCenterName" data-i18n="emoteWheelChoose">Emote wählen</div>
       </div>
     </div>
-    <div id="emoteWheelHint">Taste <b>B</b> zum Schließen · Klick zum Abspielen</div>
+    <div id="emoteWheelHint" data-i18n="emoteWheelHint">Taste <b>B</b> zum Schließen · Klick zum Abspielen</div>
   </div>
 </div>
 
 <div id="deviceSurvey" class="hidden">
   <div class="startPanel" style="max-width:380px;">
     <div class="titleRow">
-      <h1 style="font-size:26px;">Auf welchem Gerät spielst du?</h1>
+      <h1 style="font-size:26px;" data-i18n="deviceSurveyTitle">Auf welchem Gerät spielst du?</h1>
     </div>
-    <p class="heroTagline">Damit wir die Steuerung richtig einstellen können</p>
+    <p class="heroTagline" data-i18n="deviceSurveySub">Damit wir die Steuerung richtig einstellen können</p>
     <div id="deviceSurveyBtns">
-      <button class="menuBtn deviceSurveyBtn" id="deviceBtnPC">🖥️<br>PC</button>
-      <button class="menuBtn deviceSurveyBtn" id="deviceBtnMobile">📱<br>Mobilgerät</button>
+      <button class="menuBtn deviceSurveyBtn" id="deviceBtnPC" data-i18n="deviceBtnPC">🖥️<br>PC</button>
+      <button class="menuBtn deviceSurveyBtn" id="deviceBtnMobile" data-i18n="deviceBtnMobile">📱<br>Mobilgerät</button>
     </div>
   </div>
 </div>
 
 <div id="phoneBlockScreen">
   <div class="blockIcon">🖥️</div>
-  <h2>Nur auf PC &amp; Tablet spielbar</h2>
-  <p>Rankmann läuft aktuell leider nicht auf Handys. Bitte öffne das Spiel auf einem Computer oder Tablet, um zu spielen.</p>
+  <h2 data-i18n="phoneBlockTitle">Nur auf PC &amp; Tablet spielbar</h2>
+  <p data-i18n="phoneBlockText">Rankmann läuft aktuell leider nicht auf Handys. Bitte öffne das Spiel auf einem Computer oder Tablet, um zu spielen.</p>
 </div>
 <script>
   // Standalone, self-contained phone block — runs immediately, independent of
@@ -1449,12 +1481,12 @@
   <div class="startPanel" id="achievementsPanel">
     <div id="achievementsPanelScroll">
       <div class="titleRow">
-        <h1 style="font-size:32px;">🏅 Erfolge</h1>
+        <h1 style="font-size:32px;" data-i18n="achievementsTitle">🏅 Erfolge</h1>
       </div>
-      <p class="heroTagline">Schalte Abzeichen und exklusive Skins frei</p>
+      <p class="heroTagline" data-i18n="achievementsSub">Schalte Abzeichen und exklusive Skins frei</p>
       <div id="achievementsTabs"></div>
       <div id="achievementsGrid"></div>
-      <button id="achievementsCloseBtn" class="menuBtn" style="margin-top:20px;">Schließen</button>
+      <button id="achievementsCloseBtn" class="menuBtn" style="margin-top:20px;" data-i18n="closeBtn2">Schließen</button>
     </div>
   </div>
 </div>
@@ -1463,21 +1495,21 @@
   <div class="startPanel" id="galleryPanel">
     <div id="galleryPanelScroll">
       <div class="titleRow">
-        <button id="gallerySelectBtn">☑️ Auswählen</button>
-        <h1 style="font-size:32px;">🖼️ Galerie</h1>
+        <button id="gallerySelectBtn" data-i18n="gallerySelectBtn">☑️ Auswählen</button>
+        <h1 style="font-size:32px;" data-i18n="galleryTitle">🖼️ Galerie</h1>
       </div>
-      <p class="heroTagline">Deine gemachten Fotos aus dem Foto-Modus</p>
+      <p class="heroTagline" data-i18n="gallerySub">Deine gemachten Fotos aus dem Foto-Modus</p>
       <div id="gallerySelectBar" class="hidden">
-        <span id="gallerySelectCount">0 ausgewählt</span>
+        <span id="gallerySelectCount">0 <span data-i18n="gallerySelectedWord">ausgewählt</span></span>
         <div id="gallerySelectActions">
-          <button id="gallerySelectDeleteBtn">🗑️ Löschen</button>
-          <button id="gallerySelectDownloadBtn">⬇️ Herunterladen</button>
-          <button id="gallerySelectCancelBtn">✕ Abbrechen</button>
+          <button id="gallerySelectDeleteBtn" data-i18n="gallerySelectDeleteBtn">🗑️ Löschen</button>
+          <button id="gallerySelectDownloadBtn" data-i18n="gallerySelectDownloadBtn">⬇️ Herunterladen</button>
+          <button id="gallerySelectCancelBtn" data-i18n="gallerySelectCancelBtn">✕ Abbrechen</button>
         </div>
       </div>
       <div id="galleryGrid"></div>
-      <p id="galleryEmptyMsg">Noch keine Fotos — geh in den Foto-Modus (Pause-Menü) und mach welche!</p>
-      <button id="galleryCloseBtn" class="menuBtn" style="margin-top:20px;">Schließen</button>
+      <p id="galleryEmptyMsg" data-i18n="galleryEmptyMsg">Noch keine Fotos — geh in den Foto-Modus (Pause-Menü) und mach welche!</p>
+      <button id="galleryCloseBtn" class="menuBtn" style="margin-top:20px;" data-i18n="closeBtn3">Schließen</button>
     </div>
   </div>
 </div>
@@ -1486,43 +1518,53 @@
   <div class="startPanel" id="settingsPanel">
     <div id="settingsPanelScroll">
       <div class="titleRow">
-        <h1 style="font-size:32px;">⚙️ Einstellungen</h1>
+        <h1 style="font-size:32px;" data-i18n="settingsTitle">⚙️ Einstellungen</h1>
       </div>
-      <p class="heroTagline">Passe das Spiel nach deinem Geschmack an</p>
+      <p class="heroTagline" data-i18n="settingsSub">Passe das Spiel nach deinem Geschmack an</p>
 
       <div class="settingsGroup">
-        <label class="settingsLabel">🎼 Musik auswählen</label>
+        <label class="settingsLabel" data-i18n="settingsLangLabel">🌐 Sprache</label>
+        <div id="langRow" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:6px;">
+          <button class="langBtn" id="langBtnDe" data-lang="de">Deutsch</button>
+          <button class="langBtn" id="langBtnEn" data-lang="en">English</button>
+          <button class="langBtn" id="langBtnFr" data-lang="fr">Français</button>
+          <button class="langBtn" id="langBtnEs" data-lang="es">Español</button>
+          <button class="langBtn" id="langBtnPt" data-lang="pt">Português</button>
+        </div>
+      </div>
+      <div class="settingsGroup">
+        <label class="settingsLabel" data-i18n="settingsMusicSelect">🎼 Musik auswählen</label>
         <div id="musicTrackRow" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:6px;"></div>
       </div>
       <div class="settingsGroup">
-        <label class="settingsLabel">🎵 Musik-Lautstärke <span id="musicVolumeVal">80%</span></label>
+        <label class="settingsLabel"><span data-i18n="settingsMusicVol">🎵 Musik-Lautstärke</span> <span id="musicVolumeVal">80%</span></label>
         <input type="range" id="musicVolumeSlider" min="0" max="100" value="80" class="settingsSlider">
       </div>
       <div class="settingsGroup">
-        <label class="settingsLabel">🔊 Sound-Lautstärke <span id="sfxVolumeVal">100%</span></label>
+        <label class="settingsLabel"><span data-i18n="settingsSfxVol">🔊 Sound-Lautstärke</span> <span id="sfxVolumeVal">100%</span></label>
         <input type="range" id="sfxVolumeSlider" min="0" max="100" value="100" class="settingsSlider">
       </div>
       <div class="settingsGroup" id="mouseSensGroup">
-        <label class="settingsLabel">🖱️ Maus-Empfindlichkeit <span id="mouseSensVal">100%</span></label>
+        <label class="settingsLabel"><span data-i18n="settingsMouseSens">🖱️ Maus-Empfindlichkeit</span> <span id="mouseSensVal">100%</span></label>
         <input type="range" id="mouseSensSlider" min="30" max="250" value="100" class="settingsSlider">
       </div>
 
       <div class="settingsToggleRow">
-        <span>🌧️ Wetter-Effekte</span>
+        <span data-i18n="settingsWeather">🌧️ Wetter-Effekte</span>
         <button class="settingsToggle" id="toggleWeather" data-on="true"><span class="settingsToggleDot"></span></button>
       </div>
       <div class="settingsToggleRow">
-        <span>🔔 Erfolgs-Benachrichtigungen</span>
+        <span data-i18n="settingsAchToasts">🔔 Erfolgs-Benachrichtigungen</span>
         <button class="settingsToggle" id="toggleAchToasts" data-on="true"><span class="settingsToggleDot"></span></button>
       </div>
       <div class="settingsToggleRow">
-        <span>📳 Bildschirmwackeln</span>
+        <span data-i18n="settingsCamShake">📳 Bildschirmwackeln</span>
         <button class="settingsToggle" id="toggleCamShake" data-on="true"><span class="settingsToggleDot"></span></button>
       </div>
 
-      <button id="settingsSaveBtn">💾 Speichern</button>
-      <button id="settingsResetBtn">🗑️ Spielstand zurücksetzen</button>
-      <button id="settingsCloseBtn" class="menuBtn" style="margin-top:14px;">Schließen</button>
+      <button id="settingsSaveBtn" data-i18n="settingsSaveBtn">💾 Speichern</button>
+      <button id="settingsResetBtn" data-i18n="settingsResetBtn">🗑️ Spielstand zurücksetzen</button>
+      <button id="settingsCloseBtn" class="menuBtn" style="margin-top:14px;" data-i18n="closeBtn4">Schließen</button>
     </div>
   </div>
 </div>
@@ -1530,20 +1572,30 @@
 <div id="settingsSavedToast">✅ Gespeichert</div>
 <div id="resetConfirmOverlay" class="hidden">
   <div id="resetConfirmCard">
-    <p>⚠️ Wirklich <b>alles</b> zurücksetzen? Pokale, Skins, Erfolge, Fotos — alles wird unwiderruflich gelöscht.</p>
+    <p data-i18n="resetConfirmText">⚠️ Wirklich <b>alles</b> zurücksetzen? Pokale, Skins, Erfolge, Fotos — alles wird unwiderruflich gelöscht.</p>
     <div id="resetConfirmActions">
-      <button id="resetConfirmYes">Ja, alles löschen</button>
-      <button id="resetConfirmNo">Abbrechen</button>
+      <button id="resetConfirmYes" data-i18n="resetConfirmYes">Ja, alles löschen</button>
+      <button id="resetConfirmNo" data-i18n="resetConfirmNo">Abbrechen</button>
     </div>
   </div>
 </div>
 
 <div id="unsavedConfirmOverlay" class="hidden">
   <div id="unsavedConfirmCard">
-    <p>💾 Du hast Änderungen, die noch nicht gespeichert wurden.</p>
+    <p data-i18n="unsavedConfirmText">💾 Du hast Änderungen, die noch nicht gespeichert wurden.</p>
     <div id="unsavedConfirmActions">
-      <button id="unsavedSaveBtn">Speichern</button>
-      <button id="unsavedDiscardBtn">Verwerfen</button>
+      <button id="unsavedSaveBtn" data-i18n="unsavedSaveBtn">Speichern</button>
+      <button id="unsavedDiscardBtn" data-i18n="unsavedDiscardBtn">Verwerfen</button>
+    </div>
+  </div>
+</div>
+
+<div id="langConfirmOverlay" class="hidden">
+  <div id="langConfirmCard">
+    <p data-i18n="langConfirmText">🌐 Sprache wirklich wechseln?</p>
+    <div id="langConfirmActions">
+      <button id="langConfirmYes" data-i18n="langConfirmYes">Ja, wechseln</button>
+      <button id="langConfirmNo" data-i18n="resetConfirmNo">Abbrechen</button>
     </div>
   </div>
 </div>
@@ -1564,56 +1616,56 @@
   <div class="startPanel" id="shopPanel">
     <div id="shopPanelScroll">
       <div class="titleRow">
-        <h1 style="font-size:32px;">Shop</h1>
+        <h1 style="font-size:32px;" data-i18n="shopTitle">Shop</h1>
       </div>
-      <p class="heroTagline" id="shopCoins">🏆 0 Pokale</p>
+      <p class="heroTagline" id="shopCoins">🏆 0 <span data-i18n="trophiesWord">Pokale</span></p>
       <div id="shopTabs">
-        <button class="shopTabBtn active" id="shopTabCharacter">🧑 Charakter</button>
-        <button class="shopTabBtn" id="shopTabVine">🕸️ Netz</button>
-        <button class="shopTabBtn" id="shopTabEmotes">🎭 Emotes</button>
+        <button class="shopTabBtn active" id="shopTabCharacter" data-i18n="shopTabCharacter">🧑 Charakter</button>
+        <button class="shopTabBtn" id="shopTabVine" data-i18n="shopTabVine">🕸️ Netz</button>
+        <button class="shopTabBtn" id="shopTabEmotes" data-i18n="shopTabEmotes">🎭 Emotes</button>
       </div>
-      <button id="shopPreviewBtn" class="menuBtn" style="margin:10px 0;">🔍 Charakter in 3D ansehen</button>
-      <p id="shopHint">Klick auf einen Farbkreis für eine Live-Vorschau am Charakter</p>
+      <button id="shopPreviewBtn" class="menuBtn" style="margin:10px 0;" data-i18n="shopPreviewBtn">🔍 Charakter in 3D ansehen</button>
+      <p id="shopHint" data-i18n="shopHint">Klick auf einen Farbkreis für eine Live-Vorschau am Charakter</p>
       <div id="shopGrid"></div>
       <div id="vineShopGrid"></div>
       <div id="emoteShopGrid"></div>
-      <button id="shopCloseBtn" class="menuBtn" style="margin-top:20px;">Schließen</button>
+      <button id="shopCloseBtn" class="menuBtn" style="margin-top:20px;" data-i18n="closeBtn">Schließen</button>
     </div>
   </div>
 </div>
 
 <div id="previewBar" class="hidden">
-  <button id="previewBackBtn" class="menuBtn">← Zurück zum Shop</button>
+  <button id="previewBackBtn" class="menuBtn" data-i18n="previewBackBtn">← Zurück zum Shop</button>
   <div id="previewInfoCard">
     <span id="previewSkinName"></span>
     <span id="previewSkinCost"></span>
     <button id="previewActionBtn" class="skinActionBtn"></button>
   </div>
   <div id="previewSwatchRow"></div>
-  <p id="previewDragHint">Ziehen zum Drehen<br>Mausrad zum Zoomen</p>
+  <p id="previewDragHint" data-i18n="previewDragHint">Ziehen zum Drehen<br>Mausrad zum Zoomen</p>
 </div>
 
 <div id="pauseScreen" style="display:none;">
   <div class="startPanel" style="max-width:420px;">
     <div class="titleRow">
-      <h1 style="font-size:34px;">Pausiert</h1>
+      <h1 style="font-size:34px;" data-i18n="pausedTitle">Pausiert</h1>
     </div>
     <div id="pauseMenuButtons">
-      <button class="menuBtn" id="resumeBtn">▶ Fortsetzen</button>
-      <button class="menuBtn" id="pausePhotoBtn">📸 Foto-Modus</button>
-      <button class="menuBtn" id="pauseShopBtn">🛒 Shop</button>
-      <button class="menuBtn" id="pauseSettingsBtn">⚙️ Einstellungen</button>
-      <button class="menuBtn" id="pauseRestartBtn">⟲ Neu starten</button>
+      <button class="menuBtn" id="resumeBtn" data-i18n="resumeBtn">▶ Fortsetzen</button>
+      <button class="menuBtn" id="pausePhotoBtn" data-i18n="pausePhotoBtn">📸 Foto-Modus</button>
+      <button class="menuBtn" id="pauseShopBtn" data-i18n="pauseShopBtn">🛒 Shop</button>
+      <button class="menuBtn" id="pauseSettingsBtn" data-i18n="pauseSettingsBtn">⚙️ Einstellungen</button>
+      <button class="menuBtn" id="pauseRestartBtn" data-i18n="pauseRestartBtn">⟲ Neu starten</button>
     </div>
     <div id="pauseControlsList">
-      <div class="pauseControlRow"><span class="key">WASD</span><span>Bewegen</span></div>
-      <div class="pauseControlRow"><span class="key">Shift</span><span>Sprinten</span></div>
-      <div class="pauseControlRow"><span class="key">Linksklick + ziehen</span><span>Umsehen</span></div>
-      <div class="pauseControlRow"><span class="key">Rad</span><span>Zoomen</span></div>
-      <div class="pauseControlRow"><span class="key">E</span><span>Ranke halten</span></div>
-      <div class="pauseControlRow"><span class="key">Rechtsklick</span><span>Angreifen (Reichweite)</span></div>
-      <div class="pauseControlRow"><span class="key">Leertaste</span><span>Springen</span></div>
-      <div class="pauseControlRow"><span class="key">ESC</span><span>Pause</span></div>
+      <div class="pauseControlRow"><span class="key">WASD</span><span data-i18n="ctrlMove2">Bewegen</span></div>
+      <div class="pauseControlRow"><span class="key">Shift</span><span data-i18n="ctrlSprint2">Sprinten</span></div>
+      <div class="pauseControlRow"><span class="key" data-i18n="ctrlDragKey">Linksklick + ziehen</span><span data-i18n="ctrlLook2">Umsehen</span></div>
+      <div class="pauseControlRow"><span class="key" data-i18n="ctrlWheelKey">Rad</span><span data-i18n="ctrlZoom2">Zoomen</span></div>
+      <div class="pauseControlRow"><span class="key">E</span><span data-i18n="ctrlVine2">Ranke halten</span></div>
+      <div class="pauseControlRow"><span class="key" data-i18n="ctrlRightClickKey2">Rechtsklick</span><span data-i18n="ctrlAttack2">Angreifen (Reichweite)</span></div>
+      <div class="pauseControlRow"><span class="key" data-i18n="ctrlSpaceKey2">Leertaste</span><span data-i18n="ctrlJump2">Springen</span></div>
+      <div class="pauseControlRow"><span class="key">ESC</span><span data-i18n="ctrlPause2">Pause</span></div>
     </div>
   </div>
 </div>
@@ -1625,6 +1677,380 @@
   // the 3D engine for them.
   var isTouchGuard = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
   if (isTouchGuard && Math.min(window.innerWidth, window.innerHeight) < 600) return;
+
+  // ---------- LOCALIZATION ----------
+  // German is the language the HTML/JS was authored in, so it's always the
+  // "default" — for de we simply restore the original text we snapshotted
+  // from the DOM on first load, rather than duplicating it in a dictionary.
+  const TRANSLATIONS = {
+    en: {
+      heroTagline: 'Swing through a floating fantasy world',
+      totalTrophyLinePre: '🏆 Total collected:', totalTrophyLinePost: 'trophies',
+      fLabelCrystals: 'Crystals', fSubCrystals: 'Collect points',
+      fLabelTrophies: '6 trophies', fSubTrophies: 'Collect them',
+      fLabelGuards: 'Guardians', fSubGuards: 'Dodge them',
+      fLabelReward: '1 to 6', fSubReward: 'Rising reward',
+      ctrlMove: 'Move', ctrlSprint: 'Sprint', ctrlMouseKey: 'Mouse', ctrlLook: 'Look / Zoom',
+      ctrlVine: 'Hold vine', ctrlRightClickKey: 'Right click', ctrlAttack: 'Attack (in range)',
+      ctrlSpaceKey: 'Space', ctrlJump: 'Jump', ctrlPause: 'Pause',
+      startBtn: 'Start game', shopBtnMenu: '🛒 Shop', achievementsBtnMenu: '🏅 Achievements', galleryBtnMenu: '🖼️ Gallery',
+      updatePausedBadge: '⏸️ Updates paused', updatePausedTitle: 'No updates planned right now',
+      updatePausedSub: "We're taking a break. New content will follow once things pick back up",
+      worldSelectBadge: '🗺️ Choose world', world1Btn: 'World 1 · Magic Realm', world2Btn: 'World 2 · Frost Realm', world3Btn: 'World 3 · Star Realm',
+      worldSelectError: 'Not enough trophies!',
+      deviceSurveyTitle: 'Which device are you playing on?', deviceSurveySub: 'So we can set up the controls correctly',
+      deviceBtnPC: '🖥️<br>PC', deviceBtnMobile: '📱<br>Mobile device',
+      phoneBlockTitle: 'Only playable on PC &amp; tablet', phoneBlockText: "Rankmann currently doesn't run on phones. Please open the game on a computer or tablet to play.",
+      hintBar: '<span class="key">WASD</span> move <span class="sep"></span> <span class="key">Shift</span> sprint <span class="sep"></span> <span class="key">Left click + drag</span> look around <span class="sep"></span> <span class="key">Wheel</span> zoom <span class="sep"></span> <span class="key">E</span> hold vine <span class="sep"></span> <span class="key">Right click</span> attack (in range) <span class="sep"></span> <span class="key">Space</span> jump',
+      introUnmuteHint: '🔇 Sound is muted — click to enable',
+      musicUnlockHint: '🔊 Enable music',
+      galleryToastSaved: '📸 Saved to gallery',
+      photoModeLabel: '📸 Photo mode', photoExitBtn: '✕ Exit',
+      photoFilterLabel: 'Filter', photoFilterNormal: 'Normal', photoFilterWarm: 'Warm', photoFilterCool: 'Cool', photoFilterBW: 'B/W', photoFilterVintage: 'Vintage',
+      photoPoseLabel: 'Pose', photoPoseNormal: 'Normal', photoPoseWave: 'Wave', photoPoseFlex: 'Flex', photoPoseSit: 'Sit', photoPoseJump: 'Jump',
+      photoCaptureBtn: '📸 Save photo', photoHintText: 'WASD to fly, drag mouse to look around, scroll wheel to zoom',
+      statTrophies: 'Trophies', statLives: 'Lives',
+      musicFabTitle: 'Music', musicPanelTitle: '🎼 Music', emoteWheelTitle: '✦ EMOTES ✦', emoteWheelChoose: 'Choose an emote',
+      emoteWheelHint: 'Press <b>B</b> to close · Click to play', emoteHudBtnTitle: 'Emotes (B)',
+      pausedTitle: 'Paused', resumeBtn: '▶ Resume', pausePhotoBtn: '📸 Photo mode', pauseShopBtn: '🛒 Shop', pauseSettingsBtn: '⚙️ Settings', pauseRestartBtn: '⟲ Restart',
+      ctrlMove2: 'Move', ctrlSprint2: 'Sprint', ctrlDragKey: 'Left click + drag', ctrlLook2: 'Look around', ctrlWheelKey: 'Wheel', ctrlZoom2: 'Zoom',
+      ctrlVine2: 'Hold vine', ctrlRightClickKey2: 'Right click', ctrlAttack2: 'Attack (in range)', ctrlSpaceKey2: 'Space', ctrlJump2: 'Jump', ctrlPause2: 'Pause',
+      shopTitle: 'Shop', trophiesWord: 'trophies', shopTabCharacter: '🧑 Character', shopTabVine: '🕸️ Vine', shopTabEmotes: '🎭 Emotes',
+      shopPreviewBtn: '🔍 View character in 3D', shopHint: 'Click a color circle for a live preview on the character', closeBtn: 'Close',
+      previewBackBtn: '← Back to shop', previewDragHint: 'Drag to rotate<br>Scroll wheel to zoom',
+      achievementsTitle: '🏅 Achievements', achievementsSub: 'Unlock badges and exclusive skins', closeBtn2: 'Close',
+      gallerySelectBtn: '☑️ Select', galleryTitle: '🖼️ Gallery', gallerySub: 'Photos you took in photo mode',
+      gallerySelectedWord: 'selected', gallerySelectDeleteBtn: '🗑️ Delete', gallerySelectDownloadBtn: '⬇️ Download', gallerySelectCancelBtn: '✕ Cancel',
+      galleryEmptyMsg: 'No photos yet — go into photo mode (pause menu) and take some!', closeBtn3: 'Close',
+      resetConfirmText: '⚠️ Really reset <b>everything</b>? Trophies, skins, achievements, photos — everything will be permanently deleted.',
+      resetConfirmYes: 'Yes, delete everything', resetConfirmNo: 'Cancel',
+      unsavedConfirmText: '💾 You have unsaved changes.', unsavedSaveBtn: 'Save', unsavedDiscardBtn: 'Discard',
+      langConfirmText: '🌐 Really change the language?', langConfirmYes: 'Yes, change it',
+      settingsTitle: '⚙️ Settings', settingsSub: 'Customize the game to your taste', settingsLangLabel: '🌐 Language',
+      settingsMusicSelect: '🎼 Choose music', settingsMusicVol: '🎵 Music volume', settingsSfxVol: '🔊 Sound volume', settingsMouseSens: '🖱️ Mouse sensitivity',
+      settingsWeather: '🌧️ Weather effects', settingsAchToasts: '🔔 Achievement notifications', settingsCamShake: '📳 Screen shake',
+      settingsSaveBtn: '💾 Save', settingsResetBtn: '🗑️ Reset save data', closeBtn4: 'Close',
+      newSkinUnlocked: 'New skin unlocked!', newVineUnlocked: 'New vine unlocked!',
+      newVineRewardPrefix: 'New vine:', claimBtn: 'Claim', skinUnlockedTag: '✅ Skin unlocked', skinRewardTag: '🎁 Skin reward',
+      newChallengesIn: '🔄 New challenges in', catTrophies: 'Trophies', catCombat: 'Combat', catCollecting: 'Collecting', catExploration: 'Exploration', catCosmetic: 'Cosmetic',
+      previewTitle: 'Preview', ownedTag: '✅ Owned', freeTag: 'Free', equippedBtn: 'Equipped', equipBtn: 'Equip', buyBtn: 'Buy',
+      activeEmotePrefix: 'Active:', emoteChooseWord: 'Choose an emote', emoteInShopSuffix: '— in shop', unlockedBtn: 'Unlocked', musicOff: 'Music off', trackStandard: 'Standard',
+    },
+    fr: {
+      heroTagline: 'Balance-toi à travers un monde fantastique flottant',
+      totalTrophyLinePre: '🏆 Total collecté :', totalTrophyLinePost: 'trophées',
+      fLabelCrystals: 'Cristaux', fSubCrystals: 'Collecter des points',
+      fLabelTrophies: '6 trophées', fSubTrophies: 'À collecter',
+      fLabelGuards: 'Gardiens', fSubGuards: 'À éviter',
+      fLabelReward: '1 à 6', fSubReward: 'Récompense croissante',
+      ctrlMove: 'Se déplacer', ctrlSprint: 'Sprinter', ctrlMouseKey: 'Souris', ctrlLook: 'Regarder / Zoomer',
+      ctrlVine: 'Tenir la liane', ctrlRightClickKey: 'Clic droit', ctrlAttack: 'Attaquer (à portée)',
+      ctrlSpaceKey: 'Espace', ctrlJump: 'Sauter', ctrlPause: 'Pause',
+      startBtn: 'Démarrer', shopBtnMenu: '🛒 Boutique', achievementsBtnMenu: '🏅 Succès', galleryBtnMenu: '🖼️ Galerie',
+      updatePausedBadge: '⏸️ Mises à jour en pause', updatePausedTitle: "Aucune mise à jour prévue pour l'instant",
+      updatePausedSub: 'Nous faisons une pause. Du nouveau contenu arrivera dès la reprise',
+      worldSelectBadge: '🗺️ Choisir un monde', world1Btn: 'Monde 1 · Royaume Magique', world2Btn: 'Monde 2 · Royaume du Gel', world3Btn: 'Monde 3 · Royaume Stellaire',
+      worldSelectError: 'Pas assez de trophées !',
+      deviceSurveyTitle: 'Sur quel appareil joues-tu ?', deviceSurveySub: 'Pour bien régler les commandes',
+      deviceBtnPC: '🖥️<br>PC', deviceBtnMobile: '📱<br>Mobile',
+      phoneBlockTitle: 'Jouable uniquement sur PC et tablette', phoneBlockText: "Rankmann ne fonctionne actuellement pas sur téléphone. Merci d'ouvrir le jeu sur un ordinateur ou une tablette pour jouer.",
+      hintBar: '<span class="key">WASD</span> se déplacer <span class="sep"></span> <span class="key">Shift</span> sprinter <span class="sep"></span> <span class="key">Clic gauche + glisser</span> regarder <span class="sep"></span> <span class="key">Molette</span> zoomer <span class="sep"></span> <span class="key">E</span> tenir la liane <span class="sep"></span> <span class="key">Clic droit</span> attaquer (à portée) <span class="sep"></span> <span class="key">Espace</span> sauter',
+      introUnmuteHint: '🔇 Son coupé — cliquer pour activer',
+      musicUnlockHint: '🔊 Activer la musique',
+      galleryToastSaved: '📸 Enregistré dans la galerie',
+      photoModeLabel: '📸 Mode photo', photoExitBtn: '✕ Quitter',
+      photoFilterLabel: 'Filtre', photoFilterNormal: 'Normal', photoFilterWarm: 'Chaud', photoFilterCool: 'Froid', photoFilterBW: 'N/B', photoFilterVintage: 'Vintage',
+      photoPoseLabel: 'Pose', photoPoseNormal: 'Normal', photoPoseWave: 'Salut', photoPoseFlex: 'Pose muscu', photoPoseSit: 'Assis', photoPoseJump: 'Saut',
+      photoCaptureBtn: '📸 Enregistrer la photo', photoHintText: 'WASD pour voler, glisser la souris pour regarder, molette pour zoomer',
+      statTrophies: 'Trophées', statLives: 'Vies',
+      musicFabTitle: 'Musique', musicPanelTitle: '🎼 Musique', emoteWheelTitle: '✦ ÉMOTES ✦', emoteWheelChoose: 'Choisir une émote',
+      emoteWheelHint: 'Touche <b>B</b> pour fermer · Cliquer pour jouer', emoteHudBtnTitle: 'Émotes (B)',
+      pausedTitle: 'Pause', resumeBtn: '▶ Reprendre', pausePhotoBtn: '📸 Mode photo', pauseShopBtn: '🛒 Boutique', pauseSettingsBtn: '⚙️ Paramètres', pauseRestartBtn: '⟲ Recommencer',
+      ctrlMove2: 'Se déplacer', ctrlSprint2: 'Sprinter', ctrlDragKey: 'Clic gauche + glisser', ctrlLook2: 'Regarder', ctrlWheelKey: 'Molette', ctrlZoom2: 'Zoomer',
+      ctrlVine2: 'Tenir la liane', ctrlRightClickKey2: 'Clic droit', ctrlAttack2: 'Attaquer (à portée)', ctrlSpaceKey2: 'Espace', ctrlJump2: 'Sauter', ctrlPause2: 'Pause',
+      shopTitle: 'Boutique', trophiesWord: 'trophées', shopTabCharacter: '🧑 Personnage', shopTabVine: '🕸️ Liane', shopTabEmotes: '🎭 Émotes',
+      shopPreviewBtn: '🔍 Voir le personnage en 3D', shopHint: 'Clique sur un cercle de couleur pour un aperçu en direct sur le personnage', closeBtn: 'Fermer',
+      previewBackBtn: '← Retour à la boutique', previewDragHint: 'Glisser pour tourner<br>Molette pour zoomer',
+      achievementsTitle: '🏅 Succès', achievementsSub: 'Débloque des badges et des skins exclusifs', closeBtn2: 'Fermer',
+      gallerySelectBtn: '☑️ Sélectionner', galleryTitle: '🖼️ Galerie', gallerySub: 'Tes photos prises en mode photo',
+      gallerySelectedWord: 'sélectionné(s)', gallerySelectDeleteBtn: '🗑️ Supprimer', gallerySelectDownloadBtn: '⬇️ Télécharger', gallerySelectCancelBtn: '✕ Annuler',
+      galleryEmptyMsg: "Pas encore de photos — va en mode photo (menu pause) et prends-en !", closeBtn3: 'Fermer',
+      resetConfirmText: '⚠️ Vraiment tout réinitialiser ? Trophées, skins, succès, photos — tout sera supprimé définitivement.',
+      resetConfirmYes: 'Oui, tout supprimer', resetConfirmNo: 'Annuler',
+      unsavedConfirmText: '💾 Tu as des modifications non enregistrées.', unsavedSaveBtn: 'Enregistrer', unsavedDiscardBtn: 'Ignorer',
+      langConfirmText: '🌐 Vraiment changer de langue ?', langConfirmYes: 'Oui, changer',
+      settingsTitle: '⚙️ Paramètres', settingsSub: 'Personnalise le jeu selon tes goûts', settingsLangLabel: '🌐 Langue',
+      settingsMusicSelect: '🎼 Choisir la musique', settingsMusicVol: '🎵 Volume de la musique', settingsSfxVol: '🔊 Volume des sons', settingsMouseSens: '🖱️ Sensibilité de la souris',
+      settingsWeather: '🌧️ Effets météo', settingsAchToasts: '🔔 Notifications de succès', settingsCamShake: "📳 Tremblement d'écran",
+      settingsSaveBtn: '💾 Enregistrer', settingsResetBtn: '🗑️ Réinitialiser la sauvegarde', closeBtn4: 'Fermer',
+      newSkinUnlocked: 'Nouveau skin débloqué !', newVineUnlocked: 'Nouvelle liane débloquée !',
+      newVineRewardPrefix: 'Nouvelle liane :', claimBtn: 'Récupérer', skinUnlockedTag: '✅ Skin débloqué', skinRewardTag: '🎁 Récompense skin',
+      newChallengesIn: '🔄 Nouveaux défis dans', catTrophies: 'Trophées', catCombat: 'Combat', catCollecting: 'Collection', catExploration: 'Exploration', catCosmetic: 'Cosmétique',
+      previewTitle: 'Aperçu', ownedTag: '✅ Possédé', freeTag: 'Gratuit', equippedBtn: 'Équipé', equipBtn: 'Équiper', buyBtn: 'Acheter',
+      activeEmotePrefix: 'Actif :', emoteChooseWord: 'Choisir une émote', emoteInShopSuffix: '— en boutique', unlockedBtn: 'Débloqué', musicOff: 'Musique coupée', trackStandard: 'Standard',
+    },
+    es: {
+      heroTagline: 'Balancéate por un mundo de fantasía flotante',
+      totalTrophyLinePre: '🏆 Total conseguido:', totalTrophyLinePost: 'trofeos',
+      fLabelCrystals: 'Cristales', fSubCrystals: 'Reúne puntos',
+      fLabelTrophies: '6 trofeos', fSubTrophies: 'Consíguelos',
+      fLabelGuards: 'Guardianes', fSubGuards: 'Esquívalos',
+      fLabelReward: '1 a 6', fSubReward: 'Recompensa creciente',
+      ctrlMove: 'Moverse', ctrlSprint: 'Correr', ctrlMouseKey: 'Ratón', ctrlLook: 'Mirar / Zoom',
+      ctrlVine: 'Sujetar liana', ctrlRightClickKey: 'Clic derecho', ctrlAttack: 'Atacar (a distancia)',
+      ctrlSpaceKey: 'Espacio', ctrlJump: 'Saltar', ctrlPause: 'Pausa',
+      startBtn: 'Iniciar juego', shopBtnMenu: '🛒 Tienda', achievementsBtnMenu: '🏅 Logros', galleryBtnMenu: '🖼️ Galería',
+      updatePausedBadge: '⏸️ Actualizaciones en pausa', updatePausedTitle: 'Por ahora no hay actualizaciones previstas',
+      updatePausedSub: 'Estamos de pausa. Habrá contenido nuevo en cuanto retomemos',
+      worldSelectBadge: '🗺️ Elegir mundo', world1Btn: 'Mundo 1 · Reino Mágico', world2Btn: 'Mundo 2 · Reino Helado', world3Btn: 'Mundo 3 · Reino Estelar',
+      worldSelectError: '¡No tienes suficientes trofeos!',
+      deviceSurveyTitle: '¿En qué dispositivo estás jugando?', deviceSurveySub: 'Para configurar bien los controles',
+      deviceBtnPC: '🖥️<br>PC', deviceBtnMobile: '📱<br>Móvil',
+      phoneBlockTitle: 'Solo se puede jugar en PC y tablet', phoneBlockText: 'Rankmann actualmente no funciona en móviles. Abre el juego en un ordenador o tablet para jugar.',
+      hintBar: '<span class="key">WASD</span> moverse <span class="sep"></span> <span class="key">Shift</span> correr <span class="sep"></span> <span class="key">Clic izq. + arrastrar</span> mirar <span class="sep"></span> <span class="key">Rueda</span> zoom <span class="sep"></span> <span class="key">E</span> sujetar liana <span class="sep"></span> <span class="key">Clic derecho</span> atacar (a distancia) <span class="sep"></span> <span class="key">Espacio</span> saltar',
+      introUnmuteHint: '🔇 Sonido silenciado — clic para activar',
+      musicUnlockHint: '🔊 Activar música',
+      galleryToastSaved: '📸 Guardado en la galería',
+      photoModeLabel: '📸 Modo foto', photoExitBtn: '✕ Salir',
+      photoFilterLabel: 'Filtro', photoFilterNormal: 'Normal', photoFilterWarm: 'Cálido', photoFilterCool: 'Frío', photoFilterBW: 'B/N', photoFilterVintage: 'Vintage',
+      photoPoseLabel: 'Pose', photoPoseNormal: 'Normal', photoPoseWave: 'Saludar', photoPoseFlex: 'Posar', photoPoseSit: 'Sentarse', photoPoseJump: 'Salto',
+      photoCaptureBtn: '📸 Guardar foto', photoHintText: 'WASD para volar, arrastra el ratón para mirar, rueda para hacer zoom',
+      statTrophies: 'Trofeos', statLives: 'Vidas',
+      musicFabTitle: 'Música', musicPanelTitle: '🎼 Música', emoteWheelTitle: '✦ EMOTES ✦', emoteWheelChoose: 'Elige un emote',
+      emoteWheelHint: 'Pulsa <b>B</b> para cerrar · Clic para reproducir', emoteHudBtnTitle: 'Emotes (B)',
+      pausedTitle: 'Pausado', resumeBtn: '▶ Continuar', pausePhotoBtn: '📸 Modo foto', pauseShopBtn: '🛒 Tienda', pauseSettingsBtn: '⚙️ Ajustes', pauseRestartBtn: '⟲ Reiniciar',
+      ctrlMove2: 'Moverse', ctrlSprint2: 'Correr', ctrlDragKey: 'Clic izq. + arrastrar', ctrlLook2: 'Mirar', ctrlWheelKey: 'Rueda', ctrlZoom2: 'Zoom',
+      ctrlVine2: 'Sujetar liana', ctrlRightClickKey2: 'Clic derecho', ctrlAttack2: 'Atacar (a distancia)', ctrlSpaceKey2: 'Espacio', ctrlJump2: 'Saltar', ctrlPause2: 'Pausa',
+      shopTitle: 'Tienda', trophiesWord: 'trofeos', shopTabCharacter: '🧑 Personaje', shopTabVine: '🕸️ Liana', shopTabEmotes: '🎭 Emotes',
+      shopPreviewBtn: '🔍 Ver personaje en 3D', shopHint: 'Haz clic en un círculo de color para ver una vista previa en vivo', closeBtn: 'Cerrar',
+      previewBackBtn: '← Volver a la tienda', previewDragHint: 'Arrastra para girar<br>Rueda para hacer zoom',
+      achievementsTitle: '🏅 Logros', achievementsSub: 'Desbloquea insignias y skins exclusivas', closeBtn2: 'Cerrar',
+      gallerySelectBtn: '☑️ Seleccionar', galleryTitle: '🖼️ Galería', gallerySub: 'Tus fotos tomadas en modo foto',
+      gallerySelectedWord: 'seleccionadas', gallerySelectDeleteBtn: '🗑️ Eliminar', gallerySelectDownloadBtn: '⬇️ Descargar', gallerySelectCancelBtn: '✕ Cancelar',
+      galleryEmptyMsg: '¡Aún no hay fotos — entra en modo foto (menú de pausa) y haz algunas!', closeBtn3: 'Cerrar',
+      resetConfirmText: '⚠️ ¿Seguro que quieres reiniciar <b>todo</b>? Trofeos, skins, logros, fotos: todo se eliminará de forma permanente.',
+      resetConfirmYes: 'Sí, eliminar todo', resetConfirmNo: 'Cancelar',
+      unsavedConfirmText: '💾 Tienes cambios sin guardar.', unsavedSaveBtn: 'Guardar', unsavedDiscardBtn: 'Descartar',
+      langConfirmText: '🌐 ¿Seguro que quieres cambiar el idioma?', langConfirmYes: 'Sí, cambiar',
+      settingsTitle: '⚙️ Ajustes', settingsSub: 'Personaliza el juego a tu gusto', settingsLangLabel: '🌐 Idioma',
+      settingsMusicSelect: '🎼 Elegir música', settingsMusicVol: '🎵 Volumen de música', settingsSfxVol: '🔊 Volumen de sonido', settingsMouseSens: '🖱️ Sensibilidad del ratón',
+      settingsWeather: '🌧️ Efectos climáticos', settingsAchToasts: '🔔 Notificaciones de logros', settingsCamShake: '📳 Sacudida de pantalla',
+      settingsSaveBtn: '💾 Guardar', settingsResetBtn: '🗑️ Restablecer partida', closeBtn4: 'Cerrar',
+      newSkinUnlocked: '¡Nueva skin desbloqueada!', newVineUnlocked: '¡Nueva liana desbloqueada!',
+      newVineRewardPrefix: 'Nueva liana:', claimBtn: 'Reclamar', skinUnlockedTag: '✅ Skin desbloqueada', skinRewardTag: '🎁 Recompensa de skin',
+      newChallengesIn: '🔄 Nuevos desafíos en', catTrophies: 'Trofeos', catCombat: 'Combate', catCollecting: 'Recolección', catExploration: 'Exploración', catCosmetic: 'Cosmético',
+      previewTitle: 'Vista previa', ownedTag: '✅ En posesión', freeTag: 'Gratis', equippedBtn: 'Equipado', equipBtn: 'Equipar', buyBtn: 'Comprar',
+      activeEmotePrefix: 'Activo:', emoteChooseWord: 'Elige un emote', emoteInShopSuffix: '— en la tienda', unlockedBtn: 'Desbloqueado', musicOff: 'Música desactivada', trackStandard: 'Estándar',
+    },
+    pt: {
+      heroTagline: 'Balance-se por um mundo de fantasia flutuante',
+      totalTrophyLinePre: '🏆 Total coletado:', totalTrophyLinePost: 'troféus',
+      fLabelCrystals: 'Cristais', fSubCrystals: 'Colete pontos',
+      fLabelTrophies: '6 troféus', fSubTrophies: 'Colete-os',
+      fLabelGuards: 'Guardiões', fSubGuards: 'Desvie deles',
+      fLabelReward: '1 a 6', fSubReward: 'Recompensa crescente',
+      ctrlMove: 'Mover', ctrlSprint: 'Correr', ctrlMouseKey: 'Mouse', ctrlLook: 'Olhar / Zoom',
+      ctrlVine: 'Segurar o cipó', ctrlRightClickKey: 'Clique direito', ctrlAttack: 'Atacar (ao alcance)',
+      ctrlSpaceKey: 'Espaço', ctrlJump: 'Pular', ctrlPause: 'Pausa',
+      startBtn: 'Iniciar jogo', shopBtnMenu: '🛒 Loja', achievementsBtnMenu: '🏅 Conquistas', galleryBtnMenu: '🖼️ Galeria',
+      updatePausedBadge: '⏸️ Atualizações em pausa', updatePausedTitle: 'Nenhuma atualização planejada no momento',
+      updatePausedSub: 'Estamos fazendo uma pausa. Novos conteúdos virão assim que voltarmos',
+      worldSelectBadge: '🗺️ Escolher mundo', world1Btn: 'Mundo 1 · Reino Mágico', world2Btn: 'Mundo 2 · Reino do Gelo', world3Btn: 'Mundo 3 · Reino Estelar',
+      worldSelectError: 'Troféus insuficientes!',
+      deviceSurveyTitle: 'Em qual dispositivo você está jogando?', deviceSurveySub: 'Para configurarmos os controles corretamente',
+      deviceBtnPC: '🖥️<br>PC', deviceBtnMobile: '📱<br>Celular',
+      phoneBlockTitle: 'Jogável apenas em PC e tablet', phoneBlockText: 'No momento o Rankmann não funciona em celulares. Abra o jogo em um computador ou tablet para jogar.',
+      hintBar: '<span class="key">WASD</span> mover <span class="sep"></span> <span class="key">Shift</span> correr <span class="sep"></span> <span class="key">Clique esq. + arrastar</span> olhar ao redor <span class="sep"></span> <span class="key">Roda</span> zoom <span class="sep"></span> <span class="key">E</span> segurar o cipó <span class="sep"></span> <span class="key">Clique direito</span> atacar (ao alcance) <span class="sep"></span> <span class="key">Espaço</span> pular',
+      introUnmuteHint: '🔇 Som mudo — clique para ativar',
+      musicUnlockHint: '🔊 Ativar música',
+      galleryToastSaved: '📸 Salvo na galeria',
+      photoModeLabel: '📸 Modo foto', photoExitBtn: '✕ Sair',
+      photoFilterLabel: 'Filtro', photoFilterNormal: 'Normal', photoFilterWarm: 'Quente', photoFilterCool: 'Frio', photoFilterBW: 'P/B', photoFilterVintage: 'Vintage',
+      photoPoseLabel: 'Pose', photoPoseNormal: 'Normal', photoPoseWave: 'Acenar', photoPoseFlex: 'Posar', photoPoseSit: 'Sentar', photoPoseJump: 'Pulo',
+      photoCaptureBtn: '📸 Salvar foto', photoHintText: 'WASD para voar, arraste o mouse para olhar ao redor, roda para dar zoom',
+      statTrophies: 'Troféus', statLives: 'Vidas',
+      musicFabTitle: 'Música', musicPanelTitle: '🎼 Música', emoteWheelTitle: '✦ EMOTES ✦', emoteWheelChoose: 'Escolha um emote',
+      emoteWheelHint: 'Pressione <b>B</b> para fechar · Clique para tocar', emoteHudBtnTitle: 'Emotes (B)',
+      pausedTitle: 'Pausado', resumeBtn: '▶ Continuar', pausePhotoBtn: '📸 Modo foto', pauseShopBtn: '🛒 Loja', pauseSettingsBtn: '⚙️ Configurações', pauseRestartBtn: '⟲ Reiniciar',
+      ctrlMove2: 'Mover', ctrlSprint2: 'Correr', ctrlDragKey: 'Clique esq. + arrastar', ctrlLook2: 'Olhar ao redor', ctrlWheelKey: 'Roda', ctrlZoom2: 'Zoom',
+      ctrlVine2: 'Segurar o cipó', ctrlRightClickKey2: 'Clique direito', ctrlAttack2: 'Atacar (ao alcance)', ctrlSpaceKey2: 'Espaço', ctrlJump2: 'Pular', ctrlPause2: 'Pausa',
+      shopTitle: 'Loja', trophiesWord: 'troféus', shopTabCharacter: '🧑 Personagem', shopTabVine: '🕸️ Cipó', shopTabEmotes: '🎭 Emotes',
+      shopPreviewBtn: '🔍 Ver personagem em 3D', shopHint: 'Clique num círculo colorido para uma prévia ao vivo no personagem', closeBtn: 'Fechar',
+      previewBackBtn: '← Voltar à loja', previewDragHint: 'Arraste para girar<br>Roda para dar zoom',
+      achievementsTitle: '🏅 Conquistas', achievementsSub: 'Desbloqueie emblemas e skins exclusivas', closeBtn2: 'Fechar',
+      gallerySelectBtn: '☑️ Selecionar', galleryTitle: '🖼️ Galeria', gallerySub: 'Suas fotos tiradas no modo foto',
+      gallerySelectedWord: 'selecionada(s)', gallerySelectDeleteBtn: '🗑️ Excluir', gallerySelectDownloadBtn: '⬇️ Baixar', gallerySelectCancelBtn: '✕ Cancelar',
+      galleryEmptyMsg: 'Ainda sem fotos — entre no modo foto (menu de pausa) e tire algumas!', closeBtn3: 'Fechar',
+      resetConfirmText: '⚠️ Redefinir <b>tudo</b> mesmo? Troféus, skins, conquistas, fotos — tudo será apagado permanentemente.',
+      resetConfirmYes: 'Sim, apagar tudo', resetConfirmNo: 'Cancelar',
+      unsavedConfirmText: '💾 Você tem alterações não salvas.', unsavedSaveBtn: 'Salvar', unsavedDiscardBtn: 'Descartar',
+      langConfirmText: '🌐 Mudar de idioma mesmo?', langConfirmYes: 'Sim, mudar',
+      settingsTitle: '⚙️ Configurações', settingsSub: 'Personalize o jogo ao seu gosto', settingsLangLabel: '🌐 Idioma',
+      settingsMusicSelect: '🎼 Escolher música', settingsMusicVol: '🎵 Volume da música', settingsSfxVol: '🔊 Volume do som', settingsMouseSens: '🖱️ Sensibilidade do mouse',
+      settingsWeather: '🌧️ Efeitos climáticos', settingsAchToasts: '🔔 Notificações de conquistas', settingsCamShake: '📳 Tremor de tela',
+      settingsSaveBtn: '💾 Salvar', settingsResetBtn: '🗑️ Redefinir progresso', closeBtn4: 'Fechar',
+      newSkinUnlocked: 'Nova skin desbloqueada!', newVineUnlocked: 'Novo cipó desbloqueado!',
+      newVineRewardPrefix: 'Novo cipó:', claimBtn: 'Resgatar', skinUnlockedTag: '✅ Skin desbloqueada', skinRewardTag: '🎁 Recompensa de skin',
+      newChallengesIn: '🔄 Novos desafios em', catTrophies: 'Troféus', catCombat: 'Combate', catCollecting: 'Coleta', catExploration: 'Exploração', catCosmetic: 'Cosmético',
+      previewTitle: 'Prévia', ownedTag: '✅ Adquirido', freeTag: 'Grátis', equippedBtn: 'Equipado', equipBtn: 'Equipar', buyBtn: 'Comprar',
+      activeEmotePrefix: 'Ativo:', emoteChooseWord: 'Escolha um emote', emoteInShopSuffix: '— na loja', unlockedBtn: 'Desbloqueado', musicOff: 'Música desligada', trackStandard: 'Padrão',
+    },
+  };
+  let currentLang = storageGet('rankmann_lang', 'de');
+  // Names/descriptions for data-driven content (shop items, achievements) —
+  // kept separate from TRANSLATIONS since they're looked up by an id, not a
+  // fixed UI key. Falls back to the item's own German `name`/`desc` field.
+  const NAME_TRANSLATIONS = {
+    skin: {
+      en: { standard:'Standard', feuer:'Fire', eis:'Ice', schatten:'Shadow', gold:'Gold', kosmos:'Cosmos', drache:'Dragon', diamant:'Diamond', koenig:'Royal', sammler:'Collector', wanderer:'Wanderer', jaeger:'Hunter', legende:'Legend' },
+      fr: { standard:'Standard', feuer:'Feu', eis:'Glace', schatten:'Ombre', gold:'Or', kosmos:'Cosmos', drache:'Dragon', diamant:'Diamant', koenig:'Royal', sammler:'Collectionneur', wanderer:'Voyageur', jaeger:'Chasseur', legende:'Légende' },
+      es: { standard:'Estándar', feuer:'Fuego', eis:'Hielo', schatten:'Sombra', gold:'Oro', kosmos:'Cosmos', drache:'Dragón', diamant:'Diamante', koenig:'Real', sammler:'Coleccionista', wanderer:'Vagabundo', jaeger:'Cazador', legende:'Leyenda' },
+      pt: { standard:'Padrão', feuer:'Fogo', eis:'Gelo', schatten:'Sombra', gold:'Ouro', kosmos:'Cosmos', drache:'Dragão', diamant:'Diamante', koenig:'Real', sammler:'Colecionador', wanderer:'Viajante', jaeger:'Caçador', legende:'Lenda' },
+    },
+    vine: {
+      en: { standard:'Standard', feuer:'Fire Vine', eis:'Ice Vine', blitz:'Lightning Vine', kosmos:'Cosmos Vine', schatten:'Shadow Vine', kristall:'Crystal Vine', regenbogen:'Rainbow Vine' },
+      fr: { standard:'Standard', feuer:'Liane de feu', eis:'Liane de glace', blitz:'Liane éclair', kosmos:'Liane cosmique', schatten:"Liane d'ombre", kristall:'Liane de cristal', regenbogen:'Liane arc-en-ciel' },
+      es: { standard:'Estándar', feuer:'Liana de fuego', eis:'Liana de hielo', blitz:'Liana de rayo', kosmos:'Liana cósmica', schatten:'Liana sombría', kristall:'Liana de cristal', regenbogen:'Liana arcoíris' },
+      pt: { standard:'Padrão', feuer:'Cipó de fogo', eis:'Cipó de gelo', blitz:'Cipó de raio', kosmos:'Cipó cósmico', schatten:'Cipó sombrio', kristall:'Cipó de cristal', regenbogen:'Cipó arco-íris' },
+    },
+    emote: {
+      en: { wave:'Wave', tanzen:'Dance', jubeln:'Cheer', verbeugen:'Bow', flexen:'Flex', sitzen:'Chill' },
+      fr: { wave:'Saluer', tanzen:'Danser', jubeln:'Acclamer', verbeugen:'Révérence', flexen:'Poser', sitzen:'Se détendre' },
+      es: { wave:'Saludar', tanzen:'Bailar', jubeln:'Aclamar', verbeugen:'Reverencia', flexen:'Posar', sitzen:'Relajarse' },
+      pt: { wave:'Acenar', tanzen:'Dançar', jubeln:'Comemorar', verbeugen:'Reverência', flexen:'Posar', sitzen:'Relaxar' },
+    },
+    ach: {
+      en: { world2:'World Wanderer', world3:'Star Wanderer', ownSkins3:'Wardrobe', ownSkins6:'Fashion King' },
+      fr: { world2:'Voyageur des mondes', world3:'Voyageur stellaire', ownSkins3:'Garde-robe', ownSkins6:'Roi de la mode' },
+      es: { world2:'Trotamundos', world3:'Trotamundos estelar', ownSkins3:'Armario', ownSkins6:'Rey de la moda' },
+      pt: { world2:'Andarilho dos Mundos', world3:'Andarilho Estelar', ownSkins3:'Guarda-roupa', ownSkins6:'Rei da Moda' },
+    },
+  };
+  const DESC_TRANSLATIONS = {
+    en: { world2:'Unlock the Frost Realm', world3:'Unlock the Star Realm', ownSkins3:'Own 3 different skins', ownSkins6:'Own 6 different skins' },
+    fr: { world2:'Débloque le Royaume du Gel', world3:'Débloque le Royaume Stellaire', ownSkins3:'Possède 3 skins différents', ownSkins6:'Possède 6 skins différents' },
+    es: { world2:'Desbloquea el Reino Helado', world3:'Desbloquea el Reino Estelar', ownSkins3:'Ten 3 skins diferentes', ownSkins6:'Ten 6 skins diferentes' },
+    pt: { world2:'Desbloqueie o Reino do Gelo', world3:'Desbloqueie o Reino Estelar', ownSkins3:'Tenha 3 skins diferentes', ownSkins6:'Tenha 6 skins diferentes' },
+  };
+  function localizedName(category, def){
+    if (currentLang !== 'de' && NAME_TRANSLATIONS[category] && NAME_TRANSLATIONS[category][currentLang] && NAME_TRANSLATIONS[category][currentLang][def.id]){
+      return NAME_TRANSLATIONS[category][currentLang][def.id];
+    }
+    return def.name;
+  }
+  function localizedDesc(def){
+    if (currentLang !== 'de' && DESC_TRANSLATIONS[currentLang] && DESC_TRANSLATIONS[currentLang][def.id]){
+      return DESC_TRANSLATIONS[currentLang][def.id];
+    }
+    return def.desc;
+  }
+  // Rotating challenges are generated from CHALLENGE_POOL and their name/desc
+  // saved as plain strings, so we localize by looking up the ORIGINAL German
+  // name (stable across languages) rather than re-deriving from the pool.
+  const CHALLENGE_TRANSLATIONS = {
+    en: {
+      'Blitzstart': { name: 'Quick Start', descFn: n => `Collect ${n} trophies this round` },
+      'Pokal-Sprint': { name: 'Trophy Sprint', descFn: n => `Collect ${n} trophies this round` },
+      'Ausdauer': { name: 'Endurance', descFn: n => `Collect ${n} trophies this round` },
+      'Aufräumen': { name: 'Clean Sweep', descFn: n => `Defeat ${n} enemies this round` },
+      'Elite-Jäger': { name: 'Elite Hunter', descFn: n => `Defeat ${n} enemies this round` },
+      'Kriegsherr': { name: 'Warlord', descFn: n => `Defeat ${n} enemies this round` },
+      'Kristallfund': { name: 'Crystal Find', descFn: n => `Collect ${n} crystals this round` },
+      'Kristallrausch': { name: 'Crystal Rush', descFn: n => `Collect ${n} crystals this round` },
+      'Kristallkönig': { name: 'Crystal King', descFn: n => `Collect ${n} crystals this round` },
+    },
+    fr: {
+      'Blitzstart': { name: 'Départ éclair', descFn: n => `Collecte ${n} trophées ce tour-ci` },
+      'Pokal-Sprint': { name: 'Sprint de trophées', descFn: n => `Collecte ${n} trophées ce tour-ci` },
+      'Ausdauer': { name: 'Endurance', descFn: n => `Collecte ${n} trophées ce tour-ci` },
+      'Aufräumen': { name: 'Grand nettoyage', descFn: n => `Bats ${n} ennemis ce tour-ci` },
+      'Elite-Jäger': { name: "Chasseur d'élite", descFn: n => `Bats ${n} ennemis ce tour-ci` },
+      'Kriegsherr': { name: 'Seigneur de guerre', descFn: n => `Bats ${n} ennemis ce tour-ci` },
+      'Kristallfund': { name: 'Trouvaille de cristaux', descFn: n => `Collecte ${n} cristaux ce tour-ci` },
+      'Kristallrausch': { name: 'Ruée de cristaux', descFn: n => `Collecte ${n} cristaux ce tour-ci` },
+      'Kristallkönig': { name: 'Roi des cristaux', descFn: n => `Collecte ${n} cristaux ce tour-ci` },
+    },
+    es: {
+      'Blitzstart': { name: 'Inicio rápido', descFn: n => `Consigue ${n} trofeos en esta ronda` },
+      'Pokal-Sprint': { name: 'Sprint de trofeos', descFn: n => `Consigue ${n} trofeos en esta ronda` },
+      'Ausdauer': { name: 'Resistencia', descFn: n => `Consigue ${n} trofeos en esta ronda` },
+      'Aufräumen': { name: 'Limpieza total', descFn: n => `Derrota a ${n} enemigos en esta ronda` },
+      'Elite-Jäger': { name: 'Cazador de élite', descFn: n => `Derrota a ${n} enemigos en esta ronda` },
+      'Kriegsherr': { name: 'Señor de la guerra', descFn: n => `Derrota a ${n} enemigos en esta ronda` },
+      'Kristallfund': { name: 'Hallazgo de cristales', descFn: n => `Consigue ${n} cristales en esta ronda` },
+      'Kristallrausch': { name: 'Fiebre de cristales', descFn: n => `Consigue ${n} cristales en esta ronda` },
+      'Kristallkönig': { name: 'Rey de los cristales', descFn: n => `Consigue ${n} cristales en esta ronda` },
+    },
+    pt: {
+      'Blitzstart': { name: 'Início rápido', descFn: n => `Colete ${n} troféus nesta rodada` },
+      'Pokal-Sprint': { name: 'Corrida de troféus', descFn: n => `Colete ${n} troféus nesta rodada` },
+      'Ausdauer': { name: 'Resistência', descFn: n => `Colete ${n} troféus nesta rodada` },
+      'Aufräumen': { name: 'Faxina geral', descFn: n => `Derrote ${n} inimigos nesta rodada` },
+      'Elite-Jäger': { name: 'Caçador de elite', descFn: n => `Derrote ${n} inimigos nesta rodada` },
+      'Kriegsherr': { name: 'Senhor da guerra', descFn: n => `Derrote ${n} inimigos nesta rodada` },
+      'Kristallfund': { name: 'Achado de cristais', descFn: n => `Colete ${n} cristais nesta rodada` },
+      'Kristallrausch': { name: 'Corrida de cristais', descFn: n => `Colete ${n} cristais nesta rodada` },
+      'Kristallkönig': { name: 'Rei dos cristais', descFn: n => `Colete ${n} cristais nesta rodada` },
+    },
+  };
+  function localizedChallenge(ch){
+    const table = currentLang !== 'de' && CHALLENGE_TRANSLATIONS[currentLang] ? CHALLENGE_TRANSLATIONS[currentLang][ch.name] : null;
+    if (table) return { name: table.name, desc: table.descFn(ch.target) };
+    return { name: ch.name, desc: ch.desc };
+  }
+  // Looks up a UI string in the current language, falling back to German
+  // (the literal key text isn't meaningful, so fall back to English if even
+  // German is somehow missing rather than showing a raw key to the player).
+  // A handful of keys (reward toasts, category labels) have no matching DOM
+  // element to snapshot German text from, so MANUAL_DE covers those.
+  const MANUAL_DE = {
+    newSkinRewardPrefix: 'Neuer Skin:', newVineRewardPrefix: 'Neue Ranke:',
+    claimBtn: 'Abholen', skinUnlockedTag: '✅ Skin freigeschaltet', skinRewardTag: '🎁 Skin-Belohnung',
+    newChallengesIn: '🔄 Neue Herausforderungen in',
+    catTrophies: 'Pokale', catCombat: 'Kampf', catCollecting: 'Sammeln', catExploration: 'Erkundung', catCosmetic: 'Kosmetik',
+    previewTitle: 'Vorschau', ownedTag: '✅ In Besitz', freeTag: 'Kostenlos', equippedBtn: 'Ausgerüstet', equipBtn: 'Ausrüsten', buyBtn: 'Kaufen',
+    activeEmotePrefix: 'Aktiv:', emoteChooseWord: 'Emote wählen', emoteInShopSuffix: '— im Shop', unlockedBtn: 'Freigeschaltet',
+    musicOff: 'Musik aus', trackStandard: 'Standard',
+  };
+  function t(key){
+    if (currentLang !== 'de' && TRANSLATIONS[currentLang] && TRANSLATIONS[currentLang][key] !== undefined) return TRANSLATIONS[currentLang][key];
+    if (I18N_DEFAULTS[key] !== undefined) return I18N_DEFAULTS[key];
+    if (currentLang === 'de' && MANUAL_DE[key] !== undefined) return MANUAL_DE[key];
+    return TRANSLATIONS.en[key] || MANUAL_DE[key] || key;
+  }
+  // Snapshot of the original German text for every translatable element,
+  // captured once before any translation is applied — this is what "German"
+  // resets back to, and what t() falls back to for dynamic strings so we
+  // don't have to duplicate every German string in a dictionary of its own.
+  const I18N_DEFAULTS = {};
+  function snapshotI18n(){
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      I18N_DEFAULTS[el.getAttribute('data-i18n')] = el.innerHTML;
+    });
+    document.querySelectorAll('[data-i18n-title]').forEach(el => {
+      I18N_DEFAULTS[el.getAttribute('data-i18n-title')] = el.getAttribute('title') || '';
+    });
+  }
+  function applyLanguage(lang){
+    currentLang = lang;
+    storageSet('rankmann_lang', lang);
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      el.innerHTML = t(key);
+    });
+    document.querySelectorAll('[data-i18n-title]').forEach(el => {
+      const key = el.getAttribute('data-i18n-title');
+      el.title = t(key);
+    });
+    document.querySelectorAll('.langBtn').forEach(btn => {
+      btn.classList.toggle('active', btn.getAttribute('data-lang') === lang);
+    });
+    document.documentElement.lang = lang;
+    // Re-render everything built from data (shop items, achievements, world
+    // buttons, etc.) so their labels pick up the new language too.
+    if (typeof refreshLocalizedContent === 'function') refreshLocalizedContent();
+  }
+  snapshotI18n();
 
   // ---------- BASIC SETUP ----------
   const scene = new THREE.Scene();
@@ -3285,11 +3711,11 @@
   // ---------- ACHIEVEMENTS ----------
   let unlockedAchievements = storageGet('rankmann_unlockedAchievements', []);
   const ACHIEVEMENT_CATEGORIES = [
-    { id: 'trophies', icon: '🏆', label: 'Pokale' },
-    { id: 'combat', icon: '⚔️', label: 'Kampf' },
-    { id: 'collecting', icon: '💎', label: 'Sammeln' },
-    { id: 'exploration', icon: '🗺️', label: 'Erkundung' },
-    { id: 'cosmetic', icon: '🎨', label: 'Kosmetik' },
+    { id: 'trophies', icon: '🏆', labelKey: 'catTrophies' },
+    { id: 'combat', icon: '⚔️', labelKey: 'catCombat' },
+    { id: 'collecting', icon: '💎', labelKey: 'catCollecting' },
+    { id: 'exploration', icon: '🗺️', labelKey: 'catExploration' },
+    { id: 'cosmetic', icon: '🎨', labelKey: 'catCosmetic' },
   ];
   // Pokale/Kampf/Sammeln are fully rotating now (regenerate every 12h, see
   // below) — only permanent, one-time milestones live in this list.
@@ -3329,7 +3755,7 @@
         ownedSkins.push(ms.skin);
         storageSet('rankmann_ownedSkins', ownedSkins);
         const skinDef = SKIN_DEFS.find(s => s.id === ms.skin);
-        showRewardAnimation({ icon: '🎁', name: 'Neuer Skin freigeschaltet!', rewardSkin: ms.skin });
+        showRewardAnimation({ icon: '🎁', name: t('newSkinUnlocked'), rewardSkin: ms.skin });
       }
     });
     VINE_SKIN_MILESTONES.forEach(ms => {
@@ -3339,7 +3765,7 @@
       if (!ownedVineSkins.includes(ms.vineSkin)){
         ownedVineSkins.push(ms.vineSkin);
         storageSet('rankmann_ownedVineSkins', ownedVineSkins);
-        showRewardAnimation({ icon: '🌿', name: 'Neue Ranke freigeschaltet!', rewardVineSkin: ms.vineSkin });
+        showRewardAnimation({ icon: '🌿', name: t('newVineUnlocked'), rewardVineSkin: ms.vineSkin });
       }
     });
   }
@@ -3412,7 +3838,7 @@
     totalTrophies += ch.reward;
     storageSet('rankmann_totalTrophies', totalTrophies);
     updateTrophyDisplay();
-    showRewardAnimation({ icon: ch.icon, name: ch.name + ` (+${ch.reward} 🏆)` });
+    showRewardAnimation({ icon: ch.icon, name: localizedChallenge(ch).name + ` (+${ch.reward} 🏆)` });
     updateAchievementsUI();
   }
   function challengeTimeLeftStr(){
@@ -3437,7 +3863,7 @@
       ownedSkins.push(ach.rewardSkin);
       storageSet('rankmann_ownedSkins', ownedSkins);
     }
-    showRewardAnimation(ach);
+    showRewardAnimation({ icon: ach.icon, name: localizedName('ach', ach), rewardSkin: ach.rewardSkin, rewardVineSkin: ach.rewardVineSkin });
     updateAchievementsUI();
   }
   function showRewardAnimation(ach){
@@ -3453,13 +3879,13 @@
       skinRow.style.display = 'flex';
       document.getElementById('rewardSkinSwatch').style.background =
         `linear-gradient(135deg, #${skinDef.back.toString(16).padStart(6,'0')}, #${skinDef.front.toString(16).padStart(6,'0')})`;
-      document.getElementById('rewardSkinName').textContent = 'Neuer Skin: ' + skinDef.name;
+      document.getElementById('rewardSkinName').textContent = t('newSkinRewardPrefix') + ' ' + localizedName('skin', skinDef);
     } else if (vineDef){
       skinRow.style.display = 'flex';
       document.getElementById('rewardSkinSwatch').style.background = vineDef.rainbow
         ? 'linear-gradient(90deg, red, orange, yellow, #3f3, #39f, #93f, red)'
         : '#' + vineDef.color.toString(16).padStart(6,'0');
-      document.getElementById('rewardSkinName').textContent = 'Neue Ranke: ' + vineDef.name;
+      document.getElementById('rewardSkinName').textContent = t('newVineRewardPrefix') + ' ' + localizedName('vine', vineDef);
     } else {
       skinRow.style.display = 'none';
     }
@@ -3507,7 +3933,7 @@
         const tab = document.createElement('button');
         tab.className = 'achTab' + (cat.id === achievementCategory ? ' active' : '');
         const count = claimableByCategory[cat.id] || 0;
-        tab.innerHTML = `${cat.icon} ${cat.label}${count > 0 ? `<span class="achTabDot">${count}</span>` : ''}`;
+        tab.innerHTML = `${cat.icon} ${t(cat.labelKey)}${count > 0 ? `<span class="achTabDot">${count}</span>` : ''}`;
         tab.addEventListener('click', () => { achievementCategory = cat.id; updateAchievementsUI(); });
         tabsEl.appendChild(tab);
       });
@@ -3521,7 +3947,7 @@
       if (ROTATING_CATEGORIES.includes(achievementCategory)){
         const timerNote = document.createElement('div');
         timerNote.id = 'challengeTimerNote';
-        timerNote.textContent = '🔄 Neue Herausforderungen in ' + challengeTimeLeftStr();
+        timerNote.textContent = t('newChallengesIn') + ' ' + challengeTimeLeftStr();
         grid.parentElement.insertBefore(timerNote, grid);
         currentChallenges.filter(ch => ch.category === achievementCategory).forEach(ch => {
           const val = periodValue(ch.key);
@@ -3529,16 +3955,17 @@
           const claimed = claimedChallenges.includes(ch.id);
           const claimable = done && !claimed;
           const pct = Math.min(100, Math.round(val / ch.target * 100));
+          const loc = localizedChallenge(ch);
           const card = document.createElement('div');
           card.className = 'achCard' + (claimed ? ' unlocked' : '') + (claimable ? ' claimable' : '');
           card.innerHTML = `
             <span class="achIcon">${ch.icon}</span>
-            <span class="achName">${ch.name}</span>
-            <span class="achDesc">${ch.desc}</span>
+            <span class="achName">${loc.name}</span>
+            <span class="achDesc">${loc.desc}</span>
             <div class="achProgressBar"><div class="achProgressFill" style="width:${pct}%"></div></div>
             <span class="achDesc">${Math.min(val, ch.target)} / ${ch.target}</span>
-            <span class="achReward">🏆 +${ch.reward} Pokale</span>
-            ${claimable ? `<button class="achClaimBtn" data-ch="${ch.id}">Abholen</button>` : ''}
+            <span class="achReward">🏆 +${ch.reward} ${t('trophiesWord')}</span>
+            ${claimable ? `<button class="achClaimBtn" data-ch="${ch.id}">${t('claimBtn')}</button>` : ''}
           `;
           grid.appendChild(card);
         });
@@ -3553,10 +3980,10 @@
           card.className = 'achCard' + (unlocked ? ' unlocked' : '') + (claimable ? ' claimable' : '');
           card.innerHTML = `
             <span class="achIcon">${unlocked || claimable ? ach.icon : '🔒'}</span>
-            <span class="achName">${ach.name}</span>
-            <span class="achDesc">${ach.desc}</span>
-            ${ach.rewardSkin ? `<span class="achReward">${unlocked ? '✅ Skin freigeschaltet' : '🎁 Skin-Belohnung'}</span>` : ''}
-            ${claimable ? `<button class="achClaimBtn" data-ach="${ach.id}">Abholen</button>` : ''}
+            <span class="achName">${localizedName('ach', ach)}</span>
+            <span class="achDesc">${localizedDesc(ach)}</span>
+            ${ach.rewardSkin ? `<span class="achReward">${unlocked ? t('skinUnlockedTag') : t('skinRewardTag')}</span>` : ''}
+            ${claimable ? `<button class="achClaimBtn" data-ach="${ach.id}">${t('claimBtn')}</button>` : ''}
           `;
           grid.appendChild(card);
         });
@@ -3588,20 +4015,20 @@
     const btn2 = document.getElementById('worldBtn2');
     const btn3 = document.getElementById('worldBtn3');
     if (!btn1 || !btn2 || !btn3) return;
-    btn1.textContent = 'Welt 1 · Zauberreich';
+    btn1.textContent = t('world1Btn');
     btn1.className = 'worldBtn' + (selectedWorld === 1 ? ' selected' : '');
     if (world2Unlocked) {
-      btn2.textContent = 'Welt 2 · Frostreich';
+      btn2.textContent = t('world2Btn');
       btn2.className = 'worldBtn' + (selectedWorld === 2 ? ' selected' : '');
     } else {
-      btn2.innerHTML = '<span>🔒 Welt 2 · Frostreich</span><span class="worldBtnCost">' + WORLD2_COST + ' 🏆</span>';
+      btn2.innerHTML = '<span>🔒 ' + t('world2Btn') + '</span><span class="worldBtnCost">' + WORLD2_COST + ' 🏆</span>';
       btn2.className = 'worldBtn locked';
     }
     if (world3Unlocked) {
-      btn3.textContent = 'Welt 3 · Sternenreich';
+      btn3.textContent = t('world3Btn');
       btn3.className = 'worldBtn' + (selectedWorld === 3 ? ' selected' : '');
     } else {
-      btn3.innerHTML = '<span>🔒 Welt 3 · Sternenreich</span><span class="worldBtnCost">' + WORLD3_COST + ' 🏆</span>';
+      btn3.innerHTML = '<span>🔒 ' + t('world3Btn') + '</span><span class="worldBtnCost">' + WORLD3_COST + ' 🏆</span>';
       btn3.className = 'worldBtn locked';
     }
   }
@@ -3706,7 +4133,7 @@
   }
   function updateShopUI(){
     const coinsEl = document.getElementById('shopCoins');
-    if (coinsEl) coinsEl.textContent = '🏆 ' + totalTrophies + ' Pokale';
+    if (coinsEl) coinsEl.textContent = '🏆 ' + totalTrophies + ' ' + t('trophiesWord');
     updateVineShopUI();
     const grid = document.getElementById('shopGrid');
     if (!grid) return;
@@ -3719,20 +4146,20 @@
       card.className = 'skinCard' + (equipped ? ' equipped' : '');
       const swatch = document.createElement('div');
       swatch.className = 'skinSwatch';
-      swatch.title = 'Vorschau';
+      swatch.title = t('previewTitle');
       swatch.style.background = `linear-gradient(135deg, #${skin.back.toString(16).padStart(6,'0')}, #${skin.front.toString(16).padStart(6,'0')})`;
       swatch.onclick = () => applySkin(skin.id); // live preview only — not saved until bought/equipped
       const name = document.createElement('div');
       name.className = 'skinName';
-      name.textContent = skin.name;
+      name.textContent = localizedName('skin', skin);
       const cost = document.createElement('div');
       cost.className = 'skinCost';
-      cost.textContent = (owned && skin.cost > 0) ? '✅ In Besitz' : (skin.cost === 0 ? 'Kostenlos' : '🏆 ' + skin.cost);
+      cost.textContent = (owned && skin.cost > 0) ? t('ownedTag') : (skin.cost === 0 ? t('freeTag') : '🏆 ' + skin.cost);
       const btn = document.createElement('button');
       btn.className = 'skinActionBtn' + (owned ? ' owned' : '');
-      if (equipped) { btn.textContent = 'Ausgerüstet'; btn.disabled = true; }
-      else if (owned) { btn.textContent = 'Ausrüsten'; btn.onclick = () => equipSkin(skin.id); }
-      else { btn.textContent = 'Kaufen'; btn.disabled = totalTrophies < skin.cost; btn.onclick = () => buySkin(skin.id); }
+      if (equipped) { btn.textContent = t('equippedBtn'); btn.disabled = true; }
+      else if (owned) { btn.textContent = t('equipBtn'); btn.onclick = () => equipSkin(skin.id); }
+      else { btn.textContent = t('buyBtn'); btn.disabled = totalTrophies < skin.cost; btn.onclick = () => buySkin(skin.id); }
       card.appendChild(swatch);
       card.appendChild(name);
       card.appendChild(cost);
@@ -3773,15 +4200,15 @@
       if (!vine.rainbow) swatch.style.background = '#' + vine.color.toString(16).padStart(6,'0');
       const name = document.createElement('div');
       name.className = 'skinName';
-      name.textContent = vine.name;
+      name.textContent = localizedName('vine', vine);
       const cost = document.createElement('div');
       cost.className = 'skinCost';
-      cost.textContent = (owned && vine.cost > 0) ? '✅ In Besitz' : (vine.cost === 0 ? 'Kostenlos' : '🏆 ' + vine.cost);
+      cost.textContent = (owned && vine.cost > 0) ? t('ownedTag') : (vine.cost === 0 ? t('freeTag') : '🏆 ' + vine.cost);
       const btn = document.createElement('button');
       btn.className = 'skinActionBtn' + (owned ? ' owned' : '');
-      if (equipped) { btn.textContent = 'Ausgerüstet'; btn.disabled = true; }
-      else if (owned) { btn.textContent = 'Ausrüsten'; btn.onclick = () => equipVineSkin(vine.id); }
-      else { btn.textContent = 'Kaufen'; btn.disabled = totalTrophies < vine.cost; btn.onclick = () => buyVineSkin(vine.id); }
+      if (equipped) { btn.textContent = t('equippedBtn'); btn.disabled = true; }
+      else if (owned) { btn.textContent = t('equipBtn'); btn.onclick = () => equipVineSkin(vine.id); }
+      else { btn.textContent = t('buyBtn'); btn.disabled = totalTrophies < vine.cost; btn.onclick = () => buyVineSkin(vine.id); }
       card.appendChild(swatch);
       card.appendChild(name);
       card.appendChild(cost);
@@ -3817,14 +4244,14 @@
       swatch.textContent = emote.icon;
       const name = document.createElement('div');
       name.className = 'skinName';
-      name.textContent = emote.name;
+      name.textContent = localizedName('emote', emote);
       const cost = document.createElement('div');
       cost.className = 'skinCost';
-      cost.textContent = owned ? '✅ In Besitz' : (emote.cost === 0 ? 'Kostenlos' : '🏆 ' + emote.cost);
+      cost.textContent = owned ? t('ownedTag') : (emote.cost === 0 ? t('freeTag') : '🏆 ' + emote.cost);
       const btn = document.createElement('button');
       btn.className = 'skinActionBtn' + (owned ? ' owned' : '');
-      if (owned) { btn.textContent = 'Freigeschaltet'; btn.disabled = true; }
-      else { btn.textContent = 'Kaufen'; btn.disabled = totalTrophies < emote.cost; btn.onclick = () => buyEmote(emote.id); }
+      if (owned) { btn.textContent = t('unlockedBtn'); btn.disabled = true; }
+      else { btn.textContent = t('buyBtn'); btn.disabled = totalTrophies < emote.cost; btn.onclick = () => buyEmote(emote.id); }
       card.appendChild(swatch);
       card.appendChild(name);
       card.appendChild(cost);
@@ -3856,12 +4283,12 @@
     if (!emote){
       const active = EMOTE_DEFS.find(e => e.id === emoteId);
       iconEl.textContent = emoteActive && active ? active.icon : '🎭';
-      nameEl.textContent = emoteActive && active ? ('Aktiv: ' + active.name) : 'Emote wählen';
+      nameEl.textContent = emoteActive && active ? (t('activeEmotePrefix') + ' ' + localizedName('emote', active)) : t('emoteChooseWord');
       return;
     }
     const owned = ownedEmotes.includes(emote.id);
     iconEl.textContent = owned ? emote.icon : '🔒';
-    nameEl.textContent = owned ? emote.name : (emote.name + ' — im Shop');
+    nameEl.textContent = owned ? localizedName('emote', emote) : (localizedName('emote', emote) + ' ' + t('emoteInShopSuffix'));
   }
   function onEmoteSliceClick(emote){
     const owned = ownedEmotes.includes(emote.id);
@@ -4135,7 +4562,7 @@
 
       const label = document.createElement('span');
       label.className = 'skinSwatchLabel';
-      label.textContent = skin.name;
+      label.textContent = localizedName('skin', skin);
 
       item.appendChild(sw);
       item.appendChild(label);
@@ -4144,19 +4571,19 @@
     const skin = SKIN_DEFS.find(s => s.id === previewingSkinId);
     const owned = ownedSkins.includes(previewingSkinId);
     const equipped = equippedSkin === previewingSkinId;
-    document.getElementById('previewSkinName').textContent = skin.name;
+    document.getElementById('previewSkinName').textContent = localizedName('skin', skin);
     const costEl = document.getElementById('previewSkinCost');
     if (owned && skin.cost > 0) {
-      costEl.textContent = '✅ In Besitz';
+      costEl.textContent = t('ownedTag');
     } else {
-      costEl.textContent = skin.cost ? '🏆 ' + skin.cost : 'Kostenlos';
+      costEl.textContent = skin.cost ? '🏆 ' + skin.cost : t('freeTag');
     }
     const btn = document.getElementById('previewActionBtn');
     btn.className = 'skinActionBtn' + (owned ? ' owned' : '');
-    if (equipped) { btn.textContent = 'Ausgerüstet'; btn.disabled = true; btn.onclick = null; }
-    else if (owned) { btn.textContent = 'Ausrüsten'; btn.disabled = false; btn.onclick = () => { equipSkin(previewingSkinId); renderPreviewBar(); }; }
+    if (equipped) { btn.textContent = t('equippedBtn'); btn.disabled = true; btn.onclick = null; }
+    else if (owned) { btn.textContent = t('equipBtn'); btn.disabled = false; btn.onclick = () => { equipSkin(previewingSkinId); renderPreviewBar(); }; }
     else {
-      btn.textContent = 'Kaufen';
+      btn.textContent = t('buyBtn');
       btn.disabled = totalTrophies < skin.cost;
       btn.onclick = () => { buySkin(previewingSkinId); renderPreviewBar(); };
     }
@@ -4939,7 +5366,7 @@
       grid.appendChild(wrap);
     });
     document.getElementById('galleryEmptyMsg').style.display = galleryPhotos.length === 0 ? 'block' : 'none';
-    document.getElementById('gallerySelectCount').textContent = gallerySelected.size + ' ausgewählt';
+    document.getElementById('gallerySelectCount').textContent = gallerySelected.size + ' ' + t('gallerySelectedWord');
     const delBtn = document.getElementById('gallerySelectDeleteBtn');
     const dlBtn = document.getElementById('gallerySelectDownloadBtn');
     delBtn.disabled = gallerySelected.size === 0;
@@ -5028,7 +5455,7 @@
     row.innerHTML = '';
     MUSIC_TRACKS.forEach(track => {
       const btn = document.createElement('button');
-      btn.textContent = track.name;
+      btn.textContent = track.id === 'default' ? track.name.replace('Standard', t('trackStandard')) : track.name;
       btn.className = 'menuBtn';
       btn.style.padding = '8px 14px';
       btn.style.fontSize = '14px';
@@ -5052,7 +5479,7 @@
     offBtn.className = 'musicPanelTrackBtn';
     const isOff = !menuMusicWanted;
     if (isOff) offBtn.classList.add('active');
-    offBtn.innerHTML = '<span>' + (isOff ? '▶️' : '🔇') + '</span><span>Musik aus</span>';
+    offBtn.innerHTML = '<span>' + (isOff ? '▶️' : '🔇') + '</span><span>' + t('musicOff') + '</span>';
     offBtn.addEventListener('click', () => {
       stopMenuMusic();
       renderMusicPanelTracks();
@@ -5064,7 +5491,7 @@
       btn.className = 'musicPanelTrackBtn';
       const isActive = menuMusicWanted && (gameSettings.musicTrack || 'default') === track.id;
       if (isActive) btn.classList.add('active');
-      btn.innerHTML = '<span>' + (isActive ? '▶️' : '') + '</span><span>' + track.name + '</span>';
+      btn.innerHTML = '<span>' + (isActive ? '▶️' : '') + '</span><span>' + (track.id === 'default' ? track.name.replace('Standard', t('trackStandard')) : track.name) + '</span>';
       btn.addEventListener('click', () => {
         ensureAudio();
         menuMusicWanted = true;
@@ -5211,6 +5638,46 @@
     document.getElementById('resetConfirmOverlay').classList.add('hidden');
   });
   document.getElementById('resetConfirmYes').addEventListener('click', resetGameProgress);
+
+  // ---------- LANGUAGE SWITCHING ----------
+  let pendingLang = null;
+  document.querySelectorAll('.langBtn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const lang = btn.getAttribute('data-lang');
+      if (lang === currentLang) return; // already active, nothing to confirm
+      pendingLang = lang;
+      document.getElementById('langConfirmOverlay').classList.remove('hidden');
+    });
+  });
+  document.getElementById('langConfirmNo').addEventListener('click', () => {
+    pendingLang = null;
+    document.getElementById('langConfirmOverlay').classList.add('hidden');
+  });
+  document.getElementById('langConfirmYes').addEventListener('click', () => {
+    if (pendingLang){
+      storageSet('rankmann_lang', pendingLang);
+      location.reload();
+    }
+  });
+  // Re-renders every piece of UI that's built from data (shop grids,
+  // achievements/challenges, world-select buttons, music track lists) so
+  // their text picks up the new language immediately after switching.
+  function refreshLocalizedContent(){
+    updateShopUI();
+    updateAchievementsUI();
+    updateWorldSelectUI();
+    renderMusicTrackRow();
+    renderMusicPanelTracks();
+    setEmoteWheelCenter(null);
+    if (typeof buildEmoteWheel === 'function' && emoteWheelOpen) buildEmoteWheel();
+    if (typeof renderPreviewBar === 'function' && previewMode) renderPreviewBar();
+  }
+  // Highlight the active language button and apply any previously saved
+  // non-German choice now that all the render functions above exist.
+  document.querySelectorAll('.langBtn').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-lang') === currentLang);
+  });
+  if (currentLang !== 'de') applyLanguage(currentLang);
 
   document.getElementById('galleryBtn').addEventListener('click', openGallery);
   document.getElementById('galleryCloseBtn').addEventListener('click', closeGallery);
