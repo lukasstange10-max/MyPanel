@@ -2736,6 +2736,10 @@
       keys['KeyS'] = dy > dead;
       keys['KeyA'] = dx < -dead;
       keys['KeyD'] = dx > dead;
+      // Mobile movement mutates `keys` directly instead of dispatching real
+      // keydown events, so it bypasses the WASD/Space check in the keydown
+      // listener above that stops an emote on movement. Mirror that here.
+      if (emoteActive && (keys['KeyW'] || keys['KeyA'] || keys['KeyS'] || keys['KeyD'])) stopEmote();
     }
     function resetJoyKeys(){
       keys['KeyW'] = keys['KeyA'] = keys['KeyS'] = keys['KeyD'] = false;
@@ -2820,7 +2824,7 @@
       onUp && onUp();
     });
   }
-  bindTouchBtn('touchJumpBtn', () => { keys['Space'] = true; }, () => { keys['Space'] = false; });
+  bindTouchBtn('touchJumpBtn', () => { if (emoteActive) stopEmote(); keys['Space'] = true; }, () => { keys['Space'] = false; });
   bindTouchBtn('touchGrappleBtn', () => { if (running) attachGrapple(); }, () => { releaseGrapple(); });
   bindTouchBtn('touchAttackBtn', () => { if (running) performAttack(); });
   bindTouchBtn('touchSprintBtn', () => { keys['ShiftLeft'] = true; }, () => { keys['ShiftLeft'] = false; });
@@ -3934,6 +3938,10 @@
   }
   function applyEmotePose(dt){
     emoteElapsed += dt;
+    // Invisible auto-stop — no UI/countdown shown to the player, the emote
+    // just quietly ends and the character returns to normal after 30s so it
+    // can't get stuck dancing forever if nothing else interrupts it.
+    if (emoteElapsed >= 30) { stopEmote(); return; }
     const t = emoteElapsed;
     switch (emoteId){
       case 'wave': {
@@ -4883,6 +4891,10 @@
     updateWorldSelectUI();
     menuMusicWanted = true;
     tryStartMenuMusic();
+    // closePauseMenu() above already recalculated fab visibility, but it did
+    // so while `running` was still true, so settingsFab/musicFab were left
+    // hidden. Recompute now that we're actually back at the start menu.
+    updateTouchControlsVisibility();
   });
   function openShop(){
     updateShopUI();
