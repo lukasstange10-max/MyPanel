@@ -8,6 +8,15 @@
   html, body { margin: 0; padding: 0; overflow: hidden; background: #0a0518; font-family: 'Poppins', 'Segoe UI', Arial, sans-serif; }
   canvas { display: block; touch-action: none; }
   * { box-sizing: border-box; }
+  /* No text inputs anywhere in this game — disable text selection and the
+     iOS/Android long-press callout (copy/select popup) everywhere so that
+     holding down to swing, attack, etc. never triggers the browser's native
+     text-selection UI instead of the intended game action. */
+  * {
+    -webkit-user-select: none; -moz-user-select: none; user-select: none;
+    -webkit-touch-callout: none;
+  }
+
 
   #hud {
     position: fixed; top: 0; left: 0; width: 100%; pointer-events: none;
@@ -3089,6 +3098,10 @@
   // Left-click/drag is purely for looking around, so an accidental small click
   // while turning the camera never yanks the player toward a nearby anchor.
   canvas.addEventListener('contextmenu', e => e.preventDefault());
+  // Same for the rest of the page — a long-press anywhere during gameplay
+  // (swinging, attacking, the touch buttons) should never pop up the
+  // browser's native context/selection menu.
+  document.addEventListener('contextmenu', e => e.preventDefault());
   canvas.addEventListener('pointerdown', e => {
     if (e.pointerType === 'mouse' && e.button === 2) {
       if (!running) return;
@@ -5798,11 +5811,17 @@
       finished = true;
       introScreen.classList.add('fading');
       setTimeout(() => { introScreen.style.display = 'none'; }, 650);
-      document.getElementById('startScreen').style.display = 'flex';
-      menuMusicWanted = true;
-      // No automatic autoplay attempt — the player decides via this button,
-      // shown immediately together with the menu.
-      document.getElementById('musicUnlockHint').classList.add('show');
+      // Only force the start menu open if the player hasn't already started
+      // playing in the meantime (e.g. they clicked through fast, or the
+      // intro video errors out late). Without this check, a delayed video
+      // error/ended event could yank a player back to the menu mid-game.
+      if (typeof running === 'undefined' || !running) {
+        document.getElementById('startScreen').style.display = 'flex';
+        menuMusicWanted = true;
+        // No automatic autoplay attempt — the player decides via this button,
+        // shown immediately together with the menu.
+        document.getElementById('musicUnlockHint').classList.add('show');
+      }
     }
 
     introVideo.addEventListener('ended', finishIntro);
