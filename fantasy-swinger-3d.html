@@ -1390,7 +1390,17 @@
     box-sizing: border-box; margin-top: 4px;
   }
   #profileNameInput::placeholder { color: rgba(255,255,255,0.4); }
+  #profilePasswordInput {
+    width: 100%; padding: 12px 16px; border-radius: 999px; font-size: 15px; text-align: center;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(180,140,255,0.4); color: #fff;
+    box-sizing: border-box; margin-top: 8px;
+  }
+  #profilePasswordInput::placeholder { color: rgba(255,255,255,0.4); }
+  #profileCheckStatus { font-size: 11.5px; margin: 6px 0 0; min-height: 14px; color: rgba(255,255,255,0.55); }
+  #profileCheckStatus.error { color: #ff9aa2; }
+  #profileCheckStatus.ok { color: #7affc4; }
   #profileCreateActions { display: flex; gap: 10px; justify-content: center; margin-top: 16px; }
+  #profilePickerFooter { font-size: 10.5px; color: rgba(255,255,255,0.4); margin-top: 16px; }
 
   #phoneBlockScreen {
     position: fixed; inset: 0; z-index: 500;
@@ -1663,11 +1673,14 @@
       <p class="heroTagline" style="margin-bottom:0;">Avatar wählen</p>
       <div id="profileAvatarRow"></div>
       <input type="text" id="profileNameInput" maxlength="16" placeholder="Name eingeben...">
+      <input type="password" id="profilePasswordInput" maxlength="64" placeholder="Passwort ausdenken...">
+      <p id="profileCheckStatus"></p>
       <div id="profileCreateActions">
         <button class="menuBtn" id="profileCreateConfirmBtn">✅ Erstellen</button>
         <button class="menuBtn" id="profileCreateCancelBtn">✕ Abbrechen</button>
       </div>
     </div>
+    <p id="profilePickerFooter">🔒 Jeder Name ist geräteübergreifend mit einem Passwort geschützt.</p>
   </div>
 </div>
 
@@ -1678,6 +1691,7 @@
   // script then scopes every localStorage read/write under that profile id.
   (function(){
     var AVATARS = ['🦸','🧙','🥷','🧝','🐉','⚡','🌟','🎭','🦊','🐺','🌙','🔥','🏹','🛡️','💎','👑'];
+    var FIREBASE_DB_URL = 'https://spider-man-1e227-default-rtdb.europe-west1.firebasedatabase.app';
 
     function rawGet(key, fallback){
       try { var v = localStorage.getItem(key); return v === null ? fallback : JSON.parse(v); }
@@ -1685,6 +1699,21 @@
     }
     function rawSet(key, value){
       try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch(e){ return false; }
+    }
+
+    // Turns a display name into a safe, unique Firebase key (Firebase paths
+    // can't contain . # $ [ ] /) — lowercased so "Lukas" and "lukas" collide
+    // on purpose, since this is meant to protect a name regardless of case.
+    function nameKey(name){
+      return encodeURIComponent(name.trim().toLowerCase()).replace(/[.#$\[\]]/g, '_');
+    }
+    // SHA-256 via the browser's built-in Web Crypto API — the password
+    // itself is never sent anywhere or stored anywhere, only this hash is.
+    function hashPassword(pw){
+      var enc = new TextEncoder().encode(pw);
+      return crypto.subtle.digest('SHA-256', enc).then(function(buf){
+        return Array.from(new Uint8Array(buf)).map(function(b){ return b.toString(16).padStart(2, '0'); }).join('');
+      });
     }
 
     function getProfiles(){ return rawGet('rankmann_profiles', []); }
@@ -1739,6 +1768,12 @@
       return d.innerHTML;
     }
 
+    function setStatus(msg, kind){
+      var el = document.getElementById('profileCheckStatus');
+      el.textContent = msg;
+      el.className = kind || '';
+    }
+
     var chosenAvatar = AVATARS[0];
     function showCreateForm(){
       document.getElementById('profileList').classList.add('hidden');
@@ -1759,26 +1794,76 @@
         row.appendChild(btn);
       });
       document.getElementById('profileNameInput').value = '';
+      document.getElementById('profilePasswordInput').value = '';
+      setStatus('', '');
       document.getElementById('profileNameInput').focus();
     }
     function hideCreateForm(){
       document.getElementById('profileCreateForm').classList.add('hidden');
       document.getElementById('profileList').classList.remove('hidden');
     }
-
-    document.getElementById('profileCreateCancelBtn').addEventListener('click', hideCreateForm);
-    document.getElementById('profileCreateConfirmBtn').addEventListener('click', function(){
-      var nameInput = document.getElementById('profileNameInput');
-      var name = nameInput.value.trim().slice(0, 16);
-      if (!name){ nameInput.focus(); return; }
+    function finalizeProfileCreation(name){
       var profiles = getProfiles();
       var id = 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
       profiles.push({ id: id, name: name, avatar: chosenAvatar });
       rawSet('rankmann_profiles', profiles);
       rawSet('rankmann_activeProfileId', id);
       location.reload();
+    }
+
+    document.getElementById('profileCreateCancelBtn').addEventListener('click', hideCreateForm);
+    document.getElementById('profileCreateConfirmBtn').addEventListener('click', function(){
+      var nameInput = document.getElementById('profileNameInput');
+      var pwInput = document.getElementById('profilePasswordInput');
+      var name = nameInput.value.trim().slice(0, 16);
+      var password = pwInput.value;
+      if (!name){ nameInput.focus(); return; }
+      if (!password){ setStatus('Bitte ein Passwort für diesen Namen festlegen.', 'error'); pwInput.focus(); return; }
+
+      var confirmBtn = document.getElementById('profileCreateConfirmBtn');
+      confirmBtn.disabled = true;
+      setStatus('⏳ Prüfe Namen...', '');
+      var key = nameKey(name);
+
+      fetch(FIREBASE_DB_URL + '/profileNames/' + key + '.json')
+        .then(function(r){ return r.ok ? r.json() : null; })
+        .then(function(existing){
+          if (existing && existing.passwordHash){
+            // Name is already taken (on any device) — the entered password
+            // must match to "log in" as it here too.
+            return hashPassword(password).then(function(hash){
+              if (hash === existing.passwordHash){
+                setStatus('✅ Passwort korrekt', 'ok');
+                finalizeProfileCreation(name);
+              } else {
+                setStatus('❌ Falsches Passwort für diesen Namen.', 'error');
+                confirmBtn.disabled = false;
+              }
+            });
+          }
+          // Name is free — claim it globally with this password.
+          return hashPassword(password).then(function(hash){
+            return fetch(FIREBASE_DB_URL + '/profileNames/' + key + '.json', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ passwordHash: hash, createdAt: Date.now() }),
+            }).then(function(){
+              finalizeProfileCreation(name);
+            });
+          });
+        })
+        .catch(function(){
+          // Firebase unreachable — don't block play over it, just skip the
+          // cross-device check this time (best-effort protection, not a hard
+          // guarantee, consistent with the rest of the game's offline handling).
+          setStatus('⚠️ Konnte nicht online prüfen — Profil wird trotzdem lokal erstellt.', 'error');
+          setTimeout(function(){ finalizeProfileCreation(name); }, 900);
+        });
     });
     document.getElementById('profileNameInput').addEventListener('keydown', function(e){
+      if (e.key === 'Enter') document.getElementById('profilePasswordInput').focus();
+    });
+    document.getElementById('profilePasswordInput').addEventListener('keydown', function(e){
       if (e.key === 'Enter') document.getElementById('profileCreateConfirmBtn').click();
     });
 
