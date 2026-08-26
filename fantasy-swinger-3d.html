@@ -39,8 +39,12 @@
     transform: translateX(140%);
     opacity: 0;
     visibility: hidden;
-    transition: transform 0.45s cubic-bezier(.2,.8,.3,1.1), opacity 0.4s ease, visibility 0s linear 0.45s;
+    transition: transform 0.45s cubic-bezier(.2,.8,.3,1.1), opacity 0.4s ease, visibility 0s linear 0.45s, bottom 0.3s ease;
   }
+  /* PC has no touch-control cluster in the bottom-right, so the badge can
+     sit right in the corner there — mobile keeps it higher up (see default
+     above) so it never overlaps the attack/grapple/jump/sprint buttons. */
+  #globalEventBadge.pc-mode { bottom: 20px; }
   #globalEventBadge.show {
     transform: translateX(0);
     opacity: 1;
@@ -6103,6 +6107,9 @@
     // the pause menu itself sits on top of the game).
     document.getElementById('settingsFab').classList.toggle('hidden', running && !paused);
     document.getElementById('musicFab').classList.toggle('hidden', running && !paused);
+    // 2x-event badge sits lower (true bottom-right corner) on PC, since
+    // there's no touch-button cluster there to avoid.
+    document.getElementById('globalEventBadge').classList.toggle('pc-mode', !mobileControlsWanted);
   }
   document.getElementById('deviceBtnPC').addEventListener('click', () => {
     mobileControlsWanted = false;
