@@ -29,6 +29,30 @@
     color: #fff;
     z-index: 10;
   }
+  #globalEventBadge {
+    position: fixed; bottom: 210px; right: 20px; z-index: 45;
+    display: flex; flex-direction: column; align-items: flex-end; gap: 2px;
+    padding: 10px 18px; border-radius: 16px; font-weight: 800;
+    background: linear-gradient(135deg, rgba(255,200,80,0.92), rgba(255,120,60,0.92));
+    color: #2a1400; box-shadow: 0 6px 20px rgba(255,150,60,0.4);
+    animation: globalEventPulse 2s ease-in-out infinite;
+    transform: translateX(140%);
+    opacity: 0;
+    visibility: hidden;
+    transition: transform 0.45s cubic-bezier(.2,.8,.3,1.1), opacity 0.4s ease, visibility 0s linear 0.45s;
+  }
+  #globalEventBadge.show {
+    transform: translateX(0);
+    opacity: 1;
+    visibility: visible;
+    transition: transform 0.45s cubic-bezier(.2,.8,.3,1.1), opacity 0.4s ease, visibility 0s linear 0s;
+  }
+  #globalEventLabel { font-size: 12.5px; }
+  #globalEventTimeVal { font-size: 16px; font-variant-numeric: tabular-nums; }
+  @keyframes globalEventPulse {
+    0%, 100% { box-shadow: 0 6px 20px rgba(255,150,60,0.4); }
+    50% { box-shadow: 0 6px 26px rgba(255,150,60,0.7); }
+  }
   #topbar {
     display: flex; justify-content: space-between; align-items: flex-start;
     padding: 18px 20px; gap: 12px; flex-wrap: wrap;
@@ -892,6 +916,43 @@
     border-radius: 12px; color: #ff9aa2; cursor: pointer;
   }
   #settingsResetBtn:hover { background: rgba(255,92,108,0.25); }
+  #adminPanelBtn {
+    padding: 13px 24px; font-size: 15px; font-weight: 700;
+    background: linear-gradient(135deg, rgba(255,200,80,0.22), rgba(255,120,60,0.22));
+    border: 1px solid rgba(255,190,80,0.5);
+    border-radius: 34px; color: #fff; cursor: pointer;
+    transition: transform 0.15s ease, background 0.2s ease;
+  }
+  #adminPanelBtn:hover {
+    transform: translateY(-2px) scale(1.02);
+    background: linear-gradient(135deg, rgba(255,200,80,0.4), rgba(255,120,60,0.4));
+  }
+  #adminPanelBtn.hidden { display: none; }
+
+  #adminScreen {
+    position: fixed; inset: 0; z-index: 260;
+    background: rgba(6,3,14,0.6);
+    backdrop-filter: blur(3px) saturate(1.2);
+    -webkit-backdrop-filter: blur(3px) saturate(1.2);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; text-align: center; padding: 20px; box-sizing: border-box;
+  }
+  #adminScreen.hidden { display: none; }
+  #adminScreen .startPanel { max-width: 460px; max-height: 90vh; max-height: 90dvh; overflow-y: auto; border-color: rgba(255,190,80,0.35); }
+  #adminPersonalGrid, #adminGlobalGrid { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+  .adminActionBtn {
+    padding: 12px 16px; font-size: 13.5px; font-weight: 700; text-align: left;
+    background: rgba(255,190,80,0.1); border: 1px solid rgba(255,190,80,0.4);
+    border-radius: 12px; color: #fff; cursor: pointer;
+  }
+  .adminActionBtn:hover { background: rgba(255,190,80,0.2); }
+  #adminGlobalNote { font-size: 11.5px; color: rgba(255,255,255,0.55); text-align: left; margin: 6px 0 0; line-height: 1.5; }
+  #adminGlobalWarning { font-size: 11px; color: rgba(255,190,80,0.8); text-align: left; margin: 6px 0 0; line-height: 1.5; }
+  #adminGlobalStatus { font-size: 12.5px; margin-top: 10px; color: rgba(255,255,255,0.7); }
+  #adminGlobalStatusVal { color: #ffce7a; }
+  #adminToast {
+    min-height: 18px; font-size: 12.5px; font-weight: 700; color: #7affc4; margin-top: 12px;
+  }
 
   #resetConfirmOverlay {
     position: fixed; inset: 0; z-index: 400;
@@ -1266,25 +1327,6 @@
   }
   #emoteHudBtn.hidden { display: none; }
 
-  #liveStatsBtn {
-    position: fixed; left: 18px; top: 84px; z-index: 51;
-    border: 2px solid rgba(122,255,196,0.45);
-    background: rgba(20,10,38,0.55);
-    backdrop-filter: blur(4px);
-    color: #fff; font-size: 24px;
-    width: 58px; height: 58px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    touch-action: none; user-select: none; cursor: pointer;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.35);
-    transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
-  }
-  #liveStatsBtn:hover { border-color: rgba(122,255,196,0.8); }
-  #liveStatsBtn:active, #liveStatsBtn.pressed {
-    background: rgba(122,255,196,0.35); border-color: rgba(122,255,196,0.9);
-    transform: scale(0.92);
-  }
-  #liveStatsBtn.hidden { display: none; }
-
   #deviceSurvey {
     position: fixed; inset: 0; z-index: 300;
     background: rgba(6,3,14,0.75);
@@ -1370,6 +1412,10 @@
 </div>
 
 <div id="hud">
+  <div id="globalEventBadge">
+    <span id="globalEventLabel">✨ 2x Pokale</span>
+    <span id="globalEventTimeVal">--:--</span>
+  </div>
   <div id="topbar">
     <div class="stat-box" id="box-checkpoints">
       <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M7 4h10v3a5 5 0 0 1-5 5 5 5 0 0 1-5-5V4z" fill="#ffd54f"/><path d="M7 5H4a2 2 0 0 0 2 4h1M17 5h3a2 2 0 0 1-2 4h-1" stroke="#ffd54f" stroke-width="1.6" stroke-linecap="round"/><rect x="10" y="12" width="4" height="3" fill="#ffd54f"/><rect x="8" y="15" width="8" height="2.2" rx="1" fill="#ffd54f"/></svg></div>
@@ -1458,7 +1504,6 @@
   <button id="touchPauseBtn" class="touchBtn">⏸️</button>
 </div>
 <button id="emoteHudBtn" class="hidden" title="Emotes (B)" data-i18n-title="emoteHudBtnTitle">🎭</button>
-<button id="liveStatsBtn" class="hidden" title="Statistiken" data-i18n-title="statsBtnTitle">📊</button>
 
 
 <div id="musicUnlockHint"><span data-i18n="musicUnlockHint">🔊 Musik aktivieren</span></div>
@@ -1517,6 +1562,7 @@
       <button id="achievementsBtn"><span data-i18n="achievementsBtnMenu">🏅 Erfolge</span><span id="achievementsBadge"></span></button>
       <button id="galleryBtn" data-i18n="galleryBtnMenu">🖼️ Galerie</button>
       <button id="statsBtn" data-i18n="statsBtn">📊 Statistiken</button>
+      <button id="adminPanelBtn" class="hidden">🛠️ Admin-Zentrale</button>
     </div>
   </div>
 
@@ -1831,6 +1877,43 @@
   </div>
 </div>
 
+<div id="adminScreen" class="hidden">
+  <div class="startPanel" id="adminPanel">
+    <div class="titleRow">
+      <h1 style="font-size:30px;">🛠️ Admin-Zentrale</h1>
+    </div>
+    <p class="heroTagline">Nur für dich sichtbar, Lukas</p>
+
+    <div class="settingsGroup">
+      <label class="settingsLabel">👤 Persönlich</label>
+      <div id="adminPersonalGrid">
+        <button class="adminActionBtn" id="adminGiveTrophiesBtn">🏆 +10.000 Pokale</button>
+        <button class="adminActionBtn" id="adminUnlockCosmeticsBtn">🎨 Alles freischalten (Skins, Netze, Emotes)</button>
+        <button class="adminActionBtn" id="adminUnlockWorldsBtn">🗺️ Alle Welten freischalten</button>
+        <button class="adminActionBtn" id="adminUnlockAchievementsBtn">🏅 Alle Erfolge freischalten</button>
+      </div>
+      <div class="settingsToggleRow" style="margin-top:12px;">
+        <span>🛡️ God Mode (unverwundbar)</span>
+        <button class="settingsToggle" id="adminGodModeToggle" data-on="false"><span class="settingsToggleDot"></span></button>
+      </div>
+    </div>
+
+    <div class="settingsGroup">
+      <label class="settingsLabel">🌐 Global (Event-Vorbereitung)</label>
+      <p id="adminGlobalNote">Wirkt live bei allen Spielern (via Firebase), sobald ihr Spiel neu lädt oder alle paar Minuten automatisch nachprüft.</p>
+      <p id="adminGlobalWarning">⚠️ Diese Regeln sind aktuell offen (jeder mit der URL könnte schreiben) — für ein echtes Spiel später mit einem Passwortfeld oder Firebase-Auth absichern.</p>
+      <div id="adminGlobalGrid">
+        <button class="adminActionBtn" id="adminEvent2xTrophyBtn">✨ 2x-Pokale-Event starten</button>
+        <button class="adminActionBtn" id="adminEventClearBtn">✕ Event sofort beenden</button>
+      </div>
+      <p id="adminGlobalStatus">Aktuell aktiv: <b id="adminGlobalStatusVal">Kein Event</b></p>
+    </div>
+
+    <p id="adminToast"></p>
+    <button id="adminCloseBtn" class="menuBtn" style="margin-top:16px;">Schließen</button>
+  </div>
+</div>
+
 <div id="settingsScreen" class="hidden">
   <div class="startPanel" id="settingsPanel">
     <div id="settingsPanelScroll">
@@ -2009,6 +2092,81 @@
       return raw ? JSON.parse(raw) : 'default';
     } catch(e){ return 'default'; }
   })();
+
+  // ---------- GLOBAL EVENTS (Firebase) ----------
+  // Lightweight polling of a single JSON value in a public Firebase Realtime
+  // Database — no accounts/auth in the game itself. The admin panel writes
+  // the event, every player's game reads it. Fails silently (event just
+  // stays inactive) if offline or the request fails, so it never blocks
+  // normal gameplay.
+  const FIREBASE_DB_URL = 'https://spider-man-1e227-default-rtdb.europe-west1.firebasedatabase.app';
+  let globalEventActive = null; // e.g. '2x_trophies', or null
+  let globalEventExpiresAt = null; // ms epoch, or null (no expiry)
+  function fetchGlobalEvent(){
+    fetch(FIREBASE_DB_URL + '/globalEvent.json')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        const expiresAt = data && data.expiresAt ? data.expiresAt : null;
+        const stillValid = !expiresAt || Date.now() < expiresAt;
+        const newEvent = (data && data.type && stillValid) ? data.type : null;
+        globalEventExpiresAt = stillValid ? expiresAt : null;
+        if (newEvent !== globalEventActive){
+          globalEventActive = newEvent;
+          updateGlobalEventBadge();
+        }
+      })
+      .catch(() => {}); // offline / blocked / etc — event just stays as last known state
+  }
+  function writeGlobalEvent(type, durationMinutes){
+    const body = type
+      ? { type: type, setAt: Date.now(), expiresAt: durationMinutes ? Date.now() + durationMinutes * 60000 : null }
+      : null;
+    return fetch(FIREBASE_DB_URL + '/globalEvent.json', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+  }
+  function applyEventMultiplier(amount){
+    return globalEventActive === '2x_trophies' ? amount * 2 : amount;
+  }
+  // Smooth-animated countdown badge, bottom-right. Ticks every second locally
+  // (no network needed for the countdown itself) and auto-hides once expired.
+  function formatEventCountdown(msLeft){
+    const totalSec = Math.max(0, Math.floor(msLeft / 1000));
+    const h = Math.floor(totalSec / 3600);
+    const m = Math.floor((totalSec % 3600) / 60);
+    const s = totalSec % 60;
+    const pad = n => String(n).padStart(2, '0');
+    return h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${m}:${pad(s)}`;
+  }
+  function updateGlobalEventBadge(){
+    const el = document.getElementById('globalEventBadge');
+    if (!el) return;
+    if (globalEventActive === '2x_trophies'){
+      el.classList.add('show');
+    } else {
+      el.classList.remove('show');
+    }
+  }
+  function tickGlobalEventBadge(){
+    if (globalEventActive !== '2x_trophies') return;
+    if (globalEventExpiresAt){
+      const msLeft = globalEventExpiresAt - Date.now();
+      if (msLeft <= 0){
+        globalEventActive = null;
+        globalEventExpiresAt = null;
+        updateGlobalEventBadge();
+        return;
+      }
+      document.getElementById('globalEventTimeVal').textContent = formatEventCountdown(msLeft);
+    } else {
+      document.getElementById('globalEventTimeVal').textContent = '∞';
+    }
+  }
+  setInterval(tickGlobalEventBadge, 1000);
+  fetchGlobalEvent();
+  setInterval(fetchGlobalEvent, 3 * 60 * 1000); // re-check every 3 min in case it changes mid-session
 
   // ---------- LOCALIZATION ----------
   // German is the language the HTML/JS was authored in, so it's always the
@@ -4205,7 +4363,7 @@
     if (!ch || claimedChallenges.includes(id) || periodValue(ch.key) < ch.target) return;
     claimedChallenges.push(id);
     storageSet('rankmann_claimedChallenges', claimedChallenges);
-    totalTrophies += ch.reward;
+    totalTrophies += applyEventMultiplier(ch.reward);
     storageSet('rankmann_totalTrophies', totalTrophies);
     updateTrophyDisplay();
     showRewardAnimation({ icon: ch.icon, name: localizedChallenge(ch).name + ` (+${ch.reward} 🏆)` });
@@ -4464,8 +4622,142 @@
       updateTouchControlsVisibility();
     }
   }
-  document.getElementById('liveStatsBtn').addEventListener('click', openLiveStats);
   document.getElementById('statsCloseBtn').addEventListener('click', closeStatsSmart);
+
+  // ---------- ADMIN CENTRAL ----------
+  // Gated purely by the profile name — this is a client-side game with no
+  // backend/accounts, so this is a convenience gate for the developer, not
+  // real security (anyone reading the source could find the name check).
+  const ADMIN_NAME = 'lukas1467';
+  function checkIsAdminUser(){
+    const meta = getActiveProfileMeta();
+    return !!meta && meta.name.trim().toLowerCase() === ADMIN_NAME;
+  }
+  const isAdminUser = checkIsAdminUser();
+  let adminGodMode = storageGet('rankmann_adminGodMode', false);
+  document.getElementById('adminPanelBtn').classList.toggle('hidden', !isAdminUser);
+
+  function showAdminToast(msg){
+    const el = document.getElementById('adminToast');
+    el.textContent = msg;
+    setTimeout(() => { if (el.textContent === msg) el.textContent = ''; }, 2500);
+  }
+  function openAdminPanel(){
+    if (!isAdminUser) return;
+    document.getElementById('adminGodModeToggle').dataset.on = adminGodMode ? 'true' : 'false';
+    refreshAdminEventStatus();
+    document.getElementById('adminScreen').classList.remove('hidden');
+  }
+  function closeAdminPanel(){
+    document.getElementById('adminScreen').classList.add('hidden');
+  }
+  document.getElementById('adminPanelBtn').addEventListener('click', openAdminPanel);
+  document.getElementById('adminCloseBtn').addEventListener('click', closeAdminPanel);
+
+  document.getElementById('adminGiveTrophiesBtn').addEventListener('click', () => {
+    totalTrophies += 10000;
+    storageSet('rankmann_totalTrophies', totalTrophies);
+    updateTrophyDisplay();
+    showAdminToast('✅ 10.000 Pokale gutgeschrieben');
+  });
+  document.getElementById('adminUnlockCosmeticsBtn').addEventListener('click', () => {
+    ownedSkins = SKIN_DEFS.map(s => s.id);
+    storageSet('rankmann_ownedSkins', ownedSkins);
+    ownedVineSkins = VINE_SKIN_DEFS.map(v => v.id);
+    storageSet('rankmann_ownedVineSkins', ownedVineSkins);
+    ownedEmotes = EMOTE_DEFS.map(e => e.id);
+    storageSet('rankmann_ownedEmotes', ownedEmotes);
+    updateShopUI();
+    showAdminToast('✅ Alle Skins, Netze und Emotes freigeschaltet');
+  });
+  document.getElementById('adminUnlockWorldsBtn').addEventListener('click', () => {
+    world2Unlocked = true;
+    storageSet('rankmann_world2Unlocked', true);
+    world3Unlocked = true;
+    storageSet('rankmann_world3Unlocked', true);
+    updateWorldSelectUI();
+    showAdminToast('✅ Alle Welten freigeschaltet');
+  });
+  document.getElementById('adminUnlockAchievementsBtn').addEventListener('click', () => {
+    unlockedAchievements = ACHIEVEMENT_DEFS.map(a => a.id);
+    storageSet('rankmann_unlockedAchievements', unlockedAchievements);
+    ACHIEVEMENT_DEFS.forEach(a => {
+      if (a.rewardSkin && !ownedSkins.includes(a.rewardSkin)) ownedSkins.push(a.rewardSkin);
+      if (a.rewardVineSkin && !ownedVineSkins.includes(a.rewardVineSkin)) ownedVineSkins.push(a.rewardVineSkin);
+    });
+    storageSet('rankmann_ownedSkins', ownedSkins);
+    storageSet('rankmann_ownedVineSkins', ownedVineSkins);
+    updateAchievementsUI();
+    updateShopUI();
+    showAdminToast('✅ Alle Erfolge freigeschaltet');
+  });
+  document.getElementById('adminGodModeToggle').addEventListener('click', function(){
+    adminGodMode = this.dataset.on !== 'true';
+    this.dataset.on = adminGodMode ? 'true' : 'false';
+    storageSet('rankmann_adminGodMode', adminGodMode);
+    showAdminToast(adminGodMode ? '🛡️ God Mode AN' : '🛡️ God Mode AUS');
+  });
+
+  // Global events: writes to a public Firebase Realtime Database path.
+  // Every player's game polls that same path (see fetchGlobalEvent above)
+  // and applies the multiplier automatically — this now genuinely reaches
+  // every player, not just this browser.
+  function refreshAdminEventStatus(){
+    document.getElementById('adminGlobalStatusVal').textContent = '⏳ Wird geladen...';
+    fetch(FIREBASE_DB_URL + '/globalEvent.json')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        const type = data && data.type;
+        const expiresAt = data && data.expiresAt;
+        if (type === '2x_trophies'){
+          const suffix = expiresAt ? (' — noch ' + formatEventCountdown(expiresAt - Date.now())) : ' — unbegrenzt';
+          document.getElementById('adminGlobalStatusVal').textContent = '✨ 2x Pokale-Event (live)' + suffix;
+        } else {
+          document.getElementById('adminGlobalStatusVal').textContent = 'Kein Event';
+        }
+      })
+      .catch(() => {
+        document.getElementById('adminGlobalStatusVal').textContent = '⚠️ Konnte nicht laden (offline?)';
+      });
+  }
+  document.getElementById('adminEvent2xTrophyBtn').addEventListener('click', () => {
+    const answer = prompt('Wie viele Minuten soll das 2x-Pokale-Event laufen?\n(z.B. 60 für 1 Stunde, 1440 für 24 Stunden — leer lassen für unbegrenzt)', '60');
+    if (answer === null) return; // cancelled
+    let durationMins = null;
+    if (answer.trim() !== ''){
+      const parsed = parseInt(answer.trim(), 10);
+      if (!Number.isFinite(parsed) || parsed <= 0){
+        showAdminToast('❌ Ungültige Zahl — Event nicht gestartet');
+        return;
+      }
+      durationMins = parsed;
+    }
+    showAdminToast('⏳ Wird an alle Spieler gesendet...');
+    writeGlobalEvent('2x_trophies', durationMins)
+      .then(r => {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        globalEventActive = '2x_trophies';
+        globalEventExpiresAt = durationMins ? Date.now() + durationMins * 60000 : null;
+        updateGlobalEventBadge();
+        tickGlobalEventBadge();
+        refreshAdminEventStatus();
+        showAdminToast('✅ 2x Pokale-Event ist jetzt live für alle Spieler');
+      })
+      .catch(() => showAdminToast('❌ Fehlgeschlagen — Internet oder Firebase-Regeln prüfen'));
+  });
+  document.getElementById('adminEventClearBtn').addEventListener('click', () => {
+    showAdminToast('⏳ Wird zurückgesetzt...');
+    writeGlobalEvent(null)
+      .then(r => {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        globalEventActive = null;
+        globalEventExpiresAt = null;
+        updateGlobalEventBadge();
+        refreshAdminEventStatus();
+        showAdminToast('✅ Event beendet für alle Spieler');
+      })
+      .catch(() => showAdminToast('❌ Fehlgeschlagen — Internet oder Firebase-Regeln prüfen'));
+  });
 
   // ---------- WORLD SELECTION ----------
   function updateWorldSelectUI(){
@@ -5575,7 +5867,7 @@
         en.center.z + Math.sin(en.angle)*en.radius
       );
       en.mesh.lookAt(en.center);
-      if (player.invuln <= 0 && en.mesh.position.distanceTo(player.pos) < 2.0){
+      if (!adminGodMode && player.invuln <= 0 && en.mesh.position.distanceTo(player.pos) < 2.0){
         player.lives -= 1;
         player.invuln = 2.0;
         updateLivesDisplay();
@@ -5613,7 +5905,7 @@
         en.bodyMat.emissiveIntensity = 0.35;
       }
       if (en.barGroup.visible) en.barGroup.quaternion.copy(camera.quaternion);
-      if (player.invuln <= 0 && en.mesh.position.distanceTo(player.pos) < 1.3){
+      if (!adminGodMode && player.invuln <= 0 && en.mesh.position.distanceTo(player.pos) < 1.3){
         player.lives -= 1;
         player.invuln = 1.5;
         updateLivesDisplay();
@@ -5659,14 +5951,14 @@
           cp.holoRing.material.color.set(0xffe27a);
           cp.holoRing.material.emissive.set(0xd9a72f);
           cp.glowLight.color.set(0xffe27a);
-          totalTrophies += reward;
+          totalTrophies += applyEventMultiplier(reward);
           storageSet('rankmann_totalTrophies', totalTrophies);
           updateTrophyDisplay();
           pulseBox('box-checkpoints', 'glow-flash');
           sfx.trophy();
         } else {
           // already claimed once — platform stays re-collectible for a small flat reward
-          totalTrophies += 1;
+          totalTrophies += applyEventMultiplier(1);
           storageSet('rankmann_totalTrophies', totalTrophies);
           updateTrophyDisplay();
           pulseBox('box-checkpoints', 'glow-flash');
@@ -5734,11 +6026,6 @@
     // so it works as an on-screen alternative to pressing B.
     const showEmoteBtn = running && !paused && !photoModeActive && !previewMode;
     document.getElementById('emoteHudBtn').classList.toggle('hidden', !showEmoteBtn);
-    // Same visibility rule as the emote button — available while actually
-    // playing, hidden during pause/photo mode/preview (those have their own
-    // context, and pause already surfaces this same stats panel via the
-    // "📊 Statistiken" button in the pause-accessible settings/start menu).
-    document.getElementById('liveStatsBtn').classList.toggle('hidden', !showEmoteBtn);
     // Settings and music fabs belong to the start menu only — hide them
     // once a run is actually in progress (still shown while paused, since
     // the pause menu itself sits on top of the game).
