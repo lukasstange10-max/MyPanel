@@ -1900,7 +1900,7 @@
 
     <div class="settingsGroup">
       <label class="settingsLabel">🌐 Global (Event-Vorbereitung)</label>
-      <p id="adminGlobalNote">Wirkt live bei allen Spielern (via Firebase), sobald ihr Spiel neu lädt oder alle paar Minuten automatisch nachprüft.</p>
+      <p id="adminGlobalNote">Wirkt sofort bei allen gerade online verbundenen Spielern (Echtzeit via Firebase) — kein Neuladen nötig.</p>
       <p id="adminGlobalWarning">⚠️ Diese Regeln sind aktuell offen (jeder mit der URL könnte schreiben) — für ein echtes Spiel später mit einem Passwortfeld oder Firebase-Auth absichern.</p>
       <div id="adminGlobalGrid">
         <button class="adminActionBtn" id="adminEvent2xTrophyBtn">✨ 2x-Pokale-Event starten</button>
@@ -2071,6 +2071,8 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
 <script>
 (function(){
   // Phones are blocked (see the standalone script above) — don't even build
@@ -2093,39 +2095,38 @@
     } catch(e){ return 'default'; }
   })();
 
-  // ---------- GLOBAL EVENTS (Firebase) ----------
-  // Lightweight polling of a single JSON value in a public Firebase Realtime
-  // Database — no accounts/auth in the game itself. The admin panel writes
-  // the event, every player's game reads it. Fails silently (event just
-  // stays inactive) if offline or the request fails, so it never blocks
-  // normal gameplay.
+  // ---------- GLOBAL EVENTS (Firebase, real-time) ----------
+  // Uses the actual Firebase Realtime Database SDK (WebSocket connection),
+  // not REST polling — every connected player receives updates the instant
+  // the admin writes them, no waiting and no reload needed. No accounts/auth
+  // in the game itself; the admin panel writes the event, every player's
+  // game listens. Fails silently (event just stays inactive) if offline or
+  // the SDK can't connect, so it never blocks normal gameplay.
   const FIREBASE_DB_URL = 'https://spider-man-1e227-default-rtdb.europe-west1.firebasedatabase.app';
   let globalEventActive = null; // e.g. '2x_trophies', or null
   let globalEventExpiresAt = null; // ms epoch, or null (no expiry)
-  function fetchGlobalEvent(){
-    fetch(FIREBASE_DB_URL + '/globalEvent.json')
-      .then(r => r.ok ? r.json() : null)
-      .then(data => {
-        const expiresAt = data && data.expiresAt ? data.expiresAt : null;
-        const stillValid = !expiresAt || Date.now() < expiresAt;
-        const newEvent = (data && data.type && stillValid) ? data.type : null;
-        globalEventExpiresAt = stillValid ? expiresAt : null;
-        if (newEvent !== globalEventActive){
-          globalEventActive = newEvent;
-          updateGlobalEventBadge();
-        }
-      })
-      .catch(() => {}); // offline / blocked / etc — event just stays as last known state
-  }
+  let globalEventRef = null;
+  try {
+    firebase.initializeApp({ databaseURL: FIREBASE_DB_URL });
+    globalEventRef = firebase.database().ref('globalEvent');
+    globalEventRef.on('value', snapshot => {
+      const data = snapshot.val();
+      const expiresAt = data && data.expiresAt ? data.expiresAt : null;
+      const stillValid = !expiresAt || Date.now() < expiresAt;
+      const newEvent = (data && data.type && stillValid) ? data.type : null;
+      globalEventExpiresAt = stillValid ? expiresAt : null;
+      if (newEvent !== globalEventActive){
+        globalEventActive = newEvent;
+        updateGlobalEventBadge();
+      }
+    }, () => {}); // permission-denied/offline — event just stays as last known state
+  } catch(e){} // Firebase SDK failed to load/init (e.g. offline on first load) — game continues without events
   function writeGlobalEvent(type, durationMinutes){
     const body = type
       ? { type: type, setAt: Date.now(), expiresAt: durationMinutes ? Date.now() + durationMinutes * 60000 : null }
       : null;
-    return fetch(FIREBASE_DB_URL + '/globalEvent.json', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
+    if (!globalEventRef) return Promise.reject(new Error('Firebase not initialized'));
+    return globalEventRef.set(body);
   }
   function applyEventMultiplier(amount){
     return globalEventActive === '2x_trophies' ? amount * 2 : amount;
@@ -2165,8 +2166,6 @@
     }
   }
   setInterval(tickGlobalEventBadge, 1000);
-  fetchGlobalEvent();
-  setInterval(fetchGlobalEvent, 3 * 60 * 1000); // re-check every 3 min in case it changes mid-session
 
   // ---------- LOCALIZATION ----------
   // German is the language the HTML/JS was authored in, so it's always the
@@ -4698,27 +4697,14 @@
     showAdminToast(adminGodMode ? '🛡️ God Mode AN' : '🛡️ God Mode AUS');
   });
 
-  // Global events: writes to a public Firebase Realtime Database path.
-  // Every player's game polls that same path (see fetchGlobalEvent above)
-  // and applies the multiplier automatically — this now genuinely reaches
-  // every player, not just this browser.
+  // Global events: writes to a public Firebase Realtime Database path via
+  // the real-time SDK. Every connected player's game is listening on that
+  // same path (see the .on('value', ...) listener above) and gets the
+  // update pushed instantly — no polling delay, no reload needed.
   function refreshAdminEventStatus(){
-    document.getElementById('adminGlobalStatusVal').textContent = '⏳ Wird geladen...';
-    fetch(FIREBASE_DB_URL + '/globalEvent.json')
-      .then(r => r.ok ? r.json() : null)
-      .then(data => {
-        const type = data && data.type;
-        const expiresAt = data && data.expiresAt;
-        if (type === '2x_trophies'){
-          const suffix = expiresAt ? (' — noch ' + formatEventCountdown(expiresAt - Date.now())) : ' — unbegrenzt';
-          document.getElementById('adminGlobalStatusVal').textContent = '✨ 2x Pokale-Event (live)' + suffix;
-        } else {
-          document.getElementById('adminGlobalStatusVal').textContent = 'Kein Event';
-        }
-      })
-      .catch(() => {
-        document.getElementById('adminGlobalStatusVal').textContent = '⚠️ Konnte nicht laden (offline?)';
-      });
+    document.getElementById('adminGlobalStatusVal').textContent = globalEventActive === '2x_trophies'
+      ? '✨ 2x Pokale-Event (live)' + (globalEventExpiresAt ? (' — noch ' + formatEventCountdown(globalEventExpiresAt - Date.now())) : ' — unbegrenzt')
+      : 'Kein Event';
   }
   document.getElementById('adminEvent2xTrophyBtn').addEventListener('click', () => {
     const answer = prompt('Wie viele Minuten soll das 2x-Pokale-Event laufen?\n(z.B. 60 für 1 Stunde, 1440 für 24 Stunden — leer lassen für unbegrenzt)', '60');
@@ -4734,8 +4720,10 @@
     }
     showAdminToast('⏳ Wird an alle Spieler gesendet...');
     writeGlobalEvent('2x_trophies', durationMins)
-      .then(r => {
-        if (!r.ok) throw new Error('HTTP ' + r.status);
+      .then(() => {
+        // globalEventActive/Expires also update via the real-time listener,
+        // but setting them here too means the admin's own toast/status text
+        // is correct immediately without waiting on the round-trip.
         globalEventActive = '2x_trophies';
         globalEventExpiresAt = durationMins ? Date.now() + durationMins * 60000 : null;
         updateGlobalEventBadge();
@@ -4748,8 +4736,7 @@
   document.getElementById('adminEventClearBtn').addEventListener('click', () => {
     showAdminToast('⏳ Wird zurückgesetzt...');
     writeGlobalEvent(null)
-      .then(r => {
-        if (!r.ok) throw new Error('HTTP ' + r.status);
+      .then(() => {
         globalEventActive = null;
         globalEventExpiresAt = null;
         updateGlobalEventBadge();
