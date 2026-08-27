@@ -1452,6 +1452,11 @@
   }
   #forgotPasswordStatusBox.hidden { display: none; }
   #forgotPasswordStatus { font-size: 12px; color: rgba(255,255,255,0.8); margin: 0; }
+  #forgotPasswordRecheckBtn {
+    margin-top: 8px; padding: 6px 14px; border-radius: 999px; font-size: 11.5px; font-weight: 700; cursor: pointer;
+    background: rgba(180,140,255,0.15); border: 1px solid rgba(180,140,255,0.4); color: #fff;
+  }
+  #forgotPasswordRecheckBtn:hover { background: rgba(180,140,255,0.3); }
   #newPasswordRevealBox {
     margin-top: 10px; padding: 14px; border-radius: 14px;
     background: rgba(122,255,196,0.12); border: 2px solid rgba(122,255,196,0.55);
@@ -1754,6 +1759,7 @@
       <button type="button" id="forgotPasswordLink">Passwort vergessen?</button>
       <div id="forgotPasswordStatusBox" class="hidden">
         <p id="forgotPasswordStatus"></p>
+        <button type="button" id="forgotPasswordRecheckBtn">🔄 Jetzt prüfen</button>
       </div>
       <div id="newPasswordRevealBox" class="hidden">
         <p id="newPasswordRevealLabel">🔑 Ein Admin hat dir ein neues Passwort vergeben!</p>
@@ -1876,10 +1882,12 @@
       document.getElementById('newPasswordRevealBox').classList.add('hidden');
       document.getElementById('newPasswordRevealValue').textContent = '';
       if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+      pendingResetKey = null;
     }
 
     var chosenAvatar = AVATARS[0];
     var pollTimer = null;
+    var pendingResetKey = null;
     function showCreateForm(){
       document.getElementById('profileList').classList.add('hidden');
       var form = document.getElementById('profileCreateForm');
@@ -2037,12 +2045,33 @@
         body: JSON.stringify({ requestedAt: Date.now(), name: name }),
       }).then(function(){
         statusEl.textContent = '📨 Anfrage an den Admin gesendet. Diese Seite offen lassen — sobald ein neues Passwort vergeben wurde, erscheint es hier automatisch.';
-        if (pollTimer) clearInterval(pollTimer);
-        pollTimer = setInterval(function(){ checkForNewPassword(key); }, 4000);
-        checkForNewPassword(key);
+        pendingResetKey = key;
+        startPolling(key);
       }).catch(function(){
         statusEl.textContent = '❌ Anfrage konnte nicht gesendet werden — bitte den Admin direkt ansprechen.';
       });
+    });
+    function startPolling(key){
+      if (pollTimer) clearInterval(pollTimer);
+      // Browsers heavily throttle (or fully pause) setInterval on background
+      // tabs / locked phone screens — a fixed 4s timer alone can silently
+      // stop firing while the player is "just waiting", which looked like
+      // the box never showing up until they did something to wake the page
+      // back up (like clicking the link again). The visibilitychange
+      // listener below is the real fix: it force-checks immediately every
+      // time the tab becomes visible again, regardless of what the
+      // throttled interval was doing in the meantime.
+      pollTimer = setInterval(function(){ checkForNewPassword(key); }, 3000);
+      checkForNewPassword(key);
+    }
+    document.addEventListener('visibilitychange', function(){
+      if (!document.hidden && pendingResetKey) checkForNewPassword(pendingResetKey);
+    });
+    window.addEventListener('focus', function(){
+      if (pendingResetKey) checkForNewPassword(pendingResetKey);
+    });
+    document.getElementById('forgotPasswordRecheckBtn').addEventListener('click', function(){
+      if (pendingResetKey) checkForNewPassword(pendingResetKey);
     });
     function checkForNewPassword(key){
       fetch(FIREBASE_DB_URL + '/passwordResetNotify/' + key + '.json')
@@ -2050,6 +2079,7 @@
         .then(function(notify){
           if (notify && notify.password){
             if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+            pendingResetKey = null;
             document.getElementById('forgotPasswordStatusBox').classList.add('hidden');
             var box = document.getElementById('newPasswordRevealBox');
             box.classList.remove('hidden');
