@@ -1932,6 +1932,14 @@
       resetFormExtras();
       setStatus('', '');
       document.getElementById('profilePasswordInput').focus();
+      // A password reset the admin issued while this player was away (e.g.
+      // browser closed for an hour) has no session state left to remember
+      // it — so re-check for real, fresh, every single time this player
+      // opens their own login form, not just right after clicking "Passwort
+      // vergessen". The reveal box only ever goes away once actually opened
+      // (see checkForNewPassword — it stays pending in Firebase until then).
+      pendingResetKey = nameKey(profile.name);
+      startPolling(pendingResetKey);
     }
     function hideCreateForm(){
       document.getElementById('profileCreateForm').classList.add('hidden');
