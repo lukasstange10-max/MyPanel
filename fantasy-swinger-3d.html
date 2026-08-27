@@ -2235,6 +2235,7 @@
       <label class="settingsLabel">👥 Spieler verwalten</label>
       <p id="adminPlayersNote">Zeigt jeden Namen, der je geräteübergreifend registriert wurde. Passwörter selbst sind gehasht und werden nirgends im Klartext gespeichert oder angezeigt — auch nicht hier.</p>
       <button class="adminActionBtn" id="adminOpenPlayersScreenBtn">📋 Spielerliste öffnen</button>
+      <button class="adminActionBtn" id="adminClearNotifiesBtn">🧹 Offene Passwort-Freigaben löschen</button>
     </div>
 
     <p id="adminToast"></p>
@@ -5175,6 +5176,18 @@
   document.getElementById('adminOpenPlayersScreenBtn').addEventListener('click', () => {
     document.getElementById('adminPlayersScreen').classList.remove('hidden');
     loadPlayersList();
+  });
+  document.getElementById('adminClearNotifiesBtn').addEventListener('click', () => {
+    // Clears any pending, never-opened one-time password reveals — e.g.
+    // leftovers from testing, or a reset the player never actually saw.
+    // Without this, an old unclaimed reveal keeps resurfacing forever (by
+    // design — it's only meant to disappear once actually opened), which
+    // can look like a fresh reset happened when nothing new occurred.
+    if (!confirm('Wirklich ALLE offenen, nie abgeholten Passwort-Freigaben löschen? Betroffene Spieler müssten "Passwort vergessen" erneut anfragen, falls sie wirklich eins brauchen.')) return;
+    showAdminToast('⏳ Wird gelöscht...');
+    fetch(FIREBASE_DB_URL + '/passwordResetNotify.json', { method: 'DELETE' })
+      .then(() => showAdminToast('✅ Alle offenen Passwort-Freigaben gelöscht'))
+      .catch(() => showAdminToast('❌ Fehlgeschlagen'));
   });
   document.getElementById('adminPlayersCloseBtn').addEventListener('click', () => {
     document.getElementById('adminPlayersScreen').classList.add('hidden');
