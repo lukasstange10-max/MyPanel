@@ -954,6 +954,24 @@
   #adminGlobalWarning { font-size: 11px; color: rgba(255,190,80,0.8); text-align: left; margin: 6px 0 0; line-height: 1.5; }
   #adminGlobalStatus { font-size: 12.5px; margin-top: 10px; color: rgba(255,255,255,0.7); }
   #adminGlobalStatusVal { color: #ffce7a; }
+  #adminPlayersNote { font-size: 11px; color: rgba(255,255,255,0.55); text-align: left; margin: 6px 0 10px; line-height: 1.5; }
+  #adminPlayersList { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; max-height: 280px; overflow-y: auto; }
+  .adminPlayerCard {
+    padding: 10px 12px; border-radius: 12px; background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,190,80,0.3); text-align: left;
+  }
+  .adminPlayerCard.banned { border-color: rgba(255,92,108,0.6); background: rgba(255,92,108,0.08); }
+  .adminPlayerName { font-weight: 800; font-size: 13.5px; }
+  .adminPlayerName .banTag { color: #ff9aa2; font-size: 11px; font-weight: 700; margin-left: 6px; }
+  .adminPlayerMeta { font-size: 10.5px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+  .adminPlayerActions { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+  .adminPlayerActionBtn {
+    padding: 6px 10px; font-size: 11px; font-weight: 700; border-radius: 8px; cursor: pointer;
+    background: rgba(255,190,80,0.1); border: 1px solid rgba(255,190,80,0.4); color: #fff;
+  }
+  .adminPlayerActionBtn:hover { background: rgba(255,190,80,0.2); }
+  .adminPlayerActionBtn.danger { background: rgba(255,92,108,0.12); border-color: rgba(255,92,108,0.5); }
+  .adminPlayerActionBtn.danger:hover { background: rgba(255,92,108,0.25); }
   #adminToast {
     min-height: 18px; font-size: 12.5px; font-weight: 700; color: #7affc4; margin-top: 12px;
   }
@@ -1808,6 +1826,16 @@
     }
     function finalizeProfileCreation(name){
       var profiles = getProfiles();
+      // If a local profile with this exact name already exists on THIS
+      // device, re-entering the same name+password should log back into
+      // it (keeping its save data) — not spawn a second, empty duplicate
+      // with the same display name.
+      var existingLocal = profiles.find(function(p){ return p.name.trim().toLowerCase() === name.trim().toLowerCase(); });
+      if (existingLocal){
+        rawSet('rankmann_activeProfileId', existingLocal.id);
+        location.reload();
+        return;
+      }
       var id = 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
       profiles.push({ id: id, name: name, avatar: chosenAvatar });
       rawSet('rankmann_profiles', profiles);
@@ -1829,7 +1857,16 @@
       setStatus('⏳ Prüfe Namen...', '');
       var key = nameKey(name);
 
-      fetch(FIREBASE_DB_URL + '/profileNames/' + key + '.json')
+      fetch(FIREBASE_DB_URL + '/bannedNames/' + key + '.json')
+        .then(function(r){ return r.ok ? r.json() : null; })
+        .then(function(banEntry){
+          if (banEntry){
+            setStatus('🚫 Dieser Name wurde gesperrt und kann nicht mehr verwendet werden.', 'error');
+            confirmBtn.disabled = false;
+            return Promise.reject(new Error('banned')); // short-circuit the chain below
+          }
+          return fetch(FIREBASE_DB_URL + '/profileNames/' + key + '.json');
+        })
         .then(function(r){ return r.ok ? r.json() : null; })
         .then(function(existing){
           if (existing && existing.passwordHash){
@@ -1850,13 +1887,14 @@
             return fetch(FIREBASE_DB_URL + '/profileNames/' + key + '.json', {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ passwordHash: hash, createdAt: Date.now() }),
+              body: JSON.stringify({ passwordHash: hash, createdAt: Date.now(), displayName: name }),
             }).then(function(){
               finalizeProfileCreation(name);
             });
           });
         })
-        .catch(function(){
+        .catch(function(err){
+          if (err && err.message === 'banned') return; // already handled above, nothing more to do
           // Firebase unreachable — don't block play over it, just skip the
           // cross-device check this time (best-effort protection, not a hard
           // guarantee, consistent with the rest of the game's offline handling).
@@ -1996,6 +2034,13 @@
         <button class="adminActionBtn" id="adminEventClearBtn">✕ Event sofort beenden</button>
       </div>
       <p id="adminGlobalStatus">Aktuell aktiv: <b id="adminGlobalStatusVal">Kein Event</b></p>
+    </div>
+
+    <div class="settingsGroup">
+      <label class="settingsLabel">👥 Spieler verwalten</label>
+      <p id="adminPlayersNote">Zeigt jeden Namen, der je geräteübergreifend registriert wurde. Passwörter selbst sind gehasht und werden nirgends im Klartext gespeichert oder angezeigt — auch nicht hier.</p>
+      <button class="adminActionBtn" id="adminLoadPlayersBtn">📋 Spielerliste laden</button>
+      <div id="adminPlayersList"></div>
     </div>
 
     <p id="adminToast"></p>
@@ -2209,6 +2254,26 @@
         updateGlobalEventBadge();
       }
     }, () => {}); // permission-denied/offline — event just stays as last known state
+
+    // Live ban check for the CURRENT player — if an admin bans this profile's
+    // name while they're mid-session, this kicks them back to the profile
+    // picker immediately rather than waiting for their next launch.
+    const myProfileMeta = (function(){
+      try {
+        const profiles = JSON.parse(localStorage.getItem('rankmann_profiles') || '[]');
+        return profiles.find(p => p.id === ACTIVE_PROFILE_ID) || null;
+      } catch(e){ return null; }
+    })();
+    if (myProfileMeta){
+      const myNameKey = encodeURIComponent(myProfileMeta.name.trim().toLowerCase()).replace(/[.#$\[\]]/g, '_');
+      firebase.database().ref('bannedNames/' + myNameKey).on('value', snapshot => {
+        if (snapshot.val()){
+          localStorage.removeItem('rankmann_activeProfileId');
+          alert('Dieses Profil wurde von einem Admin gesperrt.');
+          location.reload();
+        }
+      }, () => {});
+    }
   } catch(e){} // Firebase SDK failed to load/init (e.g. offline on first load) — game continues without events
   function writeGlobalEvent(type, durationMinutes){
     const body = type
@@ -4843,6 +4908,96 @@
       .catch(() => showAdminToast('❌ Fehlgeschlagen — Internet oder Firebase-Regeln prüfen'));
   });
 
+  // ---------- ADMIN: PLAYER MANAGEMENT ----------
+  // Reads the full /profileNames and /bannedNames registries. Passwords
+  // themselves are one-way hashed (SHA-256) and never stored or shown in
+  // plaintext anywhere, including here — this only ever resets to a NEW
+  // password the admin chooses, never reveals the original.
+  function formatPlayerDate(ts){
+    if (!ts) return '—';
+    const d = new Date(ts);
+    return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  }
+  function renderPlayersList(names, banned){
+    const listEl = document.getElementById('adminPlayersList');
+    listEl.innerHTML = '';
+    const keys = Object.keys(names || {}).sort((a,b) => (names[b].createdAt||0) - (names[a].createdAt||0));
+    if (keys.length === 0){
+      listEl.innerHTML = '<p style="font-size:12px; color:rgba(255,255,255,0.5);">Noch keine registrierten Spieler.</p>';
+      return;
+    }
+    keys.forEach(key => {
+      const entry = names[key];
+      const isBanned = !!(banned && banned[key]);
+      const card = document.createElement('div');
+      card.className = 'adminPlayerCard' + (isBanned ? ' banned' : '');
+      card.innerHTML = `
+        <div class="adminPlayerName">${entry.displayName || key}${isBanned ? '<span class="banTag">🚫 GEBANNT</span>' : ''}</div>
+        <div class="adminPlayerMeta">Registriert: ${formatPlayerDate(entry.createdAt)}</div>
+        <div class="adminPlayerActions">
+          <button class="adminPlayerActionBtn danger" data-action="${isBanned ? 'unban' : 'ban'}" data-key="${key}">${isBanned ? '✅ Entbannen' : '🚫 Bannen'}</button>
+          <button class="adminPlayerActionBtn" data-action="resetpw" data-key="${key}">🔑 Passwort zurücksetzen</button>
+          <button class="adminPlayerActionBtn danger" data-action="delete" data-key="${key}">🗑️ Registrierung löschen</button>
+        </div>
+      `;
+      listEl.appendChild(card);
+    });
+  }
+  function loadPlayersList(){
+    showAdminToast('⏳ Lade Spielerliste...');
+    Promise.all([
+      fetch(FIREBASE_DB_URL + '/profileNames.json').then(r => r.ok ? r.json() : {}),
+      fetch(FIREBASE_DB_URL + '/bannedNames.json').then(r => r.ok ? r.json() : {}),
+    ]).then(([names, banned]) => {
+      renderPlayersList(names || {}, banned || {});
+      showAdminToast('✅ Spielerliste geladen');
+    }).catch(() => showAdminToast('❌ Konnte Spielerliste nicht laden'));
+  }
+  document.getElementById('adminLoadPlayersBtn').addEventListener('click', loadPlayersList);
+  document.getElementById('adminPlayersList').addEventListener('click', e => {
+    const btn = e.target.closest('.adminPlayerActionBtn');
+    if (!btn) return;
+    const key = btn.dataset.key;
+    const action = btn.dataset.action;
+    if (action === 'ban' || action === 'unban'){
+      const goingToBan = action === 'ban';
+      if (goingToBan && !confirm('Spieler "' + key + '" wirklich bannen? Wird sofort rausgeworfen, falls gerade online.')) return;
+      showAdminToast('⏳ Wird gespeichert...');
+      const req = goingToBan
+        ? fetch(FIREBASE_DB_URL + '/bannedNames/' + key + '.json', { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ bannedAt: Date.now() }) })
+        : fetch(FIREBASE_DB_URL + '/bannedNames/' + key + '.json', { method: 'DELETE' });
+      req.then(() => { showAdminToast(goingToBan ? '✅ Gebannt' : '✅ Entbannt'); loadPlayersList(); })
+         .catch(() => showAdminToast('❌ Fehlgeschlagen'));
+    } else if (action === 'resetpw'){
+      const newPw = prompt('Neues Passwort für "' + key + '" festlegen (wird der Person mitgeteilt, damit sie sich wieder einloggen kann):');
+      if (!newPw) return;
+      showAdminToast('⏳ Setze neues Passwort...');
+      hashPassword(newPw).then(hash => {
+        return fetch(FIREBASE_DB_URL + '/profileNames/' + key + '/passwordHash.json', {
+          method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(hash),
+        });
+      }).then(() => showAdminToast('✅ Neues Passwort gesetzt — bitte der Person mitteilen'))
+        .catch(() => showAdminToast('❌ Fehlgeschlagen'));
+    } else if (action === 'delete'){
+      if (!confirm('Registrierung von "' + key + '" wirklich löschen? Der Name wird wieder frei für jeden — lokaler Spielstand auf dem Gerät der Person bleibt aber bestehen.')) return;
+      showAdminToast('⏳ Wird gelöscht...');
+      Promise.all([
+        fetch(FIREBASE_DB_URL + '/profileNames/' + key + '.json', { method: 'DELETE' }),
+        fetch(FIREBASE_DB_URL + '/bannedNames/' + key + '.json', { method: 'DELETE' }),
+      ]).then(() => { showAdminToast('✅ Registrierung gelöscht'); loadPlayersList(); })
+        .catch(() => showAdminToast('❌ Fehlgeschlagen'));
+    }
+  });
+  // SHA-256 helper — same hashing scheme used by the profile-picker script,
+  // duplicated here since the admin panel lives in the main game script,
+  // a separate scope from that standalone bootstrap script.
+  function hashPassword(pw){
+    const enc = new TextEncoder().encode(pw);
+    return crypto.subtle.digest('SHA-256', enc).then(buf =>
+      Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('')
+    );
+  }
+
   // ---------- WORLD SELECTION ----------
   function updateWorldSelectUI(){
     const btn1 = document.getElementById('worldBtn1');
@@ -6113,8 +6268,15 @@
     // Settings and music fabs belong to the start menu only — hide them
     // once a run is actually in progress (still shown while paused, since
     // the pause menu itself sits on top of the game).
-    document.getElementById('settingsFab').classList.toggle('hidden', running && !paused);
-    document.getElementById('musicFab').classList.toggle('hidden', running && !paused);
+    // Settings and music fabs belong to the start menu only — hide them
+    // once a run is actually in progress (still shown while the pause MENU
+    // itself is open, since that sits on top of the game). Photo mode also
+    // leaves `paused` true under the hood (only its own UI is shown, see
+    // enterPhotoMode), so it needs its own explicit check here too, or the
+    // fabs would incorrectly reappear while taking photos.
+    const hideFabs = running && (!paused || photoModeActive);
+    document.getElementById('settingsFab').classList.toggle('hidden', hideFabs);
+    document.getElementById('musicFab').classList.toggle('hidden', hideFabs);
     // 2x-event badge sits lower (true bottom-right corner) on PC, since
     // there's no touch-button cluster there to avoid.
     document.getElementById('globalEventBadge').classList.toggle('pc-mode', !mobileControlsWanted);
