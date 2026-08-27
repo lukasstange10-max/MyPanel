@@ -4156,12 +4156,16 @@
     // Raycast straight out from the crosshair (screen center) and pick the anchor
     // whose perpendicular distance to that ray is smallest, within a generous
     // fixed-radius tolerance — a reliable "soft lock" aim assist.
+    // World 3's anchors are spaced much further apart (see the "wide, tall
+    // low-gravity spread" comment on anchorPositionsW3), so both the aim
+    // tolerance and the max range need to be larger there, or the same aim
+    // that works fine in World 1/2 just never reaches anything to lock onto.
     raycaster.setFromCamera({ x: 0, y: 0 }, camera);
     const origin = raycaster.ray.origin;
     const dir = raycaster.ray.direction; // already normalized
     let best = null, bestPerp = Infinity;
-    const TOLERANCE = 5;   // world units — how far off-center the aim can be
-    const MAX_RANGE = 70;
+    const TOLERANCE = selectedWorld === 3 ? 9 : 5;   // world units — how far off-center the aim can be
+    const MAX_RANGE = selectedWorld === 3 ? 110 : 70;
     for (const a of anchors){
       if (a.world !== selectedWorld) continue;
       const toA = new THREE.Vector3().subVectors(a.position, origin);
@@ -4191,8 +4195,12 @@
     if (emoteActive) { stopEmote(); return; }
     // Primary: precise aim via the crosshair raycast. Fallback: just grab the
     // nearest anchor in range, so holding E always does *something* useful
-    // even if the aim isn't pixel-perfect.
-    const best = findTargetAnchor() || nearestAnchorWithin(22);
+    // even if the aim isn't pixel-perfect. World 3's anchors are spaced much
+    // further apart than World 1/2's, so the fallback radius needs to be
+    // bigger there too, or players standing a totally normal distance from
+    // an anchor (by World 3's scale) get nothing from either path.
+    const fallbackRange = selectedWorld === 3 ? 38 : 22;
+    const best = findTargetAnchor() || nearestAnchorWithin(fallbackRange);
     if (best){
       grapple.active = true;
       grapple.anchor = best;
