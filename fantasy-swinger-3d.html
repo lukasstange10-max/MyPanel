@@ -2518,13 +2518,14 @@
       // never gets a chance to run any of our own JS.
       const presenceRef = firebase.database().ref('presence/' + myNameKey);
       firebase.database().ref('.info/connected').on('value', snap => {
+        console.log('[presence] .info/connected =', snap.val(), 'for key', myNameKey);
         if (snap.val() === true){
           presenceRef.onDisconnect().set({ online: false, lastSeen: firebase.database.ServerValue.TIMESTAMP, name: myProfileMeta.name })
-            .then(() => {
-              presenceRef.set({ online: true, lastSeen: firebase.database.ServerValue.TIMESTAMP, name: myProfileMeta.name });
-            });
+            .then(() => presenceRef.set({ online: true, lastSeen: firebase.database.ServerValue.TIMESTAMP, name: myProfileMeta.name }))
+            .then(() => console.log('[presence] wrote online:true successfully for', myNameKey))
+            .catch(err => console.error('[presence] FAILED to write presence — likely a database-rules permission issue:', err));
         }
-      });
+      }, err => console.error('[presence] .info/connected listener error:', err));
     }
   } catch(e){} // Firebase SDK failed to load/init (e.g. offline on first load) — game continues without events
   function writeGlobalEvent(type, durationMinutes){
