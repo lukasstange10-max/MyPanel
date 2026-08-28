@@ -5180,7 +5180,13 @@
   function renderPlayersList(names, banned, requests, presence){
     const listEl = document.getElementById('adminPlayersList');
     listEl.innerHTML = '';
-    const keys = Object.keys(names || {}).sort((a,b) => (names[b].createdAt||0) - (names[a].createdAt||0));
+    // Never show (or allow banning) the admin's own account here — this is
+    // exactly what let Lukas accidentally ban himself. The admin key never
+    // even reaches the list now, so there's no card to misclick.
+    const adminKey = encodeURIComponent(ADMIN_NAME.trim().toLowerCase()).replace(/[.#$\[\]]/g, '_');
+    const keys = Object.keys(names || {})
+      .filter(key => key !== adminKey)
+      .sort((a,b) => (names[b].createdAt||0) - (names[a].createdAt||0));
     if (keys.length === 0){
       listEl.innerHTML = '<p style="font-size:13px; color:rgba(255,255,255,0.5);">Noch keine registrierten Spieler.</p>';
       return;
@@ -5252,6 +5258,11 @@
     if (!btn) return;
     const key = btn.dataset.key;
     const action = btn.dataset.action;
+    const adminKeyGuard = encodeURIComponent(ADMIN_NAME.trim().toLowerCase()).replace(/[.#$\[\]]/g, '_');
+    if (action === 'ban' && key === adminKeyGuard){
+      showAdminPlayersToast('🚫 Du kannst dich nicht selbst bannen.');
+      return;
+    }
     if (action === 'ban' || action === 'unban'){
       const goingToBan = action === 'ban';
       if (goingToBan && !confirm('Spieler "' + key + '" wirklich bannen? Wird sofort rausgeworfen, falls gerade online.')) return;
