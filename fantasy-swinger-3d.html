@@ -3395,29 +3395,32 @@
     islandsW4.push(entry);
     return entry;
   }
-  // Street-level ground plane under the whole city, textured as an actual
-  // road grid (asphalt + dashed lane lines) tiled across the whole area.
+  // Street-level ground plane under the whole city, textured as a clean
+  // road grid (asphalt + dashed lane lines). Doubles as the actual walkable
+  // spawn surface (islandsW4[0]) — no separate "plaza" platform needed.
   function makeRoadTexture(){
     const c = document.createElement('canvas');
     c.width = 128; c.height = 128;
     const ctx = c.getContext('2d');
-    ctx.fillStyle = '#26282e';
+    ctx.fillStyle = '#2c2e34';
     ctx.fillRect(0, 0, 128, 128);
-    // sidewalk band framing each block
-    ctx.fillStyle = '#3a3d45';
-    ctx.fillRect(0, 0, 128, 14);
-    ctx.fillRect(0, 114, 128, 14);
-    ctx.fillRect(0, 0, 14, 128);
-    ctx.fillRect(114, 0, 14, 128);
-    // yellow dashed center line running through the middle of the street in both directions
+    // subtle lane-divider dashes running through the middle of each street
+    // in both directions — buildings sit on the regular grid too, so this
+    // lines up with the actual open corridors between them.
     ctx.fillStyle = '#e8c94a';
-    for (let i = 0; i < 128; i += 16){
-      ctx.fillRect(i + 2, 62, 10, 4);
-      ctx.fillRect(62, i + 2, 4, 10);
+    for (let i = 6; i < 128; i += 18){
+      ctx.fillRect(i, 61, 10, 6);
+      ctx.fillRect(61, i, 6, 10);
     }
+    // faint curb line
+    ctx.fillStyle = '#3d4048';
+    ctx.fillRect(0, 0, 128, 3);
+    ctx.fillRect(0, 125, 128, 3);
+    ctx.fillRect(0, 0, 3, 128);
+    ctx.fillRect(125, 0, 3, 128);
     const tex = new THREE.CanvasTexture(c);
     tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping;
-    tex.repeat.set(900/42, 900/42); // one tile per city grid cell, so lines line up with the streets between buildings
+    tex.repeat.set(900/32, 900/32); // one tile per city grid cell (see gridSpacing below), so lines line up with the streets between buildings
     return tex;
   }
   const cityGroundMat = new THREE.MeshStandardMaterial({ color: 0xffffff, map: makeRoadTexture(), roughness: 0.95 });
@@ -3427,26 +3430,29 @@
   cityGround.receiveShadow = true;
   cityGround.visible = false;
   scene.add(cityGround);
-  islands.push({ mesh: cityGround, pos: new THREE.Vector3(0, 0, CITY_CENTER_Z), radius: 0, top: -9999, bottom: -9999, homeY: 0, topOffset: -9999, bottomOffset: -9999, world: 4 });
-  // Central spawn point — flush with the street (not an elevated rooftop),
-  // so the player starts down on the road amid the skyscrapers.
-  makeBuilding(0, CITY_CENTER_Z, 30, 30, 0.4, 0.58);
-  // A big scattered grid of varied skyscrapers, jittered so it doesn't read
-  // as a perfect grid, growing taller toward the edges for a skyline profile.
+  // The road itself is the spawn hub (islandsW4[0]) — walkable everywhere,
+  // not just a small plaza — so the player always lands right on the street.
+  // Needs a large collision radius (collision is circular, not rectangular)
+  // to actually cover the full 900-unit ground plane, not just its center.
+  const cityGroundEntry = { mesh: cityGround, pos: new THREE.Vector3(0, 0, CITY_CENTER_Z), radius: 500, top: 0.15, bottom: -0.5, homeY: 0, topOffset: 0.15, bottomOffset: -0.5, world: 4 };
+  islands.push(cityGroundEntry);
+  islandsW4.push(cityGroundEntry);
+  // A dense, regular grid of varied skyscrapers — no random jitter this
+  // time, so each building sits cleanly on its own grid cell and the street
+  // pattern (tiled at the same spacing) lines up with the actual gaps
+  // between buildings instead of drifting out of sync with them.
   (function generateCityBuildings(){
-    const gridSpacing = 42;
+    const gridSpacing = 32;
     const half = 5;
     for (let gx = -half; gx <= half; gx++){
       for (let gz = -half; gz <= half; gz++){
-        if (gx === 0 && gz === 0) continue; // hub already placed
-        const jitterX = (Math.random() - 0.5) * gridSpacing * 0.5;
-        const jitterZ = (Math.random() - 0.5) * gridSpacing * 0.5;
-        const x = gx * gridSpacing + jitterX;
-        const z = CITY_CENTER_Z + gz * gridSpacing + jitterZ;
-        const w = 10 + Math.random() * 14;
-        const d = 10 + Math.random() * 14;
+        if (gx === 0 && gz === 0) continue; // leave the spawn intersection open
+        const x = gx * gridSpacing;
+        const z = CITY_CENTER_Z + gz * gridSpacing;
+        const w = 16 + Math.random() * 8;
+        const d = 16 + Math.random() * 8;
         const distFromCenter = Math.sqrt(gx*gx + gz*gz);
-        const h = 22 + Math.random() * 40 + distFromCenter * 9;
+        const h = 22 + Math.random() * 40 + distFromCenter * 8;
         const hue = 0.55 + Math.random() * 0.12; // blue-gray city palette
         makeBuilding(x, z, w, d, h, hue);
       }
