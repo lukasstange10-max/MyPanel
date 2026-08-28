@@ -688,6 +688,17 @@
     transform: translateY(-2px) scale(1.02);
     background: linear-gradient(135deg, rgba(140,160,255,0.4), rgba(90,110,230,0.4));
   }
+  #openWorldBtn {
+    padding: 13px 24px; font-size: 15px; font-weight: 700;
+    background: linear-gradient(135deg, rgba(120,170,220,0.24), rgba(60,110,170,0.24));
+    border: 1px solid rgba(120,170,220,0.55);
+    border-radius: 34px; color: #fff; cursor: pointer;
+    transition: transform 0.15s ease, background 0.2s ease;
+  }
+  #openWorldBtn:hover {
+    transform: translateY(-2px) scale(1.02);
+    background: linear-gradient(135deg, rgba(120,170,220,0.42), rgba(60,110,170,0.42));
+  }
 
   #worldSelectRow { display: flex; flex-direction: column; gap: 10px; width: 100%; }
   .worldBtn {
@@ -1671,6 +1682,7 @@
       <button id="achievementsBtn"><span data-i18n="achievementsBtnMenu">🏅 Erfolge</span><span id="achievementsBadge"></span></button>
       <button id="galleryBtn" data-i18n="galleryBtnMenu">🖼️ Galerie</button>
       <button id="statsBtn" data-i18n="statsBtn">📊 Statistiken</button>
+      <button id="openWorldBtn" data-i18n="openWorldBtn">🏙️ Open World</button>
       <button id="adminPanelBtn" class="hidden">🛠️ Admin-Zentrale</button>
     </div>
   </div>
@@ -2454,6 +2466,30 @@
     } catch(e){ return 'default'; }
   })();
 
+  // Everything except language/audio-settings/profile-list itself is scoped
+  // per-profile, so multiple people sharing one device/browser each get
+  // their own save data (trophies, skins, achievements, gallery, etc.)
+  // without touching every storageGet/storageSet call site individually —
+  // just prefix the key here. Declared this early (right after
+  // ACTIVE_PROFILE_ID) because currentLang and other settings are read via
+  // storageGet() very early in the script too — if this lived further down
+  // (as it originally did), those early reads would hit PROFILE_GLOBAL_KEYS
+  // while it's still in its temporal-dead-zone, throw, and silently fall
+  // back to defaults every time (which is exactly what caused language
+  // selection to always revert to German after a reload).
+  const PROFILE_GLOBAL_KEYS = new Set(['rankmann_lang', 'rankmann_settings', 'rankmann_profiles', 'rankmann_activeProfileId']);
+  function scopedStorageKey(key){
+    if (PROFILE_GLOBAL_KEYS.has(key)) return key;
+    return 'rankmann_profile_' + ACTIVE_PROFILE_ID + '_' + key;
+  }
+  function storageGet(key, fallback){
+    try { const v = localStorage.getItem(scopedStorageKey(key)); return v === null ? fallback : JSON.parse(v); }
+    catch(e){ return fallback; }
+  }
+  function storageSet(key, value){
+    try { localStorage.setItem(scopedStorageKey(key), JSON.stringify(value)); return true; } catch(e){ return false; }
+  }
+
   // ---------- GLOBAL EVENTS (Firebase, real-time) ----------
   // Uses the actual Firebase Realtime Database SDK (WebSocket connection),
   // not REST polling — every connected player receives updates the instant
@@ -2600,7 +2636,7 @@
       musicUnlockHint: '🔊 Enable music',
       profileSwitchHint: 'Switch', statsBtn: '📊 Statistics', statsTitle: '📊 Statistics', statsSub: 'Your progress at a glance',
       statsPlaytime: 'Playtime', statsTrophies: 'Trophies collected', statsAchievements: 'Achievements unlocked', statsSkins: 'Skins owned',
-      statsEnemies: 'Enemies defeated', statsCrystals: 'Crystals collected', statsWorlds: 'Worlds unlocked', statsPhotos: 'Photos taken', closeBtn5: 'Close', statsBtnTitle: 'Statistics',
+      statsEnemies: 'Enemies defeated', statsCrystals: 'Crystals collected', statsWorlds: 'Worlds unlocked', statsPhotos: 'Photos taken', closeBtn5: 'Close', statsBtnTitle: 'Statistics', openWorldBtn: '🏙️ Open World',
       statsLives: 'Lives', statsCurrentWorld: 'Current world', statsEquippedSkin: 'Equipped skin', statsEquippedVine: 'Equipped vine',
       galleryToastSaved: '📸 Saved to gallery',
       photoModeLabel: '📸 Photo mode', photoExitBtn: '✕ Exit',
@@ -2657,7 +2693,7 @@
       musicUnlockHint: '🔊 Activer la musique',
       profileSwitchHint: 'Changer', statsBtn: '📊 Statistiques', statsTitle: '📊 Statistiques', statsSub: "Ta progression en un coup d'œil",
       statsPlaytime: 'Temps de jeu', statsTrophies: 'Trophées collectés', statsAchievements: 'Succès débloqués', statsSkins: 'Skins possédés',
-      statsEnemies: 'Ennemis vaincus', statsCrystals: 'Cristaux collectés', statsWorlds: 'Mondes débloqués', statsPhotos: 'Photos prises', closeBtn5: 'Fermer', statsBtnTitle: 'Statistiques',
+      statsEnemies: 'Ennemis vaincus', statsCrystals: 'Cristaux collectés', statsWorlds: 'Mondes débloqués', statsPhotos: 'Photos prises', closeBtn5: 'Fermer', statsBtnTitle: 'Statistiques', openWorldBtn: '🏙️ Monde ouvert',
       statsLives: 'Vies', statsCurrentWorld: 'Monde actuel', statsEquippedSkin: 'Skin équipé', statsEquippedVine: 'Liane équipée',
       galleryToastSaved: '📸 Enregistré dans la galerie',
       photoModeLabel: '📸 Mode photo', photoExitBtn: '✕ Quitter',
@@ -2714,7 +2750,7 @@
       musicUnlockHint: '🔊 Activar música',
       profileSwitchHint: 'Cambiar', statsBtn: '📊 Estadísticas', statsTitle: '📊 Estadísticas', statsSub: 'Tu progreso de un vistazo',
       statsPlaytime: 'Tiempo de juego', statsTrophies: 'Trofeos conseguidos', statsAchievements: 'Logros desbloqueados', statsSkins: 'Skins en posesión',
-      statsEnemies: 'Enemigos derrotados', statsCrystals: 'Cristales recolectados', statsWorlds: 'Mundos desbloqueados', statsPhotos: 'Fotos tomadas', closeBtn5: 'Cerrar', statsBtnTitle: 'Estadísticas',
+      statsEnemies: 'Enemigos derrotados', statsCrystals: 'Cristales recolectados', statsWorlds: 'Mundos desbloqueados', statsPhotos: 'Fotos tomadas', closeBtn5: 'Cerrar', statsBtnTitle: 'Estadísticas', openWorldBtn: '🏙️ Mundo abierto',
       statsLives: 'Vidas', statsCurrentWorld: 'Mundo actual', statsEquippedSkin: 'Skin equipada', statsEquippedVine: 'Liana equipada',
       galleryToastSaved: '📸 Guardado en la galería',
       photoModeLabel: '📸 Modo foto', photoExitBtn: '✕ Salir',
@@ -2771,7 +2807,7 @@
       musicUnlockHint: '🔊 Ativar música',
       profileSwitchHint: 'Trocar', statsBtn: '📊 Estatísticas', statsTitle: '📊 Estatísticas', statsSub: 'Seu progresso em um relance',
       statsPlaytime: 'Tempo de jogo', statsTrophies: 'Troféus coletados', statsAchievements: 'Conquistas desbloqueadas', statsSkins: 'Skins adquiridas',
-      statsEnemies: 'Inimigos derrotados', statsCrystals: 'Cristais coletados', statsWorlds: 'Mundos desbloqueados', statsPhotos: 'Fotos tiradas', closeBtn5: 'Fechar', statsBtnTitle: 'Estatísticas',
+      statsEnemies: 'Inimigos derrotados', statsCrystals: 'Cristais coletados', statsWorlds: 'Mundos desbloqueados', statsPhotos: 'Fotos tiradas', closeBtn5: 'Fechar', statsBtnTitle: 'Estatísticas', openWorldBtn: '🏙️ Mundo aberto',
       statsLives: 'Vidas', statsCurrentWorld: 'Mundo atual', statsEquippedSkin: 'Skin equipada', statsEquippedVine: 'Cipó equipado',
       galleryToastSaved: '📸 Salvo na galeria',
       photoModeLabel: '📸 Modo foto', photoExitBtn: '✕ Sair',
@@ -3044,11 +3080,23 @@
     { t: 0.80, skyTop: 0x05050f, skyBottom: 0x140a2c, sunColor: 0x9fb8ff, sunI: 0.5, hemiSky: 0x3f2f6a, hemiGround: 0x030308, hemiI: 0.4, fog: 0x08071c, fogD: 0.003 },
     { t: 1.00, skyTop: 0x030308, skyBottom: 0x0a0818, sunColor: 0x8fa8ff, sunI: 0.4, hemiSky: 0x2a1f4a, hemiGround: 0x020204, hemiI: 0.3, fog: 0x040410, fogD: 0.0035 },
   ];
+  // World 4 — "Open World" city: classic clear blue daytime sky with a warm
+  // orange sunrise/sunset, unlike the other worlds' stylized fantasy tones —
+  // meant to look like an ordinary sunny city skyline.
+  const DAY_KEYFRAMES_W4 = [
+    { t: 0.00, skyTop: 0x0a1020, skyBottom: 0x1a2440, sunColor: 0x5a75b0, sunI: 0.2, hemiSky: 0x223055, hemiGround: 0x0a0c12, hemiI: 0.35, fog: 0x141c2e, fogD: 0.006 },
+    { t: 0.20, skyTop: 0x16223f, skyBottom: 0x3a4d70, sunColor: 0x8fa5d0, sunI: 0.4, hemiSky: 0x3a4f78, hemiGround: 0x10131c, hemiI: 0.45, fog: 0x223048, fogD: 0.0055 },
+    { t: 0.32, skyTop: 0x2c4a78, skyBottom: 0xffb87a, sunColor: 0xffe0b0, sunI: 1.1, hemiSky: 0x9dc4ff, hemiGround: 0x2a2018, hemiI: 0.9, fog: 0x8a6a55, fogD: 0.0045 },
+    { t: 0.50, skyTop: 0x3d7fd6, skyBottom: 0xbfe4ff, sunColor: 0xffffff, sunI: 1.35, hemiSky: 0xcfeaff, hemiGround: 0x3a4048, hemiI: 1.05, fog: 0xaecbe8, fogD: 0.0035 },
+    { t: 0.68, skyTop: 0x2c4a78, skyBottom: 0xffb87a, sunColor: 0xffe0b0, sunI: 1.1, hemiSky: 0x9dc4ff, hemiGround: 0x2a2018, hemiI: 0.9, fog: 0x8a6a55, fogD: 0.0045 },
+    { t: 0.80, skyTop: 0x1a2440, skyBottom: 0x5a4a68, sunColor: 0xd8a8a0, sunI: 0.5, hemiSky: 0x4f5a8a, hemiGround: 0x141220, hemiI: 0.55, fog: 0x322c40, fogD: 0.0055 },
+    { t: 1.00, skyTop: 0x0a1020, skyBottom: 0x1a2440, sunColor: 0x5a75b0, sunI: 0.2, hemiSky: 0x223055, hemiGround: 0x0a0c12, hemiI: 0.35, fog: 0x141c2e, fogD: 0.006 },
+  ];
   const _c1 = new THREE.Color(), _c2 = new THREE.Color();
   function lerpKeyColor(key, a, b, f){ _c1.setHex(a[key]); _c2.setHex(b[key]); return _c1.lerp(_c2, f); }
   function updateDayNight(dt){
     dayTime = (dayTime + dt / DAY_CYCLE_SECONDS) % 1;
-    const KEYFRAMES = selectedWorld === 3 ? DAY_KEYFRAMES_W3 : selectedWorld === 2 ? DAY_KEYFRAMES_W2 : DAY_KEYFRAMES_W1;
+    const KEYFRAMES = selectedWorld === 4 ? DAY_KEYFRAMES_W4 : selectedWorld === 3 ? DAY_KEYFRAMES_W3 : selectedWorld === 2 ? DAY_KEYFRAMES_W2 : DAY_KEYFRAMES_W1;
     let a = KEYFRAMES[0], b = KEYFRAMES[KEYFRAMES.length - 1], f = 0;
     for (let i = 0; i < KEYFRAMES.length - 1; i++){
       if (dayTime >= KEYFRAMES[i].t && dayTime <= KEYFRAMES[i+1].t){
@@ -3291,6 +3339,128 @@
     [30,16,-4],[-32,24,-18],[36,50,-100],[-38,66,-130],[20,20,-2],[-14,132,-250]
   ];
   anchorPositionsW3.forEach(p => makeAnchor(p[0],p[1],p[2],3));
+
+  // ---------- OPEN WORLD CITY (world 4) — pure swinging playground ----------
+  // Lives far away from the fantasy worlds' shared orbs/enemies (which
+  // aren't gated by world number, see below) so nothing from those bleeds
+  // in here. No checkpoints, no orbs, no enemies, no unlock cost — just a
+  // big procedurally-scattered skyline to swing between.
+  const CITY_CENTER_Z = -3000;
+  function makeWindowTexture(){
+    const c = document.createElement('canvas');
+    c.width = 64; c.height = 64;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#1a2233';
+    ctx.fillRect(0,0,64,64);
+    ctx.fillStyle = '#ffe9a8';
+    for (let y=4;y<64;y+=10){
+      for (let x=4;x<64;x+=12){
+        if (Math.random() > 0.35) ctx.fillRect(x,y,7,6);
+      }
+    }
+    const tex = new THREE.CanvasTexture(c);
+    tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(3, 6);
+    return tex;
+  }
+  const cityWindowTex = makeWindowTexture();
+  const islandsW4 = [];
+  function makeBuilding(x, z, w, d, h, colorHue){
+    const g = new THREE.Group();
+    // Very short/flat structures (the ground-level spawn plaza) are plain
+    // pavement, not a building — the window texture would look like a
+    // checkered floor rather than a proper street-level plaza.
+    const isFlatPlaza = h < 3;
+    const mat = isFlatPlaza
+      ? new THREE.MeshStandardMaterial({ color: 0x3a3d45, roughness: 0.9 })
+      : new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(colorHue, 0.12, 0.42), map: cityWindowTex, roughness: 0.7 });
+    const box = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+    box.position.y = h/2;
+    box.castShadow = true; box.receiveShadow = true;
+    g.add(box);
+    // Skip the little roof-cap detail for very short/flat structures (like
+    // the ground-level spawn plaza) — it would just float oddly above a
+    // near-flat slab instead of reading as a rooftop detail.
+    if (!isFlatPlaza){
+      const capMat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(colorHue, 0.1, 0.22), roughness: 0.8 });
+      const cap = new THREE.Mesh(new THREE.BoxGeometry(w*0.5, Math.max(1, h*0.06), d*0.5), capMat);
+      cap.position.y = h + Math.max(0.5, h*0.03);
+      g.add(cap);
+    }
+    g.position.set(x, 0, z);
+    scene.add(g);
+    const radius = Math.min(w, d) * 0.5 + 0.8;
+    const entry = { mesh: g, pos: new THREE.Vector3(x, 0, z), radius, top: h, bottom: 0, homeY: 0, topOffset: h, bottomOffset: 0, world: 4 };
+    islands.push(entry);
+    islandsW4.push(entry);
+    return entry;
+  }
+  // Street-level ground plane under the whole city, textured as an actual
+  // road grid (asphalt + dashed lane lines) tiled across the whole area.
+  function makeRoadTexture(){
+    const c = document.createElement('canvas');
+    c.width = 128; c.height = 128;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#26282e';
+    ctx.fillRect(0, 0, 128, 128);
+    // sidewalk band framing each block
+    ctx.fillStyle = '#3a3d45';
+    ctx.fillRect(0, 0, 128, 14);
+    ctx.fillRect(0, 114, 128, 14);
+    ctx.fillRect(0, 0, 14, 128);
+    ctx.fillRect(114, 0, 14, 128);
+    // yellow dashed center line running through the middle of the street in both directions
+    ctx.fillStyle = '#e8c94a';
+    for (let i = 0; i < 128; i += 16){
+      ctx.fillRect(i + 2, 62, 10, 4);
+      ctx.fillRect(62, i + 2, 4, 10);
+    }
+    const tex = new THREE.CanvasTexture(c);
+    tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(900/42, 900/42); // one tile per city grid cell, so lines line up with the streets between buildings
+    return tex;
+  }
+  const cityGroundMat = new THREE.MeshStandardMaterial({ color: 0xffffff, map: makeRoadTexture(), roughness: 0.95 });
+  const cityGround = new THREE.Mesh(new THREE.PlaneGeometry(900, 900), cityGroundMat);
+  cityGround.rotation.x = -Math.PI/2;
+  cityGround.position.set(0, 0, CITY_CENTER_Z);
+  cityGround.receiveShadow = true;
+  cityGround.visible = false;
+  scene.add(cityGround);
+  islands.push({ mesh: cityGround, pos: new THREE.Vector3(0, 0, CITY_CENTER_Z), radius: 0, top: -9999, bottom: -9999, homeY: 0, topOffset: -9999, bottomOffset: -9999, world: 4 });
+  // Central spawn point — flush with the street (not an elevated rooftop),
+  // so the player starts down on the road amid the skyscrapers.
+  makeBuilding(0, CITY_CENTER_Z, 30, 30, 0.4, 0.58);
+  // A big scattered grid of varied skyscrapers, jittered so it doesn't read
+  // as a perfect grid, growing taller toward the edges for a skyline profile.
+  (function generateCityBuildings(){
+    const gridSpacing = 42;
+    const half = 5;
+    for (let gx = -half; gx <= half; gx++){
+      for (let gz = -half; gz <= half; gz++){
+        if (gx === 0 && gz === 0) continue; // hub already placed
+        const jitterX = (Math.random() - 0.5) * gridSpacing * 0.5;
+        const jitterZ = (Math.random() - 0.5) * gridSpacing * 0.5;
+        const x = gx * gridSpacing + jitterX;
+        const z = CITY_CENTER_Z + gz * gridSpacing + jitterZ;
+        const w = 10 + Math.random() * 14;
+        const d = 10 + Math.random() * 14;
+        const distFromCenter = Math.sqrt(gx*gx + gz*gz);
+        const h = 22 + Math.random() * 40 + distFromCenter * 9;
+        const hue = 0.55 + Math.random() * 0.12; // blue-gray city palette
+        makeBuilding(x, z, w, d, h, hue);
+      }
+    }
+  })();
+  // Generous anchor coverage — one near-rooftop anchor per building, plus a
+  // lower mid-building one on roughly half of them for varied swing arcs.
+  const anchorPositionsW4 = [];
+  islandsW4.forEach((b, i) => {
+    if (i === 0) return; // skip the spawn hub itself
+    anchorPositionsW4.push([b.pos.x, b.top + 4 + Math.random()*6, b.pos.z]);
+    if (Math.random() > 0.5) anchorPositionsW4.push([b.pos.x + (Math.random()-0.5)*6, b.top*0.55, b.pos.z + (Math.random()-0.5)*6]);
+  });
+  anchorPositionsW4.forEach(p => makeAnchor(p[0], p[1], p[2], 4));
 
   // ---------- COLLECTIBLE ORBS ----------
   const orbs = [];
@@ -3576,6 +3746,12 @@
     checkpoints.forEach(cp => { cp.group.visible = (cp.world === n); });
     anchors.forEach(a => { a.visible = (a.world === n); });
     starfield.visible = (n === 3);
+    // Open World has no trophies or lives at stake — pure swinging, so the
+    // HUD boxes for them would just be permanently-zero clutter there.
+    const boxCheckpoints = document.getElementById('box-checkpoints');
+    const boxLives = document.getElementById('box-lives');
+    if (boxCheckpoints) boxCheckpoints.style.display = (n === 4) ? 'none' : '';
+    if (boxLives) boxLives.style.display = (n === 4) ? 'none' : '';
   }
 
   applyWorldTheme(1); // safe default until startGame() applies the actual selected world
@@ -4480,8 +4656,8 @@
     const origin = raycaster.ray.origin;
     const dir = raycaster.ray.direction; // already normalized
     let best = null, bestPerp = Infinity;
-    const TOLERANCE = selectedWorld === 3 ? 9 : 5;   // world units — how far off-center the aim can be
-    const MAX_RANGE = selectedWorld === 3 ? 110 : 70;
+    const TOLERANCE = selectedWorld === 4 ? 8 : selectedWorld === 3 ? 9 : 5;   // world units — how far off-center the aim can be
+    const MAX_RANGE = selectedWorld === 4 ? 90 : selectedWorld === 3 ? 110 : 70;
     for (const a of anchors){
       if (a.world !== selectedWorld) continue;
       const toA = new THREE.Vector3().subVectors(a.position, origin);
@@ -4515,7 +4691,7 @@
     // further apart than World 1/2's, so the fallback radius needs to be
     // bigger there too, or players standing a totally normal distance from
     // an anchor (by World 3's scale) get nothing from either path.
-    const fallbackRange = selectedWorld === 3 ? 38 : 22;
+    const fallbackRange = selectedWorld === 4 ? 34 : selectedWorld === 3 ? 38 : 22;
     const best = findTargetAnchor() || nearestAnchorWithin(fallbackRange);
     if (best){
       grapple.active = true;
@@ -4596,18 +4772,6 @@
   // multiple people sharing one device/browser each get their own save data
   // (trophies, skins, achievements, gallery, etc.) without touching every
   // storageGet/storageSet call site individually — just prefix the key here.
-  const PROFILE_GLOBAL_KEYS = new Set(['rankmann_lang', 'rankmann_settings', 'rankmann_profiles', 'rankmann_activeProfileId']);
-  function scopedStorageKey(key){
-    if (PROFILE_GLOBAL_KEYS.has(key)) return key;
-    return 'rankmann_profile_' + ACTIVE_PROFILE_ID + '_' + key;
-  }
-  function storageGet(key, fallback){
-    try { const v = localStorage.getItem(scopedStorageKey(key)); return v === null ? fallback : JSON.parse(v); }
-    catch(e){ return fallback; }
-  }
-  function storageSet(key, value){
-    try { localStorage.setItem(scopedStorageKey(key), JSON.stringify(value)); return true; } catch(e){ return false; }
-  }
   const DEFAULT_SETTINGS = {
     musicVolume: 0.8,
     sfxVolume: 1.0,
@@ -6033,7 +6197,7 @@
   }
 
   function respawnPlayer(){
-    const hub = selectedWorld === 3 ? islandsW3[0] : selectedWorld === 2 ? islandsW2[0] : islandsW1[0];
+    const hub = selectedWorld === 4 ? islandsW4[0] : selectedWorld === 3 ? islandsW3[0] : selectedWorld === 2 ? islandsW2[0] : islandsW1[0];
     player.pos.set(hub.pos.x, hub.top + 5, hub.pos.z);
     player.vel.set(0,0,0);
     player.wasOnGround = false;
@@ -6526,7 +6690,7 @@
         }
 
         // send the player straight back to the spawn platform — instant, no effect
-        const hub = selectedWorld === 3 ? islandsW3[0] : selectedWorld === 2 ? islandsW2[0] : islandsW1[0];
+        const hub = selectedWorld === 4 ? islandsW4[0] : selectedWorld === 3 ? islandsW3[0] : selectedWorld === 2 ? islandsW2[0] : islandsW1[0];
         player.pos.set(0, hub.top + player.radius, 0);
         player.vel.set(0, 0, 0);
         player.onGround = true;
@@ -6557,6 +6721,13 @@
     startScreen.classList.add('fading');
     setTimeout(() => { startScreen.style.display = 'none'; }, 500);
     applyWorldTheme(selectedWorld);
+    // Every world's hub island happens to sit at local (0,0,0), which is
+    // also the player's hardcoded default position — so this was never
+    // needed before. Open World's hub is deliberately far away (see
+    // CITY_CENTER_Z) to stay clear of the other worlds' shared orbs/enemies,
+    // so the very first spawn now needs an explicit position, not just the
+    // default. respawnPlayer() already knows how to do this correctly.
+    respawnPlayer();
     snapCameraToPlayer();
     ensureAudio();
     stopMenuMusic();
@@ -6571,6 +6742,14 @@
 
   document.getElementById('menuClickCatcher').addEventListener('mousedown', menuMusicUnlockAttempt);
   document.getElementById('startBtn').addEventListener('click', () => {
+    document.getElementById('deviceSurvey').classList.remove('hidden');
+  });
+  document.getElementById('openWorldBtn').addEventListener('click', () => {
+    // Open World is a free, always-available city — no trophy cost, not
+    // part of the normal world-select list, and never persisted as the
+    // player's "real" world choice (see the pauseRestartBtn handler, which
+    // restores the saved 1/2/3 pick once they leave).
+    selectedWorld = 4;
     document.getElementById('deviceSurvey').classList.remove('hidden');
   });
   let mobileControlsWanted = false;
@@ -6638,6 +6817,10 @@
     muteRainAudio();
     player.lives = 3;
     updateLivesDisplay();
+    // Open World (4) is a temporary, never-persisted selection — restore
+    // whichever real world (1/2/3) the player actually had chosen before,
+    // so the world-select buttons reflect that again once back at the menu.
+    if (selectedWorld === 4) selectedWorld = storageGet('rankmann_selectedWorld', 1);
     respawnPlayer();
     document.getElementById('startScreen').style.display = 'flex';
     document.getElementById('startScreen').classList.remove('fading');
