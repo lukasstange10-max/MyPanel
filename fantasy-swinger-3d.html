@@ -1998,7 +1998,7 @@
       setStatus('⏳ Prüfe Namen...', '');
       var key = nameKey(name);
 
-      fetch(FIREBASE_DB_URL + '/bannedNames/' + key + '.json')
+      fetch(FIREBASE_DB_URL + '/bannedNames/' + key + '.json', { cache: 'no-store' })
         .then(function(r){ return r.ok ? r.json() : null; })
         .then(function(banEntry){
           if (banEntry){
@@ -2006,7 +2006,7 @@
             confirmBtn.disabled = false;
             return Promise.reject(new Error('banned')); // short-circuit the chain below
           }
-          return fetch(FIREBASE_DB_URL + '/profileNames/' + key + '.json');
+          return fetch(FIREBASE_DB_URL + '/profileNames/' + key + '.json', { cache: 'no-store' });
         })
         .then(function(r){ return r.ok ? r.json() : null; })
         .then(function(existing){
@@ -2099,7 +2099,7 @@
       if (pendingResetKey) checkForNewPassword(pendingResetKey);
     });
     function checkForNewPassword(key){
-      fetch(FIREBASE_DB_URL + '/passwordResetNotify/' + key + '.json')
+      fetch(FIREBASE_DB_URL + '/passwordResetNotify/' + key + '.json', { cache: 'no-store' })
         .then(function(r){ return r.ok ? r.json() : null; })
         .then(function(notify){
           if (notify && notify.password){
@@ -5217,11 +5217,18 @@
   }
   function loadPlayersList(){
     showAdminPlayersToast('⏳ Lade Spielerliste...');
+    // cache: 'no-store' + a cache-busting query param — without this, the
+    // browser (or an intermediate proxy) can serve a stale cached response
+    // for these GET requests, so the 15s auto-refresh (and manual "Neu
+    // laden") could silently keep showing old online/offline status until
+    // a full page reload forced a truly fresh request.
+    const bust = '?_=' + Date.now();
+    const noCache = { cache: 'no-store' };
     Promise.all([
-      fetch(FIREBASE_DB_URL + '/profileNames.json').then(r => r.ok ? r.json() : {}),
-      fetch(FIREBASE_DB_URL + '/bannedNames.json').then(r => r.ok ? r.json() : {}),
-      fetch(FIREBASE_DB_URL + '/passwordResetRequests.json').then(r => r.ok ? r.json() : {}),
-      fetch(FIREBASE_DB_URL + '/presence.json').then(r => r.ok ? r.json() : {}),
+      fetch(FIREBASE_DB_URL + '/profileNames.json' + bust, noCache).then(r => r.ok ? r.json() : {}),
+      fetch(FIREBASE_DB_URL + '/bannedNames.json' + bust, noCache).then(r => r.ok ? r.json() : {}),
+      fetch(FIREBASE_DB_URL + '/passwordResetRequests.json' + bust, noCache).then(r => r.ok ? r.json() : {}),
+      fetch(FIREBASE_DB_URL + '/presence.json' + bust, noCache).then(r => r.ok ? r.json() : {}),
     ]).then(([names, banned, requests, presence]) => {
       renderPlayersList(names || {}, banned || {}, requests || {}, presence || {});
       showAdminPlayersToast('✅ Spielerliste geladen');
