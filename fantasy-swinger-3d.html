@@ -2475,13 +2475,21 @@
     if (myProfileMeta){
       const myNameKey = encodeURIComponent(myProfileMeta.name.trim().toLowerCase()).replace(/[.#$\[\]]/g, '_');
       firebase.database().ref('bannedNames/' + myNameKey).on('value', snapshot => {
+        const el = document.getElementById('bannedScreen');
         if (snapshot.val()){
           localStorage.removeItem('rankmann_activeProfileId');
           // Full-screen block, not a dismissable alert() — the ban should be
           // unmissable and the player shouldn't be able to just click past
           // it and keep playing on this profile.
-          const el = document.getElementById('bannedScreen');
           if (el) el.classList.remove('hidden');
+        } else {
+          // Un-banned — restore access immediately, in this same running
+          // session, without needing a manual reload. The game itself never
+          // stopped running underneath the block screen, so just hiding it
+          // and re-registering the active profile id is enough to let the
+          // player carry on right away.
+          if (el) el.classList.add('hidden');
+          localStorage.setItem('rankmann_activeProfileId', JSON.stringify(ACTIVE_PROFILE_ID));
         }
       }, () => {});
     }
