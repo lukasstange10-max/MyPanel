@@ -977,10 +977,27 @@
     border: 1px solid rgba(255,190,80,0.3); text-align: left;
   }
   .adminPlayerCard.banned { border-color: rgba(255,92,108,0.6); background: rgba(255,92,108,0.08); }
+  .adminPlayerCard.pendingReset {
+    border-color: rgba(122,255,196,0.8);
+    animation: adminPendingResetPulse 1.6s ease-in-out infinite;
+  }
+  @keyframes adminPendingResetPulse {
+    0%, 100% { box-shadow: 0 0 0 rgba(122,255,196,0); }
+    50% { box-shadow: 0 0 14px rgba(122,255,196,0.65); }
+  }
   .adminPlayerName { font-weight: 800; font-size: 16px; }
   .adminPlayerName .banTag { color: #ff9aa2; font-size: 11.5px; font-weight: 700; margin-left: 6px; }
   .adminPlayerName .reqTag { color: #7affc4; font-size: 11.5px; font-weight: 700; margin-left: 6px; }
   .adminPlayerMeta { font-size: 11.5px; color: rgba(255,255,255,0.5); margin-top: 4px; }
+  .adminPlayerPresence { font-size: 11.5px; margin-top: 2px; font-weight: 700; }
+  .adminPlayerPresence.online { color: #7affc4; }
+  .adminPlayerPresence.offline { color: rgba(255,255,255,0.4); }
+  .onlineDot {
+    display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+    background: #7affc4; margin-right: 5px; box-shadow: 0 0 6px rgba(122,255,196,0.8);
+    animation: adminOnlineDotPulse 1.4s ease-in-out infinite;
+  }
+  @keyframes adminOnlineDotPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
   .adminPlayerActions { display: flex; gap: 6px; margin-top: 12px; flex-wrap: wrap; }
   .adminPlayerActionBtn {
     padding: 7px 12px; font-size: 12px; font-weight: 700; border-radius: 8px; cursor: pointer;
@@ -2492,6 +2509,22 @@
           localStorage.setItem('rankmann_activeProfileId', JSON.stringify(ACTIVE_PROFILE_ID));
         }
       }, () => {});
+
+      // Presence tracking — standard Firebase pattern using onDisconnect().
+      // ".info/connected" fires whenever THIS client's socket connects (both
+      // on first load and after any reconnect), and onDisconnect() is
+      // registered fresh each time so the server-side "went offline" write
+      // survives even a hard disconnect (closed tab, lost network) that
+      // never gets a chance to run any of our own JS.
+      const presenceRef = firebase.database().ref('presence/' + myNameKey);
+      firebase.database().ref('.info/connected').on('value', snap => {
+        if (snap.val() === true){
+          presenceRef.onDisconnect().set({ online: false, lastSeen: firebase.database.ServerValue.TIMESTAMP, name: myProfileMeta.name })
+            .then(() => {
+              presenceRef.set({ online: true, lastSeen: firebase.database.ServerValue.TIMESTAMP, name: myProfileMeta.name });
+            });
+        }
+      });
     }
   } catch(e){} // Firebase SDK failed to load/init (e.g. offline on first load) — game continues without events
   function writeGlobalEvent(type, durationMinutes){
@@ -5144,7 +5177,7 @@
     el.textContent = msg;
     setTimeout(() => { if (el.textContent === msg) el.textContent = ''; }, 2500);
   }
-  function renderPlayersList(names, banned, requests){
+  function renderPlayersList(names, banned, requests, presence){
     const listEl = document.getElementById('adminPlayersList');
     listEl.innerHTML = '';
     const keys = Object.keys(names || {}).sort((a,b) => (names[b].createdAt||0) - (names[a].createdAt||0));
@@ -5156,11 +5189,17 @@
       const entry = names[key];
       const isBanned = !!(banned && banned[key]);
       const hasRequest = !!(requests && requests[key]);
+      const pres = presence && presence[key];
+      const isOnline = !!(pres && pres.online);
+      const presenceHtml = isOnline
+        ? '<span class="onlineDot"></span>Online'
+        : (pres && pres.lastSeen ? 'Zuletzt online: ' + formatPlayerDate(pres.lastSeen) : 'Noch nie online');
       const card = document.createElement('div');
-      card.className = 'adminPlayerCard' + (isBanned ? ' banned' : '');
+      card.className = 'adminPlayerCard' + (isBanned ? ' banned' : '') + (hasRequest ? ' pendingReset' : '');
       card.innerHTML = `
         <div class="adminPlayerName">${entry.displayName || key}${isBanned ? '<span class="banTag">🚫 GEBANNT</span>' : ''}${hasRequest ? '<span class="reqTag">🔔 Passwort-Reset angefragt</span>' : ''}</div>
         <div class="adminPlayerMeta">Registriert: ${formatPlayerDate(entry.createdAt)}</div>
+        <div class="adminPlayerPresence ${isOnline ? 'online' : 'offline'}">${presenceHtml}</div>
         <div class="adminPlayerActions">
           <button class="adminPlayerActionBtn danger" data-action="${isBanned ? 'unban' : 'ban'}" data-key="${key}">${isBanned ? '✅ Entbannen' : '🚫 Bannen'}</button>
           <button class="adminPlayerActionBtn" data-action="resetpw" data-key="${key}" data-name="${entry.displayName || key}">🔑 Passwort zurücksetzen</button>
@@ -5176,14 +5215,20 @@
       fetch(FIREBASE_DB_URL + '/profileNames.json').then(r => r.ok ? r.json() : {}),
       fetch(FIREBASE_DB_URL + '/bannedNames.json').then(r => r.ok ? r.json() : {}),
       fetch(FIREBASE_DB_URL + '/passwordResetRequests.json').then(r => r.ok ? r.json() : {}),
-    ]).then(([names, banned, requests]) => {
-      renderPlayersList(names || {}, banned || {}, requests || {});
+      fetch(FIREBASE_DB_URL + '/presence.json').then(r => r.ok ? r.json() : {}),
+    ]).then(([names, banned, requests, presence]) => {
+      renderPlayersList(names || {}, banned || {}, requests || {}, presence || {});
       showAdminPlayersToast('✅ Spielerliste geladen');
     }).catch(() => showAdminPlayersToast('❌ Konnte Spielerliste nicht laden'));
   }
+  let adminPlayersAutoRefresh = null;
   document.getElementById('adminOpenPlayersScreenBtn').addEventListener('click', () => {
     document.getElementById('adminPlayersScreen').classList.remove('hidden');
     loadPlayersList();
+    // Keep online/offline status current while the admin has this screen
+    // open, without them needing to keep hitting "Neu laden" manually.
+    if (adminPlayersAutoRefresh) clearInterval(adminPlayersAutoRefresh);
+    adminPlayersAutoRefresh = setInterval(loadPlayersList, 15000);
   });
   document.getElementById('adminClearNotifiesBtn').addEventListener('click', () => {
     // Clears any pending, never-opened one-time password reveals — e.g.
@@ -5199,6 +5244,7 @@
   });
   document.getElementById('adminPlayersCloseBtn').addEventListener('click', () => {
     document.getElementById('adminPlayersScreen').classList.add('hidden');
+    if (adminPlayersAutoRefresh) { clearInterval(adminPlayersAutoRefresh); adminPlayersAutoRefresh = null; }
   });
   document.getElementById('adminLoadPlayersBtn').addEventListener('click', loadPlayersList);
   document.getElementById('adminPlayersList').addEventListener('click', e => {
