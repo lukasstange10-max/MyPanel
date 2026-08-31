@@ -1577,7 +1577,7 @@
   <div id="stormBadge">💨 Sturm — Wind erschwert das Schwingen!</div>
   <div id="streakDisplay">
     <div id="streakPct">🔥+10% mehr Pokale</div>
-    <div id="streakSub">steigt nur auf der Plattform, wo du zweimal hintereinander gelandet bist</div>
+    <div id="streakSub">steigt nur auf der Plattform, wo du dreimal hintereinander gelandet bist</div>
   </div>
   <div id="globalEventBadge">
     <span id="globalEventLabel">✨ 2x Pokale</span>
@@ -3775,6 +3775,18 @@
   let streakCount = 0;
   const STREAK_SAME_SPOT_DIST = 3; // world units — how close counts as "the same spot"
   function streakBonusPct(){
+    // ACTUAL bonus applied to the trophy math — deliberately lags one
+    // landing behind what's shown on screen (see streakDisplayPct below).
+    // The 2nd landing already shows "+10%" as a preview, but that 10%
+    // doesn't actually pay out until the 3rd landing "catches up" to it.
+    return streakCount >= 3 ? Math.min(100, (streakCount - 2) * 10) : 0;
+  }
+  function streakDisplayPct(){
+    // What's SHOWN on screen — one tier ahead of what's actually applied.
+    // Shows "+10%" already at the 2nd landing (even though that 2nd landing
+    // still pays out the normal reward), then "+20%" at the 3rd landing
+    // (at which point the 3rd landing's reward finally gets the +10% that
+    // was previewed one step earlier), and so on.
     return streakCount >= 2 ? Math.min(100, (streakCount - 1) * 10) : 0;
   }
   function applyStreakBonus(amount){
@@ -3812,7 +3824,10 @@
   function updateStreakDisplay(){
     const el = document.getElementById('streakDisplay');
     if (!el) return;
-    const pct = streakBonusPct();
+    // Shows the PREVIEW percentage (one tier ahead of what's actually
+    // applied) — appears already at the 2nd landing, shows the number that
+    // will start counting once the 3rd landing "catches up" to it.
+    const pct = streakDisplayPct();
     if (pct <= 0){
       el.classList.remove('show');
       return;
