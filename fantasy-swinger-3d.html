@@ -4421,22 +4421,56 @@
   // friend would be a lot of extra weight for what's meant to be a light
   // "see where your friend is" feature, so this is a translucent capsule
   // plus a floating name tag instead.
-  function makeGhostMesh(name){
+  function makeGhostMesh(name, skinId){
+    const skin = SKIN_DEFS.find(s => s.id === skinId) || SKIN_DEFS[0];
     const g = new THREE.Group();
-    const hue = Array.from(name).reduce((a,c) => a + c.charCodeAt(0), 0) % 360 / 360; // stable per-name color
-    const mat = new THREE.MeshStandardMaterial({
-      color: new THREE.Color().setHSL(hue, 0.65, 0.6), transparent: true, opacity: 0.6,
-      emissive: new THREE.Color().setHSL(hue, 0.65, 0.4), emissiveIntensity: 0.5,
+    // A simplified blocky stand-in of the real character — same silhouette
+    // language (boxy torso/limbs) and the friend's ACTUAL equipped skin
+    // colors, but without the full animation rig (walk cycle, grapple pose,
+    // etc.) that the local player's mesh has, since ghosts only ever need
+    // to translate/rotate smoothly, never actually animate joints.
+    const frontMat = new THREE.MeshStandardMaterial({ color: skin.front, roughness: 0.55, metalness: 0.1 });
+    const backMat = new THREE.MeshStandardMaterial({ color: skin.back, roughness: 0.4, metalness: 0.15 });
+    const limbMat = new THREE.MeshStandardMaterial({ color: skin.limb, roughness: 0.4, metalness: 0.15 });
+    const bootMat = new THREE.MeshStandardMaterial({ color: skin.boot, roughness: 0.5, metalness: 0.15 });
+    const glowMat = new THREE.MeshStandardMaterial({ color: skin.glow, emissive: skin.glowEm, emissiveIntensity: 0.8 });
+    const headMat = new THREE.MeshStandardMaterial({ color: 0xf0c9a0, roughness: 0.6 });
+    const hairMat = new THREE.MeshStandardMaterial({ color: 0x5a3a22, roughness: 0.7 });
+
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), headMat);
+    head.position.y = 1.85;
+    g.add(head);
+    const hair = new THREE.Mesh(new THREE.SphereGeometry(0.32, 8, 6), hairMat);
+    hair.position.y = 2.12; hair.scale.set(1, 0.75, 1);
+    g.add(hair);
+
+    const torsoFront = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.85, 0.15), frontMat);
+    torsoFront.position.set(0, 1.35, 0.15);
+    g.add(torsoFront);
+    const torsoBack = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.85, 0.15), backMat);
+    torsoBack.position.set(0, 1.35, -0.15);
+    g.add(torsoBack);
+    const chestGlow = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.05, 10), glowMat);
+    chestGlow.rotation.x = Math.PI / 2;
+    chestGlow.position.set(0, 1.4, 0.23);
+    g.add(chestGlow);
+
+    [-0.42, 0.42].forEach(x => {
+      const arm = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.8, 0.26), limbMat);
+      arm.position.set(x, 1.35, 0);
+      g.add(arm);
     });
-    // CapsuleGeometry isn't available in this Three.js version (r128) — a
-    // cylinder body with a sphere cap on top gives basically the same
-    // rounded-pill silhouette.
-    const bodyCyl = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 1.3, 12), mat);
-    bodyCyl.position.y = 1.15;
-    g.add(bodyCyl);
-    const topCap = new THREE.Mesh(new THREE.SphereGeometry(0.45, 12, 8), mat);
-    topCap.position.y = 1.8;
-    g.add(topCap);
+    [-0.18, 0.18].forEach(x => {
+      const leg = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.75, 0.3), limbMat);
+      leg.position.set(x, 0.55, 0);
+      g.add(leg);
+      const boot = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.2, 0.34), bootMat);
+      boot.position.set(x, 0.12, 0.02);
+      g.add(boot);
+    });
+
+    g.traverse(obj => { if (obj.isMesh){ obj.castShadow = true; } });
+
     const canvas = document.createElement('canvas');
     canvas.width = 256; canvas.height = 64;
     const ctx = canvas.getContext('2d');
@@ -4454,7 +4488,14 @@
   }
   function updateGhostFromRoomData(key, p){
     if (!friendGhosts[key]){
-      friendGhosts[key] = { mesh: makeGhostMesh(p.name || 'Freund'), targetPos: new THREE.Vector3(p.x, p.y, p.z), targetYaw: p.yaw || 0, world: p.world, name: p.name };
+      friendGhosts[key] = { mesh: makeGhostMesh(p.name || 'Freund', p.skin), skinId: p.skin, targetPos: new THREE.Vector3(p.x, p.y, p.z), targetYaw: p.yaw || 0, world: p.world, name: p.name };
+    } else if (friendGhosts[key].skinId !== p.skin){
+      // Friend changed their equipped skin mid-session — rebuild the ghost
+      // with the new colors rather than trying to live-patch materials.
+      const oldPos = friendGhosts[key].mesh.position.clone();
+      removeGhost(key);
+      friendGhosts[key] = { mesh: makeGhostMesh(p.name || 'Freund', p.skin), skinId: p.skin, targetPos: new THREE.Vector3(p.x, p.y, p.z), targetYaw: p.yaw || 0, world: p.world, name: p.name };
+      friendGhosts[key].mesh.position.copy(oldPos);
     }
     const gh = friendGhosts[key];
     gh.targetPos.set(p.x, p.y, p.z);
@@ -4496,7 +4537,7 @@
     roomSyncTimer = 0;
     myRoomPlayerRef.set({
       name: (typeof getActiveProfileMeta === 'function' && getActiveProfileMeta()) ? getActiveProfileMeta().name : 'Spieler',
-      x: player.pos.x, y: player.pos.y, z: player.pos.z, yaw: player.yaw, world: selectedWorld,
+      x: player.pos.x, y: player.pos.y, z: player.pos.z, yaw: player.yaw, world: selectedWorld, skin: equippedSkin,
       updatedAt: firebase.database.ServerValue.TIMESTAMP,
     }).catch(() => {}); // best-effort — a dropped position update just means a friend's ghost is briefly stale, never worth interrupting gameplay over
   }
