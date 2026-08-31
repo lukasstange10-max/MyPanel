@@ -3300,6 +3300,34 @@
   renderer.shadowMap.enabled = true;
   document.body.appendChild(renderer.domElement);
 
+  // WebGL context loss — different from the "couldn't even create WebGL"
+  // case handled above. This happens mid-session (GPU driver hiccup, too
+  // many WebGL tabs open, laptop switching graphics chips, etc.) — the rest
+  // of the page (HUD, timers, Firebase) keeps running fine since none of
+  // that depends on the GPU, but the 3D view goes blank/white and stays
+  // that way forever unless something is done. Fully recovering this huge
+  // scene's textures/geometries in place would be complex and fragile, so
+  // instead: pause, show a clear message, offer a reload (which cleanly
+  // reinitializes everything) rather than leaving the player staring at an
+  // unexplained blank screen with no way forward.
+  renderer.domElement.addEventListener('webglcontextlost', (e) => {
+    e.preventDefault();
+    if (typeof running !== 'undefined' && running) { paused = true; }
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(10,5,20,0.92);color:#fff;font-family:sans-serif;text-align:center;padding:24px;box-sizing:border-box;';
+    overlay.innerHTML = `
+      <div style="max-width:440px;">
+        <div style="font-size:48px;margin-bottom:12px;">🔌⚠️</div>
+        <h1 style="font-size:21px;margin:0 0 12px;">Grafik-Verbindung verloren</h1>
+        <p style="font-size:14px;line-height:1.6;color:rgba(255,255,255,0.8);margin-bottom:18px;">
+          Der Browser hat die Verbindung zur Grafikkarte verloren — das passiert manchmal durch Treiber-Aussetzer oder wenn zu viele Grafik-lastige Tabs gleichzeitig offen sind. Dein Fortschritt ist gespeichert.
+        </p>
+        <button id="contextLostReloadBtn" style="padding:12px 28px;font-size:15px;font-weight:700;border-radius:999px;border:none;background:linear-gradient(135deg,#8a5cff,#5c8cff);color:#fff;cursor:pointer;">🔄 Seite neu laden</button>
+      </div>`;
+    document.body.appendChild(overlay);
+    document.getElementById('contextLostReloadBtn').addEventListener('click', () => location.reload());
+  }, false);
+
   window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth/window.innerHeight;
     camera.updateProjectionMatrix();
