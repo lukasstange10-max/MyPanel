@@ -946,6 +946,21 @@
     width: 20px; height: 20px; border-radius: 50%;
     background: linear-gradient(135deg, #ffe27a, #d9a72f); cursor: pointer; border: 2px solid rgba(20,10,38,0.9);
   }
+  .settingsPairRow { display: flex; gap: 8px; margin-top: 8px; }
+  .settingsPairBtn {
+    flex: 1; padding: 9px 6px; font-size: 12.5px; font-weight: 700;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(180,140,255,0.3);
+    border-radius: 10px; color: rgba(255,255,255,0.75); cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+  .settingsPairBtn:hover { background: rgba(255,255,255,0.09); }
+  .settingsPairBtn.active {
+    background: linear-gradient(135deg, rgba(138,92,255,0.35), rgba(92,140,255,0.35));
+    border-color: rgba(180,140,255,0.8); color: #fff;
+  }
+  #touchLayoutGroup, #vibrationToggleRow { display: none; }
+  body.isTouchDeviceUI #touchLayoutGroup { display: block; }
+  body.isTouchDeviceUI #vibrationToggleRow { display: flex; }
   .settingsToggleRow {
     display: flex; align-items: center; justify-content: space-between;
     margin-top: 16px; font-size: 13.5px; font-weight: 700; color: rgba(255,255,255,0.85);
@@ -1402,6 +1417,20 @@
     position: fixed; right: 22px; bottom: 26px; z-index: 51;
     display: flex; align-items: flex-end; gap: 18px;
   }
+  /* Joystick side swap — for left-handed players / bigger thumbs on the
+     other hand. Mirrors joystick+buttons+sprint+look-zone to the opposite
+     side rather than transform-mirroring (which would flip icons/text). */
+  body.joySideRight #touchJoystickBase { left: auto; right: 26px; }
+  body.joySideRight #touchButtons { right: auto; left: 22px; }
+  body.joySideRight #touchSprintBtn { right: auto; left: 22px; }
+  body.joySideRight #touchLookZone { right: auto; left: 0; }
+  /* Joystick size presets — the JS derives its drag math from the actual
+     rendered size (see getMaxRadius in setupJoystick), so these purely
+     visual overrides stay perfectly in sync with the real touch feel. */
+  body.joySizeSmall #touchJoystickBase { width: 110px; height: 110px; }
+  body.joySizeSmall #touchJoystickNub { width: 48px; height: 48px; margin: -24px 0 0 -24px; }
+  body.joySizeLarge #touchJoystickBase { width: 190px; height: 190px; }
+  body.joySizeLarge #touchJoystickNub { width: 80px; height: 80px; margin: -40px 0 0 -40px; }
   .touchBtn {
     border: 2px solid rgba(180,140,255,0.45);
     background: rgba(20,10,38,0.55);
@@ -1421,6 +1450,15 @@
     position: fixed; right: 22px; bottom: 136px; z-index: 51;
     width: 62px; height: 62px; font-size: 24px;
   }
+  /* Action-button size presets — scales attack/grapple/jump/sprint together,
+     independent of the joystick's own size setting. Pause button stays
+     fixed size (it's not an action button, no need to make it bigger). */
+  body.btnSizeSmall .touchBtn { width: 62px; height: 62px; font-size: 24px; }
+  body.btnSizeSmall .touchBtnBig { width: 77px; height: 77px; font-size: 32px; }
+  body.btnSizeSmall #touchSprintBtn { width: 50px; height: 50px; font-size: 19px; }
+  body.btnSizeLarge .touchBtn { width: 98px; height: 98px; font-size: 38px; }
+  body.btnSizeLarge .touchBtnBig { width: 120px; height: 120px; font-size: 50px; }
+  body.btnSizeLarge #touchSprintBtn { width: 78px; height: 78px; font-size: 30px; }
   #touchPauseBtn {
     position: fixed; left: 50%; top: 18px; transform: translateX(-50%); z-index: 51;
     width: 46px; height: 46px; font-size: 18px;
@@ -2376,8 +2414,33 @@
         <input type="range" id="sfxVolumeSlider" min="0" max="100" value="100" class="settingsSlider">
       </div>
       <div class="settingsGroup" id="mouseSensGroup">
-        <label class="settingsLabel"><span data-i18n="settingsMouseSens">🖱️ Maus-Empfindlichkeit</span> <span id="mouseSensVal">100%</span></label>
+        <label class="settingsLabel"><span data-i18n="settingsMouseSens">🖱️ Umseh-Empfindlichkeit</span> <span id="mouseSensVal">100%</span></label>
         <input type="range" id="mouseSensSlider" min="30" max="250" value="100" class="settingsSlider">
+      </div>
+
+      <div class="settingsGroup" id="touchLayoutGroup">
+        <label class="settingsLabel"><span data-i18n="settingsJoySide">🕹️ Joystick-Seite</span></label>
+        <div class="settingsPairRow">
+          <button class="settingsPairBtn active" id="joySideLeftBtn" data-i18n="settingsJoyLeft">Links</button>
+          <button class="settingsPairBtn" id="joySideRightBtn" data-i18n="settingsJoyRight">Rechts</button>
+        </div>
+        <label class="settingsLabel" style="margin-top:14px;"><span data-i18n="settingsJoySize">🕹️ Joystick-Größe</span></label>
+        <div class="settingsPairRow">
+          <button class="settingsPairBtn" id="joySizeSmallBtn" data-i18n="settingsJoySmall">Klein</button>
+          <button class="settingsPairBtn active" id="joySizeMedBtn" data-i18n="settingsJoyMedium">Mittel</button>
+          <button class="settingsPairBtn" id="joySizeBigBtn" data-i18n="settingsJoyBig">Groß</button>
+        </div>
+        <label class="settingsLabel" style="margin-top:14px;"><span data-i18n="settingsBtnSize">🔘 Button-Größe</span></label>
+        <div class="settingsPairRow">
+          <button class="settingsPairBtn" id="btnSizeSmallBtn" data-i18n="settingsJoySmall">Klein</button>
+          <button class="settingsPairBtn active" id="btnSizeMedBtn" data-i18n="settingsJoyMedium">Mittel</button>
+          <button class="settingsPairBtn" id="btnSizeBigBtn" data-i18n="settingsJoyBig">Groß</button>
+        </div>
+      </div>
+
+      <div class="settingsToggleRow" id="vibrationToggleRow">
+        <span data-i18n="settingsVibration">📳 Vibration bei Treffern/Landungen</span>
+        <button class="settingsToggle" id="toggleVibration" data-on="true"><span class="settingsToggleDot"></span></button>
       </div>
 
       <div class="settingsToggleRow">
@@ -2725,7 +2788,10 @@
       unsavedConfirmText: '💾 You have unsaved changes.', unsavedSaveBtn: 'Save', unsavedDiscardBtn: 'Discard',
       langConfirmText: '🌐 Really change the language?', langConfirmYes: 'Yes, change it',
       settingsTitle: '⚙️ Settings', settingsSub: 'Customize the game to your taste', settingsLangLabel: '🌐 Language',
-      settingsMusicSelect: '🎼 Choose music', settingsMusicVol: '🎵 Music volume', settingsSfxVol: '🔊 Sound volume', settingsMouseSens: '🖱️ Mouse sensitivity',
+      settingsMusicSelect: '🎼 Choose music', settingsMusicVol: '🎵 Music volume', settingsSfxVol: '🔊 Sound volume', settingsMouseSens: '🖱️ Look sensitivity',
+      settingsJoySide: '🕹️ Joystick side', settingsJoyLeft: 'Left', settingsJoyRight: 'Right', settingsJoySize: '🕹️ Joystick size',
+      settingsJoySmall: 'Small', settingsJoyMedium: 'Medium', settingsJoyBig: 'Large', settingsBtnSize: '🔘 Button size',
+      settingsVibration: '📳 Vibration on hits/landings',
       settingsWeather: '🌧️ Weather effects', settingsAchToasts: '🔔 Achievement notifications', settingsCamShake: '📳 Screen shake', settingsTrophyFly: '🏆 Trophy fly animation',
       settingsSaveBtn: '💾 Save', settingsResetBtn: '🗑️ Reset save data', closeBtn4: 'Close',
       newSkinUnlocked: 'New skin unlocked!', newVineUnlocked: 'New vine unlocked!',
@@ -2782,7 +2848,10 @@
       unsavedConfirmText: '💾 Tu as des modifications non enregistrées.', unsavedSaveBtn: 'Enregistrer', unsavedDiscardBtn: 'Ignorer',
       langConfirmText: '🌐 Vraiment changer de langue ?', langConfirmYes: 'Oui, changer',
       settingsTitle: '⚙️ Paramètres', settingsSub: 'Personnalise le jeu selon tes goûts', settingsLangLabel: '🌐 Langue',
-      settingsMusicSelect: '🎼 Choisir la musique', settingsMusicVol: '🎵 Volume de la musique', settingsSfxVol: '🔊 Volume des sons', settingsMouseSens: '🖱️ Sensibilité de la souris',
+      settingsMusicSelect: '🎼 Choisir la musique', settingsMusicVol: '🎵 Volume de la musique', settingsSfxVol: '🔊 Volume des sons', settingsMouseSens: '🖱️ Sensibilité de visée',
+      settingsJoySide: '🕹️ Côté du joystick', settingsJoyLeft: 'Gauche', settingsJoyRight: 'Droite', settingsJoySize: '🕹️ Taille du joystick',
+      settingsJoySmall: 'Petit', settingsJoyMedium: 'Moyen', settingsJoyBig: 'Grand', settingsBtnSize: '🔘 Taille des boutons',
+      settingsVibration: '📳 Vibration lors des coups/atterrissages',
       settingsWeather: '🌧️ Effets météo', settingsAchToasts: '🔔 Notifications de succès', settingsCamShake: "📳 Tremblement d'écran", settingsTrophyFly: '🏆 Animation de trophée',
       settingsSaveBtn: '💾 Enregistrer', settingsResetBtn: '🗑️ Réinitialiser la sauvegarde', closeBtn4: 'Fermer',
       newSkinUnlocked: 'Nouveau skin débloqué !', newVineUnlocked: 'Nouvelle liane débloquée !',
@@ -2839,7 +2908,10 @@
       unsavedConfirmText: '💾 Tienes cambios sin guardar.', unsavedSaveBtn: 'Guardar', unsavedDiscardBtn: 'Descartar',
       langConfirmText: '🌐 ¿Seguro que quieres cambiar el idioma?', langConfirmYes: 'Sí, cambiar',
       settingsTitle: '⚙️ Ajustes', settingsSub: 'Personaliza el juego a tu gusto', settingsLangLabel: '🌐 Idioma',
-      settingsMusicSelect: '🎼 Elegir música', settingsMusicVol: '🎵 Volumen de música', settingsSfxVol: '🔊 Volumen de sonido', settingsMouseSens: '🖱️ Sensibilidad del ratón',
+      settingsMusicSelect: '🎼 Elegir música', settingsMusicVol: '🎵 Volumen de música', settingsSfxVol: '🔊 Volumen de sonido', settingsMouseSens: '🖱️ Sensibilidad de mirada',
+      settingsJoySide: '🕹️ Lado del joystick', settingsJoyLeft: 'Izquierda', settingsJoyRight: 'Derecha', settingsJoySize: '🕹️ Tamaño del joystick',
+      settingsJoySmall: 'Pequeño', settingsJoyMedium: 'Mediano', settingsJoyBig: 'Grande', settingsBtnSize: '🔘 Tamaño de botones',
+      settingsVibration: '📳 Vibración en golpes/aterrizajes',
       settingsWeather: '🌧️ Efectos climáticos', settingsAchToasts: '🔔 Notificaciones de logros', settingsCamShake: '📳 Sacudida de pantalla', settingsTrophyFly: '🏆 Animación de trofeo',
       settingsSaveBtn: '💾 Guardar', settingsResetBtn: '🗑️ Restablecer partida', closeBtn4: 'Cerrar',
       newSkinUnlocked: '¡Nueva skin desbloqueada!', newVineUnlocked: '¡Nueva liana desbloqueada!',
@@ -2896,7 +2968,10 @@
       unsavedConfirmText: '💾 Você tem alterações não salvas.', unsavedSaveBtn: 'Salvar', unsavedDiscardBtn: 'Descartar',
       langConfirmText: '🌐 Mudar de idioma mesmo?', langConfirmYes: 'Sim, mudar',
       settingsTitle: '⚙️ Configurações', settingsSub: 'Personalize o jogo ao seu gosto', settingsLangLabel: '🌐 Idioma',
-      settingsMusicSelect: '🎼 Escolher música', settingsMusicVol: '🎵 Volume da música', settingsSfxVol: '🔊 Volume do som', settingsMouseSens: '🖱️ Sensibilidade do mouse',
+      settingsMusicSelect: '🎼 Escolher música', settingsMusicVol: '🎵 Volume da música', settingsSfxVol: '🔊 Volume do som', settingsMouseSens: '🖱️ Sensibilidade de mira',
+      settingsJoySide: '🕹️ Lado do joystick', settingsJoyLeft: 'Esquerda', settingsJoyRight: 'Direita', settingsJoySize: '🕹️ Tamanho do joystick',
+      settingsJoySmall: 'Pequeno', settingsJoyMedium: 'Médio', settingsJoyBig: 'Grande', settingsBtnSize: '🔘 Tamanho dos botões',
+      settingsVibration: '📳 Vibração em acertos/pousos',
       settingsWeather: '🌧️ Efeitos climáticos', settingsAchToasts: '🔔 Notificações de conquistas', settingsCamShake: '📳 Tremor de tela', settingsTrophyFly: '🏆 Animação de troféu',
       settingsSaveBtn: '💾 Salvar', settingsResetBtn: '🗑️ Redefinir progresso', closeBtn4: 'Fechar',
       newSkinUnlocked: 'Nova skin desbloqueada!', newVineUnlocked: 'Novo cipó desbloqueado!',
@@ -4357,6 +4432,7 @@
 
   // ---------- TOUCH CONTROLS ----------
   const isTouchDevice = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+  document.body.classList.toggle('isTouchDeviceUI', isTouchDevice); // shows the touch-only settings (joystick side/size, vibration)
   if (isTouchDevice) {
     document.getElementById('touchControls').classList.remove('hidden');
     document.getElementById('startControlsGrid').style.display = 'none';
@@ -4371,7 +4447,12 @@
     const base = document.getElementById('touchJoystickBase');
     const nub = document.getElementById('touchJoystickNub');
     let joyPointerId = null;
-    const maxRadius = 55;
+    // Derived from the joystick's ACTUAL current rendered size (not a fixed
+    // constant) so the drag-to-full-tilt distance always matches whatever
+    // size the player picked in settings (small/medium/large) — otherwise
+    // the visual circle and the real "how far do I need to drag" distance
+    // would drift out of sync.
+    function getMaxRadius(){ return base.getBoundingClientRect().width / 2 * 0.733; }
 
     function setKeysFromVector(dx, dy){
       const dead = 0.28;
@@ -4398,6 +4479,7 @@
       const rect = base.getBoundingClientRect();
       const cx = rect.left + rect.width / 2;
       const cy = rect.top + rect.height / 2;
+      const maxRadius = getMaxRadius();
       let dx = e.clientX - cx, dy = e.clientY - cy;
       const dist = Math.min(Math.hypot(dx, dy), maxRadius);
       const angle = Math.atan2(dy, dx);
@@ -4431,13 +4513,13 @@
       const dx = e.clientX - lastX, dy = e.clientY - lastY;
       lastX = e.clientX; lastY = e.clientY;
       if (photoModeActive){
-        photoCamYaw -= dx * 0.0055;
-        photoCamPitch -= dy * 0.0055;
+        photoCamYaw -= dx * 0.0055 * gameSettings.mouseSensitivity;
+        photoCamPitch -= dy * 0.0055 * gameSettings.mouseSensitivity;
         photoCamPitch = Math.max(-1.3, Math.min(1.3, photoCamPitch));
         return;
       }
-      player.yaw -= dx * 0.0055;
-      player.pitch -= dy * 0.0055;
+      player.yaw -= dx * 0.0055 * gameSettings.mouseSensitivity;
+      player.pitch -= dy * 0.0055 * gameSettings.mouseSensitivity;
       player.pitch = Math.max(-1.2, Math.min(1.0, player.pitch));
     });
     function endLook(e){
@@ -4723,6 +4805,13 @@
     noise.start();
     noise.stop(ctx.currentTime + duration + 0.02);
   }
+  // Best-effort haptic feedback — navigator.vibrate() is Android-Chrome-only
+  // (no iOS Safari support at all, that's an Apple platform restriction, not
+  // something fixable here), so this silently no-ops everywhere else.
+  function vibrate(ms){
+    if (!gameSettings.vibrationEnabled) return;
+    try { if (navigator.vibrate) navigator.vibrate(ms); } catch(e){}
+  }
   const sfx = {
     grappleAttach: () => playSoundBuffer('webshoot', 0.9),
     grappleRelease: () => playTone(420, 0.2, 'triangle', 0.22, 900),
@@ -4905,6 +4994,10 @@
     trophyFlyEnabled: true,
     mouseSensitivity: 1.0,
     musicTrack: 'default',
+    joystickSide: 'left', // 'left' or 'right'
+    joystickSize: 'medium', // 'small' | 'medium' | 'large'
+    buttonSize: 'medium', // 'small' | 'medium' | 'large' — attack/grapple/jump/sprint, independent of joystick size
+    vibrationEnabled: true,
   };
   let gameSettings = Object.assign({}, DEFAULT_SETTINGS, storageGet('rankmann_settings', {}));
   function saveSettings(){ storageSet('rankmann_settings', gameSettings); }
@@ -4912,6 +5005,22 @@
     if (musicVolumeGain) musicVolumeGain.gain.value = gameSettings.musicVolume;
     if (sfxVolumeGain) sfxVolumeGain.gain.value = gameSettings.sfxVolume;
   }
+  function applyTouchLayoutSettings(){
+    document.body.classList.toggle('joySideRight', gameSettings.joystickSide === 'right');
+    document.body.classList.toggle('joySizeSmall', gameSettings.joystickSize === 'small');
+    document.body.classList.toggle('joySizeLarge', gameSettings.joystickSize === 'large');
+    document.body.classList.toggle('btnSizeSmall', gameSettings.buttonSize === 'small');
+    document.body.classList.toggle('btnSizeLarge', gameSettings.buttonSize === 'large');
+    document.getElementById('joySideLeftBtn').classList.toggle('active', gameSettings.joystickSide !== 'right');
+    document.getElementById('joySideRightBtn').classList.toggle('active', gameSettings.joystickSide === 'right');
+    document.getElementById('joySizeSmallBtn').classList.toggle('active', gameSettings.joystickSize === 'small');
+    document.getElementById('joySizeMedBtn').classList.toggle('active', gameSettings.joystickSize === 'medium');
+    document.getElementById('joySizeBigBtn').classList.toggle('active', gameSettings.joystickSize === 'large');
+    document.getElementById('btnSizeSmallBtn').classList.toggle('active', gameSettings.buttonSize === 'small');
+    document.getElementById('btnSizeMedBtn').classList.toggle('active', gameSettings.buttonSize === 'medium');
+    document.getElementById('btnSizeBigBtn').classList.toggle('active', gameSettings.buttonSize === 'large');
+  }
+  applyTouchLayoutSettings();
   function resetGameProgress(){
     Object.keys(localStorage).forEach(key => {
       if (key.startsWith('rankmann_')) localStorage.removeItem(key);
@@ -6323,6 +6432,7 @@
     if (!gameSettings.trophyFlyEnabled){
       // Animation off — no point delaying the number then, just show it right away.
       updateTrophyDisplay();
+      vibrate(10);
       return;
     }
     const layer = document.getElementById('trophyFlyLayer');
@@ -6347,6 +6457,7 @@
       // the number change always lines up with seeing the animation arrive.
       updateTrophyDisplay();
       pulseBox('box-checkpoints', 'pulse');
+      vibrate(10);
     }, 1200);
     setTimeout(() => { item.remove(); }, 1470);
   }
@@ -6593,6 +6704,7 @@
     if (!player.wasOnGround && player.onGround && player.lastImpactSpeed > HERO_LAND_MIN_SPEED && !player.grappledSinceGrounded){
       anim.heroLandT = HERO_LAND_DURATION;
       sfx.land();
+      vibrate(15);
       if (gameSettings.cameraShakeEnabled) camShakeT = 0.35;
     }
     // Same-platform streak — only trophy checkpoints count (landing on the
@@ -6826,6 +6938,7 @@
         player.invuln = 2.0;
         updateLivesDisplay();
         pulseBox('box-lives', 'shake');
+        vibrate(45);
         // knockback
         const away = new THREE.Vector3().subVectors(player.pos, en.mesh.position).normalize();
         player.vel.addScaledVector(away, 12);
@@ -6864,6 +6977,7 @@
         player.invuln = 1.5;
         updateLivesDisplay();
         pulseBox('box-lives', 'shake');
+        vibrate(45);
         const away = new THREE.Vector3().subVectors(player.pos, en.mesh.position).normalize();
         player.vel.addScaledVector(away, 8);
         player.vel.y += 4;
@@ -7276,7 +7390,8 @@
     document.getElementById('toggleAchToasts').dataset.on = gameSettings.achievementToastsEnabled;
     document.getElementById('toggleCamShake').dataset.on = gameSettings.cameraShakeEnabled;
     document.getElementById('toggleTrophyFly').dataset.on = gameSettings.trophyFlyEnabled;
-    document.getElementById('mouseSensGroup').style.display = isTouchDevice ? 'none' : '';
+    // Now shown on touch devices too (used to be mouse-only, hidden here) —
+    // the same slider now also scales the touch look-zone's drag sensitivity.
   }
   let settingsSnapshot = null;
   let settingsDirty = false;
@@ -7347,6 +7462,31 @@
   bindSettingsToggle('toggleAchToasts', 'achievementToastsEnabled');
   bindSettingsToggle('toggleCamShake', 'cameraShakeEnabled');
   bindSettingsToggle('toggleTrophyFly', 'trophyFlyEnabled');
+  bindSettingsToggle('toggleVibration', 'vibrationEnabled');
+  document.getElementById('joySideLeftBtn').addEventListener('click', () => {
+    gameSettings.joystickSide = 'left'; saveSettings(); applyTouchLayoutSettings();
+  });
+  document.getElementById('joySideRightBtn').addEventListener('click', () => {
+    gameSettings.joystickSide = 'right'; saveSettings(); applyTouchLayoutSettings();
+  });
+  document.getElementById('joySizeSmallBtn').addEventListener('click', () => {
+    gameSettings.joystickSize = 'small'; saveSettings(); applyTouchLayoutSettings();
+  });
+  document.getElementById('joySizeMedBtn').addEventListener('click', () => {
+    gameSettings.joystickSize = 'medium'; saveSettings(); applyTouchLayoutSettings();
+  });
+  document.getElementById('joySizeBigBtn').addEventListener('click', () => {
+    gameSettings.joystickSize = 'large'; saveSettings(); applyTouchLayoutSettings();
+  });
+  document.getElementById('btnSizeSmallBtn').addEventListener('click', () => {
+    gameSettings.buttonSize = 'small'; saveSettings(); applyTouchLayoutSettings();
+  });
+  document.getElementById('btnSizeMedBtn').addEventListener('click', () => {
+    gameSettings.buttonSize = 'medium'; saveSettings(); applyTouchLayoutSettings();
+  });
+  document.getElementById('btnSizeBigBtn').addEventListener('click', () => {
+    gameSettings.buttonSize = 'large'; saveSettings(); applyTouchLayoutSettings();
+  });
 
   function showSettingsSavedToast(){
     const toast = document.getElementById('settingsSavedToast');
