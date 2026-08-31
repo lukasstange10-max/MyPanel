@@ -3056,7 +3056,36 @@
   scene.background = new THREE.Color(0x1a0f2e);
 
   const camera = new THREE.PerspectiveCamera(70, window.innerWidth/window.innerHeight, 0.1, 2000);
-  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  let renderer;
+  try {
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+  } catch(e){
+    // WebGL context creation failed — usually means the browser/device has
+    // hardware acceleration disabled, is out of GPU resources (too many
+    // WebGL-heavy tabs open), or is running somewhere without real GPU
+    // access at all (some remote-desktop/sandboxed environments). Nothing
+    // in the game itself can fix this — but a clear message beats a silent
+    // crash with just a cryptic console error and a blank page.
+    document.body.innerHTML = `
+      <div style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+        background:#160a24;color:#fff;font-family:sans-serif;text-align:center;padding:24px;box-sizing:border-box;">
+        <div style="max-width:480px;">
+          <div style="font-size:52px;margin-bottom:12px;">🎮⚠️</div>
+          <h1 style="font-size:22px;margin:0 0 12px;">Grafik konnte nicht gestartet werden</h1>
+          <p style="font-size:14px; line-height:1.6; color:rgba(255,255,255,0.8);">
+            Dein Browser konnte kein WebGL (3D-Grafik) starten. Das liegt fast immer an einer dieser Ursachen:
+          </p>
+          <ul style="text-align:left; font-size:13.5px; line-height:1.7; color:rgba(255,255,255,0.75);">
+            <li>Hardwarebeschleunigung ist im Browser deaktiviert (in den Browser-Einstellungen prüfen)</li>
+            <li>Zu viele andere 3D-/Grafik-lastige Tabs sind gerade offen — welche schließen und neu laden</li>
+            <li>Der Browser oder das Gerät unterstützt WebGL nicht (z. B. sehr alter Browser, oder eine eingeschränkte/virtuelle Umgebung ohne echten Grafikzugriff)</li>
+            <li>Veraltete Grafiktreiber</li>
+          </ul>
+          <p style="font-size:13px; color:rgba(255,255,255,0.6);">Ein anderer Browser (z. B. Chrome oder Edge, aktuelle Version) hilft oft.</p>
+        </div>
+      </div>`;
+    throw e; // stop the rest of the script from trying to run without a renderer
+  }
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.15));
   renderer.shadowMap.enabled = true;
@@ -5355,6 +5384,19 @@
     // Local-only test trigger (not synced via Firebase like the 2x event) —
     // just forces the existing weather system into a storm for a bit so you
     // don't have to wait on the random cycle to try out the wind effect.
+    if (selectedWorld === 3){
+      showAdminToast('⚠️ Kein Wetter in Welt 3 (Weltraum) — bitte in Welt 1 oder 2 testen');
+      return;
+    }
+    if (!gameSettings.weatherEnabled){
+      // Without this, the very next updateWeather() call silently resets
+      // weatherTarget back to 0 (it respects the player's own "Wetter-
+      // Effekte" toggle), making the button look broken for no visible
+      // reason if that setting happened to be off.
+      gameSettings.weatherEnabled = true;
+      saveSettings();
+      showAdminToast('ℹ️ "Wetter-Effekte" war ausgeschaltet — automatisch aktiviert');
+    }
     weatherTarget = 1;
     isStorm = true;
     weatherTimer = 60;
