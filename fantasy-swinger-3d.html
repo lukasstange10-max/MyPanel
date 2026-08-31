@@ -6861,9 +6861,9 @@
       const isOnPlatformNow = player.onGround && horizDist < cp.radius + 1.5;
       if (isOnPlatformNow && !cp.wasOnPlatform){
         // rising edge only — landing once, not every frame while standing still
+        const reward = cp.index + 1 + (cp.world === 3 ? 14 : cp.world === 2 ? 6 : 0); // World 1: 1..6, World 2: 7..14, World 3: 15..24
         if (!cp.passed){
           cp.passed = true;
-          const reward = cp.index + 1 + (cp.world === 3 ? 14 : cp.world === 2 ? 6 : 0); // World 1: 1..6, World 2: 7..14, World 3: 15..24
           // completion glow: rim/base shift to gold, holo-ring brightens
           cp.rimMat.color.set(0xffe27a);
           cp.rimMat.emissive.set(0xd9a72f);
@@ -6871,26 +6871,21 @@
           cp.holoRing.material.color.set(0xffe27a);
           cp.holoRing.material.emissive.set(0xd9a72f);
           cp.glowLight.color.set(0xffe27a);
-          // Math.ceil (not round) so any active bonus always shows up as at
-          // least +1 extra trophy — with round(), small base rewards (like
-          // the flat "+1" for re-collecting an already-claimed checkpoint)
-          // could have their bonus silently vanish back to the same number
-          // (e.g. 1 trophy + 10% = 1.1, which round() collapses to 1 again).
-          const gained = applyStreakBonus(applyEventMultiplier(reward));
-          totalTrophies += gained;
-          storageSet('rankmann_totalTrophies', totalTrophies);
-          pulseBox('box-checkpoints', 'glow-flash');
-          spawnTrophyFly(gained);
-          sfx.trophy();
-        } else {
-          // already claimed once — platform stays re-collectible for a small flat reward
-          const gained = applyStreakBonus(applyEventMultiplier(1));
-          totalTrophies += gained;
-          storageSet('rankmann_totalTrophies', totalTrophies);
-          pulseBox('box-checkpoints', 'glow-flash');
-          spawnTrophyFly(gained);
-          sfx.trophy();
         }
+        // Re-landing on an already-claimed checkpoint now pays out the SAME
+        // full reward as the first time (not a token flat "+1") — the
+        // same-platform streak is meant to make repeatedly working a single
+        // checkpoint genuinely lucrative, so the bonus needs a real base
+        // amount to scale, not a throwaway number.
+        // Math.ceil (not round) inside applyStreakBonus so any active bonus
+        // always shows up as at least +1 extra trophy rather than
+        // occasionally rounding back down to the unboosted amount.
+        const gained = applyStreakBonus(applyEventMultiplier(reward));
+        totalTrophies += gained;
+        storageSet('rankmann_totalTrophies', totalTrophies);
+        pulseBox('box-checkpoints', 'glow-flash');
+        spawnTrophyFly(gained);
+        sfx.trophy();
 
         // send the player straight back to the spawn platform — instant, no effect
         const hub = selectedWorld === 3 ? islandsW3[0] : selectedWorld === 2 ? islandsW2[0] : islandsW1[0];
