@@ -29,6 +29,43 @@
     color: #fff;
     z-index: 10;
   }
+  #stormBadge {
+    position: fixed; top: 18px; left: 50%; z-index: 46;
+    padding: 8px 20px; border-radius: 999px; font-size: 12.5px; font-weight: 800;
+    background: linear-gradient(135deg, rgba(90,110,180,0.92), rgba(50,60,110,0.92));
+    color: #dfe6ff; box-shadow: 0 6px 20px rgba(40,50,110,0.5);
+    transform: translateX(-50%) translateY(-140%);
+    opacity: 0; visibility: hidden;
+    transition: transform 0.45s cubic-bezier(.2,.8,.3,1.1), opacity 0.4s ease, visibility 0s linear 0.45s;
+  }
+  #stormBadge.show {
+    transform: translateX(-50%) translateY(0); opacity: 1; visibility: visible;
+    transition: transform 0.45s cubic-bezier(.2,.8,.3,1.1), opacity 0.4s ease, visibility 0s linear 0s;
+    animation: stormBadgeShake 0.35s ease-in-out infinite;
+  }
+  @keyframes stormBadgeShake {
+    0%, 100% { margin-left: 0; }
+    25% { margin-left: -2px; }
+    75% { margin-left: 2px; }
+  }
+  #streakDisplay {
+    position: fixed; top: 66px; left: 50%; z-index: 44;
+    text-align: center; pointer-events: none;
+    transform: translateX(-50%) translateY(-20px);
+    opacity: 0; visibility: hidden;
+    transition: transform 0.35s cubic-bezier(.2,.8,.3,1.1), opacity 0.3s ease, visibility 0s linear 0.35s;
+  }
+  #streakDisplay.show {
+    transform: translateX(-50%) translateY(0); opacity: 1; visibility: visible;
+    transition: transform 0.35s cubic-bezier(.2,.8,.3,1.1), opacity 0.3s ease, visibility 0s linear 0s;
+  }
+  #streakPct {
+    font-size: 20px; font-weight: 900; text-shadow: 0 2px 10px rgba(0,0,0,0.65), 0 0 18px currentColor;
+  }
+  #streakSub {
+    margin-top: 2px; font-size: 10.5px; font-weight: 600; color: rgba(255,255,255,0.75);
+    text-shadow: 0 1px 4px rgba(0,0,0,0.7);
+  }
   #globalEventBadge {
     position: fixed; bottom: 210px; right: 20px; z-index: 45;
     display: flex; flex-direction: column; align-items: flex-end; gap: 2px;
@@ -109,6 +146,21 @@
     100% { transform: scale(1); }
   }
   .pulse { animation: statPulse 0.4s ease; }
+  #trophyFlyLayer {
+    position: absolute; inset: 0; z-index: 200; pointer-events: none; overflow: visible;
+  }
+  .trophyFlyItem {
+    position: absolute; z-index: 201; display: flex; align-items: center; gap: 14px;
+    font-weight: 900; color: #ffe27a;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.65), 0 0 18px rgba(255,200,80,0.65);
+    transform: translate(-50%, -50%) scale(1);
+    transition: left 1.2s cubic-bezier(.3,.05,.25,1), top 1.2s cubic-bezier(.3,.05,.25,1),
+                transform 1.2s cubic-bezier(.3,.05,.25,1), opacity 0.2s ease 1.02s;
+    opacity: 1;
+  }
+  .trophyFlyItem .trophyFlyNum { font-size: 34px; }
+  .trophyFlyItem .trophyFlyIcon { font-size: 40px; }
+  .trophyFlyItem.arrived { transform: translate(-50%, -50%) scale(0.35); opacity: 0; }
   @keyframes statGlow {
     0%, 100% { box-shadow: 0 4px 18px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06); }
     50%      { box-shadow: 0 4px 26px rgba(122,255,196,0.55), inset 0 1px 0 rgba(255,255,255,0.12); }
@@ -687,17 +739,6 @@
   #statsBtn:hover {
     transform: translateY(-2px) scale(1.02);
     background: linear-gradient(135deg, rgba(140,160,255,0.4), rgba(90,110,230,0.4));
-  }
-  #openWorldBtn {
-    padding: 13px 24px; font-size: 15px; font-weight: 700;
-    background: linear-gradient(135deg, rgba(120,170,220,0.24), rgba(60,110,170,0.24));
-    border: 1px solid rgba(120,170,220,0.55);
-    border-radius: 34px; color: #fff; cursor: pointer;
-    transition: transform 0.15s ease, background 0.2s ease;
-  }
-  #openWorldBtn:hover {
-    transform: translateY(-2px) scale(1.02);
-    background: linear-gradient(135deg, rgba(120,170,220,0.42), rgba(60,110,170,0.42));
   }
 
   #worldSelectRow { display: flex; flex-direction: column; gap: 10px; width: 100%; }
@@ -1532,6 +1573,12 @@
 </div>
 
 <div id="hud">
+  <div id="trophyFlyLayer"></div>
+  <div id="stormBadge">💨 Sturm — Wind erschwert das Schwingen!</div>
+  <div id="streakDisplay">
+    <div id="streakPct">🔥+10% mehr Pokale</div>
+    <div id="streakSub">steigt nur auf der Plattform, wo du zweimal hintereinander gelandet bist</div>
+  </div>
   <div id="globalEventBadge">
     <span id="globalEventLabel">✨ 2x Pokale</span>
     <span id="globalEventTimeVal">--:--</span>
@@ -1682,7 +1729,6 @@
       <button id="achievementsBtn"><span data-i18n="achievementsBtnMenu">🏅 Erfolge</span><span id="achievementsBadge"></span></button>
       <button id="galleryBtn" data-i18n="galleryBtnMenu">🖼️ Galerie</button>
       <button id="statsBtn" data-i18n="statsBtn">📊 Statistiken</button>
-      <button id="openWorldBtn" data-i18n="openWorldBtn">🏙️ Open World</button>
       <button id="adminPanelBtn" class="hidden">🛠️ Admin-Zentrale</button>
     </div>
   </div>
@@ -2242,6 +2288,7 @@
         <button class="adminActionBtn" id="adminUnlockCosmeticsBtn">🎨 Alles freischalten (Skins, Netze, Emotes)</button>
         <button class="adminActionBtn" id="adminUnlockWorldsBtn">🗺️ Alle Welten freischalten</button>
         <button class="adminActionBtn" id="adminUnlockAchievementsBtn">🏅 Alle Erfolge freischalten</button>
+        <button class="adminActionBtn" id="adminTriggerStormBtn">⛈️ Sturm auslösen (60s)</button>
       </div>
       <div class="settingsToggleRow" style="margin-top:12px;">
         <span>🛡️ God Mode (unverwundbar)</span>
@@ -2331,6 +2378,10 @@
       <div class="settingsToggleRow">
         <span data-i18n="settingsCamShake">📳 Bildschirmwackeln</span>
         <button class="settingsToggle" id="toggleCamShake" data-on="true"><span class="settingsToggleDot"></span></button>
+      </div>
+      <div class="settingsToggleRow">
+        <span data-i18n="settingsTrophyFly">🏆 Pokal-Flug-Animation</span>
+        <button class="settingsToggle" id="toggleTrophyFly" data-on="true"><span class="settingsToggleDot"></span></button>
       </div>
 
       <button id="settingsSaveBtn" data-i18n="settingsSaveBtn">💾 Speichern</button>
@@ -2636,7 +2687,7 @@
       musicUnlockHint: '🔊 Enable music',
       profileSwitchHint: 'Switch', statsBtn: '📊 Statistics', statsTitle: '📊 Statistics', statsSub: 'Your progress at a glance',
       statsPlaytime: 'Playtime', statsTrophies: 'Trophies collected', statsAchievements: 'Achievements unlocked', statsSkins: 'Skins owned',
-      statsEnemies: 'Enemies defeated', statsCrystals: 'Crystals collected', statsWorlds: 'Worlds unlocked', statsPhotos: 'Photos taken', closeBtn5: 'Close', statsBtnTitle: 'Statistics', openWorldBtn: '🏙️ Open World',
+      statsEnemies: 'Enemies defeated', statsCrystals: 'Crystals collected', statsWorlds: 'Worlds unlocked', statsPhotos: 'Photos taken', closeBtn5: 'Close', statsBtnTitle: 'Statistics',
       statsLives: 'Lives', statsCurrentWorld: 'Current world', statsEquippedSkin: 'Equipped skin', statsEquippedVine: 'Equipped vine',
       galleryToastSaved: '📸 Saved to gallery',
       photoModeLabel: '📸 Photo mode', photoExitBtn: '✕ Exit',
@@ -2662,7 +2713,7 @@
       langConfirmText: '🌐 Really change the language?', langConfirmYes: 'Yes, change it',
       settingsTitle: '⚙️ Settings', settingsSub: 'Customize the game to your taste', settingsLangLabel: '🌐 Language',
       settingsMusicSelect: '🎼 Choose music', settingsMusicVol: '🎵 Music volume', settingsSfxVol: '🔊 Sound volume', settingsMouseSens: '🖱️ Mouse sensitivity',
-      settingsWeather: '🌧️ Weather effects', settingsAchToasts: '🔔 Achievement notifications', settingsCamShake: '📳 Screen shake',
+      settingsWeather: '🌧️ Weather effects', settingsAchToasts: '🔔 Achievement notifications', settingsCamShake: '📳 Screen shake', settingsTrophyFly: '🏆 Trophy fly animation',
       settingsSaveBtn: '💾 Save', settingsResetBtn: '🗑️ Reset save data', closeBtn4: 'Close',
       newSkinUnlocked: 'New skin unlocked!', newVineUnlocked: 'New vine unlocked!',
       newVineRewardPrefix: 'New vine:', claimBtn: 'Claim', skinUnlockedTag: '✅ Skin unlocked', skinRewardTag: '🎁 Skin reward',
@@ -2693,7 +2744,7 @@
       musicUnlockHint: '🔊 Activer la musique',
       profileSwitchHint: 'Changer', statsBtn: '📊 Statistiques', statsTitle: '📊 Statistiques', statsSub: "Ta progression en un coup d'œil",
       statsPlaytime: 'Temps de jeu', statsTrophies: 'Trophées collectés', statsAchievements: 'Succès débloqués', statsSkins: 'Skins possédés',
-      statsEnemies: 'Ennemis vaincus', statsCrystals: 'Cristaux collectés', statsWorlds: 'Mondes débloqués', statsPhotos: 'Photos prises', closeBtn5: 'Fermer', statsBtnTitle: 'Statistiques', openWorldBtn: '🏙️ Monde ouvert',
+      statsEnemies: 'Ennemis vaincus', statsCrystals: 'Cristaux collectés', statsWorlds: 'Mondes débloqués', statsPhotos: 'Photos prises', closeBtn5: 'Fermer', statsBtnTitle: 'Statistiques',
       statsLives: 'Vies', statsCurrentWorld: 'Monde actuel', statsEquippedSkin: 'Skin équipé', statsEquippedVine: 'Liane équipée',
       galleryToastSaved: '📸 Enregistré dans la galerie',
       photoModeLabel: '📸 Mode photo', photoExitBtn: '✕ Quitter',
@@ -2719,7 +2770,7 @@
       langConfirmText: '🌐 Vraiment changer de langue ?', langConfirmYes: 'Oui, changer',
       settingsTitle: '⚙️ Paramètres', settingsSub: 'Personnalise le jeu selon tes goûts', settingsLangLabel: '🌐 Langue',
       settingsMusicSelect: '🎼 Choisir la musique', settingsMusicVol: '🎵 Volume de la musique', settingsSfxVol: '🔊 Volume des sons', settingsMouseSens: '🖱️ Sensibilité de la souris',
-      settingsWeather: '🌧️ Effets météo', settingsAchToasts: '🔔 Notifications de succès', settingsCamShake: "📳 Tremblement d'écran",
+      settingsWeather: '🌧️ Effets météo', settingsAchToasts: '🔔 Notifications de succès', settingsCamShake: "📳 Tremblement d'écran", settingsTrophyFly: '🏆 Animation de trophée',
       settingsSaveBtn: '💾 Enregistrer', settingsResetBtn: '🗑️ Réinitialiser la sauvegarde', closeBtn4: 'Fermer',
       newSkinUnlocked: 'Nouveau skin débloqué !', newVineUnlocked: 'Nouvelle liane débloquée !',
       newVineRewardPrefix: 'Nouvelle liane :', claimBtn: 'Récupérer', skinUnlockedTag: '✅ Skin débloqué', skinRewardTag: '🎁 Récompense skin',
@@ -2750,7 +2801,7 @@
       musicUnlockHint: '🔊 Activar música',
       profileSwitchHint: 'Cambiar', statsBtn: '📊 Estadísticas', statsTitle: '📊 Estadísticas', statsSub: 'Tu progreso de un vistazo',
       statsPlaytime: 'Tiempo de juego', statsTrophies: 'Trofeos conseguidos', statsAchievements: 'Logros desbloqueados', statsSkins: 'Skins en posesión',
-      statsEnemies: 'Enemigos derrotados', statsCrystals: 'Cristales recolectados', statsWorlds: 'Mundos desbloqueados', statsPhotos: 'Fotos tomadas', closeBtn5: 'Cerrar', statsBtnTitle: 'Estadísticas', openWorldBtn: '🏙️ Mundo abierto',
+      statsEnemies: 'Enemigos derrotados', statsCrystals: 'Cristales recolectados', statsWorlds: 'Mundos desbloqueados', statsPhotos: 'Fotos tomadas', closeBtn5: 'Cerrar', statsBtnTitle: 'Estadísticas',
       statsLives: 'Vidas', statsCurrentWorld: 'Mundo actual', statsEquippedSkin: 'Skin equipada', statsEquippedVine: 'Liana equipada',
       galleryToastSaved: '📸 Guardado en la galería',
       photoModeLabel: '📸 Modo foto', photoExitBtn: '✕ Salir',
@@ -2776,7 +2827,7 @@
       langConfirmText: '🌐 ¿Seguro que quieres cambiar el idioma?', langConfirmYes: 'Sí, cambiar',
       settingsTitle: '⚙️ Ajustes', settingsSub: 'Personaliza el juego a tu gusto', settingsLangLabel: '🌐 Idioma',
       settingsMusicSelect: '🎼 Elegir música', settingsMusicVol: '🎵 Volumen de música', settingsSfxVol: '🔊 Volumen de sonido', settingsMouseSens: '🖱️ Sensibilidad del ratón',
-      settingsWeather: '🌧️ Efectos climáticos', settingsAchToasts: '🔔 Notificaciones de logros', settingsCamShake: '📳 Sacudida de pantalla',
+      settingsWeather: '🌧️ Efectos climáticos', settingsAchToasts: '🔔 Notificaciones de logros', settingsCamShake: '📳 Sacudida de pantalla', settingsTrophyFly: '🏆 Animación de trofeo',
       settingsSaveBtn: '💾 Guardar', settingsResetBtn: '🗑️ Restablecer partida', closeBtn4: 'Cerrar',
       newSkinUnlocked: '¡Nueva skin desbloqueada!', newVineUnlocked: '¡Nueva liana desbloqueada!',
       newVineRewardPrefix: 'Nueva liana:', claimBtn: 'Reclamar', skinUnlockedTag: '✅ Skin desbloqueada', skinRewardTag: '🎁 Recompensa de skin',
@@ -2807,7 +2858,7 @@
       musicUnlockHint: '🔊 Ativar música',
       profileSwitchHint: 'Trocar', statsBtn: '📊 Estatísticas', statsTitle: '📊 Estatísticas', statsSub: 'Seu progresso em um relance',
       statsPlaytime: 'Tempo de jogo', statsTrophies: 'Troféus coletados', statsAchievements: 'Conquistas desbloqueadas', statsSkins: 'Skins adquiridas',
-      statsEnemies: 'Inimigos derrotados', statsCrystals: 'Cristais coletados', statsWorlds: 'Mundos desbloqueados', statsPhotos: 'Fotos tiradas', closeBtn5: 'Fechar', statsBtnTitle: 'Estatísticas', openWorldBtn: '🏙️ Mundo aberto',
+      statsEnemies: 'Inimigos derrotados', statsCrystals: 'Cristais coletados', statsWorlds: 'Mundos desbloqueados', statsPhotos: 'Fotos tiradas', closeBtn5: 'Fechar', statsBtnTitle: 'Estatísticas',
       statsLives: 'Vidas', statsCurrentWorld: 'Mundo atual', statsEquippedSkin: 'Skin equipada', statsEquippedVine: 'Cipó equipado',
       galleryToastSaved: '📸 Salvo na galeria',
       photoModeLabel: '📸 Modo foto', photoExitBtn: '✕ Sair',
@@ -2833,7 +2884,7 @@
       langConfirmText: '🌐 Mudar de idioma mesmo?', langConfirmYes: 'Sim, mudar',
       settingsTitle: '⚙️ Configurações', settingsSub: 'Personalize o jogo ao seu gosto', settingsLangLabel: '🌐 Idioma',
       settingsMusicSelect: '🎼 Escolher música', settingsMusicVol: '🎵 Volume da música', settingsSfxVol: '🔊 Volume do som', settingsMouseSens: '🖱️ Sensibilidade do mouse',
-      settingsWeather: '🌧️ Efeitos climáticos', settingsAchToasts: '🔔 Notificações de conquistas', settingsCamShake: '📳 Tremor de tela',
+      settingsWeather: '🌧️ Efeitos climáticos', settingsAchToasts: '🔔 Notificações de conquistas', settingsCamShake: '📳 Tremor de tela', settingsTrophyFly: '🏆 Animação de troféu',
       settingsSaveBtn: '💾 Salvar', settingsResetBtn: '🗑️ Redefinir progresso', closeBtn4: 'Fechar',
       newSkinUnlocked: 'Nova skin desbloqueada!', newVineUnlocked: 'Novo cipó desbloqueado!',
       newVineRewardPrefix: 'Novo cipó:', claimBtn: 'Resgatar', skinUnlockedTag: '✅ Skin desbloqueada', skinRewardTag: '🎁 Recompensa de skin',
@@ -3080,23 +3131,11 @@
     { t: 0.80, skyTop: 0x05050f, skyBottom: 0x140a2c, sunColor: 0x9fb8ff, sunI: 0.5, hemiSky: 0x3f2f6a, hemiGround: 0x030308, hemiI: 0.4, fog: 0x08071c, fogD: 0.003 },
     { t: 1.00, skyTop: 0x030308, skyBottom: 0x0a0818, sunColor: 0x8fa8ff, sunI: 0.4, hemiSky: 0x2a1f4a, hemiGround: 0x020204, hemiI: 0.3, fog: 0x040410, fogD: 0.0035 },
   ];
-  // World 4 — "Open World" city: classic clear blue daytime sky with a warm
-  // orange sunrise/sunset, unlike the other worlds' stylized fantasy tones —
-  // meant to look like an ordinary sunny city skyline.
-  const DAY_KEYFRAMES_W4 = [
-    { t: 0.00, skyTop: 0x0a1020, skyBottom: 0x1a2440, sunColor: 0x5a75b0, sunI: 0.2, hemiSky: 0x223055, hemiGround: 0x0a0c12, hemiI: 0.35, fog: 0x141c2e, fogD: 0.006 },
-    { t: 0.20, skyTop: 0x16223f, skyBottom: 0x3a4d70, sunColor: 0x8fa5d0, sunI: 0.4, hemiSky: 0x3a4f78, hemiGround: 0x10131c, hemiI: 0.45, fog: 0x223048, fogD: 0.0055 },
-    { t: 0.32, skyTop: 0x2c4a78, skyBottom: 0xffb87a, sunColor: 0xffe0b0, sunI: 1.1, hemiSky: 0x9dc4ff, hemiGround: 0x2a2018, hemiI: 0.9, fog: 0x8a6a55, fogD: 0.0045 },
-    { t: 0.50, skyTop: 0x3d7fd6, skyBottom: 0xbfe4ff, sunColor: 0xffffff, sunI: 1.35, hemiSky: 0xcfeaff, hemiGround: 0x3a4048, hemiI: 1.05, fog: 0xaecbe8, fogD: 0.0035 },
-    { t: 0.68, skyTop: 0x2c4a78, skyBottom: 0xffb87a, sunColor: 0xffe0b0, sunI: 1.1, hemiSky: 0x9dc4ff, hemiGround: 0x2a2018, hemiI: 0.9, fog: 0x8a6a55, fogD: 0.0045 },
-    { t: 0.80, skyTop: 0x1a2440, skyBottom: 0x5a4a68, sunColor: 0xd8a8a0, sunI: 0.5, hemiSky: 0x4f5a8a, hemiGround: 0x141220, hemiI: 0.55, fog: 0x322c40, fogD: 0.0055 },
-    { t: 1.00, skyTop: 0x0a1020, skyBottom: 0x1a2440, sunColor: 0x5a75b0, sunI: 0.2, hemiSky: 0x223055, hemiGround: 0x0a0c12, hemiI: 0.35, fog: 0x141c2e, fogD: 0.006 },
-  ];
   const _c1 = new THREE.Color(), _c2 = new THREE.Color();
   function lerpKeyColor(key, a, b, f){ _c1.setHex(a[key]); _c2.setHex(b[key]); return _c1.lerp(_c2, f); }
   function updateDayNight(dt){
     dayTime = (dayTime + dt / DAY_CYCLE_SECONDS) % 1;
-    const KEYFRAMES = selectedWorld === 4 ? DAY_KEYFRAMES_W4 : selectedWorld === 3 ? DAY_KEYFRAMES_W3 : selectedWorld === 2 ? DAY_KEYFRAMES_W2 : DAY_KEYFRAMES_W1;
+    const KEYFRAMES = selectedWorld === 3 ? DAY_KEYFRAMES_W3 : selectedWorld === 2 ? DAY_KEYFRAMES_W2 : DAY_KEYFRAMES_W1;
     let a = KEYFRAMES[0], b = KEYFRAMES[KEYFRAMES.length - 1], f = 0;
     for (let i = 0; i < KEYFRAMES.length - 1; i++){
       if (dayTime >= KEYFRAMES[i].t && dayTime <= KEYFRAMES[i+1].t){
@@ -3155,6 +3194,11 @@
   let isStorm = false;
   let weatherTimer = 8 + Math.random() * 12; // first weather check after a short delay
   let lightningTimer = 0;
+  // Wind — direction drifts slowly over a session rather than being fixed,
+  // so which way a storm pushes you isn't the same every single time.
+  const windDirBase = Math.random() * Math.PI * 2;
+  function getWindAngle(t){ return windDirBase + Math.sin(t * 0.09) * 0.6; }
+  function getWindGust(t){ return 0.4 + 0.6 * (0.5 + 0.5*Math.sin(t*0.37)) * (0.5 + 0.5*Math.sin(t*0.13 + 2)); }
 
   const RAIN_COUNT = 900;
   const RAIN_SPREAD = 60; // radius around the player the rain volume covers
@@ -3172,6 +3216,31 @@
   const rainMat = new THREE.PointsMaterial({ color: 0xaad4ff, size: 0.35, transparent: true, opacity: 0, depthWrite: false });
   const rain = new THREE.Points(rainGeo, rainMat);
   scene.add(rain);
+
+  // ---------- WIND STREAKS ----------
+  // Short lines that stream past the player along the wind direction during
+  // a storm — the same visual language as "speed lines"/motion streaks, so
+  // the wind reads as something blowing THROUGH the scene, not just an
+  // invisible force nudging the player around.
+  const WIND_STREAK_COUNT = 120;
+  const WIND_STREAK_SPREAD = 32;
+  const windStreakGeo = new THREE.BufferGeometry();
+  const windStreakPos = new Float32Array(WIND_STREAK_COUNT * 2 * 3); // 2 points (start+end) per streak
+  const windStreakLen = new Float32Array(WIND_STREAK_COUNT);
+  function resetWindStreak(i, aroundX, aroundY, aroundZ){
+    const x = aroundX + (Math.random()-0.5) * WIND_STREAK_SPREAD * 2;
+    const y = aroundY + (Math.random()-0.2) * 22;
+    const z = aroundZ + (Math.random()-0.5) * WIND_STREAK_SPREAD * 2;
+    windStreakLen[i] = 2 + Math.random() * 3.5;
+    const i6 = i*6;
+    windStreakPos[i6] = x; windStreakPos[i6+1] = y; windStreakPos[i6+2] = z;
+    windStreakPos[i6+3] = x; windStreakPos[i6+4] = y; windStreakPos[i6+5] = z;
+  }
+  for (let i = 0; i < WIND_STREAK_COUNT; i++) resetWindStreak(i, 0, 10, 0);
+  windStreakGeo.setAttribute('position', new THREE.BufferAttribute(windStreakPos, 3));
+  const windStreakMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false });
+  const windStreaks = new THREE.LineSegments(windStreakGeo, windStreakMat);
+  scene.add(windStreaks);
 
   // lightning flash overlay (plain DOM div, cheaper than a scene light flicker)
   const lightningFlash = document.createElement('div');
@@ -3232,6 +3301,46 @@
       rainAudioNodes.gain.gain.value = 0;
     }
     rainMat.opacity = rainIntensity * 0.55;
+
+    // Storm badge — same "windy" threshold used to actually apply wind
+    // force to the player, so the indicator and the effect always agree.
+    const stormBadgeEl = document.getElementById('stormBadge');
+    const windActive = isStorm && rainIntensity > 0.15;
+    if (stormBadgeEl) stormBadgeEl.classList.toggle('show', windActive);
+
+    // Wind streaks — same threshold, same direction/gust formulas as the
+    // actual push force on the player, so what you see always matches what
+    // you feel.
+    windStreakMat.opacity = windActive ? Math.min(1, (rainIntensity - 0.15) / 0.35) * 0.85 : 0;
+    if (windActive){
+      const windT = clock.elapsedTime;
+      const windAngle = getWindAngle(windT);
+      const dx = Math.sin(windAngle), dz = Math.cos(windAngle);
+      const speed = 30 + getWindGust(windT) * 20; // fast and gust-responsive, clearly reads as "blowing"
+      const pos = windStreakGeo.attributes.position.array;
+      const spreadSq = WIND_STREAK_SPREAD * WIND_STREAK_SPREAD;
+      for (let i = 0; i < WIND_STREAK_COUNT; i++){
+        const i6 = i*6;
+        pos[i6]   += dx * speed * dt;
+        pos[i6+2] += dz * speed * dt;
+        pos[i6+3] = pos[i6]   + dx * windStreakLen[i];
+        pos[i6+5] = pos[i6+2] + dz * windStreakLen[i];
+        const relX = pos[i6] - player.pos.x, relZ = pos[i6+2] - player.pos.z;
+        if (relX*relX + relZ*relZ > spreadSq){
+          // recycle upstream (opposite the wind) so streaks keep flowing
+          // through the area around the player rather than all draining
+          // away and never coming back.
+          const spawnDist = WIND_STREAK_SPREAD * (0.75 + Math.random()*0.25);
+          const perpAngle = windAngle + Math.PI/2;
+          const perpOffset = (Math.random()-0.5) * WIND_STREAK_SPREAD * 1.6;
+          resetWindStreak(i,
+            player.pos.x - dx*spawnDist + Math.sin(perpAngle)*perpOffset,
+            player.pos.y,
+            player.pos.z - dz*spawnDist + Math.cos(perpAngle)*perpOffset);
+        }
+      }
+      windStreakGeo.attributes.position.needsUpdate = true;
+    }
 
     if (rainIntensity > 0.05){
       const pos = rainGeo.attributes.position.array;
@@ -3339,134 +3448,6 @@
     [30,16,-4],[-32,24,-18],[36,50,-100],[-38,66,-130],[20,20,-2],[-14,132,-250]
   ];
   anchorPositionsW3.forEach(p => makeAnchor(p[0],p[1],p[2],3));
-
-  // ---------- OPEN WORLD CITY (world 4) — pure swinging playground ----------
-  // Lives far away from the fantasy worlds' shared orbs/enemies (which
-  // aren't gated by world number, see below) so nothing from those bleeds
-  // in here. No checkpoints, no orbs, no enemies, no unlock cost — just a
-  // big procedurally-scattered skyline to swing between.
-  const CITY_CENTER_Z = -3000;
-  function makeWindowTexture(){
-    const c = document.createElement('canvas');
-    c.width = 64; c.height = 64;
-    const ctx = c.getContext('2d');
-    ctx.fillStyle = '#1a2233';
-    ctx.fillRect(0,0,64,64);
-    ctx.fillStyle = '#ffe9a8';
-    for (let y=4;y<64;y+=10){
-      for (let x=4;x<64;x+=12){
-        if (Math.random() > 0.35) ctx.fillRect(x,y,7,6);
-      }
-    }
-    const tex = new THREE.CanvasTexture(c);
-    tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping;
-    tex.repeat.set(3, 6);
-    return tex;
-  }
-  const cityWindowTex = makeWindowTexture();
-  const islandsW4 = [];
-  function makeBuilding(x, z, w, d, h, colorHue){
-    const g = new THREE.Group();
-    // Very short/flat structures (the ground-level spawn plaza) are plain
-    // pavement, not a building — the window texture would look like a
-    // checkered floor rather than a proper street-level plaza.
-    const isFlatPlaza = h < 3;
-    const mat = isFlatPlaza
-      ? new THREE.MeshStandardMaterial({ color: 0x3a3d45, roughness: 0.9 })
-      : new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(colorHue, 0.12, 0.42), map: cityWindowTex, roughness: 0.7 });
-    const box = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
-    box.position.y = h/2;
-    box.castShadow = true; box.receiveShadow = true;
-    g.add(box);
-    // Skip the little roof-cap detail for very short/flat structures (like
-    // the ground-level spawn plaza) — it would just float oddly above a
-    // near-flat slab instead of reading as a rooftop detail.
-    if (!isFlatPlaza){
-      const capMat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(colorHue, 0.1, 0.22), roughness: 0.8 });
-      const cap = new THREE.Mesh(new THREE.BoxGeometry(w*0.5, Math.max(1, h*0.06), d*0.5), capMat);
-      cap.position.y = h + Math.max(0.5, h*0.03);
-      g.add(cap);
-    }
-    g.position.set(x, 0, z);
-    scene.add(g);
-    const radius = Math.min(w, d) * 0.5 + 0.8;
-    const entry = { mesh: g, pos: new THREE.Vector3(x, 0, z), radius, top: h, bottom: 0, homeY: 0, topOffset: h, bottomOffset: 0, world: 4 };
-    islands.push(entry);
-    islandsW4.push(entry);
-    return entry;
-  }
-  // Street-level ground plane under the whole city, textured as a clean
-  // road grid (asphalt + dashed lane lines). Doubles as the actual walkable
-  // spawn surface (islandsW4[0]) — no separate "plaza" platform needed.
-  function makeRoadTexture(){
-    const c = document.createElement('canvas');
-    c.width = 128; c.height = 128;
-    const ctx = c.getContext('2d');
-    ctx.fillStyle = '#2c2e34';
-    ctx.fillRect(0, 0, 128, 128);
-    // subtle lane-divider dashes running through the middle of each street
-    // in both directions — buildings sit on the regular grid too, so this
-    // lines up with the actual open corridors between them.
-    ctx.fillStyle = '#e8c94a';
-    for (let i = 6; i < 128; i += 18){
-      ctx.fillRect(i, 61, 10, 6);
-      ctx.fillRect(61, i, 6, 10);
-    }
-    // faint curb line
-    ctx.fillStyle = '#3d4048';
-    ctx.fillRect(0, 0, 128, 3);
-    ctx.fillRect(0, 125, 128, 3);
-    ctx.fillRect(0, 0, 3, 128);
-    ctx.fillRect(125, 0, 3, 128);
-    const tex = new THREE.CanvasTexture(c);
-    tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping;
-    tex.repeat.set(900/32, 900/32); // one tile per city grid cell (see gridSpacing below), so lines line up with the streets between buildings
-    return tex;
-  }
-  const cityGroundMat = new THREE.MeshStandardMaterial({ color: 0xffffff, map: makeRoadTexture(), roughness: 0.95 });
-  const cityGround = new THREE.Mesh(new THREE.PlaneGeometry(900, 900), cityGroundMat);
-  cityGround.rotation.x = -Math.PI/2;
-  cityGround.position.set(0, 0, CITY_CENTER_Z);
-  cityGround.receiveShadow = true;
-  cityGround.visible = false;
-  scene.add(cityGround);
-  // The road itself is the spawn hub (islandsW4[0]) — walkable everywhere,
-  // not just a small plaza — so the player always lands right on the street.
-  // Needs a large collision radius (collision is circular, not rectangular)
-  // to actually cover the full 900-unit ground plane, not just its center.
-  const cityGroundEntry = { mesh: cityGround, pos: new THREE.Vector3(0, 0, CITY_CENTER_Z), radius: 500, top: 0.15, bottom: -0.5, homeY: 0, topOffset: 0.15, bottomOffset: -0.5, world: 4 };
-  islands.push(cityGroundEntry);
-  islandsW4.push(cityGroundEntry);
-  // A dense, regular grid of varied skyscrapers — no random jitter this
-  // time, so each building sits cleanly on its own grid cell and the street
-  // pattern (tiled at the same spacing) lines up with the actual gaps
-  // between buildings instead of drifting out of sync with them.
-  (function generateCityBuildings(){
-    const gridSpacing = 32;
-    const half = 5;
-    for (let gx = -half; gx <= half; gx++){
-      for (let gz = -half; gz <= half; gz++){
-        if (gx === 0 && gz === 0) continue; // leave the spawn intersection open
-        const x = gx * gridSpacing;
-        const z = CITY_CENTER_Z + gz * gridSpacing;
-        const w = 16 + Math.random() * 8;
-        const d = 16 + Math.random() * 8;
-        const distFromCenter = Math.sqrt(gx*gx + gz*gz);
-        const h = 22 + Math.random() * 40 + distFromCenter * 8;
-        const hue = 0.55 + Math.random() * 0.12; // blue-gray city palette
-        makeBuilding(x, z, w, d, h, hue);
-      }
-    }
-  })();
-  // Generous anchor coverage — one near-rooftop anchor per building, plus a
-  // lower mid-building one on roughly half of them for varied swing arcs.
-  const anchorPositionsW4 = [];
-  islandsW4.forEach((b, i) => {
-    if (i === 0) return; // skip the spawn hub itself
-    anchorPositionsW4.push([b.pos.x, b.top + 4 + Math.random()*6, b.pos.z]);
-    if (Math.random() > 0.5) anchorPositionsW4.push([b.pos.x + (Math.random()-0.5)*6, b.top*0.55, b.pos.z + (Math.random()-0.5)*6]);
-  });
-  anchorPositionsW4.forEach(p => makeAnchor(p[0], p[1], p[2], 4));
 
   // ---------- COLLECTIBLE ORBS ----------
   const orbs = [];
@@ -3693,7 +3674,8 @@
       });
       // register as solid ground, reusing the same collision system as the islands
       const islandEntry = { mesh: plat.group, pos: new THREE.Vector3(p[0], p[1], p[2]), radius: plat.radius,
-        top: p[1] + plat.height/2, bottom: p[1] - plat.height/2 - 1, homeY: p[1], topOffset: plat.height/2, bottomOffset: -plat.height/2 - 1, world };
+        top: p[1] + plat.height/2, bottom: p[1] - plat.height/2 - 1, homeY: p[1], topOffset: plat.height/2, bottomOffset: -plat.height/2 - 1, world,
+        isCheckpoint: true }; // flagged so the same-platform streak (only meaningful on trophy platforms) can tell it apart from decorative rocks/the hub
       islands.push(islandEntry);
       islandMeshes.push(plat.group);
     });
@@ -3752,12 +3734,6 @@
     checkpoints.forEach(cp => { cp.group.visible = (cp.world === n); });
     anchors.forEach(a => { a.visible = (a.world === n); });
     starfield.visible = (n === 3);
-    // Open World has no trophies or lives at stake — pure swinging, so the
-    // HUD boxes for them would just be permanently-zero clutter there.
-    const boxCheckpoints = document.getElementById('box-checkpoints');
-    const boxLives = document.getElementById('box-lives');
-    if (boxCheckpoints) boxCheckpoints.style.display = (n === 4) ? 'none' : '';
-    if (boxLives) boxLives.style.display = (n === 4) ? 'none' : '';
   }
 
   applyWorldTheme(1); // safe default until startGame() applies the actual selected world
@@ -3776,9 +3752,94 @@
     lastImpactSpeed: 0,
     wasOnGround: false,
     standingOn: null, // the island/platform mesh currently underfoot, excluded from camera collision
+    standingOnPos: null, // that island's position — used for the streak system's "same spot" check, since two overlapping islands can be technically-different mesh objects at essentially the same place
+    standingOnIsCheckpoint: false, // whether the current platform is a trophy checkpoint — only these count for the streak
     fallSoundPlayed: false,
     grappledSinceGrounded: false, // true if the grapple was used during this airtime — suppresses fall/land sounds
   };
+
+  // ---------- SAME-PLATFORM STREAK BONUS ----------
+  // Rewards landing on the exact same spot repeatedly, back-to-back (no
+  // other platform in between) — each additional consecutive landing there
+  // adds +10% to trophy rewards, capping at +100%. Landing anywhere else, or
+  // falling without landing at all, breaks the streak back to zero. Only
+  // starts showing once the SAME spot has been landed on twice in a row (a
+  // single landing doesn't count as a "streak" yet).
+  // Compared by POSITION (within a small radius), not by exact object
+  // reference — some spots are visually one platform but are actually two
+  // overlapping/adjacent collision objects, and which one the physics
+  // resolves to first can vary frame to frame even while standing still, so
+  // comparing object identity made the streak flicker between "different"
+  // platforms that were really the same place.
+  let streakPos = null;
+  let streakCount = 0;
+  const STREAK_SAME_SPOT_DIST = 3; // world units — how close counts as "the same spot"
+  function streakBonusPct(){
+    return streakCount >= 2 ? Math.min(100, (streakCount - 1) * 10) : 0;
+  }
+  function applyStreakBonus(amount){
+    const pct = streakBonusPct();
+    if (pct <= 0) return amount;
+    // Guarantee the bonus always visibly grows with the percentage, even for
+    // small base rewards (like the flat "+1" for re-collecting an already-
+    // claimed checkpoint) — a pure multiplicative bonus rounds most of
+    // 10%–90% down to the exact same +1 trophy for base=1, so it looks like
+    // the streak "stopped mattering" well before it actually hit 100%. This
+    // floors the bonus at +1 trophy per 10%-tier so it always keeps climbing,
+    // while leaving already-large rewards (where the multiplicative bonus
+    // naturally exceeds this floor) essentially unchanged.
+    const multiplicativeBonus = Math.ceil(amount * pct / 100);
+    const floorBonus = Math.ceil(pct / 10);
+    return amount + Math.max(multiplicativeBonus, floorBonus);
+  }
+  function streakColor(p){
+    // 0→50%: pale green deepening into vivid green. 50→60%: green→yellow.
+    // 60→80%: yellow→orange. 80→100%: orange→red.
+    if (p <= 50){
+      const t = p / 50;
+      return `hsl(120, ${40 + t*45}%, ${72 - t*27}%)`;
+    } else if (p <= 60){
+      const t = (p - 50) / 10;
+      return `hsl(${120 - t*60}, 85%, 50%)`;
+    } else if (p <= 80){
+      const t = (p - 60) / 20;
+      return `hsl(${60 - t*30}, 88%, 50%)`;
+    } else {
+      const t = (p - 80) / 20;
+      return `hsl(${30 - t*30}, 92%, 52%)`;
+    }
+  }
+  function updateStreakDisplay(){
+    const el = document.getElementById('streakDisplay');
+    if (!el) return;
+    const pct = streakBonusPct();
+    if (pct <= 0){
+      el.classList.remove('show');
+      return;
+    }
+    el.style.color = streakColor(pct);
+    document.getElementById('streakPct').textContent = '🔥+' + pct + '% mehr Pokale';
+    el.classList.add('show');
+  }
+  function resetStreak(){
+    streakPos = null;
+    streakCount = 0;
+    updateStreakDisplay();
+  }
+  function registerPlatformLanding(pos){
+    if (!pos) return;
+    const samePos = streakPos && Math.abs(pos.x - streakPos.x) < STREAK_SAME_SPOT_DIST
+      && Math.abs(pos.y - streakPos.y) < STREAK_SAME_SPOT_DIST
+      && Math.abs(pos.z - streakPos.z) < STREAK_SAME_SPOT_DIST;
+    if (samePos){
+      streakCount++;
+    } else {
+      streakPos = { x: pos.x, y: pos.y, z: pos.z };
+      streakCount = 1;
+    }
+    updateStreakDisplay();
+  }
+
   const playerMesh = new THREE.Group();
   // All visible body parts sit in this inner group, shifted down so the feet
   // touch the ground exactly where the collision code expects (player.pos.y - player.radius).
@@ -4662,8 +4723,8 @@
     const origin = raycaster.ray.origin;
     const dir = raycaster.ray.direction; // already normalized
     let best = null, bestPerp = Infinity;
-    const TOLERANCE = selectedWorld === 4 ? 8 : selectedWorld === 3 ? 9 : 5;   // world units — how far off-center the aim can be
-    const MAX_RANGE = selectedWorld === 4 ? 90 : selectedWorld === 3 ? 110 : 70;
+    const TOLERANCE = selectedWorld === 3 ? 9 : 5;   // world units — how far off-center the aim can be
+    const MAX_RANGE = selectedWorld === 3 ? 110 : 70;
     for (const a of anchors){
       if (a.world !== selectedWorld) continue;
       const toA = new THREE.Vector3().subVectors(a.position, origin);
@@ -4697,7 +4758,7 @@
     // further apart than World 1/2's, so the fallback radius needs to be
     // bigger there too, or players standing a totally normal distance from
     // an anchor (by World 3's scale) get nothing from either path.
-    const fallbackRange = selectedWorld === 4 ? 34 : selectedWorld === 3 ? 38 : 22;
+    const fallbackRange = selectedWorld === 3 ? 38 : 22;
     const best = findTargetAnchor() || nearestAnchorWithin(fallbackRange);
     if (best){
       grapple.active = true;
@@ -4784,6 +4845,7 @@
     weatherEnabled: true,
     achievementToastsEnabled: true,
     cameraShakeEnabled: true,
+    trophyFlyEnabled: true,
     mouseSensitivity: 1.0,
     musicTrack: 'default',
   };
@@ -4814,6 +4876,7 @@
     storageSet('rankmann_totalPlaytime', Math.round(totalPlaytimeSeconds));
     playtimeSinceSave = 0;
   }
+
   const WORLD2_COST = 250;
   let world3Unlocked = storageGet('rankmann_world3Unlocked', false);
   const WORLD3_COST = 400;
@@ -5272,6 +5335,15 @@
     updateAchievementsUI();
     updateShopUI();
     showAdminToast('✅ Alle Erfolge freigeschaltet');
+  });
+  document.getElementById('adminTriggerStormBtn').addEventListener('click', () => {
+    // Local-only test trigger (not synced via Firebase like the 2x event) —
+    // just forces the existing weather system into a storm for a bit so you
+    // don't have to wait on the random cycle to try out the wind effect.
+    weatherTarget = 1;
+    isStorm = true;
+    weatherTimer = 60;
+    showAdminToast('⛈️ Sturm ausgelöst — Wind wirkt jetzt beim Schwingen');
   });
   document.getElementById('adminGodModeToggle').addEventListener('click', function(){
     adminGodMode = this.dataset.on !== 'true';
@@ -6152,6 +6224,42 @@
     el.classList.add(cls);
   }
 
+  // Flies a "+N 🏆" from roughly screen-center (where the pickup happened,
+  // from the camera's point of view) over to the trophy HUD box, then pops
+  // the box once it "arrives" — purely a DOM/CSS animation layered on top of
+  // the 3D scene, so it's cheap and doesn't touch the Three.js render path.
+  function spawnTrophyFly(amount){
+    if (!gameSettings.trophyFlyEnabled){
+      // Animation off — no point delaying the number then, just show it right away.
+      updateTrophyDisplay();
+      return;
+    }
+    const layer = document.getElementById('trophyFlyLayer');
+    const targetBox = document.getElementById('box-checkpoints');
+    if (!layer || !targetBox) { updateTrophyDisplay(); return; }
+    const item = document.createElement('div');
+    item.className = 'trophyFlyItem';
+    item.innerHTML = '<span class="trophyFlyIcon">🏆</span><span class="trophyFlyNum">+' + amount + '</span>';
+    const startX = window.innerWidth / 2;
+    const startY = window.innerHeight / 2 - 40;
+    item.style.left = startX + 'px';
+    item.style.top = startY + 'px';
+    layer.appendChild(item);
+    void item.offsetWidth; // force layout so the next style change actually transitions
+    const rect = targetBox.getBoundingClientRect();
+    item.style.left = (rect.left + rect.width * 0.3) + 'px';
+    item.style.top = (rect.top + rect.height / 2) + 'px';
+    setTimeout(() => {
+      item.classList.add('arrived');
+      // The trophy count itself only ticks up now, right as the "+N" visually
+      // lands on the HUD box — not the instant it was earned — so watching
+      // the number change always lines up with seeing the animation arrive.
+      updateTrophyDisplay();
+      pulseBox('box-checkpoints', 'pulse');
+    }, 1200);
+    setTimeout(() => { item.remove(); }, 1470);
+  }
+
   // ---------- GAME LOOP ----------
   const clock = new THREE.Clock();
   const GRAVITY = -22;
@@ -6203,7 +6311,7 @@
   }
 
   function respawnPlayer(){
-    const hub = selectedWorld === 4 ? islandsW4[0] : selectedWorld === 3 ? islandsW3[0] : selectedWorld === 2 ? islandsW2[0] : islandsW1[0];
+    const hub = selectedWorld === 3 ? islandsW3[0] : selectedWorld === 2 ? islandsW2[0] : islandsW1[0];
     player.pos.set(hub.pos.x, hub.top + 5, hub.pos.z);
     player.vel.set(0,0,0);
     player.wasOnGround = false;
@@ -6213,6 +6321,7 @@
     anim.heroLandT = 0;
     grapple.active = false;
     ropeLine.visible = false;
+    resetStreak(); // any respawn (death, fall, manual restart) breaks the same-platform streak
     stopEmote();
     closeEmoteWheel();
     snapCameraToPlayer();
@@ -6295,6 +6404,21 @@
     player.vel.x += moveDir.x * accel * dt;
     player.vel.z += moveDir.z * accel * dt;
 
+    // Storm wind — gusty (varies in strength via two offset sine waves so it
+    // never feels like a flat, predictable push, but with a baseline floor
+    // so it's never near-zero either) and drifts direction slowly over the
+    // session. Strongest while actually swinging, since that's where
+    // fighting the wind is the actual challenge; much gentler while
+    // grounded so just walking around isn't annoying.
+    if (isStorm && rainIntensity > 0.15 && !player.onGround){
+      const windT = clock.elapsedTime;
+      const gust = getWindGust(windT);
+      const windAngle = getWindAngle(windT);
+      const windForce = rainIntensity * gust * (grapple.active ? 26 : 11);
+      player.vel.x += Math.sin(windAngle) * windForce * dt;
+      player.vel.z += Math.cos(windAngle) * windForce * dt;
+    }
+
     // gravity — World 3 ("Sternenreich") uses much lower gravity, giving
     // higher, slower-falling jumps that suit its wide low-g island spread
     player.vel.y += (selectedWorld === 3 ? GRAVITY * 0.45 : GRAVITY) * dt;
@@ -6355,6 +6479,8 @@
         player.vel.y = 0;
         player.onGround = true;
         player.standingOn = isl.mesh;
+        player.standingOnPos = isl.pos;
+        player.standingOnIsCheckpoint = !!isl.isCheckpoint;
       } else if (feetY < isl.top && player.pos.y + player.radius * 0.4 > isl.bottom){
         // Player's body is overlapping the island's side (not landing on top) —
         // push them back out horizontally so they can't walk/clip through the rock.
@@ -6377,6 +6503,13 @@
       anim.heroLandT = HERO_LAND_DURATION;
       sfx.land();
       if (gameSettings.cameraShakeEnabled) camShakeT = 0.35;
+    }
+    // Same-platform streak — only trophy checkpoints count (landing on the
+    // hub, or any decorative rock, is simply ignored — neither builds nor
+    // breaks a streak, since those aren't "the same platform" in the sense
+    // that matters: you can't earn trophies there in the first place).
+    if (!player.wasOnGround && player.onGround && player.standingOnIsCheckpoint){
+      registerPlatformLanding(player.standingOnPos || player.standingOn);
     }
     if (player.onGround) {
       player.fallSoundPlayed = false;
@@ -6681,27 +6814,35 @@
           cp.holoRing.material.color.set(0xffe27a);
           cp.holoRing.material.emissive.set(0xd9a72f);
           cp.glowLight.color.set(0xffe27a);
-          totalTrophies += applyEventMultiplier(reward);
+          // Math.ceil (not round) so any active bonus always shows up as at
+          // least +1 extra trophy — with round(), small base rewards (like
+          // the flat "+1" for re-collecting an already-claimed checkpoint)
+          // could have their bonus silently vanish back to the same number
+          // (e.g. 1 trophy + 10% = 1.1, which round() collapses to 1 again).
+          const gained = applyStreakBonus(applyEventMultiplier(reward));
+          totalTrophies += gained;
           storageSet('rankmann_totalTrophies', totalTrophies);
-          updateTrophyDisplay();
           pulseBox('box-checkpoints', 'glow-flash');
+          spawnTrophyFly(gained);
           sfx.trophy();
         } else {
           // already claimed once — platform stays re-collectible for a small flat reward
-          totalTrophies += applyEventMultiplier(1);
+          const gained = applyStreakBonus(applyEventMultiplier(1));
+          totalTrophies += gained;
           storageSet('rankmann_totalTrophies', totalTrophies);
-          updateTrophyDisplay();
           pulseBox('box-checkpoints', 'glow-flash');
+          spawnTrophyFly(gained);
           sfx.trophy();
         }
 
         // send the player straight back to the spawn platform — instant, no effect
-        const hub = selectedWorld === 4 ? islandsW4[0] : selectedWorld === 3 ? islandsW3[0] : selectedWorld === 2 ? islandsW2[0] : islandsW1[0];
+        const hub = selectedWorld === 3 ? islandsW3[0] : selectedWorld === 2 ? islandsW2[0] : islandsW1[0];
         player.pos.set(0, hub.top + player.radius, 0);
         player.vel.set(0, 0, 0);
         player.onGround = true;
         player.wasOnGround = true;
         player.standingOn = hub.mesh;
+        player.standingOnIsCheckpoint = false; // the hub itself never counts toward the streak
         grapple.active = false;
         ropeLine.visible = false;
         snapCameraToPlayer();
@@ -6727,12 +6868,8 @@
     startScreen.classList.add('fading');
     setTimeout(() => { startScreen.style.display = 'none'; }, 500);
     applyWorldTheme(selectedWorld);
-    // Every world's hub island happens to sit at local (0,0,0), which is
-    // also the player's hardcoded default position — so this was never
-    // needed before. Open World's hub is deliberately far away (see
-    // CITY_CENTER_Z) to stay clear of the other worlds' shared orbs/enemies,
-    // so the very first spawn now needs an explicit position, not just the
-    // default. respawnPlayer() already knows how to do this correctly.
+    // Explicitly position the player at the selected world's hub rather
+    // than relying on the character's hardcoded default spawn coordinates.
     respawnPlayer();
     snapCameraToPlayer();
     ensureAudio();
@@ -6748,14 +6885,6 @@
 
   document.getElementById('menuClickCatcher').addEventListener('mousedown', menuMusicUnlockAttempt);
   document.getElementById('startBtn').addEventListener('click', () => {
-    document.getElementById('deviceSurvey').classList.remove('hidden');
-  });
-  document.getElementById('openWorldBtn').addEventListener('click', () => {
-    // Open World is a free, always-available city — no trophy cost, not
-    // part of the normal world-select list, and never persisted as the
-    // player's "real" world choice (see the pauseRestartBtn handler, which
-    // restores the saved 1/2/3 pick once they leave).
-    selectedWorld = 4;
     document.getElementById('deviceSurvey').classList.remove('hidden');
   });
   let mobileControlsWanted = false;
@@ -6823,10 +6952,6 @@
     muteRainAudio();
     player.lives = 3;
     updateLivesDisplay();
-    // Open World (4) is a temporary, never-persisted selection — restore
-    // whichever real world (1/2/3) the player actually had chosen before,
-    // so the world-select buttons reflect that again once back at the menu.
-    if (selectedWorld === 4) selectedWorld = storageGet('rankmann_selectedWorld', 1);
     respawnPlayer();
     document.getElementById('startScreen').style.display = 'flex';
     document.getElementById('startScreen').classList.remove('fading');
@@ -7057,6 +7182,7 @@
     document.getElementById('toggleWeather').dataset.on = gameSettings.weatherEnabled;
     document.getElementById('toggleAchToasts').dataset.on = gameSettings.achievementToastsEnabled;
     document.getElementById('toggleCamShake').dataset.on = gameSettings.cameraShakeEnabled;
+    document.getElementById('toggleTrophyFly').dataset.on = gameSettings.trophyFlyEnabled;
     document.getElementById('mouseSensGroup').style.display = isTouchDevice ? 'none' : '';
   }
   let settingsSnapshot = null;
@@ -7127,6 +7253,7 @@
   bindSettingsToggle('toggleWeather', 'weatherEnabled');
   bindSettingsToggle('toggleAchToasts', 'achievementToastsEnabled');
   bindSettingsToggle('toggleCamShake', 'cameraShakeEnabled');
+  bindSettingsToggle('toggleTrophyFly', 'trophyFlyEnabled');
 
   function showSettingsSavedToast(){
     const toast = document.getElementById('settingsSavedToast');
