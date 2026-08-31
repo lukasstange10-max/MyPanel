@@ -4121,23 +4121,266 @@
     updateStreakDisplay();
   }
 
-  const playerMesh = new THREE.Group();
-  // All visible body parts sit in this inner group, shifted down so the feet
-  // touch the ground exactly where the collision code expects (player.pos.y - player.radius).
-  const body = new THREE.Group();
-  body.position.y = -1;
-  playerMesh.add(body);
+  // ---------- REUSABLE CHARACTER BUILDER ----------
+  // Builds one full copy of the detailed character model (legs, torso, arms,
+  // head, procedural hair — the works), with its own independent materials
+  // sized from the given skin's colors. Used once for the local player
+  // (below, immediately) and once per friend in a co-op room, so everyone
+  // renders as a real character instead of a placeholder shape — but each
+  // instance is fully independent, so recoloring one (e.g. via applySkin)
+  // never touches anyone else's.
+  function buildCharacterMesh(skinColors){
+    skinColors = skinColors || SKIN_DEFS_FALLBACK;
+    const playerMesh = new THREE.Group();
+    // All visible body parts sit in this inner group, shifted down so the feet
+    // touch the ground exactly where the collision code expects (player.pos.y - player.radius).
+    const body = new THREE.Group();
+    body.position.y = -1;
+    playerMesh.add(body);
 
-  const backMat = new THREE.MeshStandardMaterial({color:0x16215c, roughness:0.4, metalness:0.15});  // deep indigo — back
-  const frontMat = new THREE.MeshStandardMaterial({color:0x7a4526, roughness:0.55, metalness:0.1}); // rich bronze-brown — chest panel
-  const limbMat = new THREE.MeshStandardMaterial({color:0x16215c, roughness:0.4, metalness:0.15});  // deep indigo — arms & legs
-  const bootMat = new THREE.MeshStandardMaterial({color:0x0d1638, roughness:0.5, metalness:0.15});  // near-black indigo — boots
-  const skinMat = new THREE.MeshStandardMaterial({color:0xe8b48c, roughness:0.7});   // face
-  const hairMat = new THREE.MeshStandardMaterial({color:0x4a3222, roughness:0.75});  // messy brown hair
-  const faceFeatureMat = new THREE.MeshStandardMaterial({color:0x2a1f1a, roughness:0.6});
-  const glowMat = new THREE.MeshStandardMaterial({color:0x7affc4, emissive:0x2fbf8a, emissiveIntensity:0.7, roughness:0.3});
-  const armorMat = new THREE.MeshStandardMaterial({color:0x2a3550, roughness:0.3, metalness:0.6});  // dark steel — pauldrons & bracers
-  const goldMat = new THREE.MeshStandardMaterial({color:0xc9a227, roughness:0.35, metalness:0.7});  // gold — straps & buckles
+    const backMat = new THREE.MeshStandardMaterial({color:skinColors.back, roughness:0.4, metalness:0.15});
+    const frontMat = new THREE.MeshStandardMaterial({color:skinColors.front, roughness:0.55, metalness:0.1});
+    const limbMat = new THREE.MeshStandardMaterial({color:skinColors.limb, roughness:0.4, metalness:0.15});
+    const bootMat = new THREE.MeshStandardMaterial({color:skinColors.boot, roughness:0.5, metalness:0.15});
+    const skinMat = new THREE.MeshStandardMaterial({color:0xe8b48c, roughness:0.7});   // face
+    const hairMat = new THREE.MeshStandardMaterial({color:0x4a3222, roughness:0.75});  // messy brown hair
+    const faceFeatureMat = new THREE.MeshStandardMaterial({color:0x2a1f1a, roughness:0.6});
+    const glowMat = new THREE.MeshStandardMaterial({color:skinColors.glow, emissive:skinColors.glowEm, emissiveIntensity:0.7, roughness:0.3});
+    const armorMat = new THREE.MeshStandardMaterial({color:0x2a3550, roughness:0.3, metalness:0.6});  // dark steel — pauldrons & bracers
+    const goldMat = new THREE.MeshStandardMaterial({color:0xc9a227, roughness:0.35, metalness:0.7});  // gold — straps & buckles
+
+    // legs — blocky Roblox-style rectangular limbs, each hanging from a hip pivot
+    const legPivots = [];
+    [-0.22, 0.22].forEach(x => {
+      const hip = new THREE.Group();
+      hip.position.set(x, 0.85, 0);
+      body.add(hip);
+      const leg = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.85, 0.34), limbMat);
+      leg.position.y = -0.42;
+      leg.castShadow = true;
+      hip.add(leg);
+      // boot cuff with a glowing trim line for a more detailed, armored look
+      const bootCuff = new THREE.Mesh(new THREE.BoxGeometry(0.37, 0.16, 0.37), bootMat);
+      bootCuff.position.set(0, -0.62, 0);
+      bootCuff.castShadow = true;
+      hip.add(bootCuff);
+      const bootTrim = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.03, 0.38), glowMat);
+      bootTrim.position.set(0, -0.55, 0);
+      hip.add(bootTrim);
+      const foot = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.13, 0.36), bootMat);
+      foot.position.set(0, -0.8, 0.06);
+      foot.castShadow = true;
+      hip.add(foot);
+      legPivots.push(hip);
+    });
+
+    // torso — a straight rectangular block, blue on the back with a brown front panel
+    const torsoGroup = new THREE.Group();
+    torsoGroup.position.y = 0.85;
+    body.add(torsoGroup);
+    const torso = new THREE.Mesh(new THREE.BoxGeometry(0.92, 0.8, 0.5), backMat);
+    torso.position.y = 0.4;
+    torso.castShadow = true;
+    torsoGroup.add(torso);
+    // front chest panel (brown), a thin box sitting flush on the front face
+    const chestPanel = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.8, 0.06), frontMat);
+    chestPanel.position.set(0, 0.4, 0.28);
+    chestPanel.castShadow = true;
+    torsoGroup.add(chestPanel);
+    // glowing trim line framing the chest panel
+    const chestTrimTop = new THREE.Mesh(new THREE.BoxGeometry(0.86, 0.025, 0.02), glowMat);
+    chestTrimTop.position.set(0, 0.77, 0.32);
+    torsoGroup.add(chestTrimTop);
+    const chestTrimBottom = new THREE.Mesh(new THREE.BoxGeometry(0.86, 0.025, 0.02), glowMat);
+    chestTrimBottom.position.set(0, 0.03, 0.32);
+    torsoGroup.add(chestTrimBottom);
+    // diagonal gold chest strap with a small buckle, worn over the shoulder
+    const chestStrap = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.85, 0.03), goldMat);
+    chestStrap.position.set(-0.18, 0.42, 0.3);
+    chestStrap.rotation.z = 0.35;
+    torsoGroup.add(chestStrap);
+    const strapBuckle = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.13, 0.05), goldMat);
+    strapBuckle.position.set(0.14, 0.12, 0.32);
+    torsoGroup.add(strapBuckle);
+    // waist belt with a centered buckle
+    const belt = new THREE.Mesh(new THREE.BoxGeometry(0.96, 0.14, 0.54), new THREE.MeshStandardMaterial({color:0x241a12, roughness:0.6}));
+    belt.position.set(0, 0.02, 0);
+    belt.castShadow = true;
+    torsoGroup.add(belt);
+    const beltBuckle = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, 0.05), goldMat);
+    beltBuckle.position.set(0, 0.02, 0.3);
+    torsoGroup.add(beltBuckle);
+    // vine-circle emblem — a ring of small woven loops with a glowing gem core
+    function makeVineEmblem(){
+      const g = new THREE.Group();
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.02, 8, 20), glowMat);
+      g.add(ring);
+      for (let i = 0; i < 6; i++){
+        const a = (i / 6) * Math.PI * 2;
+        const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.032, 6, 6), glowMat);
+        leaf.position.set(Math.cos(a)*0.13, Math.sin(a)*0.13, 0);
+        leaf.scale.set(1, 1, 0.5);
+        g.add(leaf);
+      }
+      const gem = new THREE.Mesh(
+        new THREE.OctahedronGeometry(0.065, 0),
+        new THREE.MeshStandardMaterial({color:0x9affda, emissive:0x4fffc0, emissiveIntensity:1.2, roughness:0.15})
+      );
+      g.add(gem);
+      return g;
+    }
+    const chestEmblem = makeVineEmblem();
+    chestEmblem.position.set(0, 0.5, 0.34);
+    torsoGroup.add(chestEmblem);
+    const backEmblem = makeVineEmblem();
+    backEmblem.position.set(0, 0.5, -0.26);
+    backEmblem.rotation.y = Math.PI;
+    torsoGroup.add(backEmblem);
+    // short neck block
+    const neck = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.14, 0.2), skinMat);
+    neck.position.y = 0.83;
+    neck.castShadow = true;
+    torsoGroup.add(neck);
+
+    // arms — blocky rectangular limbs, each from a shoulder pivot
+    const armPivots = [];
+    const armHands = [];
+    [-1, 1].forEach(side => {
+      const shoulder = new THREE.Group();
+      shoulder.position.set(side*0.55, 0.75, 0);
+      torsoGroup.add(shoulder);
+      const arm = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.72, 0.28), limbMat);
+      arm.position.y = -0.36;
+      arm.castShadow = true;
+      shoulder.add(arm);
+      // pauldron — a steel shoulder plate for a proper armored silhouette
+      const pauldron = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.2, 0.34), armorMat);
+      pauldron.position.set(0, 0.02, 0);
+      pauldron.castShadow = true;
+      shoulder.add(pauldron);
+      const pauldronTrim = new THREE.Mesh(new THREE.BoxGeometry(0.37, 0.03, 0.35), glowMat);
+      pauldronTrim.position.set(0, -0.09, 0);
+      shoulder.add(pauldronTrim);
+      // forearm bracer with a glowing accent line
+      const bracer = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.16, 0.32), armorMat);
+      bracer.position.set(0, -0.58, 0);
+      bracer.castShadow = true;
+      shoulder.add(bracer);
+      const bracerTrim = new THREE.Mesh(new THREE.BoxGeometry(0.33, 0.025, 0.33), glowMat);
+      bracerTrim.position.set(0, -0.51, 0);
+      shoulder.add(bracerTrim);
+      const hand = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.16, 0.26), glowMat);
+      hand.position.set(0, -0.72, 0);
+      shoulder.add(hand);
+      shoulder.rotation.z = side * 0.24;
+      armPivots.push(shoulder);
+      armHands.push(hand);
+    });
+
+    // head — blocky Roblox-style cube with a simple face
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.56, 0.56), skinMat);
+    head.position.y = 1.05;
+    head.castShadow = true;
+    torsoGroup.add(head);
+    // simple flat facial features on the front of the head
+    [-1, 1].forEach(side => {
+      const eye = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.07, 0.02), faceFeatureMat);
+      eye.position.set(side*0.15, 1.08, 0.29);
+      torsoGroup.add(eye);
+    });
+    const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.03, 0.02), faceFeatureMat);
+    mouth.position.set(0, 0.92, 0.29);
+    torsoGroup.add(mouth);
+    const eyebrowMat = faceFeatureMat;
+    [-1, 1].forEach(side => {
+      const brow = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.025, 0.02), eyebrowMat);
+      brow.position.set(side*0.15, 1.15, 0.29);
+      brow.rotation.z = -side * 0.15;
+      torsoGroup.add(brow);
+    });
+
+    // messy but coherent hair — a single continuous, organically-bumped dome
+    // (guaranteed no gaps or floating "pebbles") plus a few larger accent clumps
+    // for a side-swept fringe, all firmly overlapping the dome
+    const hairGroup = new THREE.Group();
+    hairGroup.position.set(0, 1.05, 0);
+    torsoGroup.add(hairGroup);
+
+    let hairSeed = 7;
+    function hairRandom(){ // small deterministic PRNG so the hairstyle is stable across reloads
+      hairSeed = (hairSeed * 9301 + 49297) % 233280;
+      return hairSeed / 233280;
+    }
+
+    // base dome: a hemisphere (top ~75°, so it can't wrap down over the face),
+    // with every vertex nudged in/out a little for an organic, non-perfectly-round look
+    const domeGeo = new THREE.SphereGeometry(0.42, 16, 12, 0, Math.PI*2, 0, 1.3);
+    const dPos = domeGeo.attributes.position;
+    for (let i = 0; i < dPos.count; i++){
+      const len = Math.sqrt(dPos.getX(i)**2 + dPos.getY(i)**2 + dPos.getZ(i)**2);
+      const bump = 1 + (hairRandom() - 0.5) * 0.3;
+      const scale = (len * bump) / len;
+      dPos.setXYZ(i, dPos.getX(i)*scale, dPos.getY(i)*scale, dPos.getZ(i)*scale);
+    }
+    domeGeo.computeVertexNormals();
+    const dome = new THREE.Mesh(domeGeo, hairMat);
+    dome.position.set(0, 0.1, -0.03);
+    dome.scale.set(1.0, 0.85, 1.1);
+    dome.castShadow = true;
+    hairGroup.add(dome);
+
+    // larger clumps for volume, kept up near the crown/ears rather than hanging
+    // down low — off the front-center so the face stays clear
+    const accents = [
+      { pos: [-0.2, 0.3, 0.14],    scale: [0.2, 0.15, 0.16],  rot: [-0.3, 0.35, 0.25] },
+      { pos: [0.14, 0.33, 0.12],   scale: [0.18, 0.14, 0.15], rot: [-0.25, -0.2, -0.2] },
+      { pos: [0.32, 0.1, -0.03],   scale: [0.18, 0.2, 0.19],  rot: [0, 0, -0.35] },
+      { pos: [-0.33, 0.09, -0.04], scale: [0.18, 0.2, 0.19],  rot: [0, 0, 0.35] },
+      { pos: [0, 0.46, -0.08],     scale: [0.22, 0.16, 0.22], rot: [0.1, 0.15, 0] },
+      { pos: [0.2, 0.08, -0.24],   scale: [0.18, 0.18, 0.18], rot: [0.2, 0.4, -0.1] },
+      { pos: [-0.2, 0.07, -0.23],  scale: [0.18, 0.18, 0.18], rot: [0.2, -0.4, 0.1] },
+      { pos: [0, 0.1, -0.3],       scale: [0.22, 0.16, 0.17], rot: [0.15, 0, 0] },
+    ];
+    accents.forEach(a => {
+      const clump = new THREE.Mesh(new THREE.IcosahedronGeometry(0.5, 0), hairMat);
+      clump.position.set(...a.pos);
+      clump.scale.set(...a.scale);
+      clump.rotation.set(...a.rot);
+      clump.castShadow = true;
+      hairGroup.add(clump);
+    });
+
+    return {
+      playerMesh, body, legPivots, torsoGroup, armPivots, armHands, head, hairGroup,
+      materials: { backMat, frontMat, limbMat, bootMat, skinMat, hairMat, faceFeatureMat, glowMat, armorMat, goldMat },
+    };
+  }
+  const SKIN_DEFS_FALLBACK = { back:0x16215c, front:0x7a4526, limb:0x16215c, boot:0x0d1638, glow:0x7affc4, glowEm:0x2fbf8a };
+
+  // ---------- LOCAL PLAYER CHARACTER ----------
+  // Same variable names as before the refactor (playerMesh, body, legPivots,
+  // torsoGroup, armPivots, armHands, head, hairGroup, and each material) so
+  // every other place in the file that already references them keeps
+  // working completely unchanged.
+  const _localChar = buildCharacterMesh(SKIN_DEFS_FALLBACK);
+  const playerMesh = _localChar.playerMesh;
+  const body = _localChar.body;
+  const legPivots = _localChar.legPivots;
+  const torsoGroup = _localChar.torsoGroup;
+  const armPivots = _localChar.armPivots;
+  const armHands = _localChar.armHands;
+  const head = _localChar.head;
+  const hairGroup = _localChar.hairGroup;
+  const backMat = _localChar.materials.backMat;
+  const frontMat = _localChar.materials.frontMat;
+  const limbMat = _localChar.materials.limbMat;
+  const bootMat = _localChar.materials.bootMat;
+  const skinMat = _localChar.materials.skinMat;
+  const hairMat = _localChar.materials.hairMat;
+  const faceFeatureMat = _localChar.materials.faceFeatureMat;
+  const glowMat = _localChar.materials.glowMat;
+  const armorMat = _localChar.materials.armorMat;
+  const goldMat = _localChar.materials.goldMat;
   const suitMat = backMat;
 
   // ---------- SKINS ----------
@@ -4212,207 +4455,6 @@
     ropeMat.color.setHex(vine.color);
   }
 
-  // legs — blocky Roblox-style rectangular limbs, each hanging from a hip pivot
-  const legPivots = [];
-  [-0.22, 0.22].forEach(x => {
-    const hip = new THREE.Group();
-    hip.position.set(x, 0.85, 0);
-    body.add(hip);
-    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.85, 0.34), limbMat);
-    leg.position.y = -0.42;
-    leg.castShadow = true;
-    hip.add(leg);
-    // boot cuff with a glowing trim line for a more detailed, armored look
-    const bootCuff = new THREE.Mesh(new THREE.BoxGeometry(0.37, 0.16, 0.37), bootMat);
-    bootCuff.position.set(0, -0.62, 0);
-    bootCuff.castShadow = true;
-    hip.add(bootCuff);
-    const bootTrim = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.03, 0.38), glowMat);
-    bootTrim.position.set(0, -0.55, 0);
-    hip.add(bootTrim);
-    const foot = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.13, 0.36), bootMat);
-    foot.position.set(0, -0.8, 0.06);
-    foot.castShadow = true;
-    hip.add(foot);
-    legPivots.push(hip);
-  });
-
-  // torso — a straight rectangular block, blue on the back with a brown front panel
-  const torsoGroup = new THREE.Group();
-  torsoGroup.position.y = 0.85;
-  body.add(torsoGroup);
-  const torso = new THREE.Mesh(new THREE.BoxGeometry(0.92, 0.8, 0.5), backMat);
-  torso.position.y = 0.4;
-  torso.castShadow = true;
-  torsoGroup.add(torso);
-  // front chest panel (brown), a thin box sitting flush on the front face
-  const chestPanel = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.8, 0.06), frontMat);
-  chestPanel.position.set(0, 0.4, 0.28);
-  chestPanel.castShadow = true;
-  torsoGroup.add(chestPanel);
-  // glowing trim line framing the chest panel
-  const chestTrimTop = new THREE.Mesh(new THREE.BoxGeometry(0.86, 0.025, 0.02), glowMat);
-  chestTrimTop.position.set(0, 0.77, 0.32);
-  torsoGroup.add(chestTrimTop);
-  const chestTrimBottom = new THREE.Mesh(new THREE.BoxGeometry(0.86, 0.025, 0.02), glowMat);
-  chestTrimBottom.position.set(0, 0.03, 0.32);
-  torsoGroup.add(chestTrimBottom);
-  // diagonal gold chest strap with a small buckle, worn over the shoulder
-  const chestStrap = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.85, 0.03), goldMat);
-  chestStrap.position.set(-0.18, 0.42, 0.3);
-  chestStrap.rotation.z = 0.35;
-  torsoGroup.add(chestStrap);
-  const strapBuckle = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.13, 0.05), goldMat);
-  strapBuckle.position.set(0.14, 0.12, 0.32);
-  torsoGroup.add(strapBuckle);
-  // waist belt with a centered buckle
-  const belt = new THREE.Mesh(new THREE.BoxGeometry(0.96, 0.14, 0.54), new THREE.MeshStandardMaterial({color:0x241a12, roughness:0.6}));
-  belt.position.set(0, 0.02, 0);
-  belt.castShadow = true;
-  torsoGroup.add(belt);
-  const beltBuckle = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, 0.05), goldMat);
-  beltBuckle.position.set(0, 0.02, 0.3);
-  torsoGroup.add(beltBuckle);
-  // vine-circle emblem — a ring of small woven loops with a glowing gem core
-  function makeVineEmblem(){
-    const g = new THREE.Group();
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.02, 8, 20), glowMat);
-    g.add(ring);
-    for (let i = 0; i < 6; i++){
-      const a = (i / 6) * Math.PI * 2;
-      const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.032, 6, 6), glowMat);
-      leaf.position.set(Math.cos(a)*0.13, Math.sin(a)*0.13, 0);
-      leaf.scale.set(1, 1, 0.5);
-      g.add(leaf);
-    }
-    const gem = new THREE.Mesh(
-      new THREE.OctahedronGeometry(0.065, 0),
-      new THREE.MeshStandardMaterial({color:0x9affda, emissive:0x4fffc0, emissiveIntensity:1.2, roughness:0.15})
-    );
-    g.add(gem);
-    return g;
-  }
-  const chestEmblem = makeVineEmblem();
-  chestEmblem.position.set(0, 0.5, 0.34);
-  torsoGroup.add(chestEmblem);
-  const backEmblem = makeVineEmblem();
-  backEmblem.position.set(0, 0.5, -0.26);
-  backEmblem.rotation.y = Math.PI;
-  torsoGroup.add(backEmblem);
-  // short neck block
-  const neck = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.14, 0.2), skinMat);
-  neck.position.y = 0.83;
-  neck.castShadow = true;
-  torsoGroup.add(neck);
-
-  // arms — blocky rectangular limbs, each from a shoulder pivot
-  const armPivots = [];
-  const armHands = [];
-  [-1, 1].forEach(side => {
-    const shoulder = new THREE.Group();
-    shoulder.position.set(side*0.55, 0.75, 0);
-    torsoGroup.add(shoulder);
-    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.72, 0.28), limbMat);
-    arm.position.y = -0.36;
-    arm.castShadow = true;
-    shoulder.add(arm);
-    // pauldron — a steel shoulder plate for a proper armored silhouette
-    const pauldron = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.2, 0.34), armorMat);
-    pauldron.position.set(0, 0.02, 0);
-    pauldron.castShadow = true;
-    shoulder.add(pauldron);
-    const pauldronTrim = new THREE.Mesh(new THREE.BoxGeometry(0.37, 0.03, 0.35), glowMat);
-    pauldronTrim.position.set(0, -0.09, 0);
-    shoulder.add(pauldronTrim);
-    // forearm bracer with a glowing accent line
-    const bracer = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.16, 0.32), armorMat);
-    bracer.position.set(0, -0.58, 0);
-    bracer.castShadow = true;
-    shoulder.add(bracer);
-    const bracerTrim = new THREE.Mesh(new THREE.BoxGeometry(0.33, 0.025, 0.33), glowMat);
-    bracerTrim.position.set(0, -0.51, 0);
-    shoulder.add(bracerTrim);
-    const hand = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.16, 0.26), glowMat);
-    hand.position.set(0, -0.72, 0);
-    shoulder.add(hand);
-    shoulder.rotation.z = side * 0.24;
-    armPivots.push(shoulder);
-    armHands.push(hand);
-  });
-
-  // head — blocky Roblox-style cube with a simple face
-  const head = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.56, 0.56), skinMat);
-  head.position.y = 1.05;
-  head.castShadow = true;
-  torsoGroup.add(head);
-  // simple flat facial features on the front of the head
-  [-1, 1].forEach(side => {
-    const eye = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.07, 0.02), faceFeatureMat);
-    eye.position.set(side*0.15, 1.08, 0.29);
-    torsoGroup.add(eye);
-  });
-  const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.03, 0.02), faceFeatureMat);
-  mouth.position.set(0, 0.92, 0.29);
-  torsoGroup.add(mouth);
-  const eyebrowMat = faceFeatureMat;
-  [-1, 1].forEach(side => {
-    const brow = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.025, 0.02), eyebrowMat);
-    brow.position.set(side*0.15, 1.15, 0.29);
-    brow.rotation.z = -side * 0.15;
-    torsoGroup.add(brow);
-  });
-
-  // messy but coherent hair — a single continuous, organically-bumped dome
-  // (guaranteed no gaps or floating "pebbles") plus a few larger accent clumps
-  // for a side-swept fringe, all firmly overlapping the dome
-  const hairGroup = new THREE.Group();
-  hairGroup.position.set(0, 1.05, 0);
-  torsoGroup.add(hairGroup);
-
-  let hairSeed = 7;
-  function hairRandom(){ // small deterministic PRNG so the hairstyle is stable across reloads
-    hairSeed = (hairSeed * 9301 + 49297) % 233280;
-    return hairSeed / 233280;
-  }
-
-  // base dome: a hemisphere (top ~75°, so it can't wrap down over the face),
-  // with every vertex nudged in/out a little for an organic, non-perfectly-round look
-  const domeGeo = new THREE.SphereGeometry(0.42, 16, 12, 0, Math.PI*2, 0, 1.3);
-  const dPos = domeGeo.attributes.position;
-  for (let i = 0; i < dPos.count; i++){
-    const len = Math.sqrt(dPos.getX(i)**2 + dPos.getY(i)**2 + dPos.getZ(i)**2);
-    const bump = 1 + (hairRandom() - 0.5) * 0.3;
-    const scale = (len * bump) / len;
-    dPos.setXYZ(i, dPos.getX(i)*scale, dPos.getY(i)*scale, dPos.getZ(i)*scale);
-  }
-  domeGeo.computeVertexNormals();
-  const dome = new THREE.Mesh(domeGeo, hairMat);
-  dome.position.set(0, 0.1, -0.03);
-  dome.scale.set(1.0, 0.85, 1.1);
-  dome.castShadow = true;
-  hairGroup.add(dome);
-
-  // larger clumps for volume, kept up near the crown/ears rather than hanging
-  // down low — off the front-center so the face stays clear
-  const accents = [
-    { pos: [-0.2, 0.3, 0.14],    scale: [0.2, 0.15, 0.16],  rot: [-0.3, 0.35, 0.25] },
-    { pos: [0.14, 0.33, 0.12],   scale: [0.18, 0.14, 0.15], rot: [-0.25, -0.2, -0.2] },
-    { pos: [0.32, 0.1, -0.03],   scale: [0.18, 0.2, 0.19],  rot: [0, 0, -0.35] },
-    { pos: [-0.33, 0.09, -0.04], scale: [0.18, 0.2, 0.19],  rot: [0, 0, 0.35] },
-    { pos: [0, 0.46, -0.08],     scale: [0.22, 0.16, 0.22], rot: [0.1, 0.15, 0] },
-    { pos: [0.2, 0.08, -0.24],   scale: [0.18, 0.18, 0.18], rot: [0.2, 0.4, -0.1] },
-    { pos: [-0.2, 0.07, -0.23],  scale: [0.18, 0.18, 0.18], rot: [0.2, -0.4, 0.1] },
-    { pos: [0, 0.1, -0.3],       scale: [0.22, 0.16, 0.17], rot: [0.15, 0, 0] },
-  ];
-  accents.forEach(a => {
-    const clump = new THREE.Mesh(new THREE.IcosahedronGeometry(0.5, 0), hairMat);
-    clump.position.set(...a.pos);
-    clump.scale.set(...a.scale);
-    clump.rotation.set(...a.rot);
-    clump.castShadow = true;
-    hairGroup.add(clump);
-  });
-
   scene.add(playerMesh);
 
   // ---------- CO-OP GHOST AVATARS ----------
@@ -4423,53 +4465,9 @@
   // plus a floating name tag instead.
   function makeGhostMesh(name, skinId){
     const skin = SKIN_DEFS.find(s => s.id === skinId) || SKIN_DEFS[0];
-    const g = new THREE.Group();
-    // A simplified blocky stand-in of the real character — same silhouette
-    // language (boxy torso/limbs) and the friend's ACTUAL equipped skin
-    // colors, but without the full animation rig (walk cycle, grapple pose,
-    // etc.) that the local player's mesh has, since ghosts only ever need
-    // to translate/rotate smoothly, never actually animate joints.
-    const frontMat = new THREE.MeshStandardMaterial({ color: skin.front, roughness: 0.55, metalness: 0.1 });
-    const backMat = new THREE.MeshStandardMaterial({ color: skin.back, roughness: 0.4, metalness: 0.15 });
-    const limbMat = new THREE.MeshStandardMaterial({ color: skin.limb, roughness: 0.4, metalness: 0.15 });
-    const bootMat = new THREE.MeshStandardMaterial({ color: skin.boot, roughness: 0.5, metalness: 0.15 });
-    const glowMat = new THREE.MeshStandardMaterial({ color: skin.glow, emissive: skin.glowEm, emissiveIntensity: 0.8 });
-    const headMat = new THREE.MeshStandardMaterial({ color: 0xf0c9a0, roughness: 0.6 });
-    const hairMat = new THREE.MeshStandardMaterial({ color: 0x5a3a22, roughness: 0.7 });
-
-    const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), headMat);
-    head.position.y = 1.85;
-    g.add(head);
-    const hair = new THREE.Mesh(new THREE.SphereGeometry(0.32, 8, 6), hairMat);
-    hair.position.y = 2.12; hair.scale.set(1, 0.75, 1);
-    g.add(hair);
-
-    const torsoFront = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.85, 0.15), frontMat);
-    torsoFront.position.set(0, 1.35, 0.15);
-    g.add(torsoFront);
-    const torsoBack = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.85, 0.15), backMat);
-    torsoBack.position.set(0, 1.35, -0.15);
-    g.add(torsoBack);
-    const chestGlow = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.05, 10), glowMat);
-    chestGlow.rotation.x = Math.PI / 2;
-    chestGlow.position.set(0, 1.4, 0.23);
-    g.add(chestGlow);
-
-    [-0.42, 0.42].forEach(x => {
-      const arm = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.8, 0.26), limbMat);
-      arm.position.set(x, 1.35, 0);
-      g.add(arm);
-    });
-    [-0.18, 0.18].forEach(x => {
-      const leg = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.75, 0.3), limbMat);
-      leg.position.set(x, 0.55, 0);
-      g.add(leg);
-      const boot = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.2, 0.34), bootMat);
-      boot.position.set(x, 0.12, 0.02);
-      g.add(boot);
-    });
-
-    g.traverse(obj => { if (obj.isMesh){ obj.castShadow = true; } });
+    const built = buildCharacterMesh(skin); // the exact same detailed character the local player uses, own independent materials
+    const g = built.playerMesh;
+    g.position.y = 1; // buildCharacterMesh's inner "body" group sits at -1 to match the local player's feet-on-ground offset; ghosts are positioned directly (no separate collision radius math), so compensate here instead
 
     const canvas = document.createElement('canvas');
     canvas.width = 256; canvas.height = 64;
@@ -4484,17 +4482,19 @@
     tag.position.y = 2.5;
     g.add(tag);
     scene.add(g);
-    return g;
+    return { mesh: g, legPivots: built.legPivots, armPivots: built.armPivots, torsoGroup: built.torsoGroup };
   }
   function updateGhostFromRoomData(key, p){
     if (!friendGhosts[key]){
-      friendGhosts[key] = { mesh: makeGhostMesh(p.name || 'Freund', p.skin), skinId: p.skin, targetPos: new THREE.Vector3(p.x, p.y, p.z), targetYaw: p.yaw || 0, world: p.world, name: p.name };
+      const built = makeGhostMesh(p.name || 'Freund', p.skin);
+      friendGhosts[key] = { ...built, skinId: p.skin, targetPos: new THREE.Vector3(p.x, p.y, p.z), targetYaw: p.yaw || 0, world: p.world, name: p.name, walkPhase: 0, lastPos: new THREE.Vector3(p.x, p.y, p.z) };
     } else if (friendGhosts[key].skinId !== p.skin){
       // Friend changed their equipped skin mid-session — rebuild the ghost
       // with the new colors rather than trying to live-patch materials.
       const oldPos = friendGhosts[key].mesh.position.clone();
       removeGhost(key);
-      friendGhosts[key] = { mesh: makeGhostMesh(p.name || 'Freund', p.skin), skinId: p.skin, targetPos: new THREE.Vector3(p.x, p.y, p.z), targetYaw: p.yaw || 0, world: p.world, name: p.name };
+      const built = makeGhostMesh(p.name || 'Freund', p.skin);
+      friendGhosts[key] = { ...built, skinId: p.skin, targetPos: new THREE.Vector3(p.x, p.y, p.z), targetYaw: p.yaw || 0, world: p.world, name: p.name, walkPhase: 0, lastPos: oldPos.clone() };
       friendGhosts[key].mesh.position.copy(oldPos);
     }
     const gh = friendGhosts[key];
@@ -4511,20 +4511,37 @@
     delete friendGhosts[key];
   }
   // Smoothly interpolates every ghost toward its latest known position each
-  // frame (called from animate()) and shows/hides them based on whether
+  // frame (called from animate()), plays a simple walk-cycle on their legs/
+  // arms whenever they're actually moving (driven by how far they've
+  // travelled since the last frame, since ghosts don't have real input to
+  // read a "walking" flag from), and shows/hides them based on whether
   // they're currently in the SAME world as the local player — otherwise a
-  // friend three worlds away would just be an invisible capsule looming
+  // friend three worlds away would just be an invisible character looming
   // nearby, which would be confusing rather than useful.
   function updateGhosts(dt){
     Object.values(friendGhosts).forEach(gh => {
       const inSameWorld = gh.world === selectedWorld;
       gh.mesh.visible = inSameWorld && running;
       if (!inSameWorld) return;
+      const beforePos = gh.mesh.position.clone();
       gh.mesh.position.lerp(gh.targetPos, Math.min(1, dt * 8));
       let dYaw = gh.targetYaw - gh.mesh.rotation.y;
       while (dYaw > Math.PI) dYaw -= Math.PI * 2;
       while (dYaw < -Math.PI) dYaw += Math.PI * 2;
       gh.mesh.rotation.y += dYaw * Math.min(1, dt * 8);
+      const movedDist = gh.mesh.position.distanceTo(beforePos);
+      const speed = dt > 0 ? movedDist / dt : 0;
+      if (speed > 0.4){
+        gh.walkPhase += dt * (6 + Math.min(speed, 14) * 0.5);
+        const swing = Math.sin(gh.walkPhase);
+        gh.legPivots[0].rotation.x = swing * 0.65;
+        gh.legPivots[1].rotation.x = -swing * 0.65;
+        gh.armPivots[0].rotation.x += (-swing * 0.55 - gh.armPivots[0].rotation.x) * 0.4;
+        gh.armPivots[1].rotation.x += (swing * 0.55 - gh.armPivots[1].rotation.x) * 0.4;
+      } else {
+        gh.legPivots[0].rotation.x *= 0.8; gh.legPivots[1].rotation.x *= 0.8;
+        gh.armPivots[0].rotation.x *= 0.8; gh.armPivots[1].rotation.x *= 0.8;
+      }
     });
   }
   // Broadcasts the local player's own position/rotation/world to the room,
