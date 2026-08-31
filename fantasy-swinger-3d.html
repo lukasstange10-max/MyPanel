@@ -752,6 +752,33 @@
     transform: translateY(-2px) scale(1.02);
     background: linear-gradient(135deg, rgba(140,160,255,0.4), rgba(90,110,230,0.4));
   }
+  #coopBtn {
+    padding: 13px 24px; font-size: 15px; font-weight: 700;
+    background: linear-gradient(135deg, rgba(122,255,196,0.22), rgba(60,200,150,0.22));
+    border: 1px solid rgba(122,255,196,0.5);
+    border-radius: 34px; color: #fff; cursor: pointer;
+    transition: transform 0.15s ease, background 0.2s ease;
+  }
+  #coopBtn:hover {
+    transform: translateY(-2px) scale(1.02);
+    background: linear-gradient(135deg, rgba(122,255,196,0.4), rgba(60,200,150,0.4));
+  }
+  #coopScreen {
+    position: fixed; inset: 0; z-index: 250;
+    background: rgba(6,3,14,0.5);
+    backdrop-filter: blur(3px) saturate(1.2);
+    -webkit-backdrop-filter: blur(3px) saturate(1.2);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; text-align: center; padding: 20px; box-sizing: border-box;
+  }
+  #coopScreen.hidden { display: none; }
+  #coopScreen .startPanel { max-width: 420px; }
+  .coopPlayerRow {
+    display: flex; align-items: center; gap: 10px; padding: 9px 14px;
+    border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(122,255,196,0.25);
+    font-size: 13px; font-weight: 700; text-align: left;
+  }
+  .coopPlayerRow .coopDot { width: 8px; height: 8px; border-radius: 50%; background: #7affc4; flex-shrink: 0; }
 
   #worldSelectRow { display: flex; flex-direction: column; gap: 10px; width: 100%; }
   .worldBtn {
@@ -1779,7 +1806,38 @@
       <button id="achievementsBtn"><span data-i18n="achievementsBtnMenu">🏅 Erfolge</span><span id="achievementsBadge"></span></button>
       <button id="galleryBtn" data-i18n="galleryBtnMenu">🖼️ Galerie</button>
       <button id="statsBtn" data-i18n="statsBtn">📊 Statistiken</button>
+      <button id="coopBtn">👥 Mit Freunden spielen</button>
       <button id="adminPanelBtn" class="hidden">🛠️ Admin-Zentrale</button>
+    </div>
+  </div>
+
+  <div id="coopScreen" class="hidden">
+    <div class="startPanel">
+      <div class="titleRow">
+        <h1 style="font-size:30px;">👥 Mit Freunden spielen</h1>
+      </div>
+      <p class="heroTagline">Schwingt gemeinsam durch die Welt — jeder sammelt weiterhin seine eigenen Pokale.</p>
+
+      <div id="coopNoRoom">
+        <button id="coopCreateBtn" class="menuBtn">🎲 Raum erstellen</button>
+        <p style="margin:14px 0 8px; font-size:12.5px; color:rgba(255,255,255,0.6);">oder einem Raum beitreten:</p>
+        <div style="display:flex; gap:8px;">
+          <input id="coopJoinInput" type="text" maxlength="5" placeholder="CODE" style="flex:1; text-align:center; letter-spacing:3px; text-transform:uppercase; font-weight:800; font-size:16px; padding:10px; border-radius:10px; border:1px solid rgba(180,140,255,0.4); background:rgba(255,255,255,0.06); color:#fff;">
+          <button id="coopJoinBtn" class="menuBtn" style="width:auto; padding:10px 20px;">Beitreten</button>
+        </div>
+        <p id="coopJoinStatus" style="font-size:12px; color:#ff9d9d; min-height:16px; margin-top:8px;"></p>
+      </div>
+
+      <div id="coopInRoom" class="hidden">
+        <div style="text-align:center; margin-bottom:16px;">
+          <p style="font-size:12px; color:rgba(255,255,255,0.6); margin-bottom:4px;">Dein Raum-Code — teile ihn mit deinem Freund:</p>
+          <div id="coopRoomCode" style="font-size:32px; font-weight:900; letter-spacing:8px; color:#ffe27a;">-----</div>
+        </div>
+        <div id="coopPlayerList" style="display:flex; flex-direction:column; gap:6px; margin-bottom:16px;"></div>
+        <button id="coopLeaveBtn" class="menuBtn" style="background:rgba(255,90,90,0.25); border-color:rgba(255,90,90,0.5);">Raum verlassen</button>
+      </div>
+
+      <button id="coopCloseBtn" class="menuBtn" style="margin-top:14px;">Schließen</button>
     </div>
   </div>
 
@@ -2689,6 +2747,69 @@
       }, err => console.error('[presence] .info/connected listener error:', err));
     }
   } catch(e){} // Firebase SDK failed to load/init (e.g. offline on first load) — game continues without events
+
+  // ---------- CO-OP ROOMS (Firebase, real-time) ----------
+  // Deliberately simple: a short room code groups a handful of players
+  // together so they can see and swing near each other. No shared
+  // progress/trophies at all — each player's own save stays fully
+  // independent, this only broadcasts "where am I" to whoever else is in
+  // the same room. Position sync + the actual 3D ghost avatars are wired up
+  // further below, once `player`/`scene` exist — this part only needs
+  // Firebase + the player's profile name, so it's safe to set up this early.
+  let currentRoomCode = null;
+  let roomPlayersRef = null;
+  let myRoomPlayerRef = null;
+  const friendGhosts = {}; // playerKey -> { mesh, targetPos, targetYaw, name, lastSeenMs }
+  function generateRoomCode(){
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // skips ambiguous 0/O, 1/I
+    let code = '';
+    for (let i = 0; i < 5; i++) code += chars[Math.floor(Math.random() * chars.length)];
+    return code;
+  }
+  function roomPlayerKey(){
+    const meta = (typeof getActiveProfileMeta === 'function') ? getActiveProfileMeta() : null;
+    const name = meta ? meta.name : 'Spieler';
+    return encodeURIComponent(name.trim().toLowerCase()).replace(/[.#$\[\]]/g, '_');
+  }
+  function onRoomPlayersUpdate(snapshot){
+    const data = snapshot.val() || {};
+    const myKey = roomPlayerKey();
+    const listEl = document.getElementById('coopPlayerList');
+    if (listEl){
+      listEl.innerHTML = '';
+      Object.entries(data).forEach(([key, p]) => {
+        const row = document.createElement('div');
+        row.className = 'coopPlayerRow';
+        row.innerHTML = '<span class="coopDot"></span><span>' + p.name + (key === myKey ? ' (du)' : '') + '</span>';
+        listEl.appendChild(row);
+      });
+    }
+    const seenKeys = new Set();
+    Object.entries(data).forEach(([key, p]) => {
+      if (key === myKey) return;
+      seenKeys.add(key);
+      updateGhostFromRoomData(key, p);
+    });
+    Object.keys(friendGhosts).forEach(key => { if (!seenKeys.has(key)) removeGhost(key); });
+  }
+  function joinRoom(code){
+    leaveRoom(); // clean up any previous room membership first
+    currentRoomCode = code;
+    const meta = (typeof getActiveProfileMeta === 'function') ? getActiveProfileMeta() : null;
+    const myName = meta ? meta.name : 'Spieler';
+    myRoomPlayerRef = firebase.database().ref('rooms/' + code + '/players/' + roomPlayerKey());
+    myRoomPlayerRef.onDisconnect().remove(); // leave automatically if the tab closes/crashes
+    myRoomPlayerRef.set({ name: myName, x: 0, y: 0, z: 0, yaw: 0, world: 0, updatedAt: firebase.database.ServerValue.TIMESTAMP });
+    roomPlayersRef = firebase.database().ref('rooms/' + code + '/players');
+    roomPlayersRef.on('value', onRoomPlayersUpdate);
+  }
+  function leaveRoom(){
+    if (myRoomPlayerRef){ myRoomPlayerRef.onDisconnect().cancel(); myRoomPlayerRef.remove(); myRoomPlayerRef = null; }
+    if (roomPlayersRef){ roomPlayersRef.off('value', onRoomPlayersUpdate); roomPlayersRef = null; }
+    currentRoomCode = null;
+    Object.keys(friendGhosts).forEach(key => removeGhost(key));
+  }
+
   function writeGlobalEvent(type, durationMinutes){
     const body = type
       ? { type: type, setAt: Date.now(), expiresAt: durationMinutes ? Date.now() + durationMinutes * 60000 : null }
@@ -4266,6 +4387,92 @@
 
   scene.add(playerMesh);
 
+  // ---------- CO-OP GHOST AVATARS ----------
+  // Simplified stand-ins for other players in the same room — a full copy
+  // of the detailed player model (with all its cosmetic variants) for each
+  // friend would be a lot of extra weight for what's meant to be a light
+  // "see where your friend is" feature, so this is a translucent capsule
+  // plus a floating name tag instead.
+  function makeGhostMesh(name){
+    const g = new THREE.Group();
+    const hue = Array.from(name).reduce((a,c) => a + c.charCodeAt(0), 0) % 360 / 360; // stable per-name color
+    const mat = new THREE.MeshStandardMaterial({
+      color: new THREE.Color().setHSL(hue, 0.65, 0.6), transparent: true, opacity: 0.6,
+      emissive: new THREE.Color().setHSL(hue, 0.65, 0.4), emissiveIntensity: 0.5,
+    });
+    // CapsuleGeometry isn't available in this Three.js version (r128) — a
+    // cylinder body with a sphere cap on top gives basically the same
+    // rounded-pill silhouette.
+    const bodyCyl = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 1.3, 12), mat);
+    bodyCyl.position.y = 1.15;
+    g.add(bodyCyl);
+    const topCap = new THREE.Mesh(new THREE.SphereGeometry(0.45, 12, 8), mat);
+    topCap.position.y = 1.8;
+    g.add(topCap);
+    const canvas = document.createElement('canvas');
+    canvas.width = 256; canvas.height = 64;
+    const ctx = canvas.getContext('2d');
+    ctx.font = 'bold 38px sans-serif';
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = 'rgba(0,0,0,0.8)'; ctx.shadowBlur = 6;
+    ctx.fillText(name.slice(0, 14), 128, 46);
+    const tag = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas), transparent: true, depthTest: false }));
+    tag.scale.set(2.2, 0.55, 1);
+    tag.position.y = 2.5;
+    g.add(tag);
+    scene.add(g);
+    return g;
+  }
+  function updateGhostFromRoomData(key, p){
+    if (!friendGhosts[key]){
+      friendGhosts[key] = { mesh: makeGhostMesh(p.name || 'Freund'), targetPos: new THREE.Vector3(p.x, p.y, p.z), targetYaw: p.yaw || 0, world: p.world, name: p.name };
+    }
+    const gh = friendGhosts[key];
+    gh.targetPos.set(p.x, p.y, p.z);
+    gh.targetYaw = p.yaw || 0;
+    gh.world = p.world;
+    gh.lastSeenMs = Date.now();
+  }
+  function removeGhost(key){
+    const gh = friendGhosts[key];
+    if (!gh) return;
+    scene.remove(gh.mesh);
+    gh.mesh.traverse(obj => { if (obj.material){ if (obj.material.map) obj.material.map.dispose(); obj.material.dispose(); } if (obj.geometry) obj.geometry.dispose(); });
+    delete friendGhosts[key];
+  }
+  // Smoothly interpolates every ghost toward its latest known position each
+  // frame (called from animate()) and shows/hides them based on whether
+  // they're currently in the SAME world as the local player — otherwise a
+  // friend three worlds away would just be an invisible capsule looming
+  // nearby, which would be confusing rather than useful.
+  function updateGhosts(dt){
+    Object.values(friendGhosts).forEach(gh => {
+      const inSameWorld = gh.world === selectedWorld;
+      gh.mesh.visible = inSameWorld && running;
+      if (!inSameWorld) return;
+      gh.mesh.position.lerp(gh.targetPos, Math.min(1, dt * 8));
+      let dYaw = gh.targetYaw - gh.mesh.rotation.y;
+      while (dYaw > Math.PI) dYaw -= Math.PI * 2;
+      while (dYaw < -Math.PI) dYaw += Math.PI * 2;
+      gh.mesh.rotation.y += dYaw * Math.min(1, dt * 8);
+    });
+  }
+  // Broadcasts the local player's own position/rotation/world to the room,
+  // throttled (not every single frame) to keep Firebase writes reasonable.
+  let roomSyncTimer = 0;
+  function updateRoomSync(dt){
+    if (!myRoomPlayerRef || !running) return;
+    roomSyncTimer += dt;
+    if (roomSyncTimer < 0.15) return; // ~6-7 updates/sec — smooth enough with the lerp above, cheap on writes
+    roomSyncTimer = 0;
+    myRoomPlayerRef.set({
+      name: (typeof getActiveProfileMeta === 'function' && getActiveProfileMeta()) ? getActiveProfileMeta().name : 'Spieler',
+      x: player.pos.x, y: player.pos.y, z: player.pos.z, yaw: player.yaw, world: selectedWorld,
+      updatedAt: firebase.database.ServerValue.TIMESTAMP,
+    }).catch(() => {}); // best-effort — a dropped position update just means a friend's ghost is briefly stale, never worth interrupting gameplay over
+  }
+
 
 
 
@@ -5405,6 +5612,41 @@
     document.getElementById('statsScreen').classList.add('hidden');
   }
   document.getElementById('statsBtn').addEventListener('click', openStats);
+  document.getElementById('coopBtn').addEventListener('click', () => {
+    document.getElementById('coopScreen').classList.remove('hidden');
+    document.getElementById('coopNoRoom').classList.toggle('hidden', !!currentRoomCode);
+    document.getElementById('coopInRoom').classList.toggle('hidden', !currentRoomCode);
+    if (currentRoomCode) document.getElementById('coopRoomCode').textContent = currentRoomCode;
+  });
+  document.getElementById('coopCloseBtn').addEventListener('click', () => {
+    document.getElementById('coopScreen').classList.add('hidden');
+  });
+  document.getElementById('coopCreateBtn').addEventListener('click', () => {
+    const code = generateRoomCode();
+    joinRoom(code);
+    document.getElementById('coopRoomCode').textContent = code;
+    document.getElementById('coopNoRoom').classList.add('hidden');
+    document.getElementById('coopInRoom').classList.remove('hidden');
+  });
+  document.getElementById('coopJoinBtn').addEventListener('click', () => {
+    const raw = document.getElementById('coopJoinInput').value.trim().toUpperCase();
+    const statusEl = document.getElementById('coopJoinStatus');
+    if (raw.length !== 5){
+      statusEl.textContent = 'Code muss genau 5 Zeichen haben.';
+      return;
+    }
+    statusEl.textContent = '';
+    joinRoom(raw);
+    document.getElementById('coopRoomCode').textContent = raw;
+    document.getElementById('coopNoRoom').classList.add('hidden');
+    document.getElementById('coopInRoom').classList.remove('hidden');
+  });
+  document.getElementById('coopLeaveBtn').addEventListener('click', () => {
+    leaveRoom();
+    document.getElementById('coopJoinInput').value = '';
+    document.getElementById('coopNoRoom').classList.remove('hidden');
+    document.getElementById('coopInRoom').classList.add('hidden');
+  });
   // The in-game 📊 button opens the same stats panel without going through
   // the pause menu — but gameplay still needs to be paused underneath it
   // (same reasoning as the real pause menu: no getting hit by an enemy
@@ -7052,6 +7294,8 @@
 
     updateDayNight(dt);
     updateWeather(dt);
+    updateRoomSync(dt);
+    updateGhosts(dt);
     dust.rotation.y += dt*0.01;
     if (starfield.visible){
       starfield.position.set(player.pos.x, 0, player.pos.z);
