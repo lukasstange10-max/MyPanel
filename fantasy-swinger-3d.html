@@ -607,6 +607,18 @@
   #settingsFab:hover { transform: translateY(-2px) rotate(25deg) scale(1.05); background: rgba(40,22,64,0.85); }
   #settingsFab.hidden { display: none; }
 
+  #adminFab {
+    position: fixed; top: 82px; right: 20px; z-index: 101;
+    width: 52px; height: 52px; border-radius: 50%;
+    background: rgba(58,30,10,0.78); border: 1px solid rgba(255,180,90,0.5);
+    backdrop-filter: blur(6px);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; cursor: pointer;
+    transition: transform 0.15s ease, background 0.2s ease;
+  }
+  #adminFab:hover { transform: translateY(-2px) scale(1.06); background: rgba(80,42,14,0.88); }
+  #adminFab.hidden { display: none; }
+
   #musicFab {
     position: fixed; bottom: 26px; right: 22px; z-index: 103;
     width: 66px; height: 66px; border-radius: 50%;
@@ -1761,6 +1773,7 @@
 </div>
 
 <button id="settingsFab">⚙️</button>
+<button id="adminFab" class="hidden" title="Admin-Zentrale">🛠️</button>
 
 <button id="musicFab" title="Musik" data-i18n-title="musicFabTitle">🎵</button>
 <div id="musicPanel">
@@ -5333,14 +5346,35 @@
   }
   function openAdminPanel(){
     if (!isAdminUser) return;
+    if (running && !paused){
+      // Opened via the in-game FAB during active play — pause the same way
+      // the normal pause menu would (stop movement/audio/pointer lock), but
+      // show the admin screen instead of the pause screen itself.
+      paused = true;
+      savePlaytime();
+      closeEmoteWheel();
+      stopEmote();
+      muteRainAudio();
+      if (document.pointerLockElement) document.exitPointerLock();
+      for (const k in keys) keys[k] = false;
+      updateTouchControlsVisibility();
+    }
     document.getElementById('adminGodModeToggle').dataset.on = adminGodMode ? 'true' : 'false';
     refreshAdminEventStatus();
     document.getElementById('adminScreen').classList.remove('hidden');
   }
   function closeAdminPanel(){
     document.getElementById('adminScreen').classList.add('hidden');
+    if (paused && document.getElementById('pauseScreen').style.display !== 'flex'){
+      // We were the ones who paused for this (the real pause screen was
+      // never shown), so resume gameplay now that the panel is closed.
+      paused = false;
+      ensureAudio();
+      updateTouchControlsVisibility();
+    }
   }
   document.getElementById('adminPanelBtn').addEventListener('click', openAdminPanel);
+  document.getElementById('adminFab').addEventListener('click', openAdminPanel);
   document.getElementById('adminCloseBtn').addEventListener('click', closeAdminPanel);
 
   document.getElementById('adminGiveTrophiesBtn').addEventListener('click', () => {
@@ -6964,6 +6998,13 @@
     const hideFabs = running && (!paused || photoModeActive);
     document.getElementById('settingsFab').classList.toggle('hidden', hideFabs);
     document.getElementById('musicFab').classList.toggle('hidden', hideFabs);
+    // Admin FAB is deliberately NOT tied to hideFabs like the two above —
+    // the whole point is quick access to the Admin-Zentrale during actual
+    // active gameplay (not just from the pre-game menu), so it stays
+    // visible whenever the game is running, whether paused or not. Only
+    // hidden during photo mode (keeps that view uncluttered) and for
+    // anyone who isn't the admin user at all.
+    document.getElementById('adminFab').classList.toggle('hidden', !isAdminUser || !running || photoModeActive);
     // 2x-event badge sits lower (true bottom-right corner) on PC, since
     // there's no touch-button cluster there to avoid.
     document.getElementById('globalEventBadge').classList.toggle('pc-mode', !mobileControlsWanted);
