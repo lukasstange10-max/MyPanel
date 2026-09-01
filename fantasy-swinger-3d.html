@@ -789,6 +789,35 @@
     color: #fff; text-align: left; padding: 20px; box-sizing: border-box;
   }
   #changelogScreen.hidden { display: none; }
+  #bigUpdateScreen {
+    position: fixed; inset: 0; z-index: 260;
+    background: rgba(6,3,14,0.7);
+    backdrop-filter: blur(4px) saturate(1.3);
+    -webkit-backdrop-filter: blur(4px) saturate(1.3);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; text-align: center; padding: 20px; box-sizing: border-box;
+  }
+  #bigUpdateScreen.hidden { display: none; }
+  #dailyRewardScreen {
+    position: fixed; inset: 0; z-index: 260;
+    background: rgba(6,3,14,0.7);
+    backdrop-filter: blur(4px) saturate(1.3);
+    -webkit-backdrop-filter: blur(4px) saturate(1.3);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; text-align: center; padding: 20px; box-sizing: border-box;
+  }
+  #dailyRewardScreen.hidden { display: none; }
+  .dailyRewardDot {
+    width: 26px; height: 26px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 800;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.6);
+  }
+  .dailyRewardDot.done { background: linear-gradient(135deg, #ffe27a, #d9a72f); border-color: rgba(255,200,80,0.8); color: #2a1f00; }
+  .dailyRewardDot.today {
+    background: linear-gradient(135deg, #7affc4, #2fbf8a); border-color: rgba(122,255,196,0.9); color: #04231a;
+    box-shadow: 0 0 12px rgba(122,255,196,0.6);
+  }
   #changelogScreen .startPanel { max-width: 580px; max-height: 88vh; max-height: 88dvh; overflow-y: auto; text-align: center; }
   #changelogScreen .startPanel::-webkit-scrollbar { width: 8px; }
   #changelogScreen .startPanel::-webkit-scrollbar-track { background: rgba(20,10,38,0.4); border-radius: 8px; }
@@ -1344,7 +1373,7 @@
     background: linear-gradient(135deg, #ffe27a, #d9a72f); border: none;
     border-radius: 999px; color: #241505; cursor: pointer;
   }
-  #rewardConfetti {
+  #rewardConfetti, #bigUpdateConfetti {
     position: absolute; inset: 0; overflow: visible; pointer-events: none;
   }
   .confettiPiece {
@@ -1866,6 +1895,35 @@
       </div>
 
       <button id="coopCloseBtn" class="menuBtn" style="margin-top:14px;">Schließen</button>
+    </div>
+  </div>
+
+  <div id="dailyRewardScreen" class="hidden">
+    <div class="startPanel" style="max-width:420px; position:relative; overflow:visible;">
+      <div id="dailyRewardConfetti"></div>
+      <div style="font-size:52px; margin-bottom:6px;">🎁</div>
+      <h1 style="font-size:22px; margin:0 0 4px;">Willkommen zurück!</h1>
+      <p id="dailyRewardStreakText" class="heroTagline" style="margin-bottom:14px;">Tag 1 in Folge</p>
+      <div id="dailyRewardDots" style="display:flex; justify-content:center; gap:6px; margin-bottom:18px;"></div>
+      <div style="font-size:30px; font-weight:900; color:#ffe27a; margin-bottom:18px;">+<span id="dailyRewardAmount">5</span> 🏆</div>
+      <button id="dailyRewardCloseBtn" class="menuBtn" style="background:linear-gradient(135deg, rgba(255,200,80,0.3), rgba(217,167,47,0.3)); border-color:rgba(255,200,80,0.6);">Abholen! 🎉</button>
+    </div>
+  </div>
+
+  <div id="bigUpdateScreen" class="hidden">
+    <div class="startPanel" style="max-width:480px; position:relative; overflow:visible;">
+      <div id="bigUpdateConfetti"></div>
+      <div style="font-size:56px; margin-bottom:6px;">🎉</div>
+      <h1 style="font-size:26px; margin:0 0 6px; background:linear-gradient(135deg,#ffe27a,#ff9d6c,#9d7bff); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;">Das größte Update aller Zeiten!</h1>
+      <p class="heroTagline" style="margin-bottom:18px;">So viel Neues ist gerade dazugekommen:</p>
+      <div style="text-align:left; display:flex; flex-direction:column; gap:10px; margin-bottom:20px;">
+        <div class="changelogEntry" style="padding:12px 16px;">👥 <strong>Koop-Modus</strong> — schwinge live mit einem Freund durch die Welt, mit echten Charakteren, Netz und Tanz-Sync</div>
+        <div class="changelogEntry" style="padding:12px 16px;">🔥 <strong>Serien-Bonus</strong> — bis zu 100% mehr Pokale bei wiederholten Checkpoint-Landungen</div>
+        <div class="changelogEntry" style="padding:12px 16px;">⛈️ <strong>Echter Sturm-Modus</strong> — spürbarer Wind mit sichtbaren Windstreifen</div>
+        <div class="changelogEntry" style="padding:12px 16px;">📳 <strong>Mobile Steuerung</strong> — Joystick & Buttons frei anpassbar, plus Vibration</div>
+      </div>
+      <button id="bigUpdateSeeAllBtn" class="menuBtn" style="margin-bottom:10px;">📋 Alle Updates ansehen</button>
+      <button id="bigUpdateCloseBtn" class="menuBtn" style="background:linear-gradient(135deg, rgba(122,255,196,0.3), rgba(60,200,150,0.3)); border-color:rgba(122,255,196,0.6);">Los geht's! 🚀</button>
     </div>
   </div>
 
@@ -2617,6 +2675,10 @@
         <span data-i18n="settingsVibration">📳 Vibration bei Treffern/Landungen</span>
         <button class="settingsToggle" id="toggleVibration" data-on="true"><span class="settingsToggleDot"></span></button>
       </div>
+      <div class="settingsToggleRow">
+        <span data-i18n="settingsSwingTrail">✨ Schwing-Trail</span>
+        <button class="settingsToggle" id="toggleSwingTrail" data-on="true"><span class="settingsToggleDot"></span></button>
+      </div>
 
       <div class="settingsToggleRow">
         <span data-i18n="settingsWeather">🌧️ Wetter-Effekte</span>
@@ -3030,6 +3092,7 @@
       settingsJoySide: '🕹️ Joystick side', settingsJoyLeft: 'Left', settingsJoyRight: 'Right', settingsJoySize: '🕹️ Joystick size',
       settingsJoySmall: 'Small', settingsJoyMedium: 'Medium', settingsJoyBig: 'Large', settingsBtnSize: '🔘 Button size',
       settingsVibration: '📳 Vibration on hits/landings',
+      settingsSwingTrail: '✨ Swing trail',
       settingsWeather: '🌧️ Weather effects', settingsAchToasts: '🔔 Achievement notifications', settingsCamShake: '📳 Screen shake', settingsTrophyFly: '🏆 Trophy fly animation',
       settingsSaveBtn: '💾 Save', settingsResetBtn: '🗑️ Reset save data', closeBtn4: 'Close',
       newSkinUnlocked: 'New skin unlocked!', newVineUnlocked: 'New vine unlocked!',
@@ -3090,6 +3153,7 @@
       settingsJoySide: '🕹️ Côté du joystick', settingsJoyLeft: 'Gauche', settingsJoyRight: 'Droite', settingsJoySize: '🕹️ Taille du joystick',
       settingsJoySmall: 'Petit', settingsJoyMedium: 'Moyen', settingsJoyBig: 'Grand', settingsBtnSize: '🔘 Taille des boutons',
       settingsVibration: '📳 Vibration lors des coups/atterrissages',
+      settingsSwingTrail: '✨ Traînée de balancement',
       settingsWeather: '🌧️ Effets météo', settingsAchToasts: '🔔 Notifications de succès', settingsCamShake: "📳 Tremblement d'écran", settingsTrophyFly: '🏆 Animation de trophée',
       settingsSaveBtn: '💾 Enregistrer', settingsResetBtn: '🗑️ Réinitialiser la sauvegarde', closeBtn4: 'Fermer',
       newSkinUnlocked: 'Nouveau skin débloqué !', newVineUnlocked: 'Nouvelle liane débloquée !',
@@ -3150,6 +3214,7 @@
       settingsJoySide: '🕹️ Lado del joystick', settingsJoyLeft: 'Izquierda', settingsJoyRight: 'Derecha', settingsJoySize: '🕹️ Tamaño del joystick',
       settingsJoySmall: 'Pequeño', settingsJoyMedium: 'Mediano', settingsJoyBig: 'Grande', settingsBtnSize: '🔘 Tamaño de botones',
       settingsVibration: '📳 Vibración en golpes/aterrizajes',
+      settingsSwingTrail: '✨ Estela de balanceo',
       settingsWeather: '🌧️ Efectos climáticos', settingsAchToasts: '🔔 Notificaciones de logros', settingsCamShake: '📳 Sacudida de pantalla', settingsTrophyFly: '🏆 Animación de trofeo',
       settingsSaveBtn: '💾 Guardar', settingsResetBtn: '🗑️ Restablecer partida', closeBtn4: 'Cerrar',
       newSkinUnlocked: '¡Nueva skin desbloqueada!', newVineUnlocked: '¡Nueva liana desbloqueada!',
@@ -3210,6 +3275,7 @@
       settingsJoySide: '🕹️ Lado do joystick', settingsJoyLeft: 'Esquerda', settingsJoyRight: 'Direita', settingsJoySize: '🕹️ Tamanho do joystick',
       settingsJoySmall: 'Pequeno', settingsJoyMedium: 'Médio', settingsJoyBig: 'Grande', settingsBtnSize: '🔘 Tamanho dos botões',
       settingsVibration: '📳 Vibração em acertos/pousos',
+      settingsSwingTrail: '✨ Rastro de balanço',
       settingsWeather: '🌧️ Efeitos climáticos', settingsAchToasts: '🔔 Notificações de conquistas', settingsCamShake: '📳 Tremor de tela', settingsTrophyFly: '🏆 Animação de troféu',
       settingsSaveBtn: '💾 Salvar', settingsResetBtn: '🗑️ Redefinir progresso', closeBtn4: 'Fechar',
       newSkinUnlocked: 'Nova skin desbloqueada!', newVineUnlocked: 'Novo cipó desbloqueado!',
@@ -4736,6 +4802,49 @@
   ropeLine.visible = false;
   scene.add(ropeLine);
 
+  // ---------- SWING TRAIL ----------
+  // A short-lived glowing trail of dots left behind while actively
+  // swinging, matching whatever vine skin color is currently equipped — a
+  // pooled/recycled set of meshes (not spawn-and-destroy every frame) to
+  // keep it cheap even during a long swing session.
+  const SWING_TRAIL_COUNT = 40;
+  const swingTrailPool = [];
+  for (let i = 0; i < SWING_TRAIL_COUNT; i++){
+    const mat = new THREE.MeshBasicMaterial({ color: 0x7affc4, transparent: true, opacity: 0, depthWrite: false });
+    const dot = new THREE.Mesh(new THREE.SphereGeometry(0.13, 6, 6), mat);
+    dot.visible = false;
+    scene.add(dot);
+    swingTrailPool.push({ mesh: dot, age: 999, maxAge: 0.5 });
+  }
+  let swingTrailSpawnTimer = 0;
+  let swingTrailIndex = 0;
+  function updateSwingTrail(dt){
+    if (!gameSettings.swingTrailEnabled){
+      swingTrailPool.forEach(slot => { slot.mesh.visible = false; });
+      return;
+    }
+    if (grapple.active){
+      swingTrailSpawnTimer += dt;
+      if (swingTrailSpawnTimer > 0.025){
+        swingTrailSpawnTimer = 0;
+        const slot = swingTrailPool[swingTrailIndex];
+        swingTrailIndex = (swingTrailIndex + 1) % SWING_TRAIL_COUNT;
+        slot.mesh.position.copy(player.pos);
+        slot.mesh.visible = true;
+        slot.age = 0;
+        slot.mesh.material.color.copy(ropeMat.color); // always matches the currently-equipped vine skin
+      }
+    }
+    swingTrailPool.forEach(slot => {
+      if (slot.age > slot.maxAge){ slot.mesh.visible = false; return; }
+      slot.age += dt;
+      const t = slot.age / slot.maxAge;
+      slot.mesh.material.opacity = (1 - t) * 0.55;
+      const s = 1 - t * 0.55;
+      slot.mesh.scale.set(s, s, s);
+    });
+  }
+
   // ---------- CONTROLS ----------
   const keys = {};
   window.addEventListener('keydown', e => {
@@ -5451,6 +5560,7 @@
     joystickSize: 'medium', // 'small' | 'medium' | 'large'
     buttonSize: 'medium', // 'small' | 'medium' | 'large' — attack/grapple/jump/sprint, independent of joystick size
     vibrationEnabled: true,
+    swingTrailEnabled: true,
   };
   let gameSettings = Object.assign({}, DEFAULT_SETTINGS, storageGet('rankmann_settings', {}));
   function saveSettings(){ storageSet('rankmann_settings', gameSettings); }
@@ -5682,10 +5792,16 @@
       skinRow.style.display = 'none';
     }
     // confetti burst
-    const confettiWrap = document.getElementById('rewardConfetti');
+    spawnConfetti('rewardConfetti');
+    overlay.classList.remove('hidden');
+    sfx.trophy();
+  }
+  function spawnConfetti(containerId, count){
+    const confettiWrap = document.getElementById(containerId);
+    if (!confettiWrap) return;
     confettiWrap.innerHTML = '';
     const colors = ['#ffe27a', '#ff5c6c', '#7affc4', '#9d7bff', '#9adfff'];
-    for (let i = 0; i < 26; i++){
+    for (let i = 0; i < (count || 26); i++){
       const piece = document.createElement('span');
       piece.className = 'confettiPiece';
       const angle = Math.random() * Math.PI * 2;
@@ -5697,8 +5813,6 @@
       piece.style.animationDelay = (Math.random()*0.15) + 's';
       confettiWrap.appendChild(piece);
     }
-    overlay.classList.remove('hidden');
-    sfx.trophy();
   }
   function updateAchievementsUI(){
     ensureChallengeCycle();
@@ -7555,6 +7669,7 @@
     updateWeather(dt);
     updateRoomSync(dt);
     updateGhosts(dt);
+    updateSwingTrail(dt);
     dust.rotation.y += dt*0.01;
     if (starfield.visible){
       starfield.position.set(player.pos.x, 0, player.pos.z);
@@ -7966,6 +8081,7 @@
   bindSettingsToggle('toggleCamShake', 'cameraShakeEnabled');
   bindSettingsToggle('toggleTrophyFly', 'trophyFlyEnabled');
   bindSettingsToggle('toggleVibration', 'vibrationEnabled');
+  bindSettingsToggle('toggleSwingTrail', 'swingTrailEnabled');
   document.getElementById('joySideLeftBtn').addEventListener('click', () => {
     gameSettings.joystickSide = 'left'; saveSettings(); applyTouchLayoutSettings();
   });
@@ -8215,6 +8331,80 @@
       unmuteHint.classList.remove('show');
     });
   })();
+
+  // ---------- DAILY LOGIN REWARD ----------
+  // A 7-day cycle of trophy rewards that grows each consecutive day, resets
+  // to day 1 if a day gets skipped — a lightweight reason to come back
+  // rather than a full separate calendar/event system. Checked once per
+  // calendar day (not per session), so reopening the game 5x in one day
+  // only grants it the first time.
+  const DAILY_REWARDS = [5, 8, 12, 16, 20, 25, 35];
+  function checkDailyReward(){
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const lastLogin = storageGet('rankmann_lastLoginDate', null);
+    if (lastLogin === todayStr) return null; // already claimed today
+    let streak = storageGet('rankmann_loginStreak', 0);
+    if (lastLogin){
+      const diffDays = Math.round((new Date(todayStr) - new Date(lastLogin)) / 86400000);
+      streak = diffDays === 1 ? streak + 1 : 1; // missed a day (or first-ever login) → streak restarts
+    } else {
+      streak = 1;
+    }
+    storageSet('rankmann_lastLoginDate', todayStr);
+    storageSet('rankmann_loginStreak', streak);
+    const dayIndex = (streak - 1) % DAILY_REWARDS.length;
+    const reward = DAILY_REWARDS[dayIndex];
+    totalTrophies += reward;
+    storageSet('rankmann_totalTrophies', totalTrophies);
+    updateTrophyDisplay();
+    return { streak, reward, dayIndex };
+  }
+  function showDailyReward(){
+    const result = checkDailyReward();
+    if (!result) return;
+    document.getElementById('dailyRewardStreakText').textContent = result.streak === 1
+      ? 'Willkommen zurück!' : ('Tag ' + result.streak + ' in Folge — weiter so!');
+    document.getElementById('dailyRewardAmount').textContent = result.reward;
+    const dotsEl = document.getElementById('dailyRewardDots');
+    dotsEl.innerHTML = '';
+    DAILY_REWARDS.forEach((amt, i) => {
+      const dot = document.createElement('div');
+      dot.className = 'dailyRewardDot' + (i < result.dayIndex ? ' done' : i === result.dayIndex ? ' today' : '');
+      dot.textContent = i + 1;
+      dotsEl.appendChild(dot);
+    });
+    document.getElementById('dailyRewardScreen').classList.remove('hidden');
+    spawnConfetti('dailyRewardConfetti', 30);
+  }
+  document.getElementById('dailyRewardCloseBtn').addEventListener('click', () => {
+    document.getElementById('dailyRewardScreen').classList.add('hidden');
+  });
+
+  // ---------- BIG UPDATE ANNOUNCEMENT ----------
+  // Shows once per player (tracked by a version key so a FUTURE big update
+  // can bump the number and show again) — greets them at the start menu
+  // with a highlight reel of what's new, rather than making them dig
+  // through the full changelog to find out anything changed at all.
+  // The daily-reward popup (if there is one to show today) waits until
+  // AFTER this closes, so a brand-new session never stacks two popups.
+  const BIG_UPDATE_VERSION = 'coop1';
+  if (storageGet('rankmann_seenBigUpdate', null) !== BIG_UPDATE_VERSION){
+    document.getElementById('bigUpdateScreen').classList.remove('hidden');
+    spawnConfetti('bigUpdateConfetti', 40);
+  } else {
+    showDailyReward();
+  }
+  document.getElementById('bigUpdateCloseBtn').addEventListener('click', () => {
+    storageSet('rankmann_seenBigUpdate', BIG_UPDATE_VERSION);
+    document.getElementById('bigUpdateScreen').classList.add('hidden');
+    showDailyReward();
+  });
+  document.getElementById('bigUpdateSeeAllBtn').addEventListener('click', () => {
+    storageSet('rankmann_seenBigUpdate', BIG_UPDATE_VERSION);
+    document.getElementById('bigUpdateScreen').classList.add('hidden');
+    document.getElementById('changelogScreen').classList.remove('hidden');
+    showDailyReward();
+  });
 
   animate();
 })();
