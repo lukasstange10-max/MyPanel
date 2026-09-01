@@ -4482,31 +4482,44 @@
     tag.position.y = 2.5;
     g.add(tag);
     scene.add(g);
-    return { mesh: g, legPivots: built.legPivots, armPivots: built.armPivots, torsoGroup: built.torsoGroup };
+    // A friend's own web/rope line, same visual language as the local
+    // player's, so you can actually see them swinging, not just moving.
+    const ghostRopeGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]);
+    const ghostRopeMat = new THREE.LineBasicMaterial({ color: skin.glow, linewidth: 2 });
+    const ghostRope = new THREE.Line(ghostRopeGeo, ghostRopeMat);
+    ghostRope.visible = false;
+    scene.add(ghostRope);
+    return { mesh: g, legPivots: built.legPivots, armPivots: built.armPivots, armHands: built.armHands, torsoGroup: built.torsoGroup, body: built.body, rope: ghostRope };
   }
   function updateGhostFromRoomData(key, p){
     if (!friendGhosts[key]){
       const built = makeGhostMesh(p.name || 'Freund', p.skin);
-      friendGhosts[key] = { ...built, skinId: p.skin, targetPos: new THREE.Vector3(p.x, p.y, p.z), targetYaw: p.yaw || 0, world: p.world, name: p.name, walkPhase: 0, lastPos: new THREE.Vector3(p.x, p.y, p.z) };
+      friendGhosts[key] = { ...built, skinId: p.skin, targetPos: new THREE.Vector3(p.x, p.y, p.z), targetYaw: p.yaw || 0, world: p.world, name: p.name, walkPhase: 0, emoteElapsed: 0 };
     } else if (friendGhosts[key].skinId !== p.skin){
       // Friend changed their equipped skin mid-session — rebuild the ghost
       // with the new colors rather than trying to live-patch materials.
       const oldPos = friendGhosts[key].mesh.position.clone();
       removeGhost(key);
       const built = makeGhostMesh(p.name || 'Freund', p.skin);
-      friendGhosts[key] = { ...built, skinId: p.skin, targetPos: new THREE.Vector3(p.x, p.y, p.z), targetYaw: p.yaw || 0, world: p.world, name: p.name, walkPhase: 0, lastPos: oldPos.clone() };
+      friendGhosts[key] = { ...built, skinId: p.skin, targetPos: new THREE.Vector3(p.x, p.y, p.z), targetYaw: p.yaw || 0, world: p.world, name: p.name, walkPhase: 0, emoteElapsed: 0 };
       friendGhosts[key].mesh.position.copy(oldPos);
     }
     const gh = friendGhosts[key];
     gh.targetPos.set(p.x, p.y, p.z);
     gh.targetYaw = p.yaw || 0;
     gh.world = p.world;
+    gh.grappling = !!p.grappling;
+    if (gh.grappling) gh.anchorPos = { x: p.anchorX, y: p.anchorY, z: p.anchorZ };
+    if (gh.emote !== (p.emote || null)) gh.emoteElapsed = 0; // fresh emote (or none) started — restart its timer
+    gh.emote = p.emote || null;
     gh.lastSeenMs = Date.now();
   }
   function removeGhost(key){
     const gh = friendGhosts[key];
     if (!gh) return;
     scene.remove(gh.mesh);
+    scene.remove(gh.rope);
+    gh.rope.geometry.dispose(); gh.rope.material.dispose();
     gh.mesh.traverse(obj => { if (obj.material){ if (obj.material.map) obj.material.map.dispose(); obj.material.dispose(); } if (obj.geometry) obj.geometry.dispose(); });
     delete friendGhosts[key];
   }
@@ -4514,14 +4527,17 @@
   // frame (called from animate()), plays a simple walk-cycle on their legs/
   // arms whenever they're actually moving (driven by how far they've
   // travelled since the last frame, since ghosts don't have real input to
-  // read a "walking" flag from), and shows/hides them based on whether
-  // they're currently in the SAME world as the local player — otherwise a
-  // friend three worlds away would just be an invisible character looming
-  // nearby, which would be confusing rather than useful.
+  // read a "walking" flag from), draws their web while they're grappling,
+  // plays back their emote pose while one is active, and shows/hides them
+  // based on whether they're currently in the SAME world as the local
+  // player — otherwise a friend three worlds away would just be an
+  // invisible character looming nearby, which would be confusing rather
+  // than useful.
   function updateGhosts(dt){
     Object.values(friendGhosts).forEach(gh => {
       const inSameWorld = gh.world === selectedWorld;
       gh.mesh.visible = inSameWorld && running;
+      gh.rope.visible = inSameWorld && running && gh.grappling;
       if (!inSameWorld) return;
       const beforePos = gh.mesh.position.clone();
       gh.mesh.position.lerp(gh.targetPos, Math.min(1, dt * 8));
@@ -4529,18 +4545,32 @@
       while (dYaw > Math.PI) dYaw -= Math.PI * 2;
       while (dYaw < -Math.PI) dYaw += Math.PI * 2;
       gh.mesh.rotation.y += dYaw * Math.min(1, dt * 8);
-      const movedDist = gh.mesh.position.distanceTo(beforePos);
-      const speed = dt > 0 ? movedDist / dt : 0;
-      if (speed > 0.4){
-        gh.walkPhase += dt * (6 + Math.min(speed, 14) * 0.5);
-        const swing = Math.sin(gh.walkPhase);
-        gh.legPivots[0].rotation.x = swing * 0.65;
-        gh.legPivots[1].rotation.x = -swing * 0.65;
-        gh.armPivots[0].rotation.x += (-swing * 0.55 - gh.armPivots[0].rotation.x) * 0.4;
-        gh.armPivots[1].rotation.x += (swing * 0.55 - gh.armPivots[1].rotation.x) * 0.4;
+
+      if (gh.emote){
+        gh.emoteElapsed += dt;
+        applyEmotePoseTo({ armPivots: gh.armPivots, legPivots: gh.legPivots, torsoGroup: gh.torsoGroup, body: gh.body }, gh.emote, gh.emoteElapsed);
       } else {
-        gh.legPivots[0].rotation.x *= 0.8; gh.legPivots[1].rotation.x *= 0.8;
-        gh.armPivots[0].rotation.x *= 0.8; gh.armPivots[1].rotation.x *= 0.8;
+        const movedDist = gh.mesh.position.distanceTo(beforePos);
+        const speed = dt > 0 ? movedDist / dt : 0;
+        if (speed > 0.4 && !gh.grappling){
+          gh.walkPhase += dt * (6 + Math.min(speed, 14) * 0.5);
+          const swing = Math.sin(gh.walkPhase);
+          gh.legPivots[0].rotation.x = swing * 0.65;
+          gh.legPivots[1].rotation.x = -swing * 0.65;
+          gh.armPivots[0].rotation.x += (-swing * 0.55 - gh.armPivots[0].rotation.x) * 0.4;
+          gh.armPivots[1].rotation.x += (swing * 0.55 - gh.armPivots[1].rotation.x) * 0.4;
+        } else if (!gh.grappling) {
+          gh.legPivots[0].rotation.x *= 0.8; gh.legPivots[1].rotation.x *= 0.8;
+          gh.armPivots[0].rotation.x *= 0.8; gh.armPivots[1].rotation.x *= 0.8;
+        }
+      }
+
+      if (gh.grappling && gh.anchorPos){
+        gh.mesh.updateMatrixWorld(true);
+        const handPos = new THREE.Vector3();
+        gh.armHands[1].getWorldPosition(handPos);
+        gh.rope.geometry.setFromPoints([handPos, new THREE.Vector3(gh.anchorPos.x, gh.anchorPos.y, gh.anchorPos.z)]);
+        gh.rope.geometry.computeBoundingSphere();
       }
     });
   }
@@ -4552,11 +4582,24 @@
     roomSyncTimer += dt;
     if (roomSyncTimer < 0.15) return; // ~6-7 updates/sec — smooth enough with the lerp above, cheap on writes
     roomSyncTimer = 0;
-    myRoomPlayerRef.set({
+    const data = {
       name: (typeof getActiveProfileMeta === 'function' && getActiveProfileMeta()) ? getActiveProfileMeta().name : 'Spieler',
-      x: player.pos.x, y: player.pos.y, z: player.pos.z, yaw: player.yaw, world: selectedWorld, skin: equippedSkin,
+      x: player.pos.x, y: player.pos.y, z: player.pos.z, yaw: player.faceYaw, world: selectedWorld, skin: equippedSkin,
       updatedAt: firebase.database.ServerValue.TIMESTAMP,
-    }).catch(() => {}); // best-effort — a dropped position update just means a friend's ghost is briefly stale, never worth interrupting gameplay over
+    };
+    // Grapple + emote state, so a friend's rope and dance/wave/etc. poses
+    // are visible too, not just their position — otherwise "swinging
+    // together" would just look like everyone silently teleporting around.
+    if (grapple.active && grapple.anchor){
+      data.grappling = true;
+      data.anchorX = grapple.anchor.position.x;
+      data.anchorY = grapple.anchor.position.y;
+      data.anchorZ = grapple.anchor.position.z;
+    } else {
+      data.grappling = false;
+    }
+    data.emote = emoteActive ? emoteId : null;
+    myRoomPlayerRef.set(data).catch(() => {}); // best-effort — a dropped position update just means a friend's ghost is briefly stale, never worth interrupting gameplay over
   }
 
 
@@ -6446,14 +6489,13 @@
     emoteActive = false;
     emoteId = null;
   }
-  function applyEmotePose(dt){
-    emoteElapsed += dt;
-    // Invisible auto-stop — no UI/countdown shown to the player, the emote
-    // just quietly ends and the character returns to normal after 30s so it
-    // can't get stuck dancing forever if nothing else interrupts it.
-    if (emoteElapsed >= 30) { stopEmote(); return; }
-    const t = emoteElapsed;
-    switch (emoteId){
+  // Parameterized version — takes the pivots to pose instead of always using
+  // the local player's, so the exact same dance/wave/etc. poses can be
+  // played back on a friend's ghost character too (driven by their synced
+  // emote state), not just the local player.
+  function applyEmotePoseTo(target, targetEmoteId, t){
+    const { armPivots, legPivots, torsoGroup, body } = target;
+    switch (targetEmoteId){
       case 'wave': {
         armPivots[0].rotation.x = -2.3 + Math.sin(t * 6) * 0.15;
         armPivots[0].rotation.z = -0.5 + Math.sin(t * 6) * 0.3;
@@ -6517,7 +6559,15 @@
       }
       default: break;
     }
-    body.rotation.z *= 0.85;
+    if (body) body.rotation.z *= 0.85;
+  }
+  function applyEmotePose(dt){
+    emoteElapsed += dt;
+    // Invisible auto-stop — no UI/countdown shown to the player, the emote
+    // just quietly ends and the character returns to normal after 30s so it
+    // can't get stuck dancing forever if nothing else interrupts it.
+    if (emoteElapsed >= 30) { stopEmote(); return; }
+    applyEmotePoseTo({ armPivots, legPivots, torsoGroup, body }, emoteId, emoteElapsed);
   }
 
   // ---------- PHOTO MODE ----------
