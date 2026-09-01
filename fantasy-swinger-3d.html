@@ -780,6 +780,34 @@
   }
   .coopPlayerRow .coopDot { width: 8px; height: 8px; border-radius: 50%; background: #7affc4; flex-shrink: 0; }
 
+  #changelogScreen {
+    position: fixed; inset: 0; z-index: 250;
+    background: rgba(6,3,14,0.55);
+    backdrop-filter: blur(3px) saturate(1.2);
+    -webkit-backdrop-filter: blur(3px) saturate(1.2);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; text-align: left; padding: 20px; box-sizing: border-box;
+  }
+  #changelogScreen.hidden { display: none; }
+  #changelogScreen .startPanel { max-width: 580px; max-height: 88vh; max-height: 88dvh; overflow-y: auto; text-align: center; }
+  #changelogScreen .startPanel::-webkit-scrollbar { width: 8px; }
+  #changelogScreen .startPanel::-webkit-scrollbar-track { background: rgba(20,10,38,0.4); border-radius: 8px; }
+  #changelogScreen .startPanel::-webkit-scrollbar-thumb { background: rgba(180,140,255,0.5); border-radius: 8px; }
+  #changelogScreen .startPanel::-webkit-scrollbar-thumb:hover { background: rgba(180,140,255,0.75); }
+  #changelogList { text-align: left; margin-top: 18px; display: flex; flex-direction: column; gap: 16px; }
+  .changelogEntry {
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(180,140,255,0.22);
+    border-radius: 14px; padding: 16px 18px;
+  }
+  .changelogEntry .changelogDate {
+    font-size: 11px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
+    color: #ffe27a; margin-bottom: 4px;
+  }
+  .changelogEntry h3 { margin: 0 0 8px; font-size: 16px; }
+  .changelogEntry p { margin: 0; font-size: 13px; line-height: 1.55; color: rgba(255,255,255,0.78); }
+  .changelogEntry ul { margin: 6px 0 0; padding-left: 18px; font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.78); }
+  .changelogEntry li { margin-bottom: 2px; }
+
   #worldSelectRow { display: flex; flex-direction: column; gap: 10px; width: 100%; }
   .worldBtn {
     width: 100%; box-sizing: border-box;
@@ -1841,15 +1869,104 @@
     </div>
   </div>
 
+  <div id="changelogScreen" class="hidden">
+    <div class="startPanel">
+      <div class="titleRow">
+        <h1 style="font-size:30px;">🆕 Update-Verlauf</h1>
+      </div>
+      <p class="heroTagline">Alles, was sich bei Rankmann seit dem ersten Tag getan hat</p>
+      <div id="changelogList">
+
+        <div class="changelogEntry">
+          <div class="changelogDate">17. August</div>
+          <h3>🏗️ Das Fundament</h3>
+          <p>Der erste Tag von Rankmann: ein 3D-Fantasy-Schwing-Abenteuer entsteht von Grund auf. Charakter, Physik, Steuerung, Sound, Kamera und die ersten Checkpoints — alles komplett neu gebaut, inklusive Intro-Video.</p>
+        </div>
+
+        <div class="changelogEntry">
+          <div class="changelogDate">20. August</div>
+          <h3>🛒 Shop & mobile Steuerung</h3>
+          <ul>
+            <li>Shop mit kaufbaren Skins eingeführt</li>
+            <li>Pokal-Währung als einheitliches Belohnungssystem</li>
+            <li>Touch-Steuerung für Tablets</li>
+            <li>Eigenes Hosting eingerichtet</li>
+          </ul>
+        </div>
+
+        <div class="changelogEntry">
+          <div class="changelogDate">21. August</div>
+          <h3>🏅 Erfolge & Experimente</h3>
+          <p>Ein komplettes Erfolgs-System kam dazu, dazu 4 neue Premium-Skins und Verbesserungen an Welt 2. Ein Schießstand-Minigame wurde ausprobiert — hat sich aber nicht bewährt und wurde später wieder entfernt.</p>
+        </div>
+
+        <div class="changelogEntry">
+          <div class="changelogDate">24. August</div>
+          <h3>🌌 Welt 3 & Foto-Modus</h3>
+          <ul>
+            <li>Erfolge mit eigener Abhol-Animation und Konfetti</li>
+            <li>Rotierende Herausforderungen in 5 Kategorien, alle 12 Stunden neu</li>
+            <li>Netz-Skins als eigener Shop-Bereich</li>
+            <li>Foto-Modus mit Filtern, Posen und eigener Galerie</li>
+            <li>Umfangreiche Einstellungen (Lautstärke, Wetter, Maus-Empfindlichkeit)</li>
+            <li>Neue Welt 3 "Sternenreich" mit niedriger Schwerkraft, ab 400 Pokalen freischaltbar</li>
+          </ul>
+        </div>
+
+        <div class="changelogEntry">
+          <div class="changelogDate">24. August, abends</div>
+          <h3>🔊 Audio-Feinschliff</h3>
+          <p>Mehrere hartnäckige Musik-Bugs behoben: ein Doppelklick-Fehler beim Aktivieren, stumm bleibende Musik nach dem Klick, und eine spürbare Verzögerung beim Start — jetzt lädt die Musik schon während des Intros vor.</p>
+        </div>
+
+        <div class="changelogEntry">
+          <div class="changelogDate">Letzte Woche</div>
+          <h3>🎵 Chill-Musik & Emote-Rad</h3>
+          <ul>
+            <li>4 eigene Chill-Musik-Aufnahmen mit Auswahl-Menü</li>
+            <li>Musik läuft jetzt während des Spiels weiter (stoppt nur beim eigentlichen Spielstart)</li>
+            <li>Fortnite-artiges Emote-Rad: 6 Emotes, per Taste B, mit eigenen Animationen</li>
+          </ul>
+        </div>
+
+        <div class="changelogEntry">
+          <div class="changelogDate">Diese Woche</div>
+          <h3>👤 Profile, Admin-Zentrale & Community</h3>
+          <ul>
+            <li>Geräteübergreifendes Profil- und Passwort-System</li>
+            <li>Komplette Admin-Zentrale mit Spielerverwaltung (sperren, entsperren, Passwort zurücksetzen)</li>
+            <li>Live-Events wie das 2x-Pokale-Event, sofort bei allen Spielern sichtbar</li>
+            <li>Live-Online-Status, wer gerade spielt</li>
+          </ul>
+        </div>
+
+        <div class="changelogEntry">
+          <div class="changelogDate">Heute</div>
+          <h3>🔥 Serien-Bonus, Sturm & Koop-Modus</h3>
+          <ul>
+            <li>🔥 Serien-Bonus — wiederholtes Landen auf demselben Checkpoint bringt bis zu 100 % mehr Pokale</li>
+            <li>🏆 Neue Flug-Animation, wenn Pokale eingesammelt werden</li>
+            <li>⛈️ Echter Sturm-Modus mit spürbarem Wind und sichtbaren Windstreifen</li>
+            <li>📳 Anpassbare mobile Steuerung — Joystick-Seite/-Größe, Button-Größe, Vibration</li>
+            <li>👥 Koop-Räume mit Freunden — echte 1:1-Charaktere, inklusive Netz- und Tanz-Synchronisierung</li>
+            <li>🔌 Robustere Fehlerbehandlung bei Grafik-Problemen, mit klaren Meldungen statt stillem Absturz</li>
+          </ul>
+        </div>
+
+      </div>
+      <button id="changelogCloseBtn" class="menuBtn" style="margin-top:18px;">Schließen</button>
+    </div>
+  </div>
+
   <div id="sideColumn">
-  <div id="updateTeaser">
+  <div id="updateTeaser" style="cursor:pointer;">
     <div id="updateTeaserGlow"></div>
-    <span class="updateBadge" data-i18n="updatePausedBadge">⏸️ Updates pausiert</span>
+    <span class="updateBadge" data-i18n="updateNewBadge">🆕 Neu</span>
     <div class="updateFeature">
-      <span class="updateFeatureIcon">🛠️</span>
+      <span class="updateFeatureIcon">📋</span>
       <div class="updateFeatureText">
-        <span class="updateFeatureTitle" data-i18n="updatePausedTitle">Derzeit keine Updates geplant</span>
-        <span class="updateFeatureSub" data-i18n="updatePausedSub">Wir machen gerade eine Pause. Neue Inhalte folgen, sobald es wieder losgeht</span>
+        <span class="updateFeatureTitle" data-i18n="updateNewTitle">Alle Updates ansehen</span>
+        <span class="updateFeatureSub" data-i18n="updateNewSub">Klick hier, um zu sehen, was sich alles getan hat</span>
       </div>
     </div>
   </div>
@@ -2872,8 +2989,8 @@
       ctrlVine: 'Hold vine', ctrlRightClickKey: 'Right click', ctrlAttack: 'Attack (in range)',
       ctrlSpaceKey: 'Space', ctrlJump: 'Jump', ctrlPause: 'Pause',
       startBtn: 'Start game', shopBtnMenu: '🛒 Shop', achievementsBtnMenu: '🏅 Achievements', galleryBtnMenu: '🖼️ Gallery',
-      updatePausedBadge: '⏸️ Updates paused', updatePausedTitle: 'No updates planned right now',
-      updatePausedSub: "We're taking a break. New content will follow once things pick back up",
+      updateNewBadge: '🆕 New', updateNewTitle: 'See all updates',
+      updateNewSub: 'Click here to see everything that changed',
       worldSelectBadge: '🗺️ Choose world', world1Btn: 'World 1 · Magic Realm', world2Btn: 'World 2 · Frost Realm', world3Btn: 'World 3 · Star Realm',
       worldSelectError: 'Not enough trophies!',
       deviceSurveyTitle: 'Which device are you playing on?', deviceSurveySub: 'So we can set up the controls correctly',
@@ -2932,8 +3049,8 @@
       ctrlVine: 'Tenir la liane', ctrlRightClickKey: 'Clic droit', ctrlAttack: 'Attaquer (à portée)',
       ctrlSpaceKey: 'Espace', ctrlJump: 'Sauter', ctrlPause: 'Pause',
       startBtn: 'Démarrer', shopBtnMenu: '🛒 Boutique', achievementsBtnMenu: '🏅 Succès', galleryBtnMenu: '🖼️ Galerie',
-      updatePausedBadge: '⏸️ Mises à jour en pause', updatePausedTitle: "Aucune mise à jour prévue pour l'instant",
-      updatePausedSub: 'Nous faisons une pause. Du nouveau contenu arrivera dès la reprise',
+      updateNewBadge: '🆕 Nouveau', updateNewTitle: 'Voir toutes les mises à jour',
+      updateNewSub: 'Clique ici pour voir tout ce qui a changé',
       worldSelectBadge: '🗺️ Choisir un monde', world1Btn: 'Monde 1 · Royaume Magique', world2Btn: 'Monde 2 · Royaume du Gel', world3Btn: 'Monde 3 · Royaume Stellaire',
       worldSelectError: 'Pas assez de trophées !',
       deviceSurveyTitle: 'Sur quel appareil joues-tu ?', deviceSurveySub: 'Pour bien régler les commandes',
@@ -2992,8 +3109,8 @@
       ctrlVine: 'Sujetar liana', ctrlRightClickKey: 'Clic derecho', ctrlAttack: 'Atacar (a distancia)',
       ctrlSpaceKey: 'Espacio', ctrlJump: 'Saltar', ctrlPause: 'Pausa',
       startBtn: 'Iniciar juego', shopBtnMenu: '🛒 Tienda', achievementsBtnMenu: '🏅 Logros', galleryBtnMenu: '🖼️ Galería',
-      updatePausedBadge: '⏸️ Actualizaciones en pausa', updatePausedTitle: 'Por ahora no hay actualizaciones previstas',
-      updatePausedSub: 'Estamos de pausa. Habrá contenido nuevo en cuanto retomemos',
+      updateNewBadge: '🆕 Nuevo', updateNewTitle: 'Ver todas las actualizaciones',
+      updateNewSub: 'Haz clic aquí para ver todo lo que cambió',
       worldSelectBadge: '🗺️ Elegir mundo', world1Btn: 'Mundo 1 · Reino Mágico', world2Btn: 'Mundo 2 · Reino Helado', world3Btn: 'Mundo 3 · Reino Estelar',
       worldSelectError: '¡No tienes suficientes trofeos!',
       deviceSurveyTitle: '¿En qué dispositivo estás jugando?', deviceSurveySub: 'Para configurar bien los controles',
@@ -3052,8 +3169,8 @@
       ctrlVine: 'Segurar o cipó', ctrlRightClickKey: 'Clique direito', ctrlAttack: 'Atacar (ao alcance)',
       ctrlSpaceKey: 'Espaço', ctrlJump: 'Pular', ctrlPause: 'Pausa',
       startBtn: 'Iniciar jogo', shopBtnMenu: '🛒 Loja', achievementsBtnMenu: '🏅 Conquistas', galleryBtnMenu: '🖼️ Galeria',
-      updatePausedBadge: '⏸️ Atualizações em pausa', updatePausedTitle: 'Nenhuma atualização planejada no momento',
-      updatePausedSub: 'Estamos fazendo uma pausa. Novos conteúdos virão assim que voltarmos',
+      updateNewBadge: '🆕 Novo', updateNewTitle: 'Ver todas as atualizações',
+      updateNewSub: 'Clique aqui para ver tudo o que mudou',
       worldSelectBadge: '🗺️ Escolher mundo', world1Btn: 'Mundo 1 · Reino Mágico', world2Btn: 'Mundo 2 · Reino do Gelo', world3Btn: 'Mundo 3 · Reino Estelar',
       worldSelectError: 'Troféus insuficientes!',
       deviceSurveyTitle: 'Em qual dispositivo você está jogando?', deviceSurveySub: 'Para configurarmos os controles corretamente',
@@ -5749,6 +5866,12 @@
   });
   document.getElementById('coopCloseBtn').addEventListener('click', () => {
     document.getElementById('coopScreen').classList.add('hidden');
+  });
+  document.getElementById('updateTeaser').addEventListener('click', () => {
+    document.getElementById('changelogScreen').classList.remove('hidden');
+  });
+  document.getElementById('changelogCloseBtn').addEventListener('click', () => {
+    document.getElementById('changelogScreen').classList.add('hidden');
   });
   document.getElementById('coopCreateBtn').addEventListener('click', () => {
     const code = generateRoomCode();
