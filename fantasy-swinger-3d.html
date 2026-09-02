@@ -43,6 +43,19 @@
     transition: transform 0.45s cubic-bezier(.2,.8,.3,1.1), opacity 0.4s ease, visibility 0s linear 0s;
     animation: stormBadgeShake 0.35s ease-in-out infinite;
   }
+  #coopPlayerCountBadge {
+    position: fixed; top: 90px; left: 50%; transform: translateX(-50%); z-index: 45;
+    padding: 6px 16px; border-radius: 999px; font-size: 12px; font-weight: 800;
+    background: rgba(20,10,38,0.7); border: 1px solid rgba(122,255,196,0.4);
+    color: #7affc4; backdrop-filter: blur(4px);
+  }
+  #coopPlayerCountBadge.hidden { display: none; }
+  #coopOffscreenArrows { position: fixed; inset: 0; pointer-events: none; z-index: 44; }
+  .coopOffscreenArrow {
+    position: fixed; width: 34px; height: 34px; margin: -17px 0 0 -17px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
+  }
   @keyframes stormBadgeShake {
     0%, 100% { margin-left: 0; }
     25% { margin-left: -2px; }
@@ -1568,6 +1581,20 @@
     transform: translateY(-50%) scale(0.92);
   }
   #emoteHudBtn.hidden { display: none; }
+  #pingHudBtn {
+    position: fixed; right: 18px; top: calc(50% + 70px); transform: translateY(-50%); z-index: 51;
+    border: 2px solid rgba(255,226,122,0.45);
+    background: rgba(20,10,38,0.55);
+    backdrop-filter: blur(4px);
+    color: #fff; font-size: 24px;
+    width: 52px; height: 52px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    touch-action: none; user-select: none; cursor: pointer;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+    transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+  }
+  #pingHudBtn:active { background: rgba(255,226,122,0.35); border-color: rgba(255,226,122,0.8); transform: translateY(-50%) scale(0.92); }
+  #pingHudBtn.hidden { display: none; }
 
   #deviceSurvey {
     position: fixed; inset: 0; z-index: 300;
@@ -1708,6 +1735,8 @@
 
 <div id="hud">
   <div id="trophyFlyLayer"></div>
+  <div id="coopPlayerCountBadge" class="hidden"></div>
+  <div id="coopOffscreenArrows"></div>
   <div id="stormBadge">💨 Sturm — Wind erschwert das Schwingen!</div>
   <div id="streakDisplay">
     <div id="streakPct">🔥+10% mehr Pokale</div>
@@ -1805,6 +1834,7 @@
   <button id="touchPauseBtn" class="touchBtn">⏸️</button>
 </div>
 <button id="emoteHudBtn" class="hidden" title="Emotes (B)" data-i18n-title="emoteHudBtnTitle">🎭</button>
+<button id="pingHudBtn" class="hidden" title="Ping (Q)">📍</button>
 
 
 <div id="musicUnlockHint"><span data-i18n="musicUnlockHint">🔊 Musik aktivieren</span></div>
@@ -1877,7 +1907,10 @@
 
       <div id="coopNoRoom">
         <button id="coopCreateBtn" class="menuBtn">🎲 Raum erstellen</button>
-        <p style="margin:14px 0 8px; font-size:12.5px; color:rgba(255,255,255,0.6);">oder einem Raum beitreten:</p>
+        <div id="coopLastRoomRow" class="hidden" style="margin-top:10px;">
+          <button id="coopLastRoomBtn" class="menuBtn" style="background:rgba(122,255,196,0.12); border-color:rgba(122,255,196,0.4);">⏪ Zuletzt genutztem Raum beitreten: <span id="coopLastRoomCode" style="font-weight:900; letter-spacing:2px;"></span></button>
+        </div>
+        <p style="margin:14px 0 8px; font-size:12.5px; color:rgba(255,255,255,0.6);">oder einem anderen Raum beitreten:</p>
         <div style="display:flex; gap:8px;">
           <input id="coopJoinInput" type="text" maxlength="5" placeholder="CODE" style="flex:1; text-align:center; letter-spacing:3px; text-transform:uppercase; font-weight:800; font-size:16px; padding:10px; border-radius:10px; border:1px solid rgba(180,140,255,0.4); background:rgba(255,255,255,0.06); color:#fff;">
           <button id="coopJoinBtn" class="menuBtn" style="width:auto; padding:10px 20px;">Beitreten</button>
@@ -2938,7 +2971,11 @@
   let currentRoomCode = null;
   let roomPlayersRef = null;
   let myRoomPlayerRef = null;
+  let coopRoomPlayerCount = 0;
   const friendGhosts = {}; // playerKey -> { mesh, targetPos, targetYaw, name, lastSeenMs }
+  let roomPingsRef = null;
+  const activePings = {}; // pingKey -> { mesh, age, maxAge }
+  let lastPingSentMs = 0;
   function generateRoomCode(){
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // skips ambiguous 0/O, 1/I
     let code = '';
@@ -2950,9 +2987,18 @@
     const name = meta ? meta.name : 'Spieler';
     return encodeURIComponent(name.trim().toLowerCase()).replace(/[.#$\[\]]/g, '_');
   }
+  function updateCoopPlayerCountBadge(){
+    const badge = document.getElementById('coopPlayerCountBadge');
+    if (!badge) return;
+    const show = !!currentRoomCode && typeof running !== 'undefined' && running;
+    badge.classList.toggle('hidden', !show);
+    if (show) badge.textContent = '👥 ' + coopRoomPlayerCount + ' im Raum';
+  }
   function onRoomPlayersUpdate(snapshot){
     const data = snapshot.val() || {};
     const myKey = roomPlayerKey();
+    coopRoomPlayerCount = Object.keys(data).length;
+    updateCoopPlayerCountBadge();
     const listEl = document.getElementById('coopPlayerList');
     if (listEl){
       listEl.innerHTML = '';
@@ -2974,6 +3020,7 @@
   function joinRoom(code){
     leaveRoom(); // clean up any previous room membership first
     currentRoomCode = code;
+    storageSet('rankmann_lastRoomCode', code); // remembered for a quick one-click rejoin next time
     const meta = (typeof getActiveProfileMeta === 'function') ? getActiveProfileMeta() : null;
     const myName = meta ? meta.name : 'Spieler';
     myRoomPlayerRef = firebase.database().ref('rooms/' + code + '/players/' + roomPlayerKey());
@@ -2981,12 +3028,17 @@
     myRoomPlayerRef.set({ name: myName, x: 0, y: 0, z: 0, yaw: 0, world: 0, updatedAt: firebase.database.ServerValue.TIMESTAMP });
     roomPlayersRef = firebase.database().ref('rooms/' + code + '/players');
     roomPlayersRef.on('value', onRoomPlayersUpdate);
+    roomPingsRef = firebase.database().ref('rooms/' + code + '/pings');
+    roomPingsRef.on('value', onRoomPingsUpdate);
   }
   function leaveRoom(){
     if (myRoomPlayerRef){ myRoomPlayerRef.onDisconnect().cancel(); myRoomPlayerRef.remove(); myRoomPlayerRef = null; }
     if (roomPlayersRef){ roomPlayersRef.off('value', onRoomPlayersUpdate); roomPlayersRef = null; }
+    if (roomPingsRef){ roomPingsRef.off('value', onRoomPingsUpdate); roomPingsRef = null; }
     currentRoomCode = null;
     Object.keys(friendGhosts).forEach(key => removeGhost(key));
+    Object.keys(activePings).forEach(key => removePingMarker(key));
+    updateCoopPlayerCountBadge();
   }
 
   function writeGlobalEvent(type, durationMinutes){
@@ -4757,6 +4809,127 @@
       }
     });
   }
+  // Small "friend is off-screen" arrows at the edge of the view, and keeps
+  // the room player-count badge in sync with the current running/paused
+  // state (the count itself is already updated live by onRoomPlayersUpdate
+  // whenever the room's player list changes — this just handles show/hide
+  // as the player starts, pauses, or leaves the room).
+  function updateCoopUIExtras(){
+    updateCoopPlayerCountBadge();
+    const arrowContainer = document.getElementById('coopOffscreenArrows');
+    if (!arrowContainer) return;
+    const w = window.innerWidth, h = window.innerHeight;
+    const margin = 40;
+    Object.entries(friendGhosts).forEach(([key, gh]) => {
+      let arrowEl = document.getElementById('coopArrow_' + key);
+      if (!gh.mesh.visible){
+        if (arrowEl) arrowEl.style.display = 'none';
+        return;
+      }
+      const pos = gh.mesh.position.clone();
+      pos.y += 2; // aim roughly at their head/nametag, not their feet
+      const ndc = pos.project(camera);
+      const behind = ndc.z > 1;
+      const onScreen = !behind && ndc.x >= -1 && ndc.x <= 1 && ndc.y >= -1 && ndc.y <= 1;
+      if (onScreen){
+        if (arrowEl) arrowEl.style.display = 'none';
+        return;
+      }
+      if (!arrowEl){
+        arrowEl = document.createElement('div');
+        arrowEl.id = 'coopArrow_' + key;
+        arrowEl.className = 'coopOffscreenArrow';
+        arrowEl.textContent = '➤';
+        arrowContainer.appendChild(arrowEl);
+      }
+      arrowEl.style.display = 'flex';
+      let dx = ndc.x, dy = -ndc.y; // NDC +y is up, screen +y is down
+      if (behind){ dx = -dx; dy = -dy; }
+      const angle = Math.atan2(dy, dx);
+      const cx = w / 2, cy = h / 2;
+      const maxX = cx - margin, maxY = cy - margin;
+      const scale = Math.min(maxX / Math.max(Math.abs(Math.cos(angle)), 0.0001), maxY / Math.max(Math.abs(Math.sin(angle)), 0.0001));
+      arrowEl.style.left = (cx + Math.cos(angle) * scale) + 'px';
+      arrowEl.style.top = (cy + Math.sin(angle) * scale) + 'px';
+      arrowEl.style.transform = 'rotate(' + angle + 'rad)';
+    });
+    Array.from(arrowContainer.children).forEach(el => {
+      const key = el.id.replace('coopArrow_', '');
+      if (!friendGhosts[key]) el.remove();
+    });
+  }
+
+  // ---------- CO-OP PING SYSTEM ----------
+  // A Fortnite-style "mark a spot" ping — press Q (or the mobile ping
+  // button) to drop a glowing beacon at wherever you're looking, visible to
+  // everyone in the room (including yourself, as confirmation it went out).
+  function makePingMarker(){
+    const g = new THREE.Group();
+    const ringMat = new THREE.MeshBasicMaterial({ color: 0xffe27a, transparent: true, opacity: 0.9, side: THREE.DoubleSide });
+    const ring = new THREE.Mesh(new THREE.RingGeometry(0.4, 0.55, 24), ringMat);
+    ring.rotation.x = -Math.PI / 2;
+    g.add(ring);
+    const beamMat = new THREE.MeshBasicMaterial({ color: 0xffe27a, transparent: true, opacity: 0.55 });
+    const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 6, 8), beamMat);
+    beam.position.y = 3;
+    g.add(beam);
+    scene.add(g);
+    return g;
+  }
+  function removePingMarker(key){
+    const p = activePings[key];
+    if (!p) return;
+    scene.remove(p.mesh);
+    p.mesh.traverse(obj => { if (obj.material) obj.material.dispose(); if (obj.geometry) obj.geometry.dispose(); });
+    delete activePings[key];
+  }
+  function onRoomPingsUpdate(snapshot){
+    const data = snapshot.val() || {};
+    const seenKeys = new Set();
+    Object.entries(data).forEach(([key, p]) => {
+      seenKeys.add(key);
+      if (!activePings[key] || activePings[key].ts !== p.ts){
+        // new ping, or an existing key got reused for a fresh one — (re)spawn it
+        if (activePings[key]) removePingMarker(key);
+        const mesh = makePingMarker();
+        mesh.position.set(p.x, p.y, p.z);
+        activePings[key] = { mesh, age: 0, maxAge: 4, world: p.world, ts: p.ts };
+      }
+    });
+    Object.keys(activePings).forEach(key => { if (!seenKeys.has(key)) removePingMarker(key); });
+  }
+  function updatePings(dt){
+    Object.entries(activePings).forEach(([key, p]) => {
+      p.age += dt;
+      const inSameWorld = p.world === selectedWorld;
+      p.mesh.visible = inSameWorld && running;
+      if (p.age > p.maxAge){ removePingMarker(key); return; }
+      const t = p.age / p.maxAge;
+      const pulse = 1 + Math.sin(p.age * 6) * 0.12;
+      p.mesh.children[0].scale.set(pulse, pulse, 1); // ring
+      p.mesh.children[0].material.opacity = 0.9 * (1 - t);
+      p.mesh.children[1].material.opacity = 0.55 * (1 - t); // beam
+      p.mesh.rotation.y += dt * 1.5;
+    });
+  }
+  function sendPing(){
+    if (!currentRoomCode || !myRoomPlayerRef) return; // not in a room — nothing to ping into
+    const now = Date.now();
+    if (now - lastPingSentMs < 2000) return; // basic spam guard, 2s cooldown
+    lastPingSentMs = now;
+    raycaster.setFromCamera({ x: 0, y: 0 }, camera);
+    const hits = raycaster.intersectObjects(islandMeshes, true);
+    let target;
+    if (hits.length > 0 && hits[0].distance < 150){
+      target = hits[0].point;
+    } else {
+      target = raycaster.ray.origin.clone().addScaledVector(raycaster.ray.direction, 40); // nothing hit — just mark a point out in the direction you're looking
+    }
+    const pingRef = firebase.database().ref('rooms/' + currentRoomCode + '/pings/' + roomPlayerKey());
+    pingRef.set({ x: target.x, y: target.y, z: target.z, world: selectedWorld, ts: Date.now() }).catch(() => {});
+    setTimeout(() => { pingRef.remove().catch(() => {}); }, 4500); // self-cleans so the room doesn't accumulate stale pings
+  }
+
   // Broadcasts the local player's own position/rotation/world to the room,
   // throttled (not every single frame) to keep Firebase writes reasonable.
   let roomSyncTimer = 0;
@@ -4855,6 +5028,7 @@
     if (e.code === 'KeyE' && running) attachGrapple();
     if (e.code === 'KeyF' && running) performAttack();
     if (e.code === 'KeyB' && running && !paused) toggleEmoteWheel();
+    if (e.code === 'KeyQ' && running && !paused) sendPing();
     if (emoteActive && ['KeyW','KeyA','KeyS','KeyD','Space'].includes(e.code)) stopEmote();
   });
   window.addEventListener('keyup', e => {
@@ -5117,6 +5291,7 @@
   bindTouchBtn('touchSprintBtn', () => { keys['ShiftLeft'] = true; }, () => { keys['ShiftLeft'] = false; });
   bindTouchBtn('touchPauseBtn', () => { openPauseMenu(); });
   bindTouchBtn('emoteHudBtn', () => { toggleEmoteWheel(); });
+  bindTouchBtn('pingHudBtn', () => { sendPing(); });
 
   // ---------- SOUND ----------
   // Small synthesized sound engine (Web Audio API) — also used to play the
@@ -5977,6 +6152,17 @@
     document.getElementById('coopNoRoom').classList.toggle('hidden', !!currentRoomCode);
     document.getElementById('coopInRoom').classList.toggle('hidden', !currentRoomCode);
     if (currentRoomCode) document.getElementById('coopRoomCode').textContent = currentRoomCode;
+    const lastCode = storageGet('rankmann_lastRoomCode', null);
+    document.getElementById('coopLastRoomRow').classList.toggle('hidden', !lastCode || !!currentRoomCode);
+    if (lastCode) document.getElementById('coopLastRoomCode').textContent = lastCode;
+  });
+  document.getElementById('coopLastRoomBtn').addEventListener('click', () => {
+    const lastCode = storageGet('rankmann_lastRoomCode', null);
+    if (!lastCode) return;
+    joinRoom(lastCode);
+    document.getElementById('coopRoomCode').textContent = lastCode;
+    document.getElementById('coopNoRoom').classList.add('hidden');
+    document.getElementById('coopInRoom').classList.remove('hidden');
   });
   document.getElementById('coopCloseBtn').addEventListener('click', () => {
     document.getElementById('coopScreen').classList.add('hidden');
@@ -7669,6 +7855,8 @@
     updateWeather(dt);
     updateRoomSync(dt);
     updateGhosts(dt);
+    updateCoopUIExtras();
+    updatePings(dt);
     updateSwingTrail(dt);
     dust.rotation.y += dt*0.01;
     if (starfield.visible){
@@ -7718,6 +7906,9 @@
     // so it works as an on-screen alternative to pressing B.
     const showEmoteBtn = running && !paused && !photoModeActive && !previewMode;
     document.getElementById('emoteHudBtn').classList.toggle('hidden', !showEmoteBtn);
+    // The ping button only makes sense while actually in a co-op room —
+    // showing it otherwise would just be a dead button.
+    document.getElementById('pingHudBtn').classList.toggle('hidden', !(showEmoteBtn && currentRoomCode));
     // Settings and music fabs belong to the start menu only — hide them
     // once a run is actually in progress (still shown while paused, since
     // the pause menu itself sits on top of the game).
