@@ -1714,6 +1714,25 @@
 </head>
 <body>
 
+<script>
+  // Blocks the browser's own "double-tap to zoom" gesture, globally, across
+  // the whole page — some mobile browsers (newer iOS Safari especially)
+  // still trigger it even with the viewport's user-scalable=no set, since
+  // it's handled as its own system-level gesture separate from pinch-zoom.
+  // Left unblocked, a quick double-tap during gameplay zooms the whole page
+  // in and breaks the layout until the player reloads — this stops that at
+  // the source, before it can ever happen, rather than trying to recover
+  // from it after the fact.
+  (function(){
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', function(e){
+      const now = Date.now();
+      if (now - lastTouchEnd <= 350) e.preventDefault();
+      lastTouchEnd = now;
+    }, { passive: false });
+  })();
+</script>
+
 <div id="introScreen">
   <video id="introVideo" src="intro.mp4" playsinline></video>
   <div id="introUnmuteHint" data-i18n="introUnmuteHint">🔇 Ton ist stumm — klicken zum Aktivieren</div>
