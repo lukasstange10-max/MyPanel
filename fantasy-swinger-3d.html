@@ -43,6 +43,26 @@
     transition: transform 0.45s cubic-bezier(.2,.8,.3,1.1), opacity 0.4s ease, visibility 0s linear 0s;
     animation: stormBadgeShake 0.35s ease-in-out infinite;
   }
+  #chaosBadge {
+    position: fixed; top: 130px; left: 50%; z-index: 47;
+    padding: 9px 22px; border-radius: 999px; font-size: 13px; font-weight: 900;
+    background: linear-gradient(135deg, #ff5c8a, #ffb347, #9d7bff);
+    background-size: 300% 300%;
+    color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,0.4);
+    box-shadow: 0 6px 22px rgba(180,80,180,0.5);
+    transform: translateX(-50%) translateY(-140%);
+    opacity: 0; visibility: hidden;
+    transition: transform 0.45s cubic-bezier(.2,.8,.3,1.1), opacity 0.4s ease, visibility 0s linear 0.45s;
+  }
+  #chaosBadge.show {
+    transform: translateX(-50%) translateY(0); opacity: 1; visibility: visible;
+    transition: transform 0.45s cubic-bezier(.2,.8,.3,1.1), opacity 0.4s ease, visibility 0s linear 0s;
+    animation: chaosBadgePulse 1.2s ease-in-out infinite;
+  }
+  @keyframes chaosBadgePulse {
+    0%, 100% { background-position: 0% 50%; transform: translateX(-50%) translateY(0) scale(1); }
+    50% { background-position: 100% 50%; transform: translateX(-50%) translateY(0) scale(1.04); }
+  }
   #coopPlayerCountBadge {
     position: fixed; top: 90px; left: 50%; transform: translateX(-50%); z-index: 45;
     padding: 6px 16px; border-radius: 999px; font-size: 12px; font-weight: 800;
@@ -786,6 +806,15 @@
   }
   #coopScreen.hidden { display: none; }
   #coopScreen .startPanel { max-width: 420px; }
+  #saveCodeScreen {
+    position: fixed; inset: 0; z-index: 270;
+    background: rgba(6,3,14,0.65);
+    backdrop-filter: blur(4px) saturate(1.2);
+    -webkit-backdrop-filter: blur(4px) saturate(1.2);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; text-align: center; padding: 20px; box-sizing: border-box;
+  }
+  #saveCodeScreen.hidden { display: none; }
   .coopPlayerRow {
     display: flex; align-items: center; gap: 10px; padding: 9px 14px;
     border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(122,255,196,0.25);
@@ -1743,6 +1772,7 @@
   <div id="coopPlayerCountBadge" class="hidden"></div>
   <div id="coopOffscreenArrows"></div>
   <div id="stormBadge">💨 Sturm — Wind erschwert das Schwingen!</div>
+  <div id="chaosBadge"></div>
   <div id="streakDisplay">
     <div id="streakPct">🔥+10% mehr Pokale</div>
     <div id="streakSub">steigt nur auf der Plattform, wo du dreimal hintereinander gelandet bist</div>
@@ -2609,6 +2639,7 @@
         <button class="adminActionBtn" id="adminUnlockWorldsBtn">🗺️ Alle Welten freischalten</button>
         <button class="adminActionBtn" id="adminUnlockAchievementsBtn">🏅 Alle Erfolge freischalten</button>
         <button class="adminActionBtn" id="adminTriggerStormBtn">⛈️ Sturm auslösen (60s)</button>
+        <button class="adminActionBtn" id="adminTriggerChaosBtn">🎪 Chaos-Modus auslösen (18s)</button>
       </div>
       <div class="settingsToggleRow" style="margin-top:12px;">
         <span>🛡️ God Mode (unverwundbar)</span>
@@ -2715,6 +2746,10 @@
         <span data-i18n="settingsSwingTrail">✨ Schwing-Trail</span>
         <button class="settingsToggle" id="toggleSwingTrail" data-on="true"><span class="settingsToggleDot"></span></button>
       </div>
+      <div class="settingsToggleRow">
+        <span data-i18n="settingsChaosMode">🎪 Chaos-Modus (seltenes Zufalls-Event)</span>
+        <button class="settingsToggle" id="toggleChaosMode" data-on="true"><span class="settingsToggleDot"></span></button>
+      </div>
 
       <div class="settingsToggleRow">
         <span data-i18n="settingsWeather">🌧️ Wetter-Effekte</span>
@@ -2734,9 +2769,28 @@
       </div>
 
       <button id="settingsSaveBtn" data-i18n="settingsSaveBtn">💾 Speichern</button>
+      <button id="saveCodeOpenBtn">🔐 Spielstand sichern / wiederherstellen</button>
       <button id="settingsResetBtn" data-i18n="settingsResetBtn">🗑️ Spielstand zurücksetzen</button>
       <button id="settingsCloseBtn" class="menuBtn" style="margin-top:14px;" data-i18n="closeBtn4">Schließen</button>
     </div>
+  </div>
+</div>
+
+<div id="saveCodeScreen" class="hidden">
+  <div class="startPanel" style="max-width:460px;">
+    <h1 style="font-size:22px; margin:0 0 4px;">🔐 Spielstand sichern</h1>
+    <p class="heroTagline" style="margin-bottom:16px;">Als Sicherheitsnetz, falls beim nächsten Update mal was schiefgeht.</p>
+
+    <p style="font-size:12.5px; color:rgba(255,255,255,0.65); text-align:left; margin-bottom:6px;">Dein Code (kopieren und irgendwo sicher aufbewahren):</p>
+    <textarea id="saveCodeOutput" readonly style="width:100%; box-sizing:border-box; height:70px; resize:none; font-size:11px; font-family:monospace; padding:8px; border-radius:8px; border:1px solid rgba(180,140,255,0.4); background:rgba(255,255,255,0.05); color:#fff;"></textarea>
+    <button id="saveCodeCopyBtn" class="menuBtn" style="margin-top:8px;">📋 Code kopieren</button>
+
+    <p style="font-size:12.5px; color:rgba(255,255,255,0.65); text-align:left; margin:18px 0 6px;">Code wiederherstellen (überschreibt deinen aktuellen Spielstand):</p>
+    <textarea id="saveCodeInput" placeholder="Code hier einfügen..." style="width:100%; box-sizing:border-box; height:70px; resize:none; font-size:11px; font-family:monospace; padding:8px; border-radius:8px; border:1px solid rgba(180,140,255,0.4); background:rgba(255,255,255,0.05); color:#fff;"></textarea>
+    <button id="saveCodeImportBtn" class="menuBtn" style="margin-top:8px; background:rgba(255,180,80,0.2); border-color:rgba(255,180,80,0.5);">📥 Wiederherstellen</button>
+    <p id="saveCodeStatus" style="font-size:12px; min-height:16px; margin-top:8px;"></p>
+
+    <button id="saveCodeCloseBtn" class="menuBtn" style="margin-top:14px;">Schließen</button>
   </div>
 </div>
 
@@ -2888,6 +2942,36 @@
   }
   function storageSet(key, value){
     try { localStorage.setItem(scopedStorageKey(key), JSON.stringify(value)); return true; } catch(e){ return false; }
+  }
+
+  // ---------- SAVE CODE EXPORT/IMPORT ----------
+  // A manual backup/restore safety net — bundles every localStorage key
+  // belonging to the CURRENT profile into one copyable text code (Base64 of
+  // a small JSON payload). Doesn't matter WHY progress might go missing
+  // (private browsing, a browser clearing site data, anything else) — as
+  // long as the player copied their code beforehand, this always gets them
+  // back to exactly where they were, regardless of the cause.
+  function exportSaveCode(){
+    const prefix = 'rankmann_profile_' + ACTIVE_PROFILE_ID + '_';
+    const data = {};
+    for (let i = 0; i < localStorage.length; i++){
+      const k = localStorage.key(i);
+      if (k && k.indexOf(prefix) === 0) data[k.slice(prefix.length)] = localStorage.getItem(k);
+    }
+    const payload = { v: 1, data };
+    try { return btoa(unescape(encodeURIComponent(JSON.stringify(payload)))); }
+    catch(e){ return null; }
+  }
+  function importSaveCode(code){
+    let payload;
+    try { payload = JSON.parse(decodeURIComponent(escape(atob(code.trim())))); }
+    catch(e){ return false; }
+    if (!payload || typeof payload.data !== 'object') return false;
+    const prefix = 'rankmann_profile_' + ACTIVE_PROFILE_ID + '_';
+    try {
+      Object.entries(payload.data).forEach(([k, v]) => { localStorage.setItem(prefix + k, v); });
+      return true;
+    } catch(e){ return false; }
   }
 
   // ---------- GLOBAL EVENTS (Firebase, real-time) ----------
@@ -3141,6 +3225,7 @@
       settingsJoySmall: 'Small', settingsJoyMedium: 'Medium', settingsJoyBig: 'Large', settingsBtnSize: '🔘 Button size',
       settingsVibration: '📳 Vibration on hits/landings',
       settingsSwingTrail: '✨ Swing trail',
+      settingsChaosMode: '🎪 Chaos mode (rare random event)',
       settingsWeather: '🌧️ Weather effects', settingsAchToasts: '🔔 Achievement notifications', settingsCamShake: '📳 Screen shake', settingsTrophyFly: '🏆 Trophy fly animation',
       settingsSaveBtn: '💾 Save', settingsResetBtn: '🗑️ Reset save data', closeBtn4: 'Close',
       newSkinUnlocked: 'New skin unlocked!', newVineUnlocked: 'New vine unlocked!',
@@ -3202,6 +3287,7 @@
       settingsJoySmall: 'Petit', settingsJoyMedium: 'Moyen', settingsJoyBig: 'Grand', settingsBtnSize: '🔘 Taille des boutons',
       settingsVibration: '📳 Vibration lors des coups/atterrissages',
       settingsSwingTrail: '✨ Traînée de balancement',
+      settingsChaosMode: '🎪 Mode chaos (événement aléatoire rare)',
       settingsWeather: '🌧️ Effets météo', settingsAchToasts: '🔔 Notifications de succès', settingsCamShake: "📳 Tremblement d'écran", settingsTrophyFly: '🏆 Animation de trophée',
       settingsSaveBtn: '💾 Enregistrer', settingsResetBtn: '🗑️ Réinitialiser la sauvegarde', closeBtn4: 'Fermer',
       newSkinUnlocked: 'Nouveau skin débloqué !', newVineUnlocked: 'Nouvelle liane débloquée !',
@@ -3263,6 +3349,7 @@
       settingsJoySmall: 'Pequeño', settingsJoyMedium: 'Mediano', settingsJoyBig: 'Grande', settingsBtnSize: '🔘 Tamaño de botones',
       settingsVibration: '📳 Vibración en golpes/aterrizajes',
       settingsSwingTrail: '✨ Estela de balanceo',
+      settingsChaosMode: '🎪 Modo caos (evento aleatorio raro)',
       settingsWeather: '🌧️ Efectos climáticos', settingsAchToasts: '🔔 Notificaciones de logros', settingsCamShake: '📳 Sacudida de pantalla', settingsTrophyFly: '🏆 Animación de trofeo',
       settingsSaveBtn: '💾 Guardar', settingsResetBtn: '🗑️ Restablecer partida', closeBtn4: 'Cerrar',
       newSkinUnlocked: '¡Nueva skin desbloqueada!', newVineUnlocked: '¡Nueva liana desbloqueada!',
@@ -3324,6 +3411,7 @@
       settingsJoySmall: 'Pequeno', settingsJoyMedium: 'Médio', settingsJoyBig: 'Grande', settingsBtnSize: '🔘 Tamanho dos botões',
       settingsVibration: '📳 Vibração em acertos/pousos',
       settingsSwingTrail: '✨ Rastro de balanço',
+      settingsChaosMode: '🎪 Modo caos (evento aleatório raro)',
       settingsWeather: '🌧️ Efeitos climáticos', settingsAchToasts: '🔔 Notificações de conquistas', settingsCamShake: '📳 Tremor de tela', settingsTrophyFly: '🏆 Animação de troféu',
       settingsSaveBtn: '💾 Salvar', settingsResetBtn: '🗑️ Redefinir progresso', closeBtn4: 'Fechar',
       newSkinUnlocked: 'Nova skin desbloqueada!', newVineUnlocked: 'Novo cipó desbloqueado!',
@@ -3684,6 +3772,50 @@
   const starfield = new THREE.Points(starGeo, starMat);
   starfield.visible = false;
   scene.add(starfield);
+
+  // ---------- CHAOS MODE ----------
+  // A rare, short-lived random modifier — one of three effects (reversed
+  // gravity, hyper-bouncy landings, or flipped WASD) for ~18 seconds,
+  // independent of the weather/storm system so it can happen any time,
+  // clear skies or not. Deliberately infrequent (every 3-6 minutes) since
+  // it's meant to be a fun surprise, not a constant annoyance.
+  let chaosActive = false;
+  let chaosType = null; // 'gravity' | 'bouncy' | 'controls'
+  let chaosTimeLeft = 0;
+  let chaosTimer = 60 + Math.random() * 120; // first possible chaos event after 1-3 minutes
+  const CHAOS_TYPES = ['gravity', 'bouncy', 'controls'];
+  const CHAOS_LABELS = {
+    gravity: '🙃 Schwerkraft umgekehrt!',
+    bouncy: '🦘 Hyper-Sprung-Modus!',
+    controls: '🔀 Steuerung vertauscht!',
+  };
+  function startChaosMode(forceType){
+    if (!gameSettings.chaosModeEnabled) return;
+    chaosActive = true;
+    chaosType = forceType || CHAOS_TYPES[Math.floor(Math.random() * CHAOS_TYPES.length)];
+    chaosTimeLeft = 18;
+    const badge = document.getElementById('chaosBadge');
+    if (badge){ badge.textContent = CHAOS_LABELS[chaosType]; badge.classList.add('show'); }
+  }
+  function endChaosMode(){
+    chaosActive = false;
+    chaosType = null;
+    const badge = document.getElementById('chaosBadge');
+    if (badge) badge.classList.remove('show');
+  }
+  function updateChaosMode(dt){
+    if (!running || paused) return;
+    if (chaosActive){
+      chaosTimeLeft -= dt;
+      if (chaosTimeLeft <= 0) endChaosMode();
+      return;
+    }
+    chaosTimer -= dt;
+    if (chaosTimer <= 0){
+      startChaosMode();
+      chaosTimer = 180 + Math.random() * 180; // next possible event in 3-6 minutes
+    }
+  }
 
   // ---------- WEATHER ----------
   let rainIntensity = 0; // 0 = clear, 1 = full rain/storm, smoothed toward weatherTarget
@@ -4253,6 +4385,9 @@
     standingOnIsCheckpoint: false, // whether the current platform is a trophy checkpoint — only these count for the streak
     fallSoundPlayed: false,
     grappledSinceGrounded: false, // true if the grapple was used during this airtime — suppresses fall/land sounds
+    trickActive: false,
+    trickProgress: 0, // 0..1 of the current flip's rotation
+    trickCount: 0, // full flips landed so far in this airtime (for the style bonus)
   };
 
   // ---------- SAME-PLATFORM STREAK BONUS ----------
@@ -4953,6 +5088,7 @@
     if (e.code === 'KeyE' && running) attachGrapple();
     if (e.code === 'KeyF' && running) performAttack();
     if (e.code === 'KeyB' && running && !paused) toggleEmoteWheel();
+    if (e.code === 'Space' && running && !paused && !player.onGround && !grapple.active && !emoteActive) startTrick();
     if (emoteActive && ['KeyW','KeyA','KeyS','KeyD','Space'].includes(e.code)) stopEmote();
   });
   window.addEventListener('keyup', e => {
@@ -5209,7 +5345,11 @@
       onUp && onUp();
     });
   }
-  bindTouchBtn('touchJumpBtn', () => { if (emoteActive) stopEmote(); keys['Space'] = true; }, () => { keys['Space'] = false; });
+  bindTouchBtn('touchJumpBtn', () => {
+    if (emoteActive) stopEmote();
+    if (running && !paused && !player.onGround && !grapple.active) startTrick();
+    keys['Space'] = true;
+  }, () => { keys['Space'] = false; });
   bindTouchBtn('touchGrappleBtn', () => { if (running) attachGrapple(); }, () => { releaseGrapple(); });
   bindTouchBtn('touchAttackBtn', () => { if (running) performAttack(); });
   bindTouchBtn('touchSprintBtn', () => { keys['ShiftLeft'] = true; }, () => { keys['ShiftLeft'] = false; });
@@ -5558,6 +5698,7 @@
   function attachGrapple(){
     if (grapple.active) return;
     if (emoteActive) { stopEmote(); return; }
+    if (player.trickActive) resetTrickVisual(); // don't let a mid-flip spin fight with the swing pose
     // Primary: precise aim via the crosshair raycast. Fallback: just grab the
     // nearest anchor in range, so holding E always does *something* useful
     // even if the aim isn't pixel-perfect. World 3's anchors are spaced much
@@ -5600,6 +5741,33 @@
     return best;
   }
 
+  // ---------- AERIAL TRICKS ----------
+  // Press Space again while airborne (not grappling) for a front flip —
+  // Tony-Hawk-style style points, converted into a small trophy bonus on a
+  // clean landing. Purely a visual spin on the whole character mesh, so it
+  // doesn't touch the actual physics/collision at all — landing mid-flip
+  // just snaps the rotation back to normal.
+  function startTrick(){
+    if (player.trickActive) return; // already mid-flip — let it finish first
+    player.trickActive = true;
+    player.trickProgress = 0;
+  }
+  function updateTrick(dt){
+    if (!player.trickActive) return;
+    player.trickProgress += dt * 2.2; // ~0.45s per full flip
+    playerMesh.rotation.x = player.trickProgress * Math.PI * 2;
+    if (player.trickProgress >= 1){
+      player.trickActive = false;
+      player.trickProgress = 0;
+      playerMesh.rotation.x = 0;
+      player.trickCount++;
+    }
+  }
+  function resetTrickVisual(){
+    player.trickActive = false;
+    player.trickProgress = 0;
+    playerMesh.rotation.x = 0;
+  }
   function performAttack(){
     if (emoteActive) { stopEmote(); return; }
     const now = clock.elapsedTime;
@@ -5659,6 +5827,7 @@
     buttonSize: 'medium', // 'small' | 'medium' | 'large' — attack/grapple/jump/sprint, independent of joystick size
     vibrationEnabled: true,
     swingTrailEnabled: true,
+    chaosModeEnabled: true,
   };
   let gameSettings = Object.assign({}, DEFAULT_SETTINGS, storageGet('rankmann_settings', {}));
   function saveSettings(){ storageSet('rankmann_settings', gameSettings); }
@@ -6261,6 +6430,15 @@
     isStorm = true;
     weatherTimer = 60;
     showAdminToast('⛈️ Sturm ausgelöst — Wind wirkt jetzt beim Schwingen');
+  });
+  document.getElementById('adminTriggerChaosBtn').addEventListener('click', () => {
+    if (!gameSettings.chaosModeEnabled){
+      gameSettings.chaosModeEnabled = true;
+      saveSettings();
+      showAdminToast('ℹ️ "Chaos-Modus" war ausgeschaltet — automatisch aktiviert');
+    }
+    startChaosMode();
+    showAdminToast('🎪 Chaos-Modus ausgelöst — ' + CHAOS_LABELS[chaosType]);
   });
   document.getElementById('adminGodModeToggle').addEventListener('click', function(){
     adminGodMode = this.dataset.on !== 'true';
@@ -7323,6 +7501,7 @@
     if (keys['KeyA']) moveDir.sub(right);
     if (moveDir.lengthSq() > 0) moveDir.normalize();
     if (emoteActive) moveDir.set(0, 0, 0);
+    if (chaosActive && chaosType === 'controls') moveDir.multiplyScalar(-1); // WASD flipped for the duration
 
     const sprinting = (keys['ShiftLeft'] || keys['ShiftRight']) && player.onGround && !grapple.active;
     const sprintMult = sprinting ? 1.8 : 1;
@@ -7346,12 +7525,16 @@
     }
 
     // gravity — World 3 ("Sternenreich") uses much lower gravity, giving
-    // higher, slower-falling jumps that suit its wide low-g island spread
-    player.vel.y += (selectedWorld === 3 ? GRAVITY * 0.45 : GRAVITY) * dt;
+    // higher, slower-falling jumps that suit its wide low-g island spread.
+    // Chaos mode's "gravity" type simply flips the sign, so the player
+    // slowly floats UP instead of falling — swinging is then the only way
+    // to actually pull yourself back down onto a platform.
+    const baseGravity = selectedWorld === 3 ? GRAVITY * 0.45 : GRAVITY;
+    player.vel.y += (chaosActive && chaosType === 'gravity' ? -baseGravity : baseGravity) * dt;
 
-    // jump
+    // jump — chaos mode's "bouncy" type triples jump strength
     if (keys['Space'] && player.onGround && !emoteActive){
-      player.vel.y = 10;
+      player.vel.y = (chaosActive && chaosType === 'bouncy') ? 24 : 10;
       player.onGround = false;
     }
 
@@ -7431,12 +7614,34 @@
       vibrate(15);
       if (gameSettings.cameraShakeEnabled) camShakeT = 0.35;
     }
+    // Aerial trick style bonus — only completed flips count (an
+    // interrupted, mid-spin landing earns nothing for that one), reset
+    // fresh on every new landing regardless of whether any tricks landed.
+    if (!player.wasOnGround && player.onGround){
+      if (player.trickCount > 0){
+        const styleBonus = player.trickCount * 3;
+        totalTrophies += styleBonus;
+        storageSet('rankmann_totalTrophies', totalTrophies);
+        spawnTrophyFly(styleBonus);
+        sfx.trophy();
+      }
+      player.trickCount = 0;
+      resetTrickVisual();
+    }
     // Same-platform streak — only trophy checkpoints count (landing on the
     // hub, or any decorative rock, is simply ignored — neither builds nor
     // breaks a streak, since those aren't "the same platform" in the sense
     // that matters: you can't earn trophies there in the first place).
     if (!player.wasOnGround && player.onGround && player.standingOnIsCheckpoint){
       registerPlatformLanding(player.standingOnPos || player.standingOn);
+    }
+    // Chaos mode's "bouncy" type — runs AFTER the streak registration above
+    // (so a bouncy landing on a checkpoint still counts normally), and just
+    // ADDS a strong upward bounce rather than changing how landing itself
+    // works.
+    if (chaosActive && chaosType === 'bouncy' && player.onGround){
+      player.vel.y = Math.max(16, player.lastImpactSpeed * 0.85);
+      player.onGround = false;
     }
     if (player.onGround) {
       player.fallSoundPlayed = false;
@@ -7780,6 +7985,8 @@
     updateGhosts(dt);
     updateCoopUIExtras();
     updateSwingTrail(dt);
+    updateTrick(dt);
+    updateChaosMode(dt);
     dust.rotation.y += dt*0.01;
     if (starfield.visible){
       starfield.position.set(player.pos.x, 0, player.pos.z);
@@ -8192,6 +8399,7 @@
   bindSettingsToggle('toggleTrophyFly', 'trophyFlyEnabled');
   bindSettingsToggle('toggleVibration', 'vibrationEnabled');
   bindSettingsToggle('toggleSwingTrail', 'swingTrailEnabled');
+  bindSettingsToggle('toggleChaosMode', 'chaosModeEnabled');
   document.getElementById('joySideLeftBtn').addEventListener('click', () => {
     gameSettings.joystickSide = 'left'; saveSettings(); applyTouchLayoutSettings();
   });
@@ -8240,6 +8448,45 @@
   document.getElementById('unsavedDiscardBtn').addEventListener('click', discardSettingsChanges);
   document.getElementById('settingsResetBtn').addEventListener('click', () => {
     document.getElementById('resetConfirmOverlay').classList.remove('hidden');
+  });
+  document.getElementById('saveCodeOpenBtn').addEventListener('click', () => {
+    document.getElementById('saveCodeScreen').classList.remove('hidden');
+    document.getElementById('saveCodeOutput').value = exportSaveCode() || 'Fehler beim Erstellen des Codes';
+    document.getElementById('saveCodeInput').value = '';
+    document.getElementById('saveCodeStatus').textContent = '';
+  });
+  document.getElementById('saveCodeCloseBtn').addEventListener('click', () => {
+    document.getElementById('saveCodeScreen').classList.add('hidden');
+  });
+  document.getElementById('saveCodeCopyBtn').addEventListener('click', () => {
+    const el = document.getElementById('saveCodeOutput');
+    el.select();
+    navigator.clipboard.writeText(el.value).then(() => {
+      document.getElementById('saveCodeStatus').style.color = '#7affc4';
+      document.getElementById('saveCodeStatus').textContent = '✅ Kopiert!';
+    }).catch(() => {
+      document.getElementById('saveCodeStatus').style.color = '#ffb347';
+      document.getElementById('saveCodeStatus').textContent = 'Konnte nicht automatisch kopieren — bitte manuell markieren & kopieren';
+    });
+  });
+  document.getElementById('saveCodeImportBtn').addEventListener('click', () => {
+    const code = document.getElementById('saveCodeInput').value;
+    const statusEl = document.getElementById('saveCodeStatus');
+    if (!code.trim()){
+      statusEl.style.color = '#ffb347';
+      statusEl.textContent = 'Bitte zuerst einen Code einfügen.';
+      return;
+    }
+    if (!confirm('Das überschreibt deinen AKTUELLEN Spielstand mit dem Inhalt des Codes. Fortfahren?')) return;
+    const ok = importSaveCode(code);
+    if (ok){
+      statusEl.style.color = '#7affc4';
+      statusEl.textContent = '✅ Wiederhergestellt! Seite lädt neu...';
+      setTimeout(() => location.reload(), 1200);
+    } else {
+      statusEl.style.color = '#ff6b6b';
+      statusEl.textContent = '❌ Ungültiger Code — bitte prüfen und erneut versuchen.';
+    }
   });
   document.getElementById('resetConfirmNo').addEventListener('click', () => {
     document.getElementById('resetConfirmOverlay').classList.add('hidden');
