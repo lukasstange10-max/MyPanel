@@ -63,6 +63,38 @@
     0%, 100% { background-position: 0% 50%; transform: translateX(-50%) translateY(0) scale(1); }
     50% { background-position: 100% 50%; transform: translateX(-50%) translateY(0) scale(1.04); }
   }
+  #goldenHourBadge {
+    position: fixed; top: 130px; left: 50%; z-index: 47;
+    padding: 9px 22px; border-radius: 999px; font-size: 13px; font-weight: 900;
+    background: linear-gradient(135deg, #ffe27a, #ffb347, #ffe27a);
+    background-size: 300% 300%;
+    color: #2a1f00; text-shadow: 0 1px 2px rgba(255,255,255,0.3);
+    box-shadow: 0 6px 22px rgba(255,200,80,0.55);
+    transform: translateX(-50%) translateY(-140%);
+    opacity: 0; visibility: hidden;
+    transition: transform 0.45s cubic-bezier(.2,.8,.3,1.1), opacity 0.4s ease, visibility 0s linear 0.45s;
+  }
+  #goldenHourBadge.show {
+    transform: translateX(-50%) translateY(0); opacity: 1; visibility: visible;
+    transition: transform 0.45s cubic-bezier(.2,.8,.3,1.1), opacity 0.4s ease, visibility 0s linear 0s;
+    animation: chaosBadgePulse 1.2s ease-in-out infinite;
+  }
+  #specialRingBadge {
+    position: fixed; top: 172px; left: 50%; z-index: 47;
+    padding: 9px 22px; border-radius: 999px; font-size: 13px; font-weight: 900;
+    background: linear-gradient(135deg, #ffe27a, #ff9d4a, #ffe27a);
+    background-size: 300% 300%;
+    color: #2a1300; text-shadow: 0 1px 2px rgba(255,255,255,0.3);
+    box-shadow: 0 6px 22px rgba(255,180,80,0.55);
+    transform: translateX(-50%) translateY(-140%);
+    opacity: 0; visibility: hidden;
+    transition: transform 0.45s cubic-bezier(.2,.8,.3,1.1), opacity 0.4s ease, visibility 0s linear 0.45s;
+  }
+  #specialRingBadge.show {
+    transform: translateX(-50%) translateY(0); opacity: 1; visibility: visible;
+    transition: transform 0.45s cubic-bezier(.2,.8,.3,1.1), opacity 0.4s ease, visibility 0s linear 0s;
+    animation: chaosBadgePulse 1.2s ease-in-out infinite;
+  }
   #coopPlayerCountBadge {
     position: fixed; top: 90px; left: 50%; transform: translateX(-50%); z-index: 45;
     padding: 6px 16px; border-radius: 999px; font-size: 12px; font-weight: 800;
@@ -1792,6 +1824,8 @@
   <div id="coopOffscreenArrows"></div>
   <div id="stormBadge">💨 Sturm — Wind erschwert das Schwingen!</div>
   <div id="chaosBadge"></div>
+  <div id="goldenHourBadge">✨ Goldene Stunde — 3x Pokale für 5 Minuten!</div>
+  <div id="specialRingBadge"></div>
   <div id="streakDisplay">
     <div id="streakPct">🔥+10% mehr Pokale</div>
     <div id="streakSub">steigt nur auf der Plattform, wo du dreimal hintereinander gelandet bist</div>
@@ -2660,6 +2694,8 @@
         <button class="adminActionBtn" id="adminUnlockAchievementsBtn">🏅 Alle Erfolge freischalten</button>
         <button class="adminActionBtn" id="adminTriggerStormBtn">⛈️ Sturm auslösen (60s)</button>
         <button class="adminActionBtn" id="adminTriggerChaosBtn">🎪 Chaos-Modus auslösen (18s)</button>
+        <button class="adminActionBtn" id="adminTriggerGoldenHourBtn">✨ Goldene Stunde testen (2min)</button>
+        <button class="adminActionBtn" id="adminTriggerRingBtn">🎯 Bonus-Ring auslösen</button>
       </div>
       <div class="settingsToggleRow" style="margin-top:12px;">
         <span>🛡️ God Mode (unverwundbar)</span>
@@ -3021,6 +3057,31 @@
       }
     }, () => {}); // permission-denied/offline — event just stays as last known state
 
+    // Global broadcast effects — storm, chaos mode, and the golden hour can
+    // now ALSO be triggered for every connected player at once (not just
+    // locally for testing), using the exact same "forced until" timestamps
+    // the admin test buttons already used — a synced broadcast just sets
+    // those same local variables on every client instead of only the
+    // admin's own.
+    const globalEffectsRef = firebase.database().ref('globalEffects');
+    globalEffectsRef.on('value', snapshot => {
+      const data = snapshot.val() || {};
+      if (data.storm && data.storm.expiresAt > Date.now()){
+        stormForceUntil = data.storm.expiresAt;
+      }
+      if (data.chaos && data.chaos.expiresAt > Date.now()){
+        chaosForceUntil = data.chaos.expiresAt;
+        chaosForceType = data.chaos.chaosType || null;
+      }
+      if (data.goldenHour && data.goldenHour.expiresAt > Date.now()){
+        goldenHourForceUntil = data.goldenHour.expiresAt;
+      }
+    }, () => {});
+    function broadcastGlobalEffect(key, durationMs, extra){
+      const body = Object.assign({ expiresAt: Date.now() + durationMs }, extra || {});
+      globalEffectsRef.child(key).set(body).catch(() => {});
+    }
+
     // Live ban check for the CURRENT player — if an admin bans this profile's
     // name while they're mid-session, this kicks them back to the profile
     // picker immediately rather than waiting for their next launch.
@@ -3150,7 +3211,42 @@
     return globalEventRef.set(body);
   }
   function applyEventMultiplier(amount){
-    return globalEventActive === '2x_trophies' ? amount * 2 : amount;
+    let mult = globalEventActive === '2x_trophies' ? 2 : 1;
+    if (goldenHourActive) mult *= 3;
+    return amount * mult;
+  }
+  // ---------- GOLDEN HOUR ----------
+  // A once-a-day, randomly-timed 5-minute 3x-trophy window — deliberately
+  // NOT scheduled or announced in advance (the surprise is the whole
+  // point), and purely local/personal, unlike the admin's synced 2x event.
+  // The exact minute is derived from today's date so it stays the SAME
+  // window all day even if the page reloads mid-window, without needing to
+  // persist anything to storage.
+  let goldenHourActive = false;
+  let goldenHourForceUntil = 0; // admin test override — timestamp (ms) until which the golden hour is forced on
+  function getGoldenHourWindow(){
+    const todayStr = new Date().toISOString().slice(0, 10);
+    let seed = 0;
+    for (let i = 0; i < todayStr.length; i++) seed = (seed * 31 + todayStr.charCodeAt(i)) >>> 0;
+    const minuteOfDay = seed % (24 * 60);
+    const startOfDay = new Date(todayStr + 'T00:00:00');
+    const start = new Date(startOfDay.getTime() + minuteOfDay * 60000);
+    const end = new Date(start.getTime() + 5 * 60000);
+    return { start, end };
+  }
+  function updateGoldenHour(){
+    const { start, end } = getGoldenHourWindow();
+    const now = new Date();
+    const isActive = (now >= start && now <= end) || Date.now() < goldenHourForceUntil;
+    const badge = document.getElementById('goldenHourBadge');
+    if (isActive && !goldenHourActive){
+      goldenHourActive = true;
+      if (badge) badge.classList.add('show');
+      sfx.trophy();
+    } else if (!isActive && goldenHourActive){
+      goldenHourActive = false;
+      if (badge) badge.classList.remove('show');
+    }
   }
   // Smooth-animated countdown badge, bottom-right. Ticks every second locally
   // (no network needed for the countdown itself) and auto-hides once expired.
@@ -3804,6 +3900,8 @@
   let chaosType = null; // 'gravity' | 'bouncy' | 'controls'
   let chaosTimeLeft = 0;
   let chaosTimer = 60 + Math.random() * 120; // first possible chaos event after 1-3 minutes
+  let chaosForceUntil = 0; // set by a global broadcast — forces chaos on for every connected player, not just locally
+  let chaosForceType = null;
   const CHAOS_TYPES = ['gravity', 'bouncy', 'controls'];
   const CHAOS_LABELS = {
     gravity: '🙃 Schwerkraft umgekehrt!',
@@ -3826,6 +3924,14 @@
   }
   function updateChaosMode(dt){
     if (!running || paused) return;
+    // A global broadcast takes priority — keeps chaos alive (with the
+    // broadcast's specific type) for as long as the synced expiry says,
+    // regardless of the local random timer.
+    if (Date.now() < chaosForceUntil){
+      if (!chaosActive || chaosType !== chaosForceType) startChaosMode(chaosForceType);
+      chaosTimeLeft = Math.max(chaosTimeLeft, (chaosForceUntil - Date.now()) / 1000);
+      return;
+    }
     if (chaosActive){
       chaosTimeLeft -= dt;
       if (chaosTimeLeft <= 0) endChaosMode();
@@ -3843,6 +3949,7 @@
   let weatherTarget = 0;
   let isStorm = false;
   let weatherTimer = 8 + Math.random() * 12; // first weather check after a short delay
+  let stormForceUntil = 0; // set by a global broadcast — forces the storm on for every connected player
   let lightningTimer = 0;
   // Wind — direction drifts slowly over a session rather than being fixed,
   // so which way a storm pushes you isn't the same every single time.
@@ -3928,6 +4035,17 @@
   }
 
   function updateWeather(dt){
+    // A global broadcast takes priority over the local random cycle — keeps
+    // the storm alive for as long as the synced expiry says. Auto-enables
+    // the player's own "Wetter-Effekte" setting too (same as the admin's
+    // local test button already does), so a global storm is never silently
+    // invisible just because someone had that setting off.
+    if (Date.now() < stormForceUntil){
+      if (!gameSettings.weatherEnabled){ gameSettings.weatherEnabled = true; saveSettings(); }
+      weatherTarget = 1;
+      isStorm = true;
+      weatherTimer = Math.max(weatherTimer, (stormForceUntil - Date.now()) / 1000);
+    } else {
     weatherTimer -= dt;
     if (weatherTimer <= 0){
       if (weatherTarget === 0 && gameSettings.weatherEnabled){
@@ -3942,7 +4060,8 @@
         weatherTimer = 45 + Math.random() * 60;
       }
     }
-    if (!gameSettings.weatherEnabled || selectedWorld === 3) weatherTarget = 0; // no rain in the void of space, and respects the weather-effects setting
+    }
+    if ((!gameSettings.weatherEnabled || selectedWorld === 3) && Date.now() >= stormForceUntil) weatherTarget = 0; // no rain in the void of space, and respects the weather-effects setting — unless a global broadcast is actively forcing it
     rainIntensity += (weatherTarget - rainIntensity) * Math.min(1, dt * 0.35);
     if (rainIntensity > 0.01){
       ensureRainAudio();
@@ -4347,6 +4466,84 @@
     [-14,84,-166],[8,98,-198],[-10,112,-224],[16,58,-16],[-18,20,-8]
   ];
   addCheckpointSet(ringPositionsW3, 3);
+
+  // ---------- SPECIAL BONUS RING ----------
+  // A rare, announced event — like the Golden Hour, but a physical target
+  // instead of a time window. Every 2 hours, one big glowing ring appears
+  // at a random spot in a random world, stays up for a generous window so
+  // there's a real chance to reach it (even if it's in a different world
+  // than the one you're currently in), and pays out a large reward for
+  // flying through — deliberately much bigger and more forgiving to hit
+  // than a small precision trickshot would be.
+  const SPECIAL_RING_INTERVAL = 2 * 60 * 60; // 2 hours between appearances
+  const SPECIAL_RING_LIFETIME = 15 * 60; // stays up to 15 minutes if nobody reaches it
+  const SPECIAL_RING_REWARD = 25;
+  const SPECIAL_RING_HIT_RADIUS = 5.5; // generous — this is meant to be an easy, satisfying catch, not a precision test
+  let specialRing = null;
+  let specialRingTimer = 45; // first one appears fairly soon after loading, not a 2-hour wait on a fresh session
+  function spawnSpecialRing(){
+    const worldPositions = { 1: ringPositionsW1, 2: ringPositionsW2, 3: ringPositionsW3 };
+    const world = 1 + Math.floor(Math.random() * 3);
+    const positions = worldPositions[world];
+    const p = positions[Math.floor(Math.random() * positions.length)];
+    const spawnPos = new THREE.Vector3(p[0], p[1] + 5, p[2]);
+
+    const g = new THREE.Group();
+    const ringMat = new THREE.MeshStandardMaterial({ color: 0xffe27a, emissive: 0xd9a72f, emissiveIntensity: 1.1, roughness: 0.25, side: THREE.DoubleSide });
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(4.5, 0.45, 12, 32), ringMat);
+    ring.rotation.x = Math.PI / 2;
+    g.add(ring);
+    // a tall, soft light beam so it's visible from far across the world, not just up close
+    const beamMat = new THREE.MeshBasicMaterial({ color: 0xffe27a, transparent: true, opacity: 0.3, depthWrite: false });
+    const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 70, 10), beamMat);
+    g.add(beam);
+    g.position.copy(spawnPos);
+    g.visible = false; // corrected on the first updateSpecialRing() call, once selectedWorld exists
+    scene.add(g);
+
+    specialRing = { mesh: g, ringMat, beamMat, pos: spawnPos, world, lifeLeft: SPECIAL_RING_LIFETIME };
+    const badge = document.getElementById('specialRingBadge');
+    if (badge){
+      badge.textContent = '🎯 Bonus-Ring erschienen in Welt ' + world + ' — flieg durch für +' + SPECIAL_RING_REWARD + ' Pokale!';
+      badge.classList.add('show');
+    }
+    sfx.trophy();
+  }
+  function removeSpecialRing(){
+    if (!specialRing) return;
+    scene.remove(specialRing.mesh);
+    specialRing.mesh.traverse(o => { if (o.material) o.material.dispose(); if (o.geometry) o.geometry.dispose(); });
+    specialRing = null;
+    const badge = document.getElementById('specialRingBadge');
+    if (badge) badge.classList.remove('show');
+  }
+  function updateSpecialRing(dt){
+    if (!running || paused) return;
+    if (specialRing){
+      specialRing.mesh.visible = specialRing.world === selectedWorld;
+      specialRing.mesh.children[0].rotation.z += dt * 0.5;
+      specialRing.lifeLeft -= dt;
+      if (specialRing.lifeLeft <= 0){
+        removeSpecialRing();
+      } else if (specialRing.world === selectedWorld){
+        const dist = player.pos.distanceTo(specialRing.pos);
+        if (dist < SPECIAL_RING_HIT_RADIUS){
+          const gained = applyEventMultiplier(SPECIAL_RING_REWARD);
+          totalTrophies += gained;
+          storageSet('rankmann_totalTrophies', totalTrophies);
+          spawnTrophyFly(gained);
+          sfx.trophy();
+          removeSpecialRing();
+        }
+      }
+      return;
+    }
+    specialRingTimer -= dt;
+    if (specialRingTimer <= 0){
+      spawnSpecialRing();
+      specialRingTimer = SPECIAL_RING_INTERVAL;
+    }
+  }
 
   // ---------- WORLD THEME SWITCHING ----------
   // Fully swaps the active world: islands, anchors, and trophy platforms all
@@ -6431,9 +6628,9 @@
     showAdminToast('✅ Alle Erfolge freigeschaltet');
   });
   document.getElementById('adminTriggerStormBtn').addEventListener('click', () => {
-    // Local-only test trigger (not synced via Firebase like the 2x event) —
-    // just forces the existing weather system into a storm for a bit so you
-    // don't have to wait on the random cycle to try out the wind effect.
+    // Now a GLOBAL broadcast, same mechanism as the 2x event — every
+    // connected player's client picks this up via the globalEffects
+    // listener and forces the storm on for themselves too, not just here.
     if (selectedWorld === 3){
       showAdminToast('⚠️ Kein Wetter in Welt 3 (Weltraum) — bitte in Welt 1 oder 2 testen');
       return;
@@ -6447,10 +6644,12 @@
       saveSettings();
       showAdminToast('ℹ️ "Wetter-Effekte" war ausgeschaltet — automatisch aktiviert');
     }
+    stormForceUntil = Date.now() + 60000;
     weatherTarget = 1;
     isStorm = true;
     weatherTimer = 60;
-    showAdminToast('⛈️ Sturm ausgelöst — Wind wirkt jetzt beim Schwingen');
+    broadcastGlobalEffect('storm', 60000);
+    showAdminToast('⛈️ Sturm global ausgelöst — wirkt bei allen Spielern');
   });
   document.getElementById('adminTriggerChaosBtn').addEventListener('click', () => {
     if (!gameSettings.chaosModeEnabled){
@@ -6459,7 +6658,20 @@
       showAdminToast('ℹ️ "Chaos-Modus" war ausgeschaltet — automatisch aktiviert');
     }
     startChaosMode();
-    showAdminToast('🎪 Chaos-Modus ausgelöst — ' + CHAOS_LABELS[chaosType]);
+    chaosForceUntil = Date.now() + 18000;
+    chaosForceType = chaosType;
+    broadcastGlobalEffect('chaos', 18000, { chaosType });
+    showAdminToast('🎪 Chaos-Modus global ausgelöst — ' + CHAOS_LABELS[chaosType]);
+  });
+  document.getElementById('adminTriggerGoldenHourBtn').addEventListener('click', () => {
+    goldenHourForceUntil = Date.now() + 2 * 60000;
+    broadcastGlobalEffect('goldenHour', 2 * 60000);
+    showAdminToast('✨ Goldene Stunde global ausgelöst — 3x Pokale bei allen Spielern für 2 Minuten');
+  });
+  document.getElementById('adminTriggerRingBtn').addEventListener('click', () => {
+    removeSpecialRing(); // clear any existing one first so this doesn't leave a duplicate behind
+    spawnSpecialRing();
+    showAdminToast('🎯 Bonus-Ring ausgelöst — Welt ' + specialRing.world);
   });
   document.getElementById('adminGodModeToggle').addEventListener('click', function(){
     adminGodMode = this.dataset.on !== 'true';
@@ -8008,6 +8220,8 @@
     updateSwingTrail(dt);
     updateTrick(dt);
     updateChaosMode(dt);
+    updateGoldenHour();
+    updateSpecialRing(dt);
     dust.rotation.y += dt*0.01;
     if (starfield.visible){
       starfield.position.set(player.pos.x, 0, player.pos.z);
