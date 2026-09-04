@@ -5361,13 +5361,25 @@
   // keeps working completely normally, so you can freely look around.
   let spectatingKey = null;
   let spectateReturnPos = null;
+  let spectateReturnWorld = null;
   function startSpectating(key){
     if (!friendGhosts[key]) return;
     spectateReturnPos = player.pos.clone();
+    spectateReturnWorld = selectedWorld;
     spectatingKey = key;
     player.vel.set(0, 0, 0);
     playerMesh.visible = false;
     ropeLine.visible = false;
+    // The friend might be in a totally different world than the one
+    // currently loaded around us — switch the actual environment to theirs
+    // (not just the internal selectedWorld variable) so there's something
+    // sensible to actually look at, instead of watching a ghost float
+    // through OUR world's terrain.
+    const ghostWorld = friendGhosts[key].world;
+    if (ghostWorld && ghostWorld !== selectedWorld){
+      selectedWorld = ghostWorld;
+      applyWorldTheme(selectedWorld);
+    }
     const banner = document.getElementById('spectateBanner');
     if (banner){
       document.getElementById('spectateBannerName').textContent = friendGhosts[key].name || 'Freund';
@@ -5383,6 +5395,15 @@
       spectateStandaloneListener = null;
     }
     spectatingKey = null;
+    // Switch back to whichever world we were actually in before spectating,
+    // if it changed to follow the friend — otherwise the player would land
+    // back in their own body standing inside the FRIEND's world instead of
+    // their own.
+    if (spectateReturnWorld !== null && spectateReturnWorld !== selectedWorld){
+      selectedWorld = spectateReturnWorld;
+      applyWorldTheme(selectedWorld);
+    }
+    spectateReturnWorld = null;
     if (spectateReturnPos) player.pos.copy(spectateReturnPos);
     player.vel.set(0, 0, 0);
     playerMesh.visible = true;
@@ -5392,9 +5413,15 @@
   function updateSpectating(){
     if (!spectatingKey) return;
     const gh = friendGhosts[spectatingKey];
-    if (!gh || gh.world !== selectedWorld){
-      stopSpectating(); // the friend left, or switched worlds — nothing sensible left to watch
+    if (!gh){
+      stopSpectating(); // the friend disappeared entirely (left the room / stopped broadcasting)
       return;
+    }
+    if (gh.world !== selectedWorld){
+      // they switched worlds mid-watch — follow them there rather than
+      // just giving up, same environment switch as when spectating started
+      selectedWorld = gh.world;
+      applyWorldTheme(selectedWorld);
     }
     player.pos.copy(gh.mesh.position);
   }
@@ -5488,7 +5515,12 @@
     friendBroadcastRef.set({
       name: (typeof getActiveProfileMeta === 'function' && getActiveProfileMeta()) ? getActiveProfileMeta().name : 'Spieler',
       x: player.pos.x, y: player.pos.y, z: player.pos.z, yaw: player.faceYaw, world: selectedWorld, skin: equippedSkin,
-      updatedAt: Date.now(),
+      // Firebase's SERVER clock, not this device's own — comparing two
+      // different players' own Date.now() values directly would be wrong
+      // whenever their clocks aren't perfectly in sync (common in practice),
+      // which was silently hiding the "watch" button even for a friend who
+      // WAS actively playing.
+      updatedAt: firebase.database.ServerValue.TIMESTAMP,
     }).catch(() => {});
   }
 
