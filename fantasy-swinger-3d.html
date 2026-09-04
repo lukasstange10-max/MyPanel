@@ -2058,12 +2058,20 @@
     <div class="startPanel" style="max-width:420px;">
       <h1 style="font-size:22px; margin:0 0 4px;">🤝 Freunde</h1>
       <p class="heroTagline" style="margin-bottom:16px;">Füge Freunde hinzu und schau ihnen zu, wenn sie spielen</p>
-      <div style="display:flex; gap:8px; margin-bottom:16px;">
+      <div style="display:flex; gap:8px; margin-bottom:10px;">
         <input id="friendsAddInput" type="text" maxlength="24" placeholder="Profilname eingeben..." style="flex:1; box-sizing:border-box; padding:10px; border-radius:10px; border:1px solid rgba(122,170,255,0.4); background:rgba(255,255,255,0.06); color:#fff; font-size:13px;">
-        <button id="friendsAddBtn" style="padding:10px 16px; border-radius:10px; border:1px solid rgba(122,170,255,0.5); background:rgba(122,170,255,0.2); color:#fff; cursor:pointer; font-weight:700;">+ Hinzufügen</button>
+        <button id="friendsAddBtn" style="padding:10px 16px; border-radius:10px; border:1px solid rgba(122,170,255,0.5); background:rgba(122,170,255,0.2); color:#fff; cursor:pointer; font-weight:700;">+ Anfrage senden</button>
       </div>
+      <p id="friendsAddStatus" style="font-size:12px; min-height:16px; margin:0 0 14px; text-align:left;"></p>
+
+      <div id="friendsRequestsSection" class="hidden" style="margin-bottom:16px;">
+        <p style="font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:0.6px; color:#ffb84d; text-align:left; margin:0 0 8px;">📬 Anfragen</p>
+        <div id="friendsRequestRows"></div>
+      </div>
+
+      <p style="font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:0.6px; color:rgba(255,255,255,0.5); text-align:left; margin:0 0 8px;">Deine Freunde</p>
       <div id="friendsListRows"></div>
-      <p id="friendsEmptyMsg" style="font-size:13px; color:rgba(255,255,255,0.55); margin-top:10px;">Noch keine Freunde hinzugefügt. Trag oben einfach den Profilnamen deines Freundes ein.</p>
+      <p id="friendsEmptyMsg" style="font-size:13px; color:rgba(255,255,255,0.55); margin-top:10px;">Noch keine Freunde. Trag oben einen Profilnamen ein und sende eine Anfrage.</p>
       <button id="friendsCloseBtn" class="menuBtn" style="margin-top:16px;">Schließen</button>
     </div>
   </div>
@@ -6733,17 +6741,24 @@
   document.getElementById('coopCloseBtn').addEventListener('click', () => {
     document.getElementById('coopScreen').classList.add('hidden');
   });
-  // ---------- PERSISTENT FRIENDS LIST ----------
-  // Friends are added by profile NAME (not tied to any room code), and
+  // ---------- PERSISTENT FRIENDS LIST (with request/accept flow) ----------
+  // Friends are added by profile NAME, but only become mutual once the
+  // other person actually accepts — a request goes into their Firebase
+  // "inbox" (/friendRequests/{theirKey}/{myKey}), they see it next time
+  // they open the Friends screen, and accepting adds each side to the
+  // other's list. Once mutual, "who's online / currently playing" is
   // checked against the presence/friendBroadcast paths — the same live
-  // data the co-op room system already uses, just looked up by name
-  // instead of by "who's in my room". Spectating a friend found this way
-  // feeds their broadcast data into the SAME friendGhosts pipeline as
-  // room-based ghosts (via updateGhostFromRoomData), so all the existing
-  // ghost rendering/rope/walk-cycle code works completely unchanged.
+  // data the co-op room system already uses. Spectating a friend found
+  // this way feeds their broadcast data into the SAME friendGhosts
+  // pipeline as room-based ghosts (via updateGhostFromRoomData), so all
+  // the existing ghost rendering/rope/walk-cycle code works unchanged.
   function getFriendsList(){ return storageGet('rankmann_friendsList', []); }
   function saveFriendsList(list){ storageSet('rankmann_friendsList', list); }
   function friendNameKey(name){ return encodeURIComponent(name.trim().toLowerCase()).replace(/[.#$\[\]]/g, '_'); }
+  function myFriendName(){
+    const meta = (typeof getActiveProfileMeta === 'function') ? getActiveProfileMeta() : null;
+    return meta ? meta.name : 'Spieler';
+  }
   let spectateStandaloneRef = null;
   let spectateStandaloneListener = null;
   function startSpectatingFriend(name, key){
@@ -6772,6 +6787,70 @@
     tryStart(20); // up to ~3s to wait for the first snapshot to arrive
   }
   function refreshFriendsList(){
+    if (!firebase.apps || !firebase.apps.length) return; // Firebase unavailable — nothing live to show
+    const myKey = friendNameKey(myFriendName());
+
+    // Pick up any acceptances of MY outgoing requests since I last checked —
+    // this is what makes it mutual: the person who ACCEPTED already added
+    // me to their own list; this is how *I* find out and add them back.
+    firebase.database().ref('friendAcceptances/' + myKey).once('value').then(snap => {
+      const data = snap.val();
+      if (!data) return;
+      const list = getFriendsList();
+      let changed = false;
+      Object.entries(data).forEach(([fromKey, info]) => {
+        if (!list.some(n => n.toLowerCase() === (info.byName || '').toLowerCase())){
+          list.push(info.byName);
+          changed = true;
+        }
+      });
+      if (changed) saveFriendsList(list);
+      firebase.database().ref('friendAcceptances/' + myKey).remove().catch(() => {});
+      renderFriendsRows();
+    }).catch(() => renderFriendsRows());
+
+    // Incoming pending requests, shown with Accept/Decline.
+    const reqSection = document.getElementById('friendsRequestsSection');
+    const reqRows = document.getElementById('friendsRequestRows');
+    firebase.database().ref('friendRequests/' + myKey).once('value').then(snap => {
+      const data = snap.val();
+      reqRows.innerHTML = '';
+      const entries = data ? Object.entries(data) : [];
+      reqSection.classList.toggle('hidden', entries.length === 0);
+      entries.forEach(([fromKey, info]) => {
+        const row = document.createElement('div');
+        row.className = 'friendsRow';
+        row.innerHTML = '<span>' + info.fromName + ' möchte befreundet sein</span>';
+        const btnGroup = document.createElement('span');
+        btnGroup.style.cssText = 'display:flex; gap:6px;';
+        const acceptBtn = document.createElement('button');
+        acceptBtn.textContent = '✓ Annehmen';
+        acceptBtn.className = 'friendsSpectateBtn';
+        acceptBtn.addEventListener('click', () => {
+          const list = getFriendsList();
+          if (!list.some(n => n.toLowerCase() === info.fromName.toLowerCase())) list.push(info.fromName);
+          saveFriendsList(list);
+          firebase.database().ref('friendRequests/' + myKey + '/' + fromKey).remove().catch(() => {});
+          firebase.database().ref('friendAcceptances/' + fromKey + '/' + myKey).set({ byName: myFriendName(), at: Date.now() }).catch(() => {});
+          refreshFriendsList();
+        });
+        const declineBtn = document.createElement('button');
+        declineBtn.textContent = '✕';
+        declineBtn.title = 'Ablehnen';
+        declineBtn.style.cssText = 'background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.25); border-radius:8px; padding:5px 9px; cursor:pointer; color:#fff; font-size:12px;';
+        declineBtn.addEventListener('click', () => {
+          firebase.database().ref('friendRequests/' + myKey + '/' + fromKey).remove().catch(() => {});
+          refreshFriendsList();
+        });
+        btnGroup.appendChild(acceptBtn); btnGroup.appendChild(declineBtn);
+        row.appendChild(btnGroup);
+        reqRows.appendChild(row);
+      });
+    }).catch(() => {});
+
+    renderFriendsRows();
+  }
+  function renderFriendsRows(){
     const list = getFriendsList();
     const rowsEl = document.getElementById('friendsListRows');
     const emptyMsg = document.getElementById('friendsEmptyMsg');
@@ -6790,7 +6869,7 @@
       removeBtn.style.cssText = 'background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.25); border-radius:8px; padding:5px 9px; cursor:pointer; color:#fff; font-size:12px;';
       removeBtn.addEventListener('click', () => {
         saveFriendsList(getFriendsList().filter(n => n !== name));
-        refreshFriendsList();
+        renderFriendsRows();
       });
       btnGroup.appendChild(removeBtn);
       row.appendChild(btnGroup);
@@ -6817,18 +6896,37 @@
   }
   document.getElementById('friendsBtn').addEventListener('click', () => {
     document.getElementById('friendsScreen').classList.remove('hidden');
+    document.getElementById('friendsAddStatus').textContent = '';
     refreshFriendsList();
   });
   document.getElementById('friendsAddBtn').addEventListener('click', () => {
     const input = document.getElementById('friendsAddInput');
+    const statusEl = document.getElementById('friendsAddStatus');
     const name = input.value.trim();
     if (!name) return;
+    const myName = myFriendName();
+    if (name.toLowerCase() === myName.toLowerCase()){
+      statusEl.style.color = '#ff9d9d'; statusEl.textContent = 'Du kannst dich nicht selbst hinzufügen.';
+      return;
+    }
     const list = getFriendsList();
-    if (list.some(n => n.toLowerCase() === name.toLowerCase())){ input.value = ''; return; }
-    list.push(name);
-    saveFriendsList(list);
-    input.value = '';
-    refreshFriendsList();
+    if (list.some(n => n.toLowerCase() === name.toLowerCase())){
+      statusEl.style.color = '#ffb84d'; statusEl.textContent = name + ' ist schon in deiner Liste.';
+      return;
+    }
+    if (!firebase.apps || !firebase.apps.length){
+      statusEl.style.color = '#ff9d9d'; statusEl.textContent = 'Keine Verbindung — bitte später erneut versuchen.';
+      return;
+    }
+    const targetKey = friendNameKey(name);
+    firebase.database().ref('friendRequests/' + targetKey + '/' + friendNameKey(myName)).set({
+      fromName: myName, sentAt: Date.now(),
+    }).then(() => {
+      statusEl.style.color = '#7affc4'; statusEl.textContent = '✅ Anfrage an ' + name + ' gesendet — wartet auf Bestätigung.';
+      input.value = '';
+    }).catch(() => {
+      statusEl.style.color = '#ff9d9d'; statusEl.textContent = 'Anfrage konnte nicht gesendet werden.';
+    });
   });
   document.getElementById('friendsCloseBtn').addEventListener('click', () => {
     document.getElementById('friendsScreen').classList.add('hidden');
