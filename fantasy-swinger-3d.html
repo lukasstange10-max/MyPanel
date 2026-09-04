@@ -4538,8 +4538,18 @@
     const worldPositions = { 1: ringPositionsW1, 2: ringPositionsW2, 3: ringPositionsW3 };
     const world = 1 + Math.floor(Math.random() * 3);
     const positions = worldPositions[world];
-    const p = positions[Math.floor(Math.random() * positions.length)];
-    const spawnPos = new THREE.Vector3(p[0], p[1] + 5, p[2]);
+    // Spawn at the MIDPOINT between two consecutive checkpoints — out in
+    // open air along the natural swing path — rather than right at a
+    // checkpoint itself. Checkpoints are already a tight, precise landing
+    // target; stacking the ring there too made it needlessly hard to catch
+    // both. A gap in open air is much easier to just fly through.
+    const i = Math.floor(Math.random() * (positions.length - 1));
+    const a = positions[i], b = positions[i + 1];
+    const spawnPos = new THREE.Vector3(
+      (a[0] + b[0]) / 2,
+      (a[1] + b[1]) / 2 + 4,
+      (a[2] + b[2]) / 2
+    );
 
     const g = new THREE.Group();
     const ringMat = new THREE.MeshStandardMaterial({ color: 0xffe27a, emissive: 0xd9a72f, emissiveIntensity: 1.1, roughness: 0.25, side: THREE.DoubleSide });
