@@ -111,6 +111,7 @@
     transition: transform 0.45s cubic-bezier(.2,.8,.3,1.1), opacity 0.4s ease, visibility 0s linear 0s;
   }
   #globalAnnouncementBanner::before { content: '📢 '; }
+  #globalAnnouncementBanner .announceName { color: #7ab8ff; font-weight: 900; }
   #coopPlayerCountBadge {
     position: fixed; top: 90px; left: 50%; transform: translateX(-50%); z-index: 45;
     padding: 6px 16px; border-radius: 999px; font-size: 12px; font-weight: 800;
@@ -3116,18 +3117,24 @@
       if (!data || !data.text || !data.sentAt || data.sentAt <= lastSeenAnnouncementAt) return;
       lastSeenAnnouncementAt = data.sentAt;
       if (Date.now() - data.sentAt > 30000) return; // stale — don't replay an old message on a fresh page load
-      showGlobalAnnouncement(data.text);
+      showGlobalAnnouncement(data.name || 'Admin', data.text);
     }, () => {});
-    function showGlobalAnnouncement(text){
+    function showGlobalAnnouncement(name, text){
       const el = document.getElementById('globalAnnouncementBanner');
       if (!el) return;
-      el.textContent = text;
+      el.innerHTML = '<span class="announceName">' + name + '</span>: ' + text;
       el.classList.add('show');
+      sfx.announce();
       clearTimeout(showGlobalAnnouncement._t);
       showGlobalAnnouncement._t = setTimeout(() => el.classList.remove('show'), 8000);
     }
     function sendGlobalAnnouncement(text){
-      globalAnnouncementRef.set({ text, sentAt: Date.now() }).catch(() => {});
+      const meta = (typeof getActiveProfileMeta === 'function') ? getActiveProfileMeta() : null;
+      const name = meta ? meta.name : 'Admin';
+      const sentAt = Date.now();
+      lastSeenAnnouncementAt = sentAt; // pre-mark as seen so our OWN listener echo doesn't show/play it a second time
+      globalAnnouncementRef.set({ text, name, sentAt }).catch(() => {});
+      return name;
     }
 
     // Live ban check for the CURRENT player — if an admin bans this profile's
@@ -5897,6 +5904,13 @@
       playNoiseBurst(0.06, 900, 0.12);
     },
     denied: () => playTone(160, 0.12, 'sawtooth', 0.16, 90),
+    announce: () => {
+      // A soft, gentle two-note chime — sine waves (the smoothest-sounding
+      // oscillator available here) at a moderate volume, nothing sharp or
+      // sudden, since this interrupts whatever the player is doing.
+      playTone(660, 0.32, 'sine', 0.16);
+      setTimeout(() => playTone(880, 0.4, 'sine', 0.14), 130);
+    },
   };
 
   // ---------- GRAPPLE STATE ----------
@@ -6725,8 +6739,8 @@
     const input = document.getElementById('adminAnnounceInput');
     const text = input.value.trim();
     if (!text) return;
-    sendGlobalAnnouncement(text);
-    showGlobalAnnouncement(text); // show it to the admin too, immediately, without waiting on the round-trip through Firebase
+    const name = sendGlobalAnnouncement(text);
+    showGlobalAnnouncement(name, text); // show it to the admin too, immediately, without waiting on the round-trip through Firebase
     showAdminToast('📢 Ankündigung an alle Spieler gesendet');
     input.value = '';
   });
