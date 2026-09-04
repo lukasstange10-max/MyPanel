@@ -95,6 +95,22 @@
     transition: transform 0.45s cubic-bezier(.2,.8,.3,1.1), opacity 0.4s ease, visibility 0s linear 0s;
     animation: chaosBadgePulse 1.2s ease-in-out infinite;
   }
+  #globalAnnouncementBanner {
+    position: fixed; top: 20px; left: 50%; z-index: 400;
+    max-width: 90vw; padding: 14px 28px; border-radius: 16px;
+    font-size: 15px; font-weight: 700; text-align: center; line-height: 1.4;
+    background: linear-gradient(135deg, rgba(30,15,50,0.95), rgba(15,8,28,0.95));
+    border: 1.5px solid rgba(180,140,255,0.55);
+    color: #fff; box-shadow: 0 15px 45px rgba(0,0,0,0.6), 0 0 30px rgba(180,140,255,0.25);
+    transform: translateX(-50%) translateY(-160%);
+    opacity: 0; visibility: hidden;
+    transition: transform 0.45s cubic-bezier(.2,.8,.3,1.1), opacity 0.4s ease, visibility 0s linear 0.45s;
+  }
+  #globalAnnouncementBanner.show {
+    transform: translateX(-50%) translateY(0); opacity: 1; visibility: visible;
+    transition: transform 0.45s cubic-bezier(.2,.8,.3,1.1), opacity 0.4s ease, visibility 0s linear 0s;
+  }
+  #globalAnnouncementBanner::before { content: '📢 '; }
   #coopPlayerCountBadge {
     position: fixed; top: 90px; left: 50%; transform: translateX(-50%); z-index: 45;
     padding: 6px 16px; border-radius: 999px; font-size: 12px; font-weight: 800;
@@ -1849,6 +1865,8 @@
   </div>
 </div>
 
+<div id="globalAnnouncementBanner"></div>
+
 <div id="photoFlash"></div>
 <div id="galleryToast">
   <img id="galleryToastThumb" src="" alt="">
@@ -2712,6 +2730,9 @@
         <button class="adminActionBtn" id="adminEventClearBtn">✕ Event sofort beenden</button>
       </div>
       <p id="adminGlobalStatus">Aktuell aktiv: <b id="adminGlobalStatusVal">Kein Event</b></p>
+      <label class="settingsLabel" style="margin-top:16px;">📢 Ankündigung an alle senden</label>
+      <input id="adminAnnounceInput" type="text" maxlength="120" placeholder="z.B. Neues Update ist da!" style="width:100%; box-sizing:border-box; padding:10px; border-radius:10px; border:1px solid rgba(180,140,255,0.4); background:rgba(255,255,255,0.06); color:#fff; font-size:13px; margin-top:6px;">
+      <button class="adminActionBtn" id="adminAnnounceBtn" style="margin-top:8px;">📢 Ankündigung senden</button>
     </div>
 
     <div class="settingsGroup">
@@ -3080,6 +3101,33 @@
     function broadcastGlobalEffect(key, durationMs, extra){
       const body = Object.assign({ expiresAt: Date.now() + durationMs }, extra || {});
       globalEffectsRef.child(key).set(body).catch(() => {});
+    }
+
+    // One-off text announcements — unlike the effects above (which stay
+    // "on" until an expiry), a message just needs to appear once and fade.
+    // Guards against replaying an old announcement to someone who simply
+    // opens the game hours/days later (Firebase always sends whatever the
+    // CURRENT stored value is on first connect) by ignoring anything not
+    // sent within roughly the last 30 seconds.
+    const globalAnnouncementRef = firebase.database().ref('globalAnnouncement');
+    let lastSeenAnnouncementAt = 0;
+    globalAnnouncementRef.on('value', snapshot => {
+      const data = snapshot.val();
+      if (!data || !data.text || !data.sentAt || data.sentAt <= lastSeenAnnouncementAt) return;
+      lastSeenAnnouncementAt = data.sentAt;
+      if (Date.now() - data.sentAt > 30000) return; // stale — don't replay an old message on a fresh page load
+      showGlobalAnnouncement(data.text);
+    }, () => {});
+    function showGlobalAnnouncement(text){
+      const el = document.getElementById('globalAnnouncementBanner');
+      if (!el) return;
+      el.textContent = text;
+      el.classList.add('show');
+      clearTimeout(showGlobalAnnouncement._t);
+      showGlobalAnnouncement._t = setTimeout(() => el.classList.remove('show'), 8000);
+    }
+    function sendGlobalAnnouncement(text){
+      globalAnnouncementRef.set({ text, sentAt: Date.now() }).catch(() => {});
     }
 
     // Live ban check for the CURRENT player — if an admin bans this profile's
@@ -6672,6 +6720,15 @@
     removeSpecialRing(); // clear any existing one first so this doesn't leave a duplicate behind
     spawnSpecialRing();
     showAdminToast('🎯 Bonus-Ring ausgelöst — Welt ' + specialRing.world);
+  });
+  document.getElementById('adminAnnounceBtn').addEventListener('click', () => {
+    const input = document.getElementById('adminAnnounceInput');
+    const text = input.value.trim();
+    if (!text) return;
+    sendGlobalAnnouncement(text);
+    showGlobalAnnouncement(text); // show it to the admin too, immediately, without waiting on the round-trip through Firebase
+    showAdminToast('📢 Ankündigung an alle Spieler gesendet');
+    input.value = '';
   });
   document.getElementById('adminGodModeToggle').addEventListener('click', function(){
     adminGodMode = this.dataset.on !== 'true';
