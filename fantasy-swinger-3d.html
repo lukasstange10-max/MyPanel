@@ -2054,10 +2054,10 @@
       <h1 style="font-size:26px; margin:0 0 6px; background:linear-gradient(135deg,#ffe27a,#ff9d6c,#9d7bff); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;">Das größte Update aller Zeiten!</h1>
       <p class="heroTagline" style="margin-bottom:18px;">So viel Neues ist gerade dazugekommen:</p>
       <div style="text-align:left; display:flex; flex-direction:column; gap:10px; margin-bottom:20px;">
-        <div class="changelogEntry" style="padding:12px 16px;">👥 <strong>Koop-Modus</strong> — schwinge live mit einem Freund durch die Welt, mit echten Charakteren, Netz und Tanz-Sync</div>
-        <div class="changelogEntry" style="padding:12px 16px;">🔥 <strong>Serien-Bonus</strong> — bis zu 100% mehr Pokale bei wiederholten Checkpoint-Landungen</div>
-        <div class="changelogEntry" style="padding:12px 16px;">⛈️ <strong>Echter Sturm-Modus</strong> — spürbarer Wind mit sichtbaren Windstreifen</div>
-        <div class="changelogEntry" style="padding:12px 16px;">📳 <strong>Mobile Steuerung</strong> — Joystick & Buttons frei anpassbar, plus Vibration</div>
+        <div class="changelogEntry" style="padding:12px 16px;">🤸 <strong>Trick-System</strong> — Salto in der Luft für Style-Punkte und Bonus-Pokale</div>
+        <div class="changelogEntry" style="padding:12px 16px;">🎪 <strong>Chaos-Modus</strong> — zufällig: umgekehrte Schwerkraft, Hyper-Sprünge oder vertauschte Steuerung</div>
+        <div class="changelogEntry" style="padding:12px 16px;">✨ <strong>Goldene Stunde & 🎯 Bonus-Ring</strong> — seltene Überraschungs-Belohnungen</div>
+        <div class="changelogEntry" style="padding:12px 16px;">👥 <strong>Koop-Modus</strong> — schwinge live mit einem Freund, mit echten Charakteren, Netz und Tanz-Sync</div>
       </div>
       <button id="bigUpdateSeeAllBtn" class="menuBtn" style="margin-bottom:10px;">📋 Alle Updates ansehen</button>
       <button id="bigUpdateCloseBtn" class="menuBtn" style="background:linear-gradient(135deg, rgba(122,255,196,0.3), rgba(60,200,150,0.3)); border-color:rgba(122,255,196,0.6);">Los geht's! 🚀</button>
@@ -2145,6 +2145,22 @@
             <li>📳 Anpassbare mobile Steuerung — Joystick-Seite/-Größe, Button-Größe, Vibration</li>
             <li>👥 Koop-Räume mit Freunden — echte 1:1-Charaktere, inklusive Netz- und Tanz-Synchronisierung</li>
             <li>🔌 Robustere Fehlerbehandlung bei Grafik-Problemen, mit klaren Meldungen statt stillem Absturz</li>
+          </ul>
+        </div>
+
+        <div class="changelogEntry">
+          <div class="changelogDate">Heute, später</div>
+          <h3>🤸 Tricks, Chaos & Überraschungs-Belohnungen</h3>
+          <ul>
+            <li>🤸 Trick-System — Saltos in der Luft für Style-Punkte und Bonus-Pokale</li>
+            <li>🎪 Chaos-Modus — seltenes Zufalls-Event: umgekehrte Schwerkraft, Hyper-Sprünge oder vertauschte Steuerung</li>
+            <li>✨ Goldene Stunde — einmal täglich, zufällig, für 5 Minuten 3x Pokale</li>
+            <li>🎯 Bonus-Ring — alle 2 Stunden, an einer zufälligen Stelle in einer der drei Welten, für 25 Pokale</li>
+            <li>🌍 Sturm, Chaos-Modus und Goldene Stunde können jetzt auch global an alle Spieler gleichzeitig gesendet werden</li>
+            <li>📢 Neue Ankündigungs-Funktion — kurze Nachrichten an alle gerade verbundenen Spieler senden</li>
+            <li>🔐 Spielstand-Sicherung — Export/Import-Code als Sicherheitsnetz vor jedem Update</li>
+            <li>👥 Koop-Erweiterungen — letzten Raum-Code merken, Live-Spieleranzahl, Richtungs-Pfeil zu Freunden</li>
+            <li>✨ Schwing-Trail — leuchtende Partikelspur beim Schwingen</li>
           </ul>
         </div>
 
@@ -9064,7 +9080,7 @@
   // through the full changelog to find out anything changed at all.
   // The daily-reward popup (if there is one to show today) waits until
   // AFTER this closes, so a brand-new session never stacks two popups.
-  const BIG_UPDATE_VERSION = 'coop1';
+  const BIG_UPDATE_VERSION = 'coop2';
   if (storageGet('rankmann_seenBigUpdate', null) !== BIG_UPDATE_VERSION){
     document.getElementById('bigUpdateScreen').classList.remove('hidden');
     spawnConfetti('bigUpdateConfetti', 40);
