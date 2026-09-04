@@ -110,6 +110,22 @@
     transition: transform 0.45s cubic-bezier(.2,.8,.3,1.1), opacity 0.4s ease, visibility 0s linear 0s;
   }
   #globalAnnouncementBanner .announceName { color: #7ab8ff; font-weight: 900; }
+  #spectateBanner {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 200;
+    display: none; align-items: center; gap: 14px;
+    padding: 10px 20px; border-radius: 999px;
+    background: rgba(10,5,20,0.85); border: 1px solid rgba(122,255,196,0.4);
+    color: #fff; font-size: 13.5px; font-weight: 700;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  }
+  #spectateBanner.show { display: flex; }
+  #spectateBanner #spectateBannerName { color: #7affc4; font-weight: 900; }
+  #spectateStopBtn {
+    padding: 6px 14px; font-size: 12px; font-weight: 700;
+    background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 999px; color: #fff; cursor: pointer;
+  }
+  #spectateStopBtn:hover { background: rgba(255,255,255,0.22); }
   #coopPlayerCountBadge {
     position: fixed; top: 90px; left: 50%; transform: translateX(-50%); z-index: 45;
     padding: 6px 16px; border-radius: 999px; font-size: 12px; font-weight: 800;
@@ -843,6 +859,17 @@
     transform: translateY(-2px) scale(1.02);
     background: linear-gradient(135deg, rgba(122,255,196,0.4), rgba(60,200,150,0.4));
   }
+  #friendsBtn {
+    padding: 13px 24px; font-size: 15px; font-weight: 700;
+    background: linear-gradient(135deg, rgba(122,170,255,0.22), rgba(90,120,220,0.22));
+    border: 1px solid rgba(122,170,255,0.5);
+    border-radius: 34px; color: #fff; cursor: pointer;
+    transition: transform 0.15s ease, background 0.2s ease;
+  }
+  #friendsBtn:hover {
+    transform: translateY(-2px) scale(1.02);
+    background: linear-gradient(135deg, rgba(122,170,255,0.4), rgba(90,120,220,0.4));
+  }
   #saveCodeHint {
     position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%); z-index: 20;
     font-size: 11.5px; font-weight: 600; color: rgba(255,226,122,0.7);
@@ -859,6 +886,26 @@
   }
   #coopScreen.hidden { display: none; }
   #coopScreen .startPanel { max-width: 420px; }
+  #friendsScreen {
+    position: fixed; inset: 0; z-index: 250;
+    background: rgba(6,3,14,0.5);
+    backdrop-filter: blur(3px) saturate(1.2);
+    -webkit-backdrop-filter: blur(3px) saturate(1.2);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; text-align: center; padding: 20px; box-sizing: border-box;
+  }
+  #friendsScreen.hidden { display: none; }
+  .friendsRow {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px;
+    border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(122,255,196,0.25);
+    font-size: 13px; font-weight: 700; text-align: left; margin-bottom: 8px;
+  }
+  .friendsRow .coopDot { width: 8px; height: 8px; border-radius: 50%; background: #7affc4; flex-shrink: 0; }
+  .friendsSpectateBtn {
+    background: rgba(122,255,196,0.15); border: 1px solid rgba(122,255,196,0.4);
+    border-radius: 8px; padding: 5px 12px; cursor: pointer; font-size: 13px; color: #fff;
+  }
+  .friendsSpectateBtn:hover { background: rgba(122,255,196,0.28); }
   #saveCodeScreen {
     position: fixed; inset: 0; z-index: 270;
     background: rgba(6,3,14,0.65);
@@ -1865,6 +1912,10 @@
 </div>
 
 <div id="globalAnnouncementBanner"></div>
+<div id="spectateBanner">
+  👀 Du schaust <span id="spectateBannerName"></span> zu
+  <button id="spectateStopBtn">Beenden (ESC)</button>
+</div>
 
 <div id="photoFlash"></div>
 <div id="galleryToast">
@@ -1997,9 +2048,24 @@
       <button id="galleryBtn" data-i18n="galleryBtnMenu">🖼️ Galerie</button>
       <button id="statsBtn" data-i18n="statsBtn">📊 Statistiken</button>
       <button id="coopBtn">👥 Mit Freunden spielen</button>
+      <button id="friendsBtn">🤝 Freunde</button>
       <button id="adminPanelBtn" class="hidden">🛠️ Admin-Zentrale</button>
     </div>
     <div id="saveCodeHint">🔐 Nicht vergessen: Spielstand regelmäßig sichern, damit nichts verloren geht</div>
+  </div>
+
+  <div id="friendsScreen" class="hidden">
+    <div class="startPanel" style="max-width:420px;">
+      <h1 style="font-size:22px; margin:0 0 4px;">🤝 Freunde</h1>
+      <p class="heroTagline" style="margin-bottom:16px;">Füge Freunde hinzu und schau ihnen zu, wenn sie spielen</p>
+      <div style="display:flex; gap:8px; margin-bottom:16px;">
+        <input id="friendsAddInput" type="text" maxlength="24" placeholder="Profilname eingeben..." style="flex:1; box-sizing:border-box; padding:10px; border-radius:10px; border:1px solid rgba(122,170,255,0.4); background:rgba(255,255,255,0.06); color:#fff; font-size:13px;">
+        <button id="friendsAddBtn" style="padding:10px 16px; border-radius:10px; border:1px solid rgba(122,170,255,0.5); background:rgba(122,170,255,0.2); color:#fff; cursor:pointer; font-weight:700;">+ Hinzufügen</button>
+      </div>
+      <div id="friendsListRows"></div>
+      <p id="friendsEmptyMsg" style="font-size:13px; color:rgba(255,255,255,0.55); margin-top:10px;">Noch keine Freunde hinzugefügt. Trag oben einfach den Profilnamen deines Freundes ein.</p>
+      <button id="friendsCloseBtn" class="menuBtn" style="margin-top:16px;">Schließen</button>
+    </div>
   </div>
 
   <div id="coopScreen" class="hidden">
@@ -2970,6 +3036,7 @@
     </div>
     <div id="pauseMenuButtons">
       <button class="menuBtn" id="resumeBtn" data-i18n="resumeBtn">▶ Fortsetzen</button>
+      <button class="menuBtn" id="pauseFriendsBtn">🤝 Freunde</button>
       <button class="menuBtn" id="pausePhotoBtn" data-i18n="pausePhotoBtn">📸 Foto-Modus</button>
       <button class="menuBtn" id="pauseShopBtn" data-i18n="pauseShopBtn">🛒 Shop</button>
       <button class="menuBtn" id="pauseSettingsBtn" data-i18n="pauseSettingsBtn">⚙️ Einstellungen</button>
@@ -3078,6 +3145,7 @@
   let globalEventActive = null; // e.g. '2x_trophies', or null
   let globalEventExpiresAt = null; // ms epoch, or null (no expiry)
   let globalEventRef = null;
+  let friendBroadcastRef = null;
   try {
     firebase.initializeApp({ databaseURL: FIREBASE_DB_URL });
     globalEventRef = firebase.database().ref('globalEvent');
@@ -3195,6 +3263,17 @@
             .catch(err => console.error('[presence] Failed to write presence:', err));
         }
       }, err => console.error('[presence] .info/connected listener error:', err));
+
+      // Live position broadcast for the FRIENDS feature — separate from the
+      // room-scoped co-op sync above, this is keyed purely by name (not a
+      // room code), so a friend can be found and spectated by anyone who's
+      // added them, whether or not they're in the same co-op room. Only
+      // written while actually playing (see updateFriendBroadcast), and
+      // removed automatically on disconnect just like presence.
+      friendBroadcastRef = firebase.database().ref('friendBroadcast/' + myNameKey);
+      firebase.database().ref('.info/connected').on('value', snap => {
+        if (snap.val() === true) friendBroadcastRef.onDisconnect().remove();
+      });
     }
   } catch(e){} // Firebase SDK failed to load/init (e.g. offline on first load) — game continues without events
 
@@ -3240,7 +3319,26 @@
       Object.entries(data).forEach(([key, p]) => {
         const row = document.createElement('div');
         row.className = 'coopPlayerRow';
-        row.innerHTML = '<span class="coopDot"></span><span>' + p.name + (key === myKey ? ' (du)' : '') + '</span>';
+        row.style.justifyContent = 'space-between';
+        const label = document.createElement('span');
+        label.innerHTML = '<span class="coopDot"></span><span>' + p.name + (key === myKey ? ' (du)' : '') + '</span>';
+        label.style.display = 'flex'; label.style.alignItems = 'center'; label.style.gap = '8px';
+        row.appendChild(label);
+        if (key !== myKey){
+          const spectateBtn = document.createElement('button');
+          spectateBtn.textContent = '👀';
+          spectateBtn.title = 'Zuschauen';
+          spectateBtn.style.cssText = 'background:rgba(122,255,196,0.15); border:1px solid rgba(122,255,196,0.4); border-radius:8px; padding:3px 9px; cursor:pointer; font-size:13px;';
+          spectateBtn.addEventListener('click', () => {
+            if (!running){
+              alert('Erst "Spiel starten", dann kannst du von hier aus zuschauen.');
+              return;
+            }
+            document.getElementById('coopScreen').classList.add('hidden');
+            startSpectating(key);
+          });
+          row.appendChild(spectateBtn);
+        }
         listEl.appendChild(row);
       });
     }
@@ -5243,6 +5341,55 @@
       }
     });
   }
+
+  // ---------- SPECTATOR MODE ----------
+  // Watch a friend's ghost through your OWN camera without playing
+  // yourself — different from just being in the same room together, this
+  // is for when you'd rather sit back and watch. Reuses the entire
+  // existing camera-follow system unchanged: this just overwrites
+  // player.pos to track the spectated ghost every frame (right before the
+  // camera code reads it), while your own character/rope stay hidden and
+  // your own movement/jump/grapple/attack inputs are ignored. Mouse-look
+  // keeps working completely normally, so you can freely look around.
+  let spectatingKey = null;
+  let spectateReturnPos = null;
+  function startSpectating(key){
+    if (!friendGhosts[key]) return;
+    spectateReturnPos = player.pos.clone();
+    spectatingKey = key;
+    player.vel.set(0, 0, 0);
+    playerMesh.visible = false;
+    ropeLine.visible = false;
+    const banner = document.getElementById('spectateBanner');
+    if (banner){
+      document.getElementById('spectateBannerName').textContent = friendGhosts[key].name || 'Freund';
+      banner.classList.add('show');
+    }
+  }
+  function stopSpectating(){
+    if (!spectatingKey) return;
+    if (spectateStandaloneRef){
+      spectateStandaloneRef.off('value', spectateStandaloneListener);
+      removeGhost(spectatingKey); // the standalone ghost was only ever created for this spectate session — clean it up, not left floating in the world
+      spectateStandaloneRef = null;
+      spectateStandaloneListener = null;
+    }
+    spectatingKey = null;
+    if (spectateReturnPos) player.pos.copy(spectateReturnPos);
+    player.vel.set(0, 0, 0);
+    playerMesh.visible = true;
+    const banner = document.getElementById('spectateBanner');
+    if (banner) banner.classList.remove('show');
+  }
+  function updateSpectating(){
+    if (!spectatingKey) return;
+    const gh = friendGhosts[spectatingKey];
+    if (!gh || gh.world !== selectedWorld){
+      stopSpectating(); // the friend left, or switched worlds — nothing sensible left to watch
+      return;
+    }
+    player.pos.copy(gh.mesh.position);
+  }
   // Small "friend is off-screen" arrows at the edge of the view, and keeps
   // the room player-count badge in sync with the current running/paused
   // state (the count itself is already updated live by onRoomPlayersUpdate
@@ -5321,6 +5468,22 @@
     myRoomPlayerRef.set(data).catch(() => {}); // best-effort — a dropped position update just means a friend's ghost is briefly stale, never worth interrupting gameplay over
   }
 
+  // Broadcasts the same kind of data as the room sync above, but to the
+  // name-keyed friendBroadcast path instead of a room — so a friend can
+  // find and spectate you by name alone, with no shared room code needed.
+  let friendBroadcastTimer = 0;
+  function updateFriendBroadcast(dt){
+    if (!friendBroadcastRef || !running) return;
+    friendBroadcastTimer += dt;
+    if (friendBroadcastTimer < 0.5) return; // less urgent than room sync — spectating tolerates a bit more lag
+    friendBroadcastTimer = 0;
+    friendBroadcastRef.set({
+      name: (typeof getActiveProfileMeta === 'function' && getActiveProfileMeta()) ? getActiveProfileMeta().name : 'Spieler',
+      x: player.pos.x, y: player.pos.y, z: player.pos.z, yaw: player.faceYaw, world: selectedWorld, skin: equippedSkin,
+      updatedAt: Date.now(),
+    }).catch(() => {});
+  }
+
 
 
 
@@ -5388,10 +5551,11 @@
     // 'E' held down is a reliable alternative to right-click for the grapple —
     // some embedded/sandboxed browser views swallow the right-click context menu
     // handling before it reaches the page, so right-click may not fire there.
-    if (e.code === 'KeyE' && running) attachGrapple();
-    if (e.code === 'KeyF' && running) performAttack();
-    if (e.code === 'KeyB' && running && !paused) toggleEmoteWheel();
-    if (e.code === 'Space' && running && !paused && !player.onGround && !grapple.active && !emoteActive) startTrick();
+    if (e.code === 'KeyE' && running && !spectatingKey) attachGrapple();
+    if (e.code === 'KeyF' && running && !spectatingKey) performAttack();
+    if (e.code === 'KeyB' && running && !paused && !spectatingKey) toggleEmoteWheel();
+    if (e.code === 'Space' && running && !paused && !spectatingKey && !player.onGround && !grapple.active && !emoteActive) startTrick();
+    if (e.code === 'Escape' && spectatingKey) { stopSpectating(); e.stopImmediatePropagation(); }
     if (emoteActive && ['KeyW','KeyA','KeyS','KeyD','Space'].includes(e.code)) stopEmote();
   });
   window.addEventListener('keyup', e => {
@@ -6569,6 +6733,107 @@
   document.getElementById('coopCloseBtn').addEventListener('click', () => {
     document.getElementById('coopScreen').classList.add('hidden');
   });
+  // ---------- PERSISTENT FRIENDS LIST ----------
+  // Friends are added by profile NAME (not tied to any room code), and
+  // checked against the presence/friendBroadcast paths — the same live
+  // data the co-op room system already uses, just looked up by name
+  // instead of by "who's in my room". Spectating a friend found this way
+  // feeds their broadcast data into the SAME friendGhosts pipeline as
+  // room-based ghosts (via updateGhostFromRoomData), so all the existing
+  // ghost rendering/rope/walk-cycle code works completely unchanged.
+  function getFriendsList(){ return storageGet('rankmann_friendsList', []); }
+  function saveFriendsList(list){ storageSet('rankmann_friendsList', list); }
+  function friendNameKey(name){ return encodeURIComponent(name.trim().toLowerCase()).replace(/[.#$\[\]]/g, '_'); }
+  let spectateStandaloneRef = null;
+  let spectateStandaloneListener = null;
+  function startSpectatingFriend(name, key){
+    if (!running){ alert('Erst "Spiel starten", dann kannst du von hier aus zuschauen.'); return; }
+    document.getElementById('friendsScreen').classList.add('hidden');
+    if (paused) closePauseMenu();
+    const fbKey = 'standalone_' + key;
+    const ref = firebase.database().ref('friendBroadcast/' + key);
+    const listener = ref.on('value', snapshot => {
+      const data = snapshot.val();
+      if (!data){
+        // friend stopped playing mid-watch — end the session gracefully instead of freezing on their last position
+        removeGhost(fbKey);
+        if (spectatingKey === fbKey) stopSpectating();
+        return;
+      }
+      updateGhostFromRoomData(fbKey, data);
+    });
+    spectateStandaloneRef = ref;
+    spectateStandaloneListener = listener;
+    const tryStart = (attemptsLeft) => {
+      if (friendGhosts[fbKey]) startSpectating(fbKey);
+      else if (attemptsLeft > 0) setTimeout(() => tryStart(attemptsLeft - 1), 150);
+      else { ref.off('value', listener); alert('Konnte den Live-Stream von ' + name + ' nicht laden — vielleicht gerade offline gegangen?'); }
+    };
+    tryStart(20); // up to ~3s to wait for the first snapshot to arrive
+  }
+  function refreshFriendsList(){
+    const list = getFriendsList();
+    const rowsEl = document.getElementById('friendsListRows');
+    const emptyMsg = document.getElementById('friendsEmptyMsg');
+    if (emptyMsg) emptyMsg.style.display = list.length === 0 ? '' : 'none';
+    rowsEl.innerHTML = '';
+    list.forEach(name => {
+      const key = friendNameKey(name);
+      const row = document.createElement('div');
+      row.className = 'friendsRow';
+      row.innerHTML = '<span style="display:flex;align-items:center;gap:8px;"><span class="coopDot" style="background:#555;"></span><span>' + name + '</span></span>';
+      const btnGroup = document.createElement('span');
+      btnGroup.style.cssText = 'display:flex; gap:6px;';
+      const removeBtn = document.createElement('button');
+      removeBtn.textContent = '✕';
+      removeBtn.title = 'Entfernen';
+      removeBtn.style.cssText = 'background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.25); border-radius:8px; padding:5px 9px; cursor:pointer; color:#fff; font-size:12px;';
+      removeBtn.addEventListener('click', () => {
+        saveFriendsList(getFriendsList().filter(n => n !== name));
+        refreshFriendsList();
+      });
+      btnGroup.appendChild(removeBtn);
+      row.appendChild(btnGroup);
+      rowsEl.appendChild(row);
+
+      if (!firebase.apps || !firebase.apps.length) return; // Firebase unavailable — show the row but skip the live status check
+      firebase.database().ref('presence/' + key).once('value').then(snap => {
+        const data = snap.val();
+        const dot = row.querySelector('.coopDot');
+        if (dot) dot.style.background = (data && data.online) ? '#7affc4' : '#555';
+      }).catch(() => {});
+      firebase.database().ref('friendBroadcast/' + key).once('value').then(snap => {
+        const data = snap.val();
+        const isFresh = data && data.updatedAt && (Date.now() - data.updatedAt < 5000);
+        if (isFresh && !btnGroup.querySelector('.friendsSpectateBtn')){
+          const specBtn = document.createElement('button');
+          specBtn.className = 'friendsSpectateBtn';
+          specBtn.textContent = '👀 Zuschauen';
+          specBtn.addEventListener('click', () => startSpectatingFriend(name, key));
+          btnGroup.insertBefore(specBtn, removeBtn);
+        }
+      }).catch(() => {});
+    });
+  }
+  document.getElementById('friendsBtn').addEventListener('click', () => {
+    document.getElementById('friendsScreen').classList.remove('hidden');
+    refreshFriendsList();
+  });
+  document.getElementById('friendsAddBtn').addEventListener('click', () => {
+    const input = document.getElementById('friendsAddInput');
+    const name = input.value.trim();
+    if (!name) return;
+    const list = getFriendsList();
+    if (list.some(n => n.toLowerCase() === name.toLowerCase())){ input.value = ''; return; }
+    list.push(name);
+    saveFriendsList(list);
+    input.value = '';
+    refreshFriendsList();
+  });
+  document.getElementById('friendsCloseBtn').addEventListener('click', () => {
+    document.getElementById('friendsScreen').classList.add('hidden');
+  });
+  document.getElementById('spectateStopBtn').addEventListener('click', () => { stopSpectating(); });
   document.getElementById('updateTeaser').addEventListener('click', () => {
     document.getElementById('changelogScreen').classList.remove('hidden');
   });
@@ -7729,7 +7994,8 @@
   }
   window.addEventListener('keydown', e => {
     if (e.code === 'Escape'){
-      if (photoModeActive) exitPhotoMode();
+      if (spectatingKey) { /* handled by the other keydown listener — don't also open the pause menu on the same press */ }
+      else if (photoModeActive) exitPhotoMode();
       else if (paused) closePauseMenu(); else openPauseMenu();
     }
   });
@@ -8129,6 +8395,7 @@
     // Only the follow TARGET is smoothed (soaks up physics jitter); the camera's
     // offset from that target is applied directly every frame so mouse-look
     // rotates instantly with zero lag/wobble.
+    updateSpectating();
     const HEAD_OFFSET = 0.95; // roughly the character's eye height above player.pos
     const headTarget = player.pos.clone().add(new THREE.Vector3(0, HEAD_OFFSET, 0));
     // while falling, lift the follow point higher for a better overview of the dive
@@ -8154,7 +8421,7 @@
     // hide the body once the camera is close enough to be "inside" the head,
     // so first person doesn't show the inside of the model
     const firstPerson = camZoom < 0.9;
-    playerMesh.visible = !firstPerson;
+    playerMesh.visible = !firstPerson && !spectatingKey;
 
     // crosshair: only shown in first person — in third person the reticle
     // floating in front of the character doesn't correspond to an aim point
@@ -8214,7 +8481,7 @@
       }
     }
     if (player.invuln > 0) player.invuln -= dt;
-    if (!firstPerson) {
+    if (!firstPerson && !spectatingKey) {
       playerMesh.visible = !(player.invuln > 0 && Math.floor(player.invuln*10)%2===0);
     }
 
@@ -8316,6 +8583,7 @@
     updateDayNight(dt);
     updateWeather(dt);
     updateRoomSync(dt);
+    updateFriendBroadcast(dt);
     updateGhosts(dt);
     updateCoopUIExtras();
     updateSwingTrail(dt);
@@ -8903,6 +9171,10 @@
   })();
   document.getElementById('shopBtn').addEventListener('click', openShop);
   document.getElementById('pauseShopBtn').addEventListener('click', openShop);
+  document.getElementById('pauseFriendsBtn').addEventListener('click', () => {
+    document.getElementById('friendsScreen').classList.remove('hidden');
+    refreshFriendsList();
+  });
   document.getElementById('pausePhotoBtn').addEventListener('click', enterPhotoMode);
   document.getElementById('photoExitBtn').addEventListener('click', exitPhotoMode);
   document.getElementById('photoCaptureBtn').addEventListener('click', takePhoto);
