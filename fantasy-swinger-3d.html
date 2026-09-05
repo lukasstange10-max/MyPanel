@@ -6877,8 +6877,21 @@
   }
   let spectateStandaloneRef = null;
   let spectateStandaloneListener = null;
+  let pendingSpectateAfterStart = null;
   function startSpectatingFriend(name, key){
-    if (!running){ alert('Erst "Spiel starten", dann kannst du von hier aus zuschauen.'); return; }
+    if (!running){
+      // Not playing yet — close the friends dialog, walk them straight into
+      // the normal "Spiel starten" device-choice flow, and remember to
+      // resume spectating the instant startGame() actually runs, instead of
+      // just telling them to go start the game themselves and leaving them
+      // stuck right back where they started.
+      pendingSpectateAfterStart = { name, key };
+      document.getElementById('friendsScreen').classList.add('hidden');
+      stopFriendsAutoRefresh();
+      if (paused) closePauseMenu();
+      document.getElementById('deviceSurvey').classList.remove('hidden');
+      return;
+    }
     if (!firebaseReady()){ alert('Keine Verbindung — Zuschauen ist gerade nicht möglich.'); return; }
     document.getElementById('friendsScreen').classList.add('hidden');
     stopFriendsAutoRefresh();
@@ -8921,6 +8934,11 @@
     updateTouchControlsVisibility();
     document.getElementById('deviceSurvey').classList.add('hidden');
     startGame();
+    if (pendingSpectateAfterStart){
+      const { name, key } = pendingSpectateAfterStart;
+      pendingSpectateAfterStart = null;
+      startSpectatingFriend(name, key);
+    }
   });
   document.getElementById('deviceBtnMobile').addEventListener('click', () => {
     mobileControlsWanted = true;
@@ -8928,6 +8946,11 @@
     document.getElementById('deviceSurvey').classList.add('hidden');
     document.getElementById('hint').style.display = 'none';
     startGame();
+    if (pendingSpectateAfterStart){
+      const { name, key } = pendingSpectateAfterStart;
+      pendingSpectateAfterStart = null;
+      startSpectatingFriend(name, key);
+    }
   });
 
   // Phones aren't supported — block them outright with a clear message.
