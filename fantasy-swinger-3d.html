@@ -6881,6 +6881,7 @@
     if (!running){ alert('Erst "Spiel starten", dann kannst du von hier aus zuschauen.'); return; }
     if (!firebaseReady()){ alert('Keine Verbindung — Zuschauen ist gerade nicht möglich.'); return; }
     document.getElementById('friendsScreen').classList.add('hidden');
+    stopFriendsAutoRefresh();
     if (paused) closePauseMenu();
     const fbKey = 'standalone_' + key;
     const ref = firebase.database().ref('friendBroadcast/' + key);
@@ -7014,10 +7015,22 @@
       }).catch(() => {});
     });
   }
+  let friendsAutoRefreshInterval = null;
+  function startFriendsAutoRefresh(){
+    clearInterval(friendsAutoRefreshInterval);
+    friendsAutoRefreshInterval = setInterval(() => {
+      if (!document.getElementById('friendsScreen').classList.contains('hidden')) refreshFriendsList();
+    }, 3000); // live-ish without hammering Firebase — catches a just-accepted request or a friend who just started playing without needing to close/reopen the screen
+  }
+  function stopFriendsAutoRefresh(){
+    clearInterval(friendsAutoRefreshInterval);
+    friendsAutoRefreshInterval = null;
+  }
   document.getElementById('friendsBtn').addEventListener('click', () => {
     document.getElementById('friendsScreen').classList.remove('hidden');
     document.getElementById('friendsAddStatus').textContent = '';
     refreshFriendsList();
+    startFriendsAutoRefresh();
   });
   document.getElementById('friendsAddBtn').addEventListener('click', () => {
     const input = document.getElementById('friendsAddInput');
@@ -7050,6 +7063,7 @@
   });
   document.getElementById('friendsCloseBtn').addEventListener('click', () => {
     document.getElementById('friendsScreen').classList.add('hidden');
+    stopFriendsAutoRefresh();
   });
   document.getElementById('friendReqAcceptBtn').addEventListener('click', () => {
     const fromKey = pendingToastFromKey;
@@ -7064,6 +7078,11 @@
       firebase.database().ref('friendAcceptances/' + fromKey + '/' + myKey).set({ byName: myFriendName(), at: Date.now() }).catch(() => {});
     }
     document.getElementById('friendReqToast').classList.remove('show');
+    // If the Friends screen happens to be open right now (e.g. accepted via
+    // this floating toast while already looking at the list), refresh it
+    // immediately instead of leaving it showing stale data until manually
+    // closed and reopened.
+    if (!document.getElementById('friendsScreen').classList.contains('hidden')) refreshFriendsList();
   });
   document.getElementById('friendReqDismissBtn').addEventListener('click', () => {
     document.getElementById('friendReqToast').classList.remove('show');
@@ -9409,6 +9428,7 @@
   document.getElementById('pauseFriendsBtn').addEventListener('click', () => {
     document.getElementById('friendsScreen').classList.remove('hidden');
     refreshFriendsList();
+    startFriendsAutoRefresh();
   });
   document.getElementById('pausePhotoBtn').addEventListener('click', enterPhotoMode);
   document.getElementById('photoExitBtn').addEventListener('click', exitPhotoMode);
