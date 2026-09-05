@@ -9192,6 +9192,14 @@
   function returnToMainMenu(){
     running = false;
     document.getElementById('viewerCountBadge').classList.remove('show');
+    // Explicitly clear this player's own live-position broadcast — just
+    // stopping the periodic WRITES (which updateFriendBroadcast already
+    // does once running=false) isn't enough, since a friend spectating
+    // via this data would only get notified on an actual CHANGE. Without
+    // this, the last-known position just sits there unchanged forever,
+    // and whoever's watching never finds out this player actually left —
+    // their view just silently freezes instead of ending gracefully.
+    if (friendBroadcastRef) friendBroadcastRef.remove().catch(() => {});
     muteRainAudio();
     player.lives = 3;
     updateLivesDisplay();
