@@ -5545,12 +5545,15 @@
     smallEnemies.forEach(en => { if (en.alive) en.mesh.visible = true; });
     const banner = document.getElementById('spectateBanner');
     if (banner) banner.classList.remove('show');
-    if (friendLeft){
-      // The person being watched left/stopped playing mid-session — rather
-      // than dropping the spectator into active control of a character
-      // they haven't been steering (and that's still sitting wherever it
-      // was left, possibly mid-air or off a ledge), send them back to the
-      // main menu instead, same as a normal "quit to menu" would.
+    if (friendLeft || spectateWasAutoStarted){
+      // Either the person being watched left/stopped playing mid-session,
+      // or this whole session only started because the player wanted to
+      // watch someone BEFORE playing themselves (walked through device
+      // choice just for that) — in both cases, dropping them into active
+      // control of a character they never actually chose to play would be
+      // a strange place to land. Head back to the main menu instead, same
+      // as a normal "quit to menu" would.
+      spectateWasAutoStarted = false;
       spectateReturnWorld = null;
       spectateReturnPos = null;
       returnToMainMenu();
@@ -7036,6 +7039,7 @@
   let spectateViewerRef = null;
   let pendingSpectateAfterStart = null;
   let pendingRoomSpectateKey = null;
+  let spectateWasAutoStarted = false; // true when spectating began via the "walked through device choice just to watch" flow, not because a normal running game chose to spectate mid-session
   function inviteFriendToCoop(name, key){
     if (!firebaseReady()){ alert('Keine Verbindung — Einladen ist gerade nicht möglich.'); return; }
     // Reuse an already-open room if there is one, so inviting a SECOND
@@ -9159,6 +9163,7 @@
     if (pendingSpectateAfterStart){
       const { name, key } = pendingSpectateAfterStart;
       pendingSpectateAfterStart = null;
+      spectateWasAutoStarted = true;
       startSpectatingFriend(name, key);
     }
     if (pendingCoopJoinAfterStart){
@@ -9169,6 +9174,7 @@
     if (pendingRoomSpectateKey){
       const key = pendingRoomSpectateKey;
       pendingRoomSpectateKey = null;
+      spectateWasAutoStarted = true;
       startSpectating(key);
     }
   });
@@ -9181,6 +9187,7 @@
     if (pendingSpectateAfterStart){
       const { name, key } = pendingSpectateAfterStart;
       pendingSpectateAfterStart = null;
+      spectateWasAutoStarted = true;
       startSpectatingFriend(name, key);
     }
     if (pendingCoopJoinAfterStart){
@@ -9191,6 +9198,7 @@
     if (pendingRoomSpectateKey){
       const key = pendingRoomSpectateKey;
       pendingRoomSpectateKey = null;
+      spectateWasAutoStarted = true;
       startSpectating(key);
     }
   });
