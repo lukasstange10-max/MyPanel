@@ -291,6 +291,25 @@
   }
   #galleryToast span { font-size: 13px; font-weight: 700; color: #fff; }
 
+  #friendReqToast {
+    position: fixed; top: 20px; right: 20px; z-index: 260;
+    background: rgba(20,10,38,0.95); border: 2px solid rgba(122,170,255,0.6);
+    border-radius: 14px; padding: 14px 16px;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.5), 0 0 25px rgba(122,170,255,0.25);
+    transform: translateX(130%); transition: transform 0.35s cubic-bezier(.2,.8,.3,1.2);
+    max-width: 260px;
+  }
+  #friendReqToast.show { transform: translateX(0); }
+  #friendReqToast .frtTitle { font-size: 13px; font-weight: 800; color: #fff; margin-bottom: 4px; }
+  #friendReqToast .frtName { color: #7aa8ff; }
+  #friendReqToast .frtBtns { display: flex; gap: 8px; margin-top: 10px; }
+  #friendReqToast button {
+    flex: 1; padding: 6px 10px; font-size: 12px; font-weight: 700; cursor: pointer;
+    border-radius: 8px; color: #fff;
+  }
+  #friendReqAcceptBtn { background: rgba(122,255,196,0.25); border: 1px solid rgba(122,255,196,0.5); }
+  #friendReqDismissBtn { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.25); }
+
   #photoModeUI {
     position: fixed; inset: 0; z-index: 90; pointer-events: none;
     display: flex; flex-direction: column; justify-content: space-between;
@@ -860,6 +879,7 @@
     background: linear-gradient(135deg, rgba(122,255,196,0.4), rgba(60,200,150,0.4));
   }
   #friendsBtn {
+    position: relative;
     padding: 13px 24px; font-size: 15px; font-weight: 700;
     background: linear-gradient(135deg, rgba(122,170,255,0.22), rgba(90,120,220,0.22));
     border: 1px solid rgba(122,170,255,0.5);
@@ -870,6 +890,16 @@
     transform: translateY(-2px) scale(1.02);
     background: linear-gradient(135deg, rgba(122,170,255,0.4), rgba(90,120,220,0.4));
   }
+  #pauseFriendsBtn { position: relative; }
+  .friendsReqBadge {
+    position: absolute; top: -8px; right: -8px;
+    min-width: 22px; height: 22px; padding: 0 5px; border-radius: 999px;
+    background: linear-gradient(135deg, #ff5c6c, #aa1f2a); border: 2px solid rgba(20,10,38,0.9);
+    color: #fff; font-size: 12px; font-weight: 800; line-height: 18px; text-align: center;
+    display: none; animation: claimablePulse 1.6s ease-in-out infinite;
+  }
+  .friendsReqBadge.show { display: block; }
+  #friendsRequestsSection.hidden { display: none; }
   #saveCodeHint {
     position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%); z-index: 20;
     font-size: 11.5px; font-weight: 600; color: rgba(255,226,122,0.7);
@@ -1923,6 +1953,14 @@
   <span data-i18n="galleryToastSaved">📸 In Galerie gespeichert</span>
 </div>
 
+<div id="friendReqToast">
+  <div class="frtTitle">🤝 <span class="frtName" id="friendReqToastName"></span> möchte dich als Freund</div>
+  <div class="frtBtns">
+    <button id="friendReqAcceptBtn">✓ Annehmen</button>
+    <button id="friendReqDismissBtn">Später</button>
+  </div>
+</div>
+
 <div id="photoModeUI" class="hidden">
   <div id="photoTopBar">
     <span data-i18n="photoModeLabel">📸 Foto-Modus</span>
@@ -2048,7 +2086,7 @@
       <button id="galleryBtn" data-i18n="galleryBtnMenu">🖼️ Galerie</button>
       <button id="statsBtn" data-i18n="statsBtn">📊 Statistiken</button>
       <button id="coopBtn">👥 Mit Freunden spielen</button>
-      <button id="friendsBtn">🤝 Freunde</button>
+      <button id="friendsBtn">🤝 Freunde<span id="friendsReqBadge" class="friendsReqBadge"></span></button>
       <button id="adminPanelBtn" class="hidden">🛠️ Admin-Zentrale</button>
     </div>
     <div id="saveCodeHint">🔐 Nicht vergessen: Spielstand regelmäßig sichern, damit nichts verloren geht</div>
@@ -3044,7 +3082,7 @@
     </div>
     <div id="pauseMenuButtons">
       <button class="menuBtn" id="resumeBtn" data-i18n="resumeBtn">▶ Fortsetzen</button>
-      <button class="menuBtn" id="pauseFriendsBtn">🤝 Freunde</button>
+      <button class="menuBtn" id="pauseFriendsBtn">🤝 Freunde<span id="pauseFriendsReqBadge" class="friendsReqBadge"></span></button>
       <button class="menuBtn" id="pausePhotoBtn" data-i18n="pausePhotoBtn">📸 Foto-Modus</button>
       <button class="menuBtn" id="pauseShopBtn" data-i18n="pauseShopBtn">🛒 Shop</button>
       <button class="menuBtn" id="pauseSettingsBtn" data-i18n="pauseSettingsBtn">⚙️ Einstellungen</button>
@@ -3281,6 +3319,24 @@
       friendBroadcastRef = firebase.database().ref('friendBroadcast/' + myNameKey);
       firebase.database().ref('.info/connected').on('value', snap => {
         if (snap.val() === true) friendBroadcastRef.onDisconnect().remove();
+      });
+
+      // Live incoming friend-request watcher — fires for every change, not
+      // just when the Friends screen happens to be open, so a new request
+      // updates the button badge and (if actually mid-game) pops a toast
+      // immediately, the same way the gallery/achievement toasts already
+      // work. Tracks which request keys have already been toasted so
+      // reconnecting or re-rendering doesn't re-show the same one twice.
+      const seenRequestKeys = new Set();
+      firebase.database().ref('friendRequests/' + myNameKey).on('value', snapshot => {
+        const data = snapshot.val() || {};
+        const entries = Object.entries(data);
+        updateFriendReqBadges(entries.length);
+        entries.forEach(([fromKey, info]) => {
+          if (seenRequestKeys.has(fromKey)) return;
+          seenRequestKeys.add(fromKey);
+          if (running) showFriendRequestToast(info.fromName, fromKey);
+        });
       });
     }
   } catch(e){} // Firebase SDK failed to load/init (e.g. offline on first load) — game continues without events
@@ -6785,6 +6841,34 @@
   // pipeline as room-based ghosts (via updateGhostFromRoomData), so all
   // the existing ghost rendering/rope/walk-cycle code works unchanged.
   function getFriendsList(){ return storageGet('rankmann_friendsList', []); }
+  // Safe existence check — if the Firebase SDK itself failed to load (ad
+  // blocker, privacy extension, flaky network, etc.), the global `firebase`
+  // identifier doesn't exist AT ALL, and referencing it directly throws a
+  // ReferenceError immediately, before any `&&`/`||` can short-circuit
+  // around it. Every friends-feature entry point below checks this first
+  // and fails quietly instead of crashing.
+  function firebaseReady(){
+    try { return typeof firebase !== 'undefined' && !!firebase.apps && firebase.apps.length > 0; }
+    catch(e){ return false; }
+  }
+  function updateFriendReqBadges(count){
+    [['friendsReqBadge'], ['pauseFriendsReqBadge']].forEach(([id]) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = count > 9 ? '9+' : String(count);
+      el.classList.toggle('show', count > 0);
+    });
+  }
+  let pendingToastFromKey = null;
+  function showFriendRequestToast(fromName, fromKey){
+    pendingToastFromKey = fromKey;
+    document.getElementById('friendReqToastName').textContent = fromName;
+    const toast = document.getElementById('friendReqToast');
+    toast.classList.add('show');
+    clearTimeout(showFriendRequestToast._t);
+    showFriendRequestToast._t = setTimeout(() => toast.classList.remove('show'), 10000);
+  }
+
   function saveFriendsList(list){ storageSet('rankmann_friendsList', list); }
   function friendNameKey(name){ return encodeURIComponent(name.trim().toLowerCase()).replace(/[.#$\[\]]/g, '_'); }
   function myFriendName(){
@@ -6795,6 +6879,7 @@
   let spectateStandaloneListener = null;
   function startSpectatingFriend(name, key){
     if (!running){ alert('Erst "Spiel starten", dann kannst du von hier aus zuschauen.'); return; }
+    if (!firebaseReady()){ alert('Keine Verbindung — Zuschauen ist gerade nicht möglich.'); return; }
     document.getElementById('friendsScreen').classList.add('hidden');
     if (paused) closePauseMenu();
     const fbKey = 'standalone_' + key;
@@ -6819,7 +6904,7 @@
     tryStart(20); // up to ~3s to wait for the first snapshot to arrive
   }
   function refreshFriendsList(){
-    if (!firebase.apps || !firebase.apps.length) return; // Firebase unavailable — nothing live to show
+    if (!firebaseReady()){ renderFriendsRows(); return; } // Firebase unavailable — still show the local list, just without live status
     const myKey = friendNameKey(myFriendName());
 
     // Pick up any acceptances of MY outgoing requests since I last checked —
@@ -6862,8 +6947,10 @@
           const list = getFriendsList();
           if (!list.some(n => n.toLowerCase() === info.fromName.toLowerCase())) list.push(info.fromName);
           saveFriendsList(list);
-          firebase.database().ref('friendRequests/' + myKey + '/' + fromKey).remove().catch(() => {});
-          firebase.database().ref('friendAcceptances/' + fromKey + '/' + myKey).set({ byName: myFriendName(), at: Date.now() }).catch(() => {});
+          if (firebaseReady()){
+            firebase.database().ref('friendRequests/' + myKey + '/' + fromKey).remove().catch(() => {});
+            firebase.database().ref('friendAcceptances/' + fromKey + '/' + myKey).set({ byName: myFriendName(), at: Date.now() }).catch(() => {});
+          }
           refreshFriendsList();
         });
         const declineBtn = document.createElement('button');
@@ -6871,7 +6958,7 @@
         declineBtn.title = 'Ablehnen';
         declineBtn.style.cssText = 'background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.25); border-radius:8px; padding:5px 9px; cursor:pointer; color:#fff; font-size:12px;';
         declineBtn.addEventListener('click', () => {
-          firebase.database().ref('friendRequests/' + myKey + '/' + fromKey).remove().catch(() => {});
+          if (firebaseReady()) firebase.database().ref('friendRequests/' + myKey + '/' + fromKey).remove().catch(() => {});
           refreshFriendsList();
         });
         btnGroup.appendChild(acceptBtn); btnGroup.appendChild(declineBtn);
@@ -6900,6 +6987,7 @@
       removeBtn.title = 'Entfernen';
       removeBtn.style.cssText = 'background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.25); border-radius:8px; padding:5px 9px; cursor:pointer; color:#fff; font-size:12px;';
       removeBtn.addEventListener('click', () => {
+        if (!confirm(name + ' wirklich aus deiner Freundesliste entfernen?')) return;
         saveFriendsList(getFriendsList().filter(n => n !== name));
         renderFriendsRows();
       });
@@ -6907,7 +6995,7 @@
       row.appendChild(btnGroup);
       rowsEl.appendChild(row);
 
-      if (!firebase.apps || !firebase.apps.length) return; // Firebase unavailable — show the row but skip the live status check
+      if (!firebaseReady()) return; // Firebase unavailable — show the row but skip the live status check
       firebase.database().ref('presence/' + key).once('value').then(snap => {
         const data = snap.val();
         const dot = row.querySelector('.coopDot');
@@ -6946,7 +7034,7 @@
       statusEl.style.color = '#ffb84d'; statusEl.textContent = name + ' ist schon in deiner Liste.';
       return;
     }
-    if (!firebase.apps || !firebase.apps.length){
+    if (!firebaseReady()){
       statusEl.style.color = '#ff9d9d'; statusEl.textContent = 'Keine Verbindung — bitte später erneut versuchen.';
       return;
     }
@@ -6962,6 +7050,23 @@
   });
   document.getElementById('friendsCloseBtn').addEventListener('click', () => {
     document.getElementById('friendsScreen').classList.add('hidden');
+  });
+  document.getElementById('friendReqAcceptBtn').addEventListener('click', () => {
+    const fromKey = pendingToastFromKey;
+    const fromName = document.getElementById('friendReqToastName').textContent;
+    if (!fromKey) return;
+    const myKey = friendNameKey(myFriendName());
+    const list = getFriendsList();
+    if (!list.some(n => n.toLowerCase() === fromName.toLowerCase())) list.push(fromName);
+    saveFriendsList(list);
+    if (firebaseReady()){
+      firebase.database().ref('friendRequests/' + myKey + '/' + fromKey).remove().catch(() => {});
+      firebase.database().ref('friendAcceptances/' + fromKey + '/' + myKey).set({ byName: myFriendName(), at: Date.now() }).catch(() => {});
+    }
+    document.getElementById('friendReqToast').classList.remove('show');
+  });
+  document.getElementById('friendReqDismissBtn').addEventListener('click', () => {
+    document.getElementById('friendReqToast').classList.remove('show');
   });
   document.getElementById('spectateStopBtn').addEventListener('click', () => { stopSpectating(); });
   document.getElementById('updateTeaser').addEventListener('click', () => {
