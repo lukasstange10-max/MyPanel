@@ -5366,6 +5366,7 @@
     if (gh.grappling) gh.anchorPos = { x: p.anchorX, y: p.anchorY, z: p.anchorZ };
     if (gh.emote !== (p.emote || null)) gh.emoteElapsed = 0; // fresh emote (or none) started — restart its timer
     gh.emote = p.emote || null;
+    gh.deadEnemyIndices = Array.isArray(p.deadEnemyIndices) ? p.deadEnemyIndices : null;
     gh.lastSeenMs = Date.now();
   }
   function removeGhost(key){
@@ -5479,6 +5480,11 @@
       spectateViewerRef = null;
     }
     spectatingKey = null;
+    // Undo the "hide enemies the spectated friend already defeated" display
+    // override — restores every still-alive local enemy back to visible,
+    // regardless of which ones were actually hidden, which is simpler and
+    // just as correct as tracking the exact overridden set.
+    smallEnemies.forEach(en => { if (en.alive) en.mesh.visible = true; });
     // Switch back to whichever world we were actually in before spectating,
     // if it changed to follow the friend — otherwise the player would land
     // back in their own body standing inside the FRIEND's world instead of
@@ -5596,7 +5602,7 @@
     friendBroadcastTimer += dt;
     if (friendBroadcastTimer < 0.15) return; // matches the co-op room sync rate now — the old 0.5s interval was too sparse for smooth spectate camera tracking
     friendBroadcastTimer = 0;
-    friendBroadcastRef.set({
+    const data = {
       name: (typeof getActiveProfileMeta === 'function' && getActiveProfileMeta()) ? getActiveProfileMeta().name : 'Spieler',
       x: player.pos.x, y: player.pos.y, z: player.pos.z, yaw: player.faceYaw, world: selectedWorld, skin: equippedSkin,
       // Firebase's SERVER clock, not this device's own — comparing two
@@ -5605,7 +5611,27 @@
       // which was silently hiding the "watch" button even for a friend who
       // WAS actively playing.
       updatedAt: firebase.database.ServerValue.TIMESTAMP,
-    }).catch(() => {});
+    };
+    // Same rope/emote fields the co-op room sync sends — without these, a
+    // spectator's ghost never shows the web while swinging or the pose
+    // while dancing, since updateGhostFromRoomData/updateGhosts only ever
+    // react to fields that are actually present in the payload.
+    if (grapple.active && grapple.anchor){
+      data.grappling = true;
+      data.anchorX = grapple.anchor.position.x;
+      data.anchorY = grapple.anchor.position.y;
+      data.anchorZ = grapple.anchor.position.z;
+    } else {
+      data.grappling = false;
+    }
+    data.emote = emoteActive ? emoteId : null;
+    // Which small enemies THIS player has already defeated, by their fixed
+    // array index (stable across every client, since smallEnemies is built
+    // in the same hardcoded order for everyone) — lets a spectator's view
+    // reflect enemies the person they're watching has already cleared,
+    // instead of showing them all as freshly alive.
+    data.deadEnemyIndices = smallEnemies.reduce((arr, en, i) => { if (!en.alive) arr.push(i); return arr; }, []);
+    friendBroadcastRef.set(data).catch(() => {});
   }
 
 
@@ -8822,6 +8848,23 @@
           updateLivesDisplay();
           respawnPlayer();
         }
+      }
+    }
+
+    // While spectating, also hide any small enemy the person being watched
+    // has already defeated in THEIR OWN game — enemies are simulated
+    // entirely locally per player (never synced), so without this a
+    // spectator would see every enemy as freshly alive regardless of what
+    // their friend has actually cleared. Only touches mesh visibility, never
+    // en.alive itself, so the spectator's own separate progress/enemies are
+    // completely unaffected once they stop watching.
+    if (spectatingKey){
+      const gh = friendGhosts[spectatingKey];
+      if (gh && Array.isArray(gh.deadEnemyIndices)){
+        gh.deadEnemyIndices.forEach(i => {
+          const en = smallEnemies[i];
+          if (en && en.alive) en.mesh.visible = false;
+        });
       }
     }
 
