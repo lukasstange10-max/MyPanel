@@ -319,6 +319,25 @@
   #friendReqAcceptBtn { background: rgba(122,255,196,0.25); border: 1px solid rgba(122,255,196,0.5); }
   #friendReqDismissBtn { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.25); }
 
+  #coopInviteToast {
+    position: fixed; top: 140px; right: 20px; z-index: 260;
+    background: rgba(20,10,38,0.95); border: 2px solid rgba(255,184,77,0.6);
+    border-radius: 14px; padding: 14px 16px;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.5), 0 0 25px rgba(255,184,77,0.25);
+    transform: translateX(130%); transition: transform 0.35s cubic-bezier(.2,.8,.3,1.2);
+    max-width: 260px;
+  }
+  #coopInviteToast.show { transform: translateX(0); }
+  #coopInviteToast .frtTitle { font-size: 13px; font-weight: 800; color: #fff; margin-bottom: 4px; }
+  #coopInviteToast .frtName { color: #ffb84d; }
+  #coopInviteToast .frtBtns { display: flex; gap: 8px; margin-top: 10px; }
+  #coopInviteToast button {
+    flex: 1; padding: 6px 10px; font-size: 12px; font-weight: 700; cursor: pointer;
+    border-radius: 8px; color: #fff;
+  }
+  #coopInviteAcceptBtn { background: rgba(255,184,77,0.25); border: 1px solid rgba(255,184,77,0.5); }
+  #coopInviteDismissBtn { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.25); }
+
   #photoModeUI {
     position: fixed; inset: 0; z-index: 90; pointer-events: none;
     display: flex; flex-direction: column; justify-content: space-between;
@@ -1971,6 +1990,14 @@
   </div>
 </div>
 
+<div id="coopInviteToast">
+  <div class="frtTitle">🎮 <span class="frtName" id="coopInviteToastName"></span> lädt dich zum Koop-Spiel ein</div>
+  <div class="frtBtns">
+    <button id="coopInviteAcceptBtn">✓ Beitreten</button>
+    <button id="coopInviteDismissBtn">Später</button>
+  </div>
+</div>
+
 <div id="photoModeUI" class="hidden">
   <div id="photoTopBar">
     <span data-i18n="photoModeLabel">📸 Foto-Modus</span>
@@ -3363,6 +3390,19 @@
         if (!badge) return;
         badge.textContent = '👀 ' + count + (count === 1 ? ' schaut zu' : ' schauen zu');
         badge.classList.toggle('show', count > 0 && running);
+      });
+
+      // Live incoming co-op invite watcher — same pattern as the friend
+      // request toast: a friend picks you from THEIR friends list and
+      // invites you straight into their room, no code to type at all.
+      const seenInviteKeys = new Set();
+      firebase.database().ref('coopInvites/' + myNameKey).on('value', snapshot => {
+        const data = snapshot.val() || {};
+        Object.entries(data).forEach(([fromKey, info]) => {
+          if (seenInviteKeys.has(fromKey + info.sentAt)) return;
+          seenInviteKeys.add(fromKey + info.sentAt);
+          showCoopInviteToast(info.fromName, info.roomCode, fromKey);
+        });
       });
     }
   } catch(e){} // Firebase SDK failed to load/init (e.g. offline on first load) — game continues without events
@@ -6926,6 +6966,38 @@
     showFriendRequestToast._t = setTimeout(() => toast.classList.remove('show'), 10000);
   }
 
+  let pendingCoopInvite = null; // { fromKey, roomCode }
+  function showCoopInviteToast(fromName, roomCode, fromKey){
+    pendingCoopInvite = { fromKey, roomCode };
+    document.getElementById('coopInviteToastName').textContent = fromName;
+    const toast = document.getElementById('coopInviteToast');
+    toast.classList.add('show');
+    clearTimeout(showCoopInviteToast._t);
+    showCoopInviteToast._t = setTimeout(() => toast.classList.remove('show'), 15000); // a bit longer than the friend-request toast — joining a game is a bigger decision to notice in time for
+  }
+  function acceptCoopInvite(){
+    if (!pendingCoopInvite) return;
+    const { fromKey, roomCode } = pendingCoopInvite;
+    if (firebaseReady()) firebase.database().ref('coopInvites/' + friendNameKey(myFriendName()) + '/' + fromKey).remove().catch(() => {});
+    document.getElementById('coopInviteToast').classList.remove('show');
+    pendingCoopInvite = null;
+    if (!running){
+      // Not playing yet — same "walk them through device choice, then
+      // finish the action automatically" pattern as spectating a friend
+      // who isn't running does, so accepting an invite is never a dead end.
+      pendingCoopJoinAfterStart = roomCode;
+      if (paused) closePauseMenu();
+      document.getElementById('deviceSurvey').classList.remove('hidden');
+      return;
+    }
+    if (paused) closePauseMenu();
+    joinRoom(roomCode);
+    document.getElementById('coopScreen').classList.remove('hidden');
+    document.getElementById('coopRoomCode').textContent = roomCode;
+    document.getElementById('coopNoRoom').classList.add('hidden');
+    document.getElementById('coopInRoom').classList.remove('hidden');
+  }
+
   function saveFriendsList(list){ storageSet('rankmann_friendsList', list); }
   function friendNameKey(name){ return encodeURIComponent(name.trim().toLowerCase()).replace(/[.#$\[\]]/g, '_'); }
   function myFriendName(){
@@ -6936,6 +7008,30 @@
   let spectateStandaloneListener = null;
   let spectateViewerRef = null;
   let pendingSpectateAfterStart = null;
+  function inviteFriendToCoop(name, key){
+    if (!firebaseReady()){ alert('Keine Verbindung — Einladen ist gerade nicht möglich.'); return; }
+    // Reuse an already-open room if there is one, so inviting a SECOND
+    // friend doesn't spin up a whole separate room from the first — only
+    // create a fresh one if we're not currently in any room at all.
+    let roomCode = currentRoomCode;
+    if (!roomCode){
+      roomCode = generateRoomCode();
+      joinRoom(roomCode);
+    }
+    const myName = myFriendName();
+    firebase.database().ref('coopInvites/' + key + '/' + friendNameKey(myName)).set({
+      fromName: myName, roomCode, sentAt: Date.now(),
+    }).catch(() => {});
+    // Show the inviter their own room screen too, so they can see the code
+    // and who's joined, exactly like creating a room normally would.
+    document.getElementById('friendsScreen').classList.add('hidden');
+    stopFriendsAutoRefresh();
+    document.getElementById('coopScreen').classList.remove('hidden');
+    document.getElementById('coopRoomCode').textContent = roomCode;
+    document.getElementById('coopNoRoom').classList.add('hidden');
+    document.getElementById('coopInRoom').classList.remove('hidden');
+  }
+  let pendingCoopJoinAfterStart = null;
   function startSpectatingFriend(name, key){
     if (!running){
       // Not playing yet — close the friends dialog, walk them straight into
@@ -7082,6 +7178,13 @@
         const data = snap.val();
         const dot = row.querySelector('.coopDot');
         if (dot) dot.style.background = (data && data.online) ? '#7affc4' : '#555';
+        if (data && data.online && !btnGroup.querySelector('.friendsInviteBtn')){
+          const inviteBtn = document.createElement('button');
+          inviteBtn.className = 'friendsSpectateBtn friendsInviteBtn';
+          inviteBtn.textContent = '🎮 Einladen';
+          inviteBtn.addEventListener('click', () => inviteFriendToCoop(name, key));
+          btnGroup.insertBefore(inviteBtn, removeBtn);
+        }
       }).catch(() => {});
       firebase.database().ref('friendBroadcast/' + key).once('value').then(snap => {
         const data = snap.val();
@@ -7167,6 +7270,11 @@
   });
   document.getElementById('friendReqDismissBtn').addEventListener('click', () => {
     document.getElementById('friendReqToast').classList.remove('show');
+  });
+  document.getElementById('coopInviteAcceptBtn').addEventListener('click', acceptCoopInvite);
+  document.getElementById('coopInviteDismissBtn').addEventListener('click', () => {
+    document.getElementById('coopInviteToast').classList.remove('show');
+    pendingCoopInvite = null;
   });
   document.getElementById('spectateStopBtn').addEventListener('click', () => { stopSpectating(); });
   document.getElementById('updateTeaser').addEventListener('click', () => {
@@ -9024,6 +9132,11 @@
       pendingSpectateAfterStart = null;
       startSpectatingFriend(name, key);
     }
+    if (pendingCoopJoinAfterStart){
+      const code = pendingCoopJoinAfterStart;
+      pendingCoopJoinAfterStart = null;
+      joinRoom(code);
+    }
   });
   document.getElementById('deviceBtnMobile').addEventListener('click', () => {
     mobileControlsWanted = true;
@@ -9035,6 +9148,11 @@
       const { name, key } = pendingSpectateAfterStart;
       pendingSpectateAfterStart = null;
       startSpectatingFriend(name, key);
+    }
+    if (pendingCoopJoinAfterStart){
+      const code = pendingCoopJoinAfterStart;
+      pendingCoopJoinAfterStart = null;
+      joinRoom(code);
     }
   });
 
