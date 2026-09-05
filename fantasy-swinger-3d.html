@@ -5515,8 +5515,9 @@
       document.getElementById('spectateBannerName').textContent = friendGhosts[key].name || 'Freund';
       banner.classList.add('show');
     }
+    updateTouchControlsVisibility(); // hides the joystick/buttons — nothing to control while just watching
   }
-  function stopSpectating(){
+  function stopSpectating(friendLeft){
     if (!spectatingKey) return;
     if (spectateStandaloneRef){
       spectateStandaloneRef.off('value', spectateStandaloneListener);
@@ -5535,6 +5536,19 @@
     // regardless of which ones were actually hidden, which is simpler and
     // just as correct as tracking the exact overridden set.
     smallEnemies.forEach(en => { if (en.alive) en.mesh.visible = true; });
+    const banner = document.getElementById('spectateBanner');
+    if (banner) banner.classList.remove('show');
+    if (friendLeft){
+      // The person being watched left/stopped playing mid-session — rather
+      // than dropping the spectator into active control of a character
+      // they haven't been steering (and that's still sitting wherever it
+      // was left, possibly mid-air or off a ledge), send them back to the
+      // main menu instead, same as a normal "quit to menu" would.
+      spectateReturnWorld = null;
+      spectateReturnPos = null;
+      returnToMainMenu();
+      return;
+    }
     // Switch back to whichever world we were actually in before spectating,
     // if it changed to follow the friend — otherwise the player would land
     // back in their own body standing inside the FRIEND's world instead of
@@ -5547,14 +5561,13 @@
     if (spectateReturnPos) player.pos.copy(spectateReturnPos);
     player.vel.set(0, 0, 0);
     playerMesh.visible = true;
-    const banner = document.getElementById('spectateBanner');
-    if (banner) banner.classList.remove('show');
+    updateTouchControlsVisibility(); // brings the joystick/buttons back now that there's a character to control again
   }
   function updateSpectating(){
     if (!spectatingKey) return;
     const gh = friendGhosts[spectatingKey];
     if (!gh){
-      stopSpectating(); // the friend disappeared entirely (left the room / stopped broadcasting)
+      stopSpectating(true); // the friend disappeared entirely (left the room / stopped broadcasting) — head back to the menu rather than dropping into unattended control
       return;
     }
     if (gh.world !== selectedWorld){
@@ -7064,7 +7077,7 @@
       if (!data){
         // friend stopped playing mid-watch — end the session gracefully instead of freezing on their last position
         removeGhost(fbKey);
-        if (spectatingKey === fbKey) stopSpectating();
+        if (spectatingKey === fbKey) stopSpectating(true);
         return;
       }
       updateGhostFromRoomData(fbKey, data);
@@ -9095,7 +9108,7 @@
   });
   let mobileControlsWanted = false;
   function updateTouchControlsVisibility(){
-    const shouldShow = mobileControlsWanted && running && (!paused || photoModeActive) && !previewMode;
+    const shouldShow = mobileControlsWanted && running && (!paused || photoModeActive) && !previewMode && !spectatingKey;
     document.getElementById('touchControls').classList.toggle('hidden', !shouldShow);
     // In photo mode the joystick (forward/back flying) and look zone (drag to
     // turn) still make sense, but jump/attack/grapple/sprint/pause don't.
@@ -9103,8 +9116,9 @@
     document.getElementById('touchSprintBtn').style.display = photoModeActive ? 'none' : '';
     document.getElementById('touchPauseBtn').style.display = photoModeActive ? 'none' : '';
     // The emote button is shown on PC too (not gated by mobileControlsWanted),
-    // so it works as an on-screen alternative to pressing B.
-    const showEmoteBtn = running && !paused && !photoModeActive && !previewMode;
+    // so it works as an on-screen alternative to pressing B — hidden while
+    // spectating too, since there's no character here to emote with.
+    const showEmoteBtn = running && !paused && !photoModeActive && !previewMode && !spectatingKey;
     document.getElementById('emoteHudBtn').classList.toggle('hidden', !showEmoteBtn);
     // Settings and music fabs belong to the start menu only — hide them
     // once a run is actually in progress (still shown while paused, since
@@ -9175,12 +9189,7 @@
   window.addEventListener('orientationchange', checkPhoneBlock);
 
   document.getElementById('resumeBtn').addEventListener('click', closePauseMenu);
-  document.getElementById('pauseRestartBtn').addEventListener('click', () => {
-    // Soft restart — NOT location.reload(). A hard reload destroys the
-    // AudioContext, and browsers then require a fresh user gesture before
-    // audio can play again, which made "Musik aktivieren" pop back up even
-    // though the player already unlocked it once this session.
-    closePauseMenu();
+  function returnToMainMenu(){
     running = false;
     document.getElementById('viewerCountBadge').classList.remove('show');
     muteRainAudio();
@@ -9195,10 +9204,18 @@
     updateWorldSelectUI();
     menuMusicWanted = true;
     tryStartMenuMusic();
-    // closePauseMenu() above already recalculated fab visibility, but it did
-    // so while `running` was still true, so settingsFab/musicFab were left
-    // hidden. Recompute now that we're actually back at the start menu.
+    // closePauseMenu() (if it ran) already recalculated fab visibility, but
+    // did so while `running` was still true, so settingsFab/musicFab were
+    // left hidden. Recompute now that we're actually back at the start menu.
     updateTouchControlsVisibility();
+  }
+  document.getElementById('pauseRestartBtn').addEventListener('click', () => {
+    // Soft restart — NOT location.reload(). A hard reload destroys the
+    // AudioContext, and browsers then require a fresh user gesture before
+    // audio can play again, which made "Musik aktivieren" pop back up even
+    // though the player already unlocked it once this session.
+    closePauseMenu();
+    returnToMainMenu();
   });
   function openShop(){
     updateShopUI();
