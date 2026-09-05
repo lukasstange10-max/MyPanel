@@ -3468,7 +3468,14 @@
           spectateBtn.style.cssText = 'background:rgba(122,255,196,0.15); border:1px solid rgba(122,255,196,0.4); border-radius:8px; padding:3px 9px; cursor:pointer; font-size:13px;';
           spectateBtn.addEventListener('click', () => {
             if (!running){
-              alert('Erst "Spiel starten", dann kannst du von hier aus zuschauen.');
+              // Same "walk them through device choice, then finish the
+              // action automatically" pattern used for spectating a friend
+              // via the Friends list — inviting someone and wanting to
+              // watch them BEFORE playing yourself is a completely normal
+              // thing to want, so this should never be a dead end.
+              pendingRoomSpectateKey = key;
+              document.getElementById('coopScreen').classList.add('hidden');
+              document.getElementById('deviceSurvey').classList.remove('hidden');
               return;
             }
             document.getElementById('coopScreen').classList.add('hidden');
@@ -7028,6 +7035,7 @@
   let spectateStandaloneListener = null;
   let spectateViewerRef = null;
   let pendingSpectateAfterStart = null;
+  let pendingRoomSpectateKey = null;
   function inviteFriendToCoop(name, key){
     if (!firebaseReady()){ alert('Keine Verbindung — Einladen ist gerade nicht möglich.'); return; }
     // Reuse an already-open room if there is one, so inviting a SECOND
@@ -9158,6 +9166,11 @@
       pendingCoopJoinAfterStart = null;
       joinRoom(code);
     }
+    if (pendingRoomSpectateKey){
+      const key = pendingRoomSpectateKey;
+      pendingRoomSpectateKey = null;
+      startSpectating(key);
+    }
   });
   document.getElementById('deviceBtnMobile').addEventListener('click', () => {
     mobileControlsWanted = true;
@@ -9174,6 +9187,11 @@
       const code = pendingCoopJoinAfterStart;
       pendingCoopJoinAfterStart = null;
       joinRoom(code);
+    }
+    if (pendingRoomSpectateKey){
+      const key = pendingRoomSpectateKey;
+      pendingRoomSpectateKey = null;
+      startSpectating(key);
     }
   });
 
