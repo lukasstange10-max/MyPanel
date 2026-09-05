@@ -2102,61 +2102,8 @@
     <div id="saveCodeHint">🔐 Nicht vergessen: Spielstand regelmäßig sichern, damit nichts verloren geht</div>
   </div>
 
-  <div id="friendsScreen" class="hidden">
-    <div class="startPanel" style="max-width:420px;">
-      <h1 style="font-size:22px; margin:0 0 4px;">🤝 Freunde</h1>
-      <p class="heroTagline" style="margin-bottom:16px;">Füge Freunde hinzu und schau ihnen zu, wenn sie spielen</p>
-      <div style="display:flex; gap:8px; margin-bottom:10px;">
-        <input id="friendsAddInput" type="text" maxlength="24" placeholder="Profilname eingeben..." style="flex:1; box-sizing:border-box; padding:10px; border-radius:10px; border:1px solid rgba(122,170,255,0.4); background:rgba(255,255,255,0.06); color:#fff; font-size:13px;">
-        <button id="friendsAddBtn" style="padding:10px 16px; border-radius:10px; border:1px solid rgba(122,170,255,0.5); background:rgba(122,170,255,0.2); color:#fff; cursor:pointer; font-weight:700;">+ Anfrage senden</button>
-      </div>
-      <p id="friendsAddStatus" style="font-size:12px; min-height:16px; margin:0 0 14px; text-align:left;"></p>
-
-      <div id="friendsRequestsSection" class="hidden" style="margin-bottom:16px;">
-        <p style="font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:0.6px; color:#ffb84d; text-align:left; margin:0 0 8px;">📬 Anfragen</p>
-        <div id="friendsRequestRows"></div>
-      </div>
-
-      <p style="font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:0.6px; color:rgba(255,255,255,0.5); text-align:left; margin:0 0 8px;">Deine Freunde</p>
-      <div id="friendsListRows"></div>
-      <p id="friendsEmptyMsg" style="font-size:13px; color:rgba(255,255,255,0.55); margin-top:10px;">Noch keine Freunde. Trag oben einen Profilnamen ein und sende eine Anfrage.</p>
-      <button id="friendsCloseBtn" class="menuBtn" style="margin-top:16px;">Schließen</button>
-    </div>
-  </div>
-
-  <div id="coopScreen" class="hidden">
-    <div class="startPanel">
-      <div class="titleRow">
-        <h1 style="font-size:30px;">👥 Mit Freunden spielen</h1>
-      </div>
-      <p class="heroTagline">Schwingt gemeinsam durch die Welt — jeder sammelt weiterhin seine eigenen Pokale.</p>
-
-      <div id="coopNoRoom">
-        <button id="coopCreateBtn" class="menuBtn">🎲 Raum erstellen</button>
-        <div id="coopLastRoomRow" class="hidden" style="margin-top:10px;">
-          <button id="coopLastRoomBtn" class="menuBtn" style="background:rgba(122,255,196,0.12); border-color:rgba(122,255,196,0.4);">⏪ Zuletzt genutztem Raum beitreten: <span id="coopLastRoomCode" style="font-weight:900; letter-spacing:2px;"></span></button>
-        </div>
-        <p style="margin:14px 0 8px; font-size:12.5px; color:rgba(255,255,255,0.6);">oder einem anderen Raum beitreten:</p>
-        <div style="display:flex; gap:8px;">
-          <input id="coopJoinInput" type="text" maxlength="5" placeholder="CODE" style="flex:1; text-align:center; letter-spacing:3px; text-transform:uppercase; font-weight:800; font-size:16px; padding:10px; border-radius:10px; border:1px solid rgba(180,140,255,0.4); background:rgba(255,255,255,0.06); color:#fff;">
-          <button id="coopJoinBtn" class="menuBtn" style="width:auto; padding:10px 20px;">Beitreten</button>
-        </div>
-        <p id="coopJoinStatus" style="font-size:12px; color:#ff9d9d; min-height:16px; margin-top:8px;"></p>
-      </div>
-
-      <div id="coopInRoom" class="hidden">
-        <div style="text-align:center; margin-bottom:16px;">
-          <p style="font-size:12px; color:rgba(255,255,255,0.6); margin-bottom:4px;">Dein Raum-Code — teile ihn mit deinem Freund:</p>
-          <div id="coopRoomCode" style="font-size:32px; font-weight:900; letter-spacing:8px; color:#ffe27a;">-----</div>
-        </div>
-        <div id="coopPlayerList" style="display:flex; flex-direction:column; gap:6px; margin-bottom:16px;"></div>
-        <button id="coopLeaveBtn" class="menuBtn" style="background:rgba(255,90,90,0.25); border-color:rgba(255,90,90,0.5);">Raum verlassen</button>
-      </div>
-
-      <button id="coopCloseBtn" class="menuBtn" style="margin-top:14px;">Schließen</button>
-    </div>
-  </div>
-
+  
+  
   <div id="dailyRewardScreen" class="hidden">
     <div class="startPanel" style="max-width:420px; position:relative; overflow:visible;">
       <div id="dailyRewardConfetti"></div>
@@ -2317,6 +2264,62 @@
   </div>
   </div>
 </div>
+
+<div id="coopScreen" class="hidden">
+    <div class="startPanel">
+      <div class="titleRow">
+        <h1 style="font-size:30px;">👥 Mit Freunden spielen</h1>
+      </div>
+      <p class="heroTagline">Schwingt gemeinsam durch die Welt — jeder sammelt weiterhin seine eigenen Pokale.</p>
+
+      <div id="coopNoRoom">
+        <button id="coopCreateBtn" class="menuBtn">🎲 Raum erstellen</button>
+        <div id="coopLastRoomRow" class="hidden" style="margin-top:10px;">
+          <button id="coopLastRoomBtn" class="menuBtn" style="background:rgba(122,255,196,0.12); border-color:rgba(122,255,196,0.4);">⏪ Zuletzt genutztem Raum beitreten: <span id="coopLastRoomCode" style="font-weight:900; letter-spacing:2px;"></span></button>
+        </div>
+        <p style="margin:14px 0 8px; font-size:12.5px; color:rgba(255,255,255,0.6);">oder einem anderen Raum beitreten:</p>
+        <div style="display:flex; gap:8px;">
+          <input id="coopJoinInput" type="text" maxlength="5" placeholder="CODE" style="flex:1; text-align:center; letter-spacing:3px; text-transform:uppercase; font-weight:800; font-size:16px; padding:10px; border-radius:10px; border:1px solid rgba(180,140,255,0.4); background:rgba(255,255,255,0.06); color:#fff;">
+          <button id="coopJoinBtn" class="menuBtn" style="width:auto; padding:10px 20px;">Beitreten</button>
+        </div>
+        <p id="coopJoinStatus" style="font-size:12px; color:#ff9d9d; min-height:16px; margin-top:8px;"></p>
+      </div>
+
+      <div id="coopInRoom" class="hidden">
+        <div style="text-align:center; margin-bottom:16px;">
+          <p style="font-size:12px; color:rgba(255,255,255,0.6); margin-bottom:4px;">Dein Raum-Code — teile ihn mit deinem Freund:</p>
+          <div id="coopRoomCode" style="font-size:32px; font-weight:900; letter-spacing:8px; color:#ffe27a;">-----</div>
+        </div>
+        <div id="coopPlayerList" style="display:flex; flex-direction:column; gap:6px; margin-bottom:16px;"></div>
+        <button id="coopLeaveBtn" class="menuBtn" style="background:rgba(255,90,90,0.25); border-color:rgba(255,90,90,0.5);">Raum verlassen</button>
+      </div>
+
+      <button id="coopCloseBtn" class="menuBtn" style="margin-top:14px;">Schließen</button>
+    </div>
+  </div>
+
+<div id="friendsScreen" class="hidden">
+    <div class="startPanel" style="max-width:420px;">
+      <h1 style="font-size:22px; margin:0 0 4px;">🤝 Freunde</h1>
+      <p class="heroTagline" style="margin-bottom:16px;">Füge Freunde hinzu und schau ihnen zu, wenn sie spielen</p>
+      <div style="display:flex; gap:8px; margin-bottom:10px;">
+        <input id="friendsAddInput" type="text" maxlength="24" placeholder="Profilname eingeben..." style="flex:1; box-sizing:border-box; padding:10px; border-radius:10px; border:1px solid rgba(122,170,255,0.4); background:rgba(255,255,255,0.06); color:#fff; font-size:13px;">
+        <button id="friendsAddBtn" style="padding:10px 16px; border-radius:10px; border:1px solid rgba(122,170,255,0.5); background:rgba(122,170,255,0.2); color:#fff; cursor:pointer; font-weight:700;">+ Anfrage senden</button>
+      </div>
+      <p id="friendsAddStatus" style="font-size:12px; min-height:16px; margin:0 0 14px; text-align:left;"></p>
+
+      <div id="friendsRequestsSection" class="hidden" style="margin-bottom:16px;">
+        <p style="font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:0.6px; color:#ffb84d; text-align:left; margin:0 0 8px;">📬 Anfragen</p>
+        <div id="friendsRequestRows"></div>
+      </div>
+
+      <p style="font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:0.6px; color:rgba(255,255,255,0.5); text-align:left; margin:0 0 8px;">Deine Freunde</p>
+      <div id="friendsListRows"></div>
+      <p id="friendsEmptyMsg" style="font-size:13px; color:rgba(255,255,255,0.55); margin-top:10px;">Noch keine Freunde. Trag oben einen Profilnamen ein und sende eine Anfrage.</p>
+      <button id="friendsCloseBtn" class="menuBtn" style="margin-top:16px;">Schließen</button>
+    </div>
+  </div>
+
 
 <button id="settingsFab">⚙️</button>
 <button id="adminFab" class="hidden" title="Admin-Zentrale">🛠️</button>
