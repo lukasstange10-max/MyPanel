@@ -3454,7 +3454,14 @@
         label.innerHTML = '<span class="coopDot"></span><span>' + p.name + (key === myKey ? ' (du)' : '') + '</span>';
         label.style.display = 'flex'; label.style.alignItems = 'center'; label.style.gap = '8px';
         row.appendChild(label);
-        if (key !== myKey){
+        // Only actually playing right now — not just sitting in the room
+        // having joined from the menu — gets a watch button. world > 0
+        // rules out the placeholder {world:0} joinRoom() writes before
+        // anyone has actually pressed "Spiel starten", and the freshness
+        // check catches someone who started playing but has since quit
+        // back to the menu (their last position update goes stale).
+        const isActuallyPlaying = p.world > 0 && p.updatedAt && (Date.now() - p.updatedAt < 5000);
+        if (key !== myKey && isActuallyPlaying){
           const spectateBtn = document.createElement('button');
           spectateBtn.textContent = '👀';
           spectateBtn.title = 'Zuschauen';
@@ -7189,9 +7196,9 @@
       firebase.database().ref('friendBroadcast/' + key).once('value').then(snap => {
         const data = snap.val();
         const isFresh = data && data.updatedAt && (Date.now() - data.updatedAt < 5000);
-        if (isFresh && !btnGroup.querySelector('.friendsSpectateBtn')){
+        if (isFresh && !btnGroup.querySelector('.friendsWatchBtn')){
           const specBtn = document.createElement('button');
-          specBtn.className = 'friendsSpectateBtn';
+          specBtn.className = 'friendsSpectateBtn friendsWatchBtn';
           specBtn.textContent = '👀 Zuschauen';
           specBtn.addEventListener('click', () => startSpectatingFriend(name, key));
           btnGroup.insertBefore(specBtn, removeBtn);
