@@ -95,6 +95,15 @@
     transition: transform 0.45s cubic-bezier(.2,.8,.3,1.1), opacity 0.4s ease, visibility 0s linear 0s;
     animation: chaosBadgePulse 1.2s ease-in-out infinite;
   }
+  #viewerCountBadge {
+    position: fixed; top: 90px; left: 20px; z-index: 45;
+    padding: 7px 16px; border-radius: 999px; font-size: 12.5px; font-weight: 800;
+    background: rgba(20,10,38,0.75); border: 1px solid rgba(122,170,255,0.4);
+    color: #7aa8ff; backdrop-filter: blur(4px);
+    opacity: 0; transform: translateX(-12px); pointer-events: none;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+  #viewerCountBadge.show { opacity: 1; transform: translateX(0); }
   #globalAnnouncementBanner {
     position: fixed; top: 24px; left: 50%; z-index: 400;
     min-width: 480px; max-width: 96vw; padding: 20px 90px;
@@ -1918,6 +1927,7 @@
   <div id="chaosBadge"></div>
   <div id="goldenHourBadge">✨ Goldene Stunde — 3x Pokale für 5 Minuten!</div>
   <div id="specialRingBadge"></div>
+  <div id="viewerCountBadge"></div>
   <div id="streakDisplay">
     <div id="streakPct">🔥+10% mehr Pokale</div>
     <div id="streakSub">steigt nur auf der Plattform, wo du dreimal hintereinander gelandet bist</div>
@@ -3337,6 +3347,19 @@
           seenRequestKeys.add(fromKey);
           if (running) showFriendRequestToast(info.fromName, fromKey);
         });
+      });
+
+      // "Who's watching me" — a live count of anyone currently spectating
+      // THIS player (see startSpectatingFriend's viewerRef registration),
+      // shown as a small badge at the top of the screen while actually
+      // playing. Purely informational — doesn't affect gameplay at all.
+      firebase.database().ref('spectators/' + myNameKey).on('value', snapshot => {
+        const data = snapshot.val() || {};
+        const count = Object.keys(data).length;
+        const badge = document.getElementById('viewerCountBadge');
+        if (!badge) return;
+        badge.textContent = '👀 ' + count + (count === 1 ? ' schaut zu' : ' schauen zu');
+        badge.classList.toggle('show', count > 0 && running);
       });
     }
   } catch(e){} // Firebase SDK failed to load/init (e.g. offline on first load) — game continues without events
@@ -5450,6 +5473,11 @@
       spectateStandaloneRef = null;
       spectateStandaloneListener = null;
     }
+    if (spectateViewerRef){
+      spectateViewerRef.onDisconnect().cancel();
+      spectateViewerRef.remove().catch(() => {});
+      spectateViewerRef = null;
+    }
     spectatingKey = null;
     // Switch back to whichever world we were actually in before spectating,
     // if it changed to follow the friend — otherwise the player would land
@@ -5566,7 +5594,7 @@
   function updateFriendBroadcast(dt){
     if (!friendBroadcastRef || !running) return;
     friendBroadcastTimer += dt;
-    if (friendBroadcastTimer < 0.5) return; // less urgent than room sync — spectating tolerates a bit more lag
+    if (friendBroadcastTimer < 0.15) return; // matches the co-op room sync rate now — the old 0.5s interval was too sparse for smooth spectate camera tracking
     friendBroadcastTimer = 0;
     friendBroadcastRef.set({
       name: (typeof getActiveProfileMeta === 'function' && getActiveProfileMeta()) ? getActiveProfileMeta().name : 'Spieler',
@@ -6877,6 +6905,7 @@
   }
   let spectateStandaloneRef = null;
   let spectateStandaloneListener = null;
+  let spectateViewerRef = null;
   let pendingSpectateAfterStart = null;
   function startSpectatingFriend(name, key){
     if (!running){
@@ -6910,6 +6939,16 @@
     });
     spectateStandaloneRef = ref;
     spectateStandaloneListener = listener;
+    // Register as a viewer on the SPECTATED person's own "who's watching
+    // me" list, so their screen can show a live count — cleaned up both on
+    // stopSpectating() and automatically on disconnect (closed tab, lost
+    // network) so a crashed viewer doesn't leave a stale "1 watching" stuck
+    // on the other end forever.
+    const myKey = friendNameKey(myFriendName());
+    const viewerRef = firebase.database().ref('spectators/' + key + '/' + myKey);
+    viewerRef.set(true).catch(() => {});
+    viewerRef.onDisconnect().remove();
+    spectateViewerRef = viewerRef;
     const tryStart = (attemptsLeft) => {
       if (friendGhosts[fbKey]) startSpectating(fbKey);
       else if (attemptsLeft > 0) setTimeout(() => tryStart(attemptsLeft - 1), 150);
@@ -8972,6 +9011,7 @@
     // though the player already unlocked it once this session.
     closePauseMenu();
     running = false;
+    document.getElementById('viewerCountBadge').classList.remove('show');
     muteRainAudio();
     player.lives = 3;
     updateLivesDisplay();
