@@ -3228,7 +3228,28 @@
     if (!payload || typeof payload.data !== 'object') return false;
     const prefix = 'rankmann_profile_' + ACTIVE_PROFILE_ID + '_';
     try {
+      // The friends list specifically gets MERGED rather than overwritten —
+      // restoring an OLDER code (from before some friends were added)
+      // should never silently erase friends gained since then. Everything
+      // else in the code still fully overwrites as normal, since trophies/
+      // skins/etc. are things a player might genuinely want rolled back to
+      // an earlier snapshot on purpose.
+      const currentFriendsRaw = localStorage.getItem(prefix + 'rankmann_friendsList');
+      let mergedFriends = null;
+      if (payload.data.rankmann_friendsList){
+        try {
+          const fromCode = JSON.parse(payload.data.rankmann_friendsList) || [];
+          const current = currentFriendsRaw ? (JSON.parse(currentFriendsRaw) || []) : [];
+          const seen = new Set();
+          mergedFriends = [];
+          [...current, ...fromCode].forEach(name => {
+            const key = name.toLowerCase();
+            if (!seen.has(key)){ seen.add(key); mergedFriends.push(name); }
+          });
+        } catch(e){ /* malformed data on either side — fall through to the normal overwrite for this key */ }
+      }
       Object.entries(payload.data).forEach(([k, v]) => { localStorage.setItem(prefix + k, v); });
+      if (mergedFriends) localStorage.setItem(prefix + 'rankmann_friendsList', JSON.stringify(mergedFriends));
       return true;
     } catch(e){ return false; }
   }
