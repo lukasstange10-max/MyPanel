@@ -2150,10 +2150,10 @@
       <h1 style="font-size:26px; margin:0 0 6px; background:linear-gradient(135deg,#ffe27a,#ff9d6c,#9d7bff); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;">Das größte Update aller Zeiten!</h1>
       <p class="heroTagline" style="margin-bottom:18px;">So viel Neues ist gerade dazugekommen:</p>
       <div style="text-align:left; display:flex; flex-direction:column; gap:10px; margin-bottom:20px;">
-        <div class="changelogEntry" style="padding:12px 16px;">🤸 <strong>Trick-System</strong> — Salto in der Luft für Style-Punkte und Bonus-Pokale</div>
-        <div class="changelogEntry" style="padding:12px 16px;">🎪 <strong>Chaos-Modus</strong> — zufällig: umgekehrte Schwerkraft, Hyper-Sprünge oder vertauschte Steuerung</div>
-        <div class="changelogEntry" style="padding:12px 16px;">✨ <strong>Goldene Stunde & 🎯 Bonus-Ring</strong> — seltene Überraschungs-Belohnungen</div>
-        <div class="changelogEntry" style="padding:12px 16px;">👥 <strong>Koop-Modus</strong> — schwinge live mit einem Freund, mit echten Charakteren, Netz und Tanz-Sync</div>
+        <div class="changelogEntry" style="padding:12px 16px;">🤝 <strong>Echtes Freunde-System</strong> — Anfragen senden, annehmen, sehen wer online ist</div>
+        <div class="changelogEntry" style="padding:12px 16px;">🎮 <strong>Koop-Einladungen</strong> — Freund direkt einladen, kein Raum-Code nötig</div>
+        <div class="changelogEntry" style="padding:12px 16px;">👀 <strong>Zuschauen</strong> — sieh live zu, wenn ein Freund spielt, inklusive Netz &amp; Zuschauerzahl</div>
+        <div class="changelogEntry" style="padding:12px 16px;">🤸 <strong>Trick-System &amp; 🎪 Chaos-Modus</strong> — Saltos, Bonus-Punkte und Zufalls-Überraschungen</div>
       </div>
       <button id="bigUpdateSeeAllBtn" class="menuBtn" style="margin-bottom:10px;">📋 Alle Updates ansehen</button>
       <button id="bigUpdateCloseBtn" class="menuBtn" style="background:linear-gradient(135deg, rgba(122,255,196,0.3), rgba(60,200,150,0.3)); border-color:rgba(122,255,196,0.6);">Los geht's! 🚀</button>
@@ -2257,6 +2257,19 @@
             <li>🔐 Spielstand-Sicherung — Export/Import-Code als Sicherheitsnetz vor jedem Update</li>
             <li>👥 Koop-Erweiterungen — letzten Raum-Code merken, Live-Spieleranzahl, Richtungs-Pfeil zu Freunden</li>
             <li>✨ Schwing-Trail — leuchtende Partikelspur beim Schwingen</li>
+          </ul>
+        </div>
+
+        <div class="changelogEntry">
+          <div class="changelogDate">Heute, jetzt</div>
+          <h3>🤝 Echtes Freunde-System</h3>
+          <ul>
+            <li>🤝 Freunde per Profilname hinzufügen — mit echter Anfrage, die erst angenommen werden muss</li>
+            <li>📬 Live-Benachrichtigung bei neuer Anfrage, auch mitten im Spiel, mit Zahl am Freunde-Knopf</li>
+            <li>🟢 Sofort sehen, welche Freunde gerade online sind oder aktiv spielen</li>
+            <li>🎮 Koop-Einladungen — Freund direkt in deinen Raum einladen, kein Code nötig</li>
+            <li>👀 Freunden beim Spielen zuschauen — live, mit Netz-Anzeige und "wer schaut gerade zu"-Anzeige</li>
+            <li>🚪 Sauberes Verhalten beim Verlassen — Zuschauen endet automatisch, wenn der Freund aufhört zu spielen</li>
           </ul>
         </div>
 
@@ -9892,7 +9905,7 @@
   // through the full changelog to find out anything changed at all.
   // The daily-reward popup (if there is one to show today) waits until
   // AFTER this closes, so a brand-new session never stacks two popups.
-  const BIG_UPDATE_VERSION = 'coop2';
+  const BIG_UPDATE_VERSION = 'friends1';
   if (storageGet('rankmann_seenBigUpdate', null) !== BIG_UPDATE_VERSION){
     document.getElementById('bigUpdateScreen').classList.remove('hidden');
     spawnConfetti('bigUpdateConfetti', 40);
