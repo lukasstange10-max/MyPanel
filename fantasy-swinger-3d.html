@@ -8744,14 +8744,6 @@
     if (!player.wasOnGround && player.onGround && player.standingOnIsCheckpoint){
       registerPlatformLanding(player.standingOnPos || player.standingOn);
     }
-    // Chaos mode's "bouncy" type — runs AFTER the streak registration above
-    // (so a bouncy landing on a checkpoint still counts normally), and just
-    // ADDS a strong upward bounce rather than changing how landing itself
-    // works.
-    if (chaosActive && chaosType === 'bouncy' && player.onGround){
-      player.vel.y = Math.max(16, player.lastImpactSpeed * 0.85);
-      player.onGround = false;
-    }
     if (player.onGround) {
       player.fallSoundPlayed = false;
       player.grappledSinceGrounded = false;
@@ -9104,6 +9096,18 @@
         snapCameraToPlayer();
       }
       cp.wasOnPlatform = isOnPlatformNow;
+    }
+
+    // Chaos mode's "bouncy" type — runs here, AFTER the checkpoint loop
+    // above has had its chance to see a real player.onGround==true landing
+    // and award trophies for it. Placing this any earlier in the frame
+    // (it used to sit right after the streak-bonus check, which runs
+    // BEFORE the checkpoint loop) meant the checkpoint loop always saw
+    // onGround already flipped back to false by the bounce, so landing
+    // on a platform during bouncy chaos silently paid out nothing at all.
+    if (chaosActive && chaosType === 'bouncy' && player.onGround){
+      player.vel.y = Math.max(16, player.lastImpactSpeed * 0.85);
+      player.onGround = false;
     }
 
     updateDayNight(dt);
