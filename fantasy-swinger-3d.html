@@ -3543,7 +3543,7 @@
     const myName = meta ? meta.name : 'Spieler';
     myRoomPlayerRef = firebase.database().ref('rooms/' + code + '/players/' + roomPlayerKey());
     myRoomPlayerRef.onDisconnect().remove(); // leave automatically if the tab closes/crashes
-    myRoomPlayerRef.set({ name: myName, x: 0, y: 0, z: 0, yaw: 0, world: 0, updatedAt: firebase.database.ServerValue.TIMESTAMP });
+    myRoomPlayerRef.set({ name: myName, x: 0, y: 0, z: 0, yaw: 0, world: 0, trophies: totalTrophies, updatedAt: firebase.database.ServerValue.TIMESTAMP });
     roomPlayersRef = firebase.database().ref('rooms/' + code + '/players');
     roomPlayersRef.on('value', onRoomPlayersUpdate);
   }
@@ -5415,23 +5415,28 @@
   // friend would be a lot of extra weight for what's meant to be a light
   // "see where your friend is" feature, so this is a translucent capsule
   // plus a floating name tag instead.
-  function makeGhostMesh(name, skinId){
+  function makeGhostMesh(name, skinId, trophies){
     const skin = SKIN_DEFS.find(s => s.id === skinId) || SKIN_DEFS[0];
     const built = buildCharacterMesh(skin); // the exact same detailed character the local player uses, own independent materials
     const g = built.playerMesh;
     g.position.y = 1; // buildCharacterMesh's inner "body" group sits at -1 to match the local player's feet-on-ground offset; ghosts are positioned directly (no separate collision radius math), so compensate here instead
 
     const canvas = document.createElement('canvas');
-    canvas.width = 256; canvas.height = 64;
+    canvas.width = 256; canvas.height = 84;
     const ctx = canvas.getContext('2d');
-    ctx.font = 'bold 38px sans-serif';
-    ctx.fillStyle = '#ffffff';
     ctx.textAlign = 'center';
     ctx.shadowColor = 'rgba(0,0,0,0.8)'; ctx.shadowBlur = 6;
-    ctx.fillText(name.slice(0, 14), 128, 46);
+    ctx.font = 'bold 34px sans-serif';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(name.slice(0, 14), 128, 40);
+    if (typeof trophies === 'number'){
+      ctx.font = 'bold 20px sans-serif';
+      ctx.fillStyle = '#ffe27a';
+      ctx.fillText(getPlayerTitle(trophies), 128, 68);
+    }
     const tag = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas), transparent: true, depthTest: false }));
-    tag.scale.set(2.2, 0.55, 1);
-    tag.position.y = 2.5;
+    tag.scale.set(2.2, 0.72, 1);
+    tag.position.y = 2.6;
     g.add(tag);
     scene.add(g);
     // A friend's own web/rope line, same visual language as the local
@@ -5445,14 +5450,14 @@
   }
   function updateGhostFromRoomData(key, p){
     if (!friendGhosts[key]){
-      const built = makeGhostMesh(p.name || 'Freund', p.skin);
+      const built = makeGhostMesh(p.name || 'Freund', p.skin, p.trophies);
       friendGhosts[key] = { ...built, skinId: p.skin, targetPos: new THREE.Vector3(p.x, p.y, p.z), targetYaw: p.yaw || 0, world: p.world, name: p.name, walkPhase: 0, emoteElapsed: 0 };
     } else if (friendGhosts[key].skinId !== p.skin){
       // Friend changed their equipped skin mid-session — rebuild the ghost
       // with the new colors rather than trying to live-patch materials.
       const oldPos = friendGhosts[key].mesh.position.clone();
       removeGhost(key);
-      const built = makeGhostMesh(p.name || 'Freund', p.skin);
+      const built = makeGhostMesh(p.name || 'Freund', p.skin, p.trophies);
       friendGhosts[key] = { ...built, skinId: p.skin, targetPos: new THREE.Vector3(p.x, p.y, p.z), targetYaw: p.yaw || 0, world: p.world, name: p.name, walkPhase: 0, emoteElapsed: 0 };
       friendGhosts[key].mesh.position.copy(oldPos);
     }
