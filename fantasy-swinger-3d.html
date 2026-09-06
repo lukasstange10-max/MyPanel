@@ -959,6 +959,11 @@
     font-size: 13px; font-weight: 700; text-align: left; margin-bottom: 8px;
   }
   .friendsRow .coopDot { width: 8px; height: 8px; border-radius: 50%; background: #7affc4; flex-shrink: 0; }
+  .friendTitleTag, .coopTitleTag {
+    font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4px;
+    color: #ffe27a; background: rgba(255,226,122,0.14); border: 1px solid rgba(255,226,122,0.35);
+    border-radius: 999px; padding: 2px 8px; margin-left: 4px;
+  }
   .friendsSpectateBtn {
     background: rgba(122,255,196,0.15); border: 1px solid rgba(122,255,196,0.4);
     border-radius: 8px; padding: 5px 12px; cursor: pointer; font-size: 13px; color: #fff;
@@ -2080,6 +2085,7 @@
     <button id="activeProfileBadge" title="Profil wechseln">
       <span id="activeProfileAvatar">🦸</span>
       <span id="activeProfileName">Spieler</span>
+      <span id="activeProfileTitleTag" class="friendTitleTag"></span>
       <span class="profileSwitchHint" data-i18n="profileSwitchHint">Wechseln</span>
     </button>
 
@@ -3485,7 +3491,8 @@
         row.className = 'coopPlayerRow';
         row.style.justifyContent = 'space-between';
         const label = document.createElement('span');
-        label.innerHTML = '<span class="coopDot"></span><span>' + p.name + (key === myKey ? ' (du)' : '') + '</span>';
+        const titleTag = typeof p.trophies === 'number' ? '<span class="coopTitleTag">' + getPlayerTitle(p.trophies) + '</span>' : '';
+        label.innerHTML = '<span class="coopDot"></span><span>' + p.name + (key === myKey ? ' (du)' : '') + '</span>' + titleTag;
         label.style.display = 'flex'; label.style.alignItems = 'center'; label.style.gap = '8px';
         row.appendChild(label);
         // Only actually playing right now — not just sitting in the room
@@ -5458,6 +5465,7 @@
     if (gh.emote !== (p.emote || null)) gh.emoteElapsed = 0; // fresh emote (or none) started — restart its timer
     gh.emote = p.emote || null;
     gh.deadEnemyIndices = Array.isArray(p.deadEnemyIndices) ? p.deadEnemyIndices : null;
+    gh.trophies = typeof p.trophies === 'number' ? p.trophies : gh.trophies;
     gh.lastSeenMs = Date.now();
   }
   function removeGhost(key){
@@ -5553,7 +5561,10 @@
     }
     const banner = document.getElementById('spectateBanner');
     if (banner){
-      document.getElementById('spectateBannerName').textContent = friendGhosts[key].name || 'Freund';
+      const gh = friendGhosts[key];
+      let nameText = gh.name || 'Freund';
+      if (typeof gh.trophies === 'number') nameText += ' (' + getPlayerTitle(gh.trophies) + ')';
+      document.getElementById('spectateBannerName').textContent = nameText;
       banner.classList.add('show');
     }
     updateTouchControlsVisibility(); // hides the joystick/buttons — nothing to control while just watching
@@ -5683,6 +5694,7 @@
     const data = {
       name: (typeof getActiveProfileMeta === 'function' && getActiveProfileMeta()) ? getActiveProfileMeta().name : 'Spieler',
       x: player.pos.x, y: player.pos.y, z: player.pos.z, yaw: player.faceYaw, world: selectedWorld, skin: equippedSkin,
+      trophies: totalTrophies,
       updatedAt: firebase.database.ServerValue.TIMESTAMP,
     };
     // Grapple + emote state, so a friend's rope and dance/wave/etc. poses
@@ -5712,6 +5724,7 @@
     const data = {
       name: (typeof getActiveProfileMeta === 'function' && getActiveProfileMeta()) ? getActiveProfileMeta().name : 'Spieler',
       x: player.pos.x, y: player.pos.y, z: player.pos.z, yaw: player.faceYaw, world: selectedWorld, skin: equippedSkin,
+      trophies: totalTrophies,
       // Firebase's SERVER clock, not this device's own — comparing two
       // different players' own Date.now() values directly would be wrong
       // whenever their clocks aren't perfectly in sync (common in practice),
@@ -6593,6 +6606,28 @@
   let ownedVineSkins = storageGet('rankmann_ownedVineSkins', ['standard']);
   let equippedVineSkin = storageGet('rankmann_equippedVineSkin', 'standard');
   let totalTrophies = storageGet('rankmann_totalTrophies', 0);
+  // ---------- TITLE SYSTEM ----------
+  // A visible rank/title based on lifetime trophy count — shown next to a
+  // player's name wherever another player sees them (friends list, co-op
+  // room, spectate banner), giving a little status/flex on top of the raw
+  // number. Purely cosmetic — doesn't affect gameplay at all.
+  const TITLE_TIERS = [
+    { min: 0,    name: 'Neuling' },
+    { min: 50,   name: 'Schwinger' },
+    { min: 150,  name: 'Ranken-Reiter' },
+    { min: 300,  name: 'Schwing-Meister' },
+    { min: 500,  name: 'Champion' },
+    { min: 800,  name: 'Elite-Schwinger' },
+    { min: 1200, name: 'Legende' },
+  ];
+  function getPlayerTitle(trophies){
+    let title = TITLE_TIERS[0].name;
+    for (const tier of TITLE_TIERS){
+      if (trophies >= tier.min) title = tier.name; else break;
+    }
+    return title;
+  }
+
   let world2Unlocked = storageGet('rankmann_world2Unlocked', false);
   let selectedWorld = storageGet('rankmann_selectedWorld', 1);
   let enemiesDefeated = storageGet('rankmann_enemiesDefeated', 0);
@@ -6910,6 +6945,8 @@
     updateShopUI();
     updateWorldSelectUI();
     checkAchievements();
+    const titleEl = document.getElementById('activeProfileTitleTag');
+    if (titleEl) titleEl.textContent = getPlayerTitle(totalTrophies);
   }
   updateTrophyDisplay();
 
@@ -6925,6 +6962,8 @@
     if (!avatarEl || !nameEl) return;
     avatarEl.textContent = meta ? meta.avatar : '🦸';
     nameEl.textContent = meta ? meta.name : 'Spieler';
+    const titleEl = document.getElementById('activeProfileTitleTag');
+    if (titleEl) titleEl.textContent = getPlayerTitle(totalTrophies);
   }
   updateProfileBadge();
   document.getElementById('activeProfileBadge').addEventListener('click', () => {
@@ -7261,6 +7300,15 @@
           specBtn.textContent = '👀 Zuschauen';
           specBtn.addEventListener('click', () => startSpectatingFriend(name, key));
           btnGroup.insertBefore(specBtn, removeBtn);
+        }
+        if (data && typeof data.trophies === 'number'){
+          const titleEl = row.querySelector('.friendTitleTag');
+          if (!titleEl){
+            const tag = document.createElement('span');
+            tag.className = 'friendTitleTag';
+            tag.textContent = getPlayerTitle(data.trophies);
+            row.querySelector('span').appendChild(tag);
+          }
         }
       }).catch(() => {});
     });
