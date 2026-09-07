@@ -5709,7 +5709,13 @@
   // throttled (not every single frame) to keep Firebase writes reasonable.
   let roomSyncTimer = 0;
   function updateRoomSync(dt){
-    if (!myRoomPlayerRef || !running) return;
+    // While spectating, player.pos gets overridden every frame to follow
+    // whoever's being watched — broadcasting THAT would make the spectator
+    // appear as a ghost sitting right on top of the person they're
+    // watching, on every other client. Simply not sending updates freezes
+    // their own ghost at their last real position instead, which is a far
+    // less confusing outcome for everyone else in the room.
+    if (!myRoomPlayerRef || !running || spectatingKey) return;
     roomSyncTimer += dt;
     if (roomSyncTimer < 0.15) return; // ~6-7 updates/sec — smooth enough with the lerp above, cheap on writes
     roomSyncTimer = 0;
@@ -5739,7 +5745,7 @@
   // find and spectate you by name alone, with no shared room code needed.
   let friendBroadcastTimer = 0;
   function updateFriendBroadcast(dt){
-    if (!friendBroadcastRef || !running) return;
+    if (!friendBroadcastRef || !running || spectatingKey) return; // same reasoning as updateRoomSync above — don't broadcast a position that's actually just following whoever we're watching
     friendBroadcastTimer += dt;
     if (friendBroadcastTimer < 0.15) return; // matches the co-op room sync rate now — the old 0.5s interval was too sparse for smooth spectate camera tracking
     friendBroadcastTimer = 0;
@@ -7106,15 +7112,13 @@
     if (firebaseReady()) firebase.database().ref('coopInvites/' + friendNameKey(myFriendName()) + '/' + fromKey).remove().catch(() => {});
     document.getElementById('coopInviteToast').classList.remove('show');
     pendingCoopInvite = null;
-    if (!running){
-      // Not playing yet — same "walk them through device choice, then
-      // finish the action automatically" pattern as spectating a friend
-      // who isn't running does, so accepting an invite is never a dead end.
-      pendingCoopJoinAfterStart = roomCode;
-      if (paused) closePauseMenu();
-      document.getElementById('deviceSurvey').classList.remove('hidden');
-      return;
-    }
+    // Joining a room is just bookkeeping (which room this player belongs
+    // to) — it does NOT require actually playing. So this always just
+    // joins quietly and shows the room screen, regardless of whether a
+    // game is currently running; it never forces the device-choice survey
+    // or auto-starts gameplay the person didn't ask for. They press "Spiel
+    // starten" themselves, whenever they're actually ready — the room is
+    // simply already waiting for them at that point.
     if (paused) closePauseMenu();
     joinRoom(roomCode);
     document.getElementById('coopScreen').classList.remove('hidden');
