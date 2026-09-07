@@ -5737,6 +5737,14 @@
       data.grappling = false;
     }
     data.emote = emoteActive ? emoteId : null;
+    // Which small enemies THIS player has already defeated, by their fixed
+    // array index (stable across every client, since smallEnemies is built
+    // in the same hardcoded order for everyone) — only actually READ while
+    // someone is actively spectating (camera-following) this player, so it
+    // has zero effect on normal simultaneous co-op play; it just means a
+    // spectator's view correctly reflects enemies already cleared instead
+    // of showing them all as freshly alive.
+    data.deadEnemyIndices = smallEnemies.reduce((arr, en, i) => { if (!en.alive) arr.push(i); return arr; }, []);
     myRoomPlayerRef.set(data).catch(() => {}); // best-effort — a dropped position update just means a friend's ghost is briefly stale, never worth interrupting gameplay over
   }
 
@@ -7318,11 +7326,18 @@
       rowsEl.appendChild(row);
 
       if (!firebaseReady()) return; // Firebase unavailable — show the row but skip the live status check
+      // Already in the same co-op room together? Then "invite" doesn't
+      // make sense — check the room's OWN ghost list (non-standalone
+      // ones) for a matching name rather than the presence/online check,
+      // since that's what actually reflects current room membership.
+      const alreadyInMyRoom = !!currentRoomCode && Object.keys(friendGhosts).some(k =>
+        !k.startsWith('standalone_') && friendGhosts[k].name && friendGhosts[k].name.toLowerCase() === name.toLowerCase()
+      );
       firebase.database().ref('presence/' + key).once('value').then(snap => {
         const data = snap.val();
         const dot = row.querySelector('.coopDot');
         if (dot) dot.style.background = (data && data.online) ? '#7affc4' : '#555';
-        if (data && data.online && !btnGroup.querySelector('.friendsInviteBtn')){
+        if (data && data.online && !alreadyInMyRoom && !btnGroup.querySelector('.friendsInviteBtn')){
           const inviteBtn = document.createElement('button');
           inviteBtn.className = 'friendsSpectateBtn friendsInviteBtn';
           inviteBtn.textContent = '🎮 Einladen';
