@@ -3531,7 +3531,24 @@
     Object.entries(data).forEach(([key, p]) => {
       if (key === myKey) return;
       seenKeys.add(key);
+      // If a standalone (Friends-list) spectate ghost already exists for
+      // this exact person (matched by name), drop it — the room-based
+      // ghost about to be created/updated below tracks the same person,
+      // and keeping both around renders two overlapping copies of them.
+      // If we were actively spectating the standalone one, hand the
+      // session over to the room key instead of ending it outright.
+      const staleStandaloneKey = Object.keys(friendGhosts).find(k =>
+        k.startsWith('standalone_') && friendGhosts[k].name && friendGhosts[k].name.toLowerCase() === (p.name || '').toLowerCase()
+      );
+      let handOffSpectate = false;
+      if (staleStandaloneKey){
+        handOffSpectate = spectatingKey === staleStandaloneKey;
+        if (spectateStandaloneRef){ spectateStandaloneRef.off('value', spectateStandaloneListener); spectateStandaloneRef = null; spectateStandaloneListener = null; }
+        removeGhost(staleStandaloneKey);
+        if (handOffSpectate) spectatingKey = null; // clear without the normal stopSpectating() cleanup — we're about to hand off to the room ghost below, not actually stopping
+      }
       updateGhostFromRoomData(key, p);
+      if (handOffSpectate && friendGhosts[key]) startSpectating(key);
     });
     Object.keys(friendGhosts).forEach(key => { if (!seenKeys.has(key)) removeGhost(key); });
   }
@@ -7160,6 +7177,19 @@
     document.getElementById('friendsScreen').classList.add('hidden');
     stopFriendsAutoRefresh();
     if (paused) closePauseMenu();
+    // If this friend is ALSO in the same co-op room as us, a ghost for
+    // them already exists (created by the room sync, matched by name).
+    // Spectating that one directly — instead of ALSO spinning up a
+    // separate standalone friendBroadcast-based ghost for the exact same
+    // person — avoids two overlapping copies of them rendering on top of
+    // each other, which is exactly what happened before this check existed.
+    const existingRoomKey = Object.keys(friendGhosts).find(k =>
+      !k.startsWith('standalone_') && friendGhosts[k].name && friendGhosts[k].name.toLowerCase() === name.toLowerCase()
+    );
+    if (existingRoomKey){
+      startSpectating(existingRoomKey);
+      return;
+    }
     const fbKey = 'standalone_' + key;
     const ref = firebase.database().ref('friendBroadcast/' + key);
     const listener = ref.on('value', snapshot => {
