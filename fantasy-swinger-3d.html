@@ -126,9 +126,10 @@
   }
   #bossFadeOverlay.show { opacity: 1; pointer-events: auto; }
   #bossFadeText {
-    font-size: 42px; font-weight: 900; color: #ff2d55; text-align: center;
+    font-size: clamp(38px, 8vw, 68px); font-weight: 900; color: #ff2d55; text-align: center;
     text-shadow: 0 0 30px rgba(255,45,85,0.6);
     opacity: 0; transition: opacity 0.6s ease;
+    padding: 0 20px;
   }
   #bossFadeText.show { opacity: 1; }
 
@@ -151,6 +152,20 @@
     background: linear-gradient(90deg, #ff2d55, #ff6b8a);
     transition: width 0.35s ease, background 0.4s ease;
   }
+
+  #damageVignette {
+    position: fixed; inset: 0; z-index: 90; pointer-events: none;
+    background: radial-gradient(ellipse at center, transparent 45%, rgba(255,20,40,0.55) 100%);
+    opacity: 0;
+  }
+  #damageVignette.flash {
+    animation: damageVignettePulse 0.55s ease-out;
+  }
+  @keyframes damageVignettePulse {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
   #globalAnnouncementBanner {
     position: fixed; top: 24px; left: 50%; z-index: 400;
     min-width: 480px; max-width: 96vw; padding: 20px 90px;
@@ -2004,6 +2019,7 @@
   <div id="bossFadeOverlay">
     <div id="bossFadeText"></div>
   </div>
+  <div id="damageVignette"></div>
   <div id="bossHpBarWrap">
     <div id="bossHpBarName">👹 BOSS</div>
     <div id="bossHpBarBg"><div id="bossHpBarFill"></div></div>
@@ -4904,6 +4920,8 @@
   let inBossArena = false;
   let bossAttackTimer = 0;
   let bossHitFlashT = 0;
+  const BOSS_LUNGE_DURATION = 0.4;
+  let bossLungeT = 0;
   let preBossPos = null;
   let preBossWorld = null;
   let bossVictoryPending = false;
@@ -5017,16 +5035,42 @@
   }
   function updateBossFight(dt){
     if (!inBossArena) return;
-    // Gentle idle bob/rotation so something this size still reads as alive
-    // even though it never actually moves from its spot.
+    // Gentle idle bob so something this size still reads as alive even
+    // though it never actually moves from its spot.
     bossGroup.position.y = BOSS_ARENA_POS.y + 12 + Math.sin(clock.elapsedTime * 0.8) * 1.2;
-    bossGroup.rotation.y += dt * 0.15;
+
+    // Always facing the player — turns smoothly toward whichever direction
+    // they're currently standing in (not an instant snap), so moving left
+    // around the arena visibly turns its head/body to follow you left.
+    const toPlayer = new THREE.Vector3().subVectors(player.pos, bossGroup.position);
+    if (toPlayer.x*toPlayer.x + toPlayer.z*toPlayer.z > 0.01){
+      const targetYaw = Math.atan2(toPlayer.x, toPlayer.z);
+      let deltaYaw = targetYaw - bossGroup.rotation.y;
+      while (deltaYaw > Math.PI) deltaYaw -= Math.PI * 2; // shortest-path wrap, so it never spins the long way around
+      while (deltaYaw < -Math.PI) deltaYaw += Math.PI * 2;
+      bossGroup.rotation.y += deltaYaw * Math.min(1, dt * 3);
+    }
+
     if (bossHitFlashT > 0){
       bossHitFlashT -= dt;
       bossBodyMat.emissiveIntensity = 0.45 + Math.max(0, bossHitFlashT) * 3;
-    } else {
+    } else if (bossLungeT <= 0){
       bossBodyMat.emissiveIntensity = 0.45;
     }
+
+    // Attack lunge/telegraph — a quick, visible windup-then-punch motion so
+    // getting hit never feels like it came out of nowhere. The boss grows
+    // and glows brighter starting just before the hit actually lands, then
+    // snaps back to normal size right after.
+    if (bossLungeT > 0){
+      bossLungeT -= dt;
+      const t = Math.max(0, bossLungeT);
+      const scale = 1 + Math.sin((1 - t / BOSS_LUNGE_DURATION) * Math.PI) * 0.22;
+      bossGroup.scale.setScalar(scale);
+      bossBodyMat.emissiveIntensity = 0.45 + Math.sin((1 - t / BOSS_LUNGE_DURATION) * Math.PI) * 1.8;
+      if (bossLungeT <= 0) bossGroup.scale.setScalar(1);
+    }
+
     // "Mehrstufig" — attacks noticeably faster once wounded, and faster
     // still once nearly defeated, so the fight visibly escalates rather
     // than just ticking the same health bar down at a flat pace.
@@ -5035,12 +5079,14 @@
     bossAttackTimer += dt;
     if (bossAttackTimer >= attackInterval){
       bossAttackTimer = 0;
+      bossLungeT = BOSS_LUNGE_DURATION; // visible on EVERY attack swing, whether or not it actually lands, so a dodged attack still reads clearly as an attack
       const dist = player.pos.distanceTo(bossGroup.position);
       if (dist < BOSS_ATTACK_RANGE && !adminGodMode && player.invuln <= 0){
         player.lives -= 1;
         player.invuln = 2.2;
         updateLivesDisplay();
         pulseBox('box-lives', 'shake');
+        flashDamageVignette();
         vibrate(80);
         const away = new THREE.Vector3().subVectors(player.pos, bossGroup.position).normalize();
         player.vel.addScaledVector(away, 16);
@@ -8975,6 +9021,9 @@
     void el.offsetWidth; // restart animation
     el.classList.add(cls);
   }
+  function flashDamageVignette(){
+    pulseBox('damageVignette', 'flash');
+  }
 
   // Flies a "+N 🏆" from roughly screen-center (where the pickup happened,
   // from the camera's point of view) over to the trophy HUD box, then pops
@@ -9522,6 +9571,7 @@
         player.invuln = 2.0;
         updateLivesDisplay();
         pulseBox('box-lives', 'shake');
+        flashDamageVignette();
         vibrate(45);
         // knockback
         const away = new THREE.Vector3().subVectors(player.pos, en.mesh.position).normalize();
@@ -9561,6 +9611,7 @@
         player.invuln = 1.5;
         updateLivesDisplay();
         pulseBox('box-lives', 'shake');
+        flashDamageVignette();
         vibrate(45);
         const away = new THREE.Vector3().subVectors(player.pos, en.mesh.position).normalize();
         player.vel.addScaledVector(away, 8);
