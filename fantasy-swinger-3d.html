@@ -4517,6 +4517,15 @@
   }
 
   function updateWeather(dt){
+    // No weather in the boss arena at all — it's a separate, enclosed space
+    // far from any of the normal worlds, so the ambient rain sound (and any
+    // leftover rain particles) from wherever the player was standing before
+    // getting pulled into the fight would be completely out of place here.
+    if (inBossArena){
+      muteRainAudio();
+      rainMat.opacity = 0;
+      return;
+    }
     // A global broadcast takes priority over the local random cycle — keeps
     // the storm alive for as long as the synced expiry says. Auto-enables
     // the player's own "Wetter-Effekte" setting too (same as the admin's
@@ -4926,7 +4935,26 @@
   let preBossWorld = null;
   let bossVictoryPending = false;
 
+  // Every general-purpose HUD element gets tucked away the instant a boss
+  // transition starts — not just visually covered by the black overlay
+  // (which fades in gradually and would let things bleed through mid-fade),
+  // but actually hidden outright, then restored once the transition is
+  // fully done (either into the fight or back out of it).
+  const BOSS_TRANSITION_HIDE_IDS = [
+    'hud', 'chaosBadge', 'stormBadge', 'weatherForecastBadge', 'viewerCountBadge',
+    'coopPlayerCountBadge', 'coopOffscreenArrows', 'specialRingBadge',
+    'globalAnnouncementBanner', 'friendReqToast', 'coopInviteToast', 'spectateBanner',
+    'emoteHudBtn', 'settingsFab', 'adminFab', 'musicFab', 'touchControls', 'crosshair',
+    'bossHpBarWrap',
+  ];
+  function setGameUiHiddenForBossTransition(hidden){
+    BOSS_TRANSITION_HIDE_IDS.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.visibility = hidden ? 'hidden' : '';
+    });
+  }
   function fadeToBlack(){
+    setGameUiHiddenForBossTransition(true);
     return new Promise(resolve => {
       const overlay = document.getElementById('bossFadeOverlay');
       overlay.classList.add('show');
@@ -4939,6 +4967,7 @@
     textEl.classList.remove('show');
     textEl.textContent = '';
     overlay.classList.remove('show');
+    setGameUiHiddenForBossTransition(false);
   }
   function showBossFadeText(text){
     const textEl = document.getElementById('bossFadeText');
