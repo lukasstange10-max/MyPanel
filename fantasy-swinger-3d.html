@@ -122,7 +122,7 @@
     position: fixed; inset: 0; z-index: 500;
     background: #000; opacity: 0; pointer-events: none;
     display: flex; align-items: center; justify-content: center;
-    transition: opacity 0.9s ease;
+    transition: opacity 1.4s ease;
   }
   #bossFadeOverlay.show { opacity: 1; pointer-events: auto; }
   #bossFadeText {
@@ -4816,8 +4816,8 @@
   const BOSS_ARENA_POS = new THREE.Vector3(0, 400, -9000);
   const BOSS_MAX_HP = 400;
   const BOSS_TROPHY_PER_HIT = 20;
-  const BOSS_ATTACK_RANGE = 9; // generous — the boss is huge, its "reach" should feel proportional
-  const BOSS_HIT_RANGE = 7.5; // how close the PLAYER needs to be to land a hit on it
+  const BOSS_ATTACK_RANGE = 24; // the boss's body alone has a 9-unit radius (icosahedron radius) plus spikes reaching further — this needs real margin beyond that or the boss can never actually reach anyone standing near it
+  const BOSS_HIT_RANGE = 22; // same reasoning — 7.5 was actually SMALLER than the boss's own body radius, meaning landing a hit required standing almost inside it
 
   // Arena platform — plain and solid, big enough to comfortably fight on.
   const bossArenaGroup = new THREE.Group();
@@ -4849,6 +4849,20 @@
     bottom: BOSS_ARENA_POS.y - 4,
     baseHue: 0.95,
   });
+  // A ring of grapple anchors floating around the arena's rim, up high
+  // enough to swing between while circling the boss — so fighting it still
+  // feels like the same game (swinging around, not just standing still
+  // trading hits), rather than a totally different mode bolted on.
+  const bossAnchors = [];
+  for (let i = 0; i < 8; i++){
+    const a = (i / 8) * Math.PI * 2;
+    const ax = BOSS_ARENA_POS.x + Math.cos(a) * 24;
+    const az = BOSS_ARENA_POS.z + Math.sin(a) * 24;
+    const ay = BOSS_ARENA_POS.y + 22 + (i % 2 === 0 ? 4 : -4);
+    makeAnchor(ax, ay, az, 'boss');
+    bossAnchors.push(anchors[anchors.length - 1]);
+    bossAnchors[bossAnchors.length - 1].visible = false;
+  }
 
   // The boss itself — a massively scaled-up version of the small-enemy
   // "spiky blob" look (same design language, just towering instead of
@@ -4898,7 +4912,7 @@
     return new Promise(resolve => {
       const overlay = document.getElementById('bossFadeOverlay');
       overlay.classList.add('show');
-      setTimeout(resolve, 900); // matches the CSS transition duration
+      setTimeout(resolve, 1400); // matches the CSS transition duration
     });
   }
   function fadeFromBlack(){
@@ -4947,6 +4961,7 @@
     inBossArena = true;
     bossGroup.visible = true;
     bossArenaGroup.visible = true;
+    bossAnchors.forEach(a => { a.visible = true; });
     player.pos.set(BOSS_ARENA_POS.x, BOSS_ARENA_POS.y + 6, BOSS_ARENA_POS.z + 22);
     player.vel.set(0, 0, 0);
     player.onGround = false;
@@ -4955,6 +4970,8 @@
     ropeLine.visible = false;
     resetStreak();
     updateBossHpBarUI();
+    showBossFadeText('👹 BOSS KAMPF!');
+    await new Promise(r => setTimeout(r, 2000)); // longer hold than before — enough time to actually read it, not just a flash
     fadeFromBlack();
   }
   async function endBossEventLocally(showVictory){
@@ -4969,6 +4986,7 @@
     inBossArena = false;
     bossGroup.visible = false;
     bossArenaGroup.visible = false;
+    bossAnchors.forEach(a => { a.visible = false; });
     document.getElementById('bossHpBarWrap').classList.remove('show');
     if (preBossWorld !== null && preBossWorld !== selectedWorld){
       selectedWorld = preBossWorld;
@@ -5314,7 +5332,7 @@
       }
     });
     checkpoints.forEach(cp => { cp.group.visible = (cp.world === n); });
-    anchors.forEach(a => { a.visible = (a.world === n); });
+    anchors.forEach(a => { if (a.world !== 'boss') a.visible = (a.world === n); }); // boss-arena anchors are managed entirely by enterBossArena/endBossEventLocally instead, since they're not part of the normal world 1/2/3 rotation
     starfield.visible = (n === 3);
   }
 
