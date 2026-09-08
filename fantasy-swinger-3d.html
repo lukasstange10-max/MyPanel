@@ -6919,7 +6919,8 @@
     const TOLERANCE = selectedWorld === 3 ? 9 : 5;   // world units — how far off-center the aim can be
     const MAX_RANGE = selectedWorld === 3 ? 110 : 70;
     for (const a of anchors){
-      if (a.world !== selectedWorld) continue;
+      if (inBossArena){ if (a.world !== 'boss') continue; }
+      else if (a.world !== selectedWorld) continue;
       const toA = new THREE.Vector3().subVectors(a.position, origin);
       const along = toA.dot(dir);
       if (along <= 0.5 || along > MAX_RANGE) continue; // behind camera or too far
@@ -6935,7 +6936,8 @@
   function nearestAnchorWithin(range){
     let best = null, bestDist = Infinity;
     for (const a of anchors){
-      if (a.world !== selectedWorld) continue;
+      if (inBossArena){ if (a.world !== 'boss') continue; }
+      else if (a.world !== selectedWorld) continue;
       const d = player.pos.distanceTo(a.position);
       if (d < range && d < bestDist){ bestDist = d; best = a; }
     }
@@ -6952,7 +6954,7 @@
     // further apart than World 1/2's, so the fallback radius needs to be
     // bigger there too, or players standing a totally normal distance from
     // an anchor (by World 3's scale) get nothing from either path.
-    const fallbackRange = selectedWorld === 3 ? 38 : 22;
+    const fallbackRange = inBossArena ? 32 : (selectedWorld === 3 ? 38 : 22);
     const best = findTargetAnchor() || nearestAnchorWithin(fallbackRange);
     if (best){
       grapple.active = true;
