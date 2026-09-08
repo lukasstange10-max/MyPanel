@@ -3034,6 +3034,7 @@
       <button id="settingsSaveBtn" data-i18n="settingsSaveBtn">💾 Speichern</button>
       <button id="saveCodeOpenBtn">🔐 Spielstand sichern / wiederherstellen</button>
       <p style="font-size:11px; color:rgba(255,226,122,0.75); text-align:center; margin:4px 0 0;">Tipp: Vor jedem Update kurz sichern, falls mal was schiefgeht</p>
+      <p id="cloudBackupStatus" style="font-size:11px; color:rgba(122,255,196,0.75); text-align:center; margin:6px 0 0;">☁️ Noch keine automatische Sicherung in dieser Sitzung</p>
       <button id="settingsResetBtn" data-i18n="settingsResetBtn">🗑️ Spielstand zurücksetzen</button>
       <button id="settingsCloseBtn" class="menuBtn" style="margin-top:14px;" data-i18n="closeBtn4">Schließen</button>
     </div>
@@ -3216,48 +3217,53 @@
   // (private browsing, a browser clearing site data, anything else) — as
   // long as the player copied their code beforehand, this always gets them
   // back to exactly where they were, regardless of the cause.
-  function exportSaveCode(){
+  function collectProfileData(){
     const prefix = 'rankmann_profile_' + ACTIVE_PROFILE_ID + '_';
     const data = {};
     for (let i = 0; i < localStorage.length; i++){
       const k = localStorage.key(i);
       if (k && k.indexOf(prefix) === 0) data[k.slice(prefix.length)] = localStorage.getItem(k);
     }
-    const payload = { v: 1, data };
+    return data;
+  }
+  function exportSaveCode(){
+    const payload = { v: 1, data: collectProfileData() };
     try { return btoa(unescape(encodeURIComponent(JSON.stringify(payload)))); }
     catch(e){ return null; }
+  }
+  function applyProfileData(data){
+    const prefix = 'rankmann_profile_' + ACTIVE_PROFILE_ID + '_';
+    try {
+      // The friends list specifically gets MERGED rather than overwritten —
+      // restoring OLDER data (from before some friends were added) should
+      // never silently erase friends gained since then. Everything else
+      // still fully overwrites as normal, since trophies/skins/etc. are
+      // things a player might genuinely want rolled back on purpose.
+      const currentFriendsRaw = localStorage.getItem(prefix + 'rankmann_friendsList');
+      let mergedFriends = null;
+      if (data.rankmann_friendsList){
+        try {
+          const fromSource = JSON.parse(data.rankmann_friendsList) || [];
+          const current = currentFriendsRaw ? (JSON.parse(currentFriendsRaw) || []) : [];
+          const seen = new Set();
+          mergedFriends = [];
+          [...current, ...fromSource].forEach(name => {
+            const key = name.toLowerCase();
+            if (!seen.has(key)){ seen.add(key); mergedFriends.push(name); }
+          });
+        } catch(e){ /* malformed data on either side — fall through to the normal overwrite for this key */ }
+      }
+      Object.entries(data).forEach(([k, v]) => { localStorage.setItem(prefix + k, v); });
+      if (mergedFriends) localStorage.setItem(prefix + 'rankmann_friendsList', JSON.stringify(mergedFriends));
+      return true;
+    } catch(e){ return false; }
   }
   function importSaveCode(code){
     let payload;
     try { payload = JSON.parse(decodeURIComponent(escape(atob(code.trim())))); }
     catch(e){ return false; }
     if (!payload || typeof payload.data !== 'object') return false;
-    const prefix = 'rankmann_profile_' + ACTIVE_PROFILE_ID + '_';
-    try {
-      // The friends list specifically gets MERGED rather than overwritten —
-      // restoring an OLDER code (from before some friends were added)
-      // should never silently erase friends gained since then. Everything
-      // else in the code still fully overwrites as normal, since trophies/
-      // skins/etc. are things a player might genuinely want rolled back to
-      // an earlier snapshot on purpose.
-      const currentFriendsRaw = localStorage.getItem(prefix + 'rankmann_friendsList');
-      let mergedFriends = null;
-      if (payload.data.rankmann_friendsList){
-        try {
-          const fromCode = JSON.parse(payload.data.rankmann_friendsList) || [];
-          const current = currentFriendsRaw ? (JSON.parse(currentFriendsRaw) || []) : [];
-          const seen = new Set();
-          mergedFriends = [];
-          [...current, ...fromCode].forEach(name => {
-            const key = name.toLowerCase();
-            if (!seen.has(key)){ seen.add(key); mergedFriends.push(name); }
-          });
-        } catch(e){ /* malformed data on either side — fall through to the normal overwrite for this key */ }
-      }
-      Object.entries(payload.data).forEach(([k, v]) => { localStorage.setItem(prefix + k, v); });
-      if (mergedFriends) localStorage.setItem(prefix + 'rankmann_friendsList', JSON.stringify(mergedFriends));
-      return true;
-    } catch(e){ return false; }
+    return applyProfileData(payload.data);
   }
 
   // ---------- GLOBAL EVENTS (Firebase, real-time) ----------
@@ -5751,6 +5757,59 @@
   // Broadcasts the same kind of data as the room sync above, but to the
   // name-keyed friendBroadcast path instead of a room — so a friend can
   // find and spectate you by name alone, with no shared room code needed.
+  // ---------- AUTOMATIC CLOUD BACKUP ----------
+  // Periodically writes the same data a manual save code would capture up
+  // to Firebase, keyed by this profile's name+password (the SAME identity
+  // already used to reserve names globally in the profile picker) — so
+  // progress survives a lost/cleared browser without the player needing to
+  // remember to export a code themselves. A restore is only ever OFFERED,
+  // never applied automatically, and only when the cloud copy is clearly
+  // ahead of what's stored locally right now.
+  let cloudBackupTimer = 0;
+  let lastCloudBackupAt = null;
+  function cloudBackupRef(){
+    const meta = (typeof getActiveProfileMeta === 'function') ? getActiveProfileMeta() : null;
+    if (!meta || !meta.name) return null;
+    return firebase.database().ref('cloudBackups/' + friendNameKey(meta.name));
+  }
+  function updateCloudBackup(dt){
+    if (!firebaseReady() || !running) return;
+    cloudBackupTimer += dt;
+    if (cloudBackupTimer < 180) return; // every 3 minutes of active play — frequent enough that a lost device rarely costs much, rare enough not to hammer Firebase
+    cloudBackupTimer = 0;
+    const ref = cloudBackupRef();
+    if (!ref) return;
+    ref.set({ data: collectProfileData(), trophies: totalTrophies, savedAt: firebase.database.ServerValue.TIMESTAMP }).then(() => {
+      lastCloudBackupAt = Date.now();
+      updateCloudBackupStatusUI();
+    }).catch(() => {});
+  }
+  function updateCloudBackupStatusUI(){
+    const el = document.getElementById('cloudBackupStatus');
+    if (!el) return;
+    el.textContent = lastCloudBackupAt ? ('☁️ Zuletzt automatisch gesichert: ' + new Date(lastCloudBackupAt).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })) : '☁️ Noch keine automatische Sicherung in dieser Sitzung';
+  }
+  // Checked once, shortly after a profile loads — offers a restore ONLY if
+  // the cloud copy has meaningfully more progress than what's here right
+  // now (comparing trophy counts is a simple, honest proxy for "is this
+  // actually ahead", without needing to diff every single stored key).
+  function checkCloudBackupOnLoad(){
+    if (!firebaseReady()) return;
+    const ref = cloudBackupRef();
+    if (!ref) return;
+    ref.once('value').then(snap => {
+      const backup = snap.val();
+      if (!backup || !backup.data) return;
+      const cloudTrophies = typeof backup.trophies === 'number' ? backup.trophies : 0;
+      if (cloudTrophies <= totalTrophies) return; // local is already equal or ahead — nothing useful to offer
+      const savedDate = backup.savedAt ? new Date(backup.savedAt).toLocaleString('de-DE') : 'unbekannt';
+      if (confirm('☁️ Eine automatische Cloud-Sicherung mit mehr Fortschritt wurde gefunden (' + cloudTrophies + ' Pokale, gesichert am ' + savedDate + ').\n\nJetzt hier wiederherstellen? (Dein aktueller lokaler Stand bleibt dabei mit deinen Freunden zusammengeführt, nichts geht verloren.)')){
+        applyProfileData(backup.data);
+        location.reload();
+      }
+    }).catch(() => {});
+  }
+
   let friendBroadcastTimer = 0;
   function updateFriendBroadcast(dt){
     if (!friendBroadcastRef || !running || spectatingKey) return; // same reasoning as updateRoomSync above — don't broadcast a position that's actually just following whoever we're watching
@@ -7002,6 +7061,7 @@
     if (titleEl) titleEl.textContent = getPlayerTitle(totalTrophies);
   }
   updateProfileBadge();
+  setTimeout(checkCloudBackupOnLoad, 2500); // small delay so Firebase has a moment to actually connect first
   document.getElementById('activeProfileBadge').addEventListener('click', () => {
     // Force the standalone profile-picker script (which runs on the *next*
     // load) to show again, then reload into it — reuses the exact same
@@ -9216,6 +9276,7 @@
     updateWeather(dt);
     updateRoomSync(dt);
     updateFriendBroadcast(dt);
+    updateCloudBackup(dt);
     updateGhosts(dt);
     updateCoopUIExtras();
     updateSwingTrail(dt);
