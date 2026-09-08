@@ -43,6 +43,19 @@
     transition: transform 0.45s cubic-bezier(.2,.8,.3,1.1), opacity 0.4s ease, visibility 0s linear 0s;
     animation: stormBadgeShake 0.35s ease-in-out infinite;
   }
+  #weatherForecastBadge {
+    position: fixed; top: 18px; left: 50%; z-index: 46;
+    padding: 7px 18px; border-radius: 999px; font-size: 12px; font-weight: 700;
+    background: rgba(20,10,38,0.75); border: 1px solid rgba(140,160,220,0.4);
+    color: #c9d4ff; backdrop-filter: blur(4px);
+    transform: translateX(-50%) translateY(-140%);
+    opacity: 0; visibility: hidden;
+    transition: transform 0.4s cubic-bezier(.2,.8,.3,1.1), opacity 0.35s ease, visibility 0s linear 0.4s;
+  }
+  #weatherForecastBadge.show {
+    transform: translateX(-50%) translateY(0); opacity: 1; visibility: visible;
+    transition: transform 0.4s cubic-bezier(.2,.8,.3,1.1), opacity 0.35s ease, visibility 0s linear 0s;
+  }
   #chaosBadge {
     position: fixed; top: 130px; left: 50%; z-index: 47;
     padding: 9px 22px; border-radius: 999px; font-size: 13px; font-weight: 900;
@@ -1948,6 +1961,7 @@
   <div id="coopPlayerCountBadge" class="hidden"></div>
   <div id="coopOffscreenArrows"></div>
   <div id="stormBadge">💨 Sturm — Wind erschwert das Schwingen!</div>
+  <div id="weatherForecastBadge"></div>
   <div id="chaosBadge"></div>
   <div id="goldenHourBadge">✨ Goldene Stunde — 3x Pokale für 5 Minuten!</div>
   <div id="specialRingBadge"></div>
@@ -4324,6 +4338,7 @@
   let weatherTarget = 0;
   let isStorm = false;
   let weatherTimer = 8 + Math.random() * 12; // first weather check after a short delay
+  let nextEventIsStorm = Math.random() < 0.4; // forecast for the FIRST weather event, pre-rolled the same way subsequent ones are
   let stormForceUntil = 0; // set by a global broadcast — forces the storm on for every connected player
   let lightningTimer = 0;
   // Wind — direction drifts slowly over a session rather than being fixed,
@@ -4424,15 +4439,23 @@
     weatherTimer -= dt;
     if (weatherTimer <= 0){
       if (weatherTarget === 0 && gameSettings.weatherEnabled){
-        // start a weather event
+        // start a weather event — reuse whatever the forecast ALREADY
+        // decided during the clear-sky period just ending, rather than
+        // re-rolling now, so what actually happens always matches what the
+        // forecast badge promised.
         weatherTarget = 1;
-        isStorm = Math.random() < 0.4;
+        isStorm = nextEventIsStorm;
         weatherTimer = isStorm ? (25 + Math.random()*20) : (35 + Math.random()*25);
       } else {
-        // end it, clear skies for a while
+        // end it, clear skies for a while — and immediately pre-roll
+        // whether the NEXT event (at the end of this clear spell) will be
+        // a storm, so there's something to actually forecast throughout
+        // the whole waiting period instead of only finding out at the
+        // last second.
         weatherTarget = 0;
         isStorm = false;
         weatherTimer = 45 + Math.random() * 60;
+        nextEventIsStorm = Math.random() < 0.4;
       }
     }
     }
@@ -4451,6 +4474,21 @@
     const stormBadgeEl = document.getElementById('stormBadge');
     const windActive = isStorm && rainIntensity > 0.15;
     if (stormBadgeEl) stormBadgeEl.classList.toggle('show', windActive);
+
+    // Weather forecast — only shown during clear skies, only when the
+    // pre-rolled next event is actually a storm (a forecast for "might
+    // rain a little" isn't worth cluttering the HUD over), and never in
+    // world 3 or with the setting off, matching every other weather gate.
+    const forecastEl = document.getElementById('weatherForecastBadge');
+    if (forecastEl){
+      const showForecast = weatherTarget === 0 && nextEventIsStorm && gameSettings.weatherEnabled && selectedWorld !== 3 && Date.now() >= stormForceUntil;
+      forecastEl.classList.toggle('show', showForecast);
+      if (showForecast){
+        const totalSec = Math.max(0, Math.floor(weatherTimer));
+        const m = Math.floor(totalSec / 60), s = totalSec % 60;
+        forecastEl.textContent = '⛈️ Sturm in ' + m + ':' + String(s).padStart(2, '0');
+      }
+    }
 
     // Wind streaks — same threshold, same direction/gust formulas as the
     // actual push force on the player, so what you see always matches what
