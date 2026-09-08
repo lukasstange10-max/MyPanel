@@ -117,6 +117,40 @@
     transition: opacity 0.3s ease, transform 0.3s ease;
   }
   #viewerCountBadge.show { opacity: 1; transform: translateX(0); }
+
+  #bossFadeOverlay {
+    position: fixed; inset: 0; z-index: 500;
+    background: #000; opacity: 0; pointer-events: none;
+    display: flex; align-items: center; justify-content: center;
+    transition: opacity 0.9s ease;
+  }
+  #bossFadeOverlay.show { opacity: 1; pointer-events: auto; }
+  #bossFadeText {
+    font-size: 42px; font-weight: 900; color: #ff2d55; text-align: center;
+    text-shadow: 0 0 30px rgba(255,45,85,0.6);
+    opacity: 0; transition: opacity 0.6s ease;
+  }
+  #bossFadeText.show { opacity: 1; }
+
+  #bossHpBarWrap {
+    position: fixed; top: 16px; left: 50%; transform: translateX(-50%); z-index: 60;
+    width: min(680px, 88vw); display: none; text-align: center;
+  }
+  #bossHpBarWrap.show { display: block; }
+  #bossHpBarName {
+    font-size: 13px; font-weight: 900; letter-spacing: 1.5px; color: #ff8fa3;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.8); margin-bottom: 4px;
+  }
+  #bossHpBarBg {
+    width: 100%; height: 22px; border-radius: 999px; overflow: hidden;
+    background: rgba(20,5,15,0.75); border: 2px solid rgba(255,45,85,0.5);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  }
+  #bossHpBarFill {
+    height: 100%; width: 100%; border-radius: 999px;
+    background: linear-gradient(90deg, #ff2d55, #ff6b8a);
+    transition: width 0.35s ease, background 0.4s ease;
+  }
   #globalAnnouncementBanner {
     position: fixed; top: 24px; left: 50%; z-index: 400;
     min-width: 480px; max-width: 96vw; padding: 20px 90px;
@@ -1966,6 +2000,14 @@
   <div id="goldenHourBadge">✨ Goldene Stunde — 3x Pokale für 5 Minuten!</div>
   <div id="specialRingBadge"></div>
   <div id="viewerCountBadge"></div>
+
+  <div id="bossFadeOverlay">
+    <div id="bossFadeText"></div>
+  </div>
+  <div id="bossHpBarWrap">
+    <div id="bossHpBarName">👹 BOSS</div>
+    <div id="bossHpBarBg"><div id="bossHpBarFill"></div></div>
+  </div>
   <div id="streakDisplay">
     <div id="streakPct">🔥+10% mehr Pokale</div>
     <div id="streakSub">steigt nur auf der Plattform, wo du dreimal hintereinander gelandet bist</div>
@@ -2914,6 +2956,7 @@
         <button class="adminActionBtn" id="adminTriggerChaosBtn">🎪 Chaos-Modus auslösen (18s)</button>
         <button class="adminActionBtn" id="adminTriggerGoldenHourBtn">✨ Goldene Stunde testen (2min)</button>
         <button class="adminActionBtn" id="adminTriggerRingBtn">🎯 Bonus-Ring auslösen</button>
+        <button class="adminActionBtn" id="adminTriggerBossBtn">👹 Boss-Gegner auslösen</button>
       </div>
       <div class="settingsToggleRow" style="margin-top:12px;">
         <span>🛡️ God Mode (unverwundbar)</span>
@@ -3330,6 +3373,39 @@
     function broadcastGlobalEffect(key, durationMs, extra){
       const body = Object.assign({ expiresAt: Date.now() + durationMs }, extra || {});
       globalEffectsRef.child(key).set(body).catch(() => {});
+    }
+
+    // Boss event — everyone connected reacts the moment this flips on/off,
+    // and the boss's HP itself lives here too (shared, synced) so every
+    // player is fighting the exact same health pool at once.
+    const bossEventRef = firebase.database().ref('bossEvent');
+    bossEventRef.on('value', snapshot => {
+      const data = snapshot.val();
+      if (!data || !data.active){
+        if (bossEventActive) endBossEventLocally(false); // event was cleared/reset without a proper victory — just quietly send everyone back
+        bossEventActive = false;
+        return;
+      }
+      bossHp = typeof data.hp === 'number' ? data.hp : BOSS_MAX_HP;
+      if (!bossEventActive){
+        bossEventActive = true;
+        enterBossArena();
+      }
+      updateBossHpBarUI();
+      if (bossHp <= 0 && !bossVictoryPending){
+        bossVictoryPending = true;
+        triggerBossVictorySequence();
+      }
+    });
+    function startBossEvent(){
+      bossEventRef.set({ active: true, hp: BOSS_MAX_HP, maxHp: BOSS_MAX_HP, startedAt: Date.now() }).catch(() => {});
+    }
+    function damageBoss(amount){
+      // A transaction, not a plain read-then-write — multiple players can
+      // land hits within the same instant, and without this two clients
+      // could both read "40 hp left" and both write "39", silently eating
+      // one of the hits.
+      bossEventRef.child('hp').transaction(current => Math.max(0, (typeof current === 'number' ? current : BOSS_MAX_HP) - amount)).catch(() => {});
     }
 
     // One-off text announcements — unlike the effects above (which stay
@@ -4729,6 +4805,236 @@
   makeSmallEnemy(11, 29, -72);
   makeSmallEnemy(-17, 35, -96);
   makeSmallEnemy(2, 41, -126);
+
+  // ---------- BOSS EVENT ARENA ----------
+  // A special, admin-triggered global event: everyone connected gets a
+  // smooth fade to black, teleported to a dedicated arena (built far away
+  // in world space, well past the fog's render distance, so it never
+  // overlaps or interferes with worlds 1–3), fights a shared giant boss
+  // together, then gets faded back to wherever they each were before the
+  // event started once the boss goes down.
+  const BOSS_ARENA_POS = new THREE.Vector3(0, 400, -9000);
+  const BOSS_MAX_HP = 400;
+  const BOSS_TROPHY_PER_HIT = 20;
+  const BOSS_ATTACK_RANGE = 9; // generous — the boss is huge, its "reach" should feel proportional
+  const BOSS_HIT_RANGE = 7.5; // how close the PLAYER needs to be to land a hit on it
+
+  // Arena platform — plain and solid, big enough to comfortably fight on.
+  const bossArenaGroup = new THREE.Group();
+  bossArenaGroup.position.copy(BOSS_ARENA_POS);
+  bossArenaGroup.visible = false;
+  const bossPlatform = new THREE.Mesh(
+    new THREE.CylinderGeometry(26, 28, 4, 24),
+    new THREE.MeshStandardMaterial({ color: 0x241436, roughness: 0.75 })
+  );
+  bossPlatform.position.y = -2;
+  bossArenaGroup.add(bossPlatform);
+  const bossPlatformRim = new THREE.Mesh(
+    new THREE.TorusGeometry(27, 0.6, 8, 40),
+    new THREE.MeshStandardMaterial({ color: 0xff2d55, emissive: 0xff2d55, emissiveIntensity: 0.6, roughness: 0.4 })
+  );
+  bossPlatformRim.rotation.x = Math.PI / 2;
+  bossPlatformRim.position.y = 0.1;
+  bossArenaGroup.add(bossPlatformRim);
+  scene.add(bossArenaGroup);
+  // Register the platform as a real collidable surface — no `world`
+  // property, so applyWorldTheme() (which only touches islands tagged for
+  // world 1/2/3) leaves this alone; visibility is controlled entirely by
+  // bossArenaGroup.visible instead.
+  islands.push({
+    mesh: bossPlatform,
+    pos: BOSS_ARENA_POS,
+    radius: 27,
+    top: BOSS_ARENA_POS.y,
+    bottom: BOSS_ARENA_POS.y - 4,
+    baseHue: 0.95,
+  });
+
+  // The boss itself — a massively scaled-up version of the small-enemy
+  // "spiky blob" look (same design language, just towering instead of
+  // scuttling), with a few extra menacing details befitting something this
+  // size: a crown of spikes and a slow, heavy bob so it reads as alive
+  // despite barely moving.
+  const bossGroup = new THREE.Group();
+  const bossBodyMat = new THREE.MeshStandardMaterial({ color: 0x2a0a1a, emissive: 0xff2d55, emissiveIntensity: 0.45, roughness: 0.5 });
+  const bossBody = new THREE.Mesh(new THREE.IcosahedronGeometry(9, 1), bossBodyMat);
+  bossBody.castShadow = true;
+  bossGroup.add(bossBody);
+  [-1, 1].forEach(side => {
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(1.3, 12, 12), new THREE.MeshBasicMaterial({ color: 0xffe27a }));
+    eye.position.set(side * 3.2, 1.6, 6.8);
+    bossGroup.add(eye);
+  });
+  for (let i = 0; i < 10; i++){
+    const a = (i / 10) * Math.PI * 2;
+    const spike = new THREE.Mesh(new THREE.ConeGeometry(1.1, 5, 6), bossBodyMat);
+    spike.position.set(Math.cos(a) * 7.5, 4 + Math.sin(i) * 1.5, Math.sin(a) * 7.5);
+    spike.lookAt(spike.position.clone().multiplyScalar(1.6));
+    spike.rotateX(Math.PI / 2);
+    bossGroup.add(spike);
+  }
+  for (let i = 0; i < 6; i++){
+    const a = (i / 6) * Math.PI * 2 + 0.3;
+    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 6, 6), bossBodyMat);
+    leg.position.set(Math.cos(a) * 8, -6, Math.sin(a) * 8);
+    leg.rotation.z = Math.cos(a) * 0.4;
+    leg.rotation.x = Math.sin(a) * 0.4;
+    bossGroup.add(leg);
+  }
+  bossGroup.position.set(BOSS_ARENA_POS.x, BOSS_ARENA_POS.y + 12, BOSS_ARENA_POS.z);
+  scene.add(bossGroup);
+  bossGroup.visible = false;
+
+  let bossHp = BOSS_MAX_HP;
+  let bossEventActive = false;
+  let inBossArena = false;
+  let bossAttackTimer = 0;
+  let bossHitFlashT = 0;
+  let preBossPos = null;
+  let preBossWorld = null;
+  let bossVictoryPending = false;
+
+  function fadeToBlack(){
+    return new Promise(resolve => {
+      const overlay = document.getElementById('bossFadeOverlay');
+      overlay.classList.add('show');
+      setTimeout(resolve, 900); // matches the CSS transition duration
+    });
+  }
+  function fadeFromBlack(){
+    const overlay = document.getElementById('bossFadeOverlay');
+    const textEl = document.getElementById('bossFadeText');
+    textEl.classList.remove('show');
+    textEl.textContent = '';
+    overlay.classList.remove('show');
+  }
+  function showBossFadeText(text){
+    const textEl = document.getElementById('bossFadeText');
+    textEl.textContent = text;
+    textEl.classList.add('show');
+  }
+  function updateBossHpBarUI(){
+    const wrap = document.getElementById('bossHpBarWrap');
+    const fill = document.getElementById('bossHpBarFill');
+    if (!wrap || !fill) return;
+    wrap.classList.toggle('show', inBossArena && bossEventActive);
+    const pct = Math.max(0, Math.min(100, (bossHp / BOSS_MAX_HP) * 100));
+    fill.style.width = pct + '%';
+    // "mehrstufig" — the boss visibly changes as it takes more damage, not
+    // just a shrinking bar: color shifts and it moves/attacks faster once
+    // it's wounded, and faster still once it's nearly done.
+    if (pct > 66){
+      fill.style.background = 'linear-gradient(90deg, #ff2d55, #ff6b8a)';
+    } else if (pct > 33){
+      fill.style.background = 'linear-gradient(90deg, #ff8a2d, #ffc36b)';
+    } else {
+      fill.style.background = 'linear-gradient(90deg, #ffe22d, #fff6b0)';
+    }
+  }
+  async function enterBossArena(){
+    if (inBossArena) return;
+    if (!running){
+      // Not actually playing right now (still on the menu, say) — nothing
+      // sensible to fade/teleport. They'll simply miss this particular
+      // fight unless they're already in-game when it's triggered.
+      bossEventActive = false;
+      return;
+    }
+    if (paused) closePauseMenu();
+    preBossPos = player.pos.clone();
+    preBossWorld = selectedWorld;
+    await fadeToBlack();
+    inBossArena = true;
+    bossGroup.visible = true;
+    bossArenaGroup.visible = true;
+    player.pos.set(BOSS_ARENA_POS.x, BOSS_ARENA_POS.y + 6, BOSS_ARENA_POS.z + 22);
+    player.vel.set(0, 0, 0);
+    player.onGround = false;
+    player.wasOnGround = false;
+    grapple.active = false;
+    ropeLine.visible = false;
+    resetStreak();
+    updateBossHpBarUI();
+    fadeFromBlack();
+  }
+  async function endBossEventLocally(showVictory){
+    if (!inBossArena){ bossVictoryPending = false; return; }
+    if (showVictory){
+      await fadeToBlack();
+      showBossFadeText('👹 BOSS BESIEGT!');
+      await new Promise(r => setTimeout(r, 1800));
+    } else {
+      await fadeToBlack();
+    }
+    inBossArena = false;
+    bossGroup.visible = false;
+    bossArenaGroup.visible = false;
+    document.getElementById('bossHpBarWrap').classList.remove('show');
+    if (preBossWorld !== null && preBossWorld !== selectedWorld){
+      selectedWorld = preBossWorld;
+      applyWorldTheme(selectedWorld);
+    }
+    if (preBossPos){ player.pos.copy(preBossPos); }
+    player.vel.set(0, 0, 0);
+    preBossPos = null;
+    preBossWorld = null;
+    bossVictoryPending = false;
+    fadeFromBlack();
+  }
+  async function triggerBossVictorySequence(){
+    // Only actually plays the "you were there" sequence for players who
+    // were IN the arena — someone who never joined this particular fight
+    // shouldn't get a random black screen with a victory message.
+    if (inBossArena) await endBossEventLocally(true);
+    else bossVictoryPending = false;
+  }
+  function respawnAtBossPlatform(){
+    player.pos.set(BOSS_ARENA_POS.x, BOSS_ARENA_POS.y + 6, BOSS_ARENA_POS.z + 22);
+    player.vel.set(0, 0, 0);
+    player.wasOnGround = false;
+    player.onGround = false;
+    grapple.active = false;
+    ropeLine.visible = false;
+    snapCameraToPlayer();
+  }
+  function updateBossFight(dt){
+    if (!inBossArena) return;
+    // Gentle idle bob/rotation so something this size still reads as alive
+    // even though it never actually moves from its spot.
+    bossGroup.position.y = BOSS_ARENA_POS.y + 12 + Math.sin(clock.elapsedTime * 0.8) * 1.2;
+    bossGroup.rotation.y += dt * 0.15;
+    if (bossHitFlashT > 0){
+      bossHitFlashT -= dt;
+      bossBodyMat.emissiveIntensity = 0.45 + Math.max(0, bossHitFlashT) * 3;
+    } else {
+      bossBodyMat.emissiveIntensity = 0.45;
+    }
+    // "Mehrstufig" — attacks noticeably faster once wounded, and faster
+    // still once nearly defeated, so the fight visibly escalates rather
+    // than just ticking the same health bar down at a flat pace.
+    const hpPct = bossHp / BOSS_MAX_HP;
+    const attackInterval = hpPct > 0.66 ? 4.5 : hpPct > 0.33 ? 3.2 : 2.2;
+    bossAttackTimer += dt;
+    if (bossAttackTimer >= attackInterval){
+      bossAttackTimer = 0;
+      const dist = player.pos.distanceTo(bossGroup.position);
+      if (dist < BOSS_ATTACK_RANGE && !adminGodMode && player.invuln <= 0){
+        player.lives -= 1;
+        player.invuln = 2.2;
+        updateLivesDisplay();
+        pulseBox('box-lives', 'shake');
+        vibrate(80);
+        const away = new THREE.Vector3().subVectors(player.pos, bossGroup.position).normalize();
+        player.vel.addScaledVector(away, 16);
+        player.vel.y += 9;
+        if (player.lives <= 0){
+          player.lives = 3;
+          updateLivesDisplay();
+          respawnPlayer();
+        }
+      }
+    }
+  }
 
   // ---------- CHECKPOINT LANDING PLATFORMS ----------
   // A small canvas-texture sprite showing the checkpoint's number, always facing the camera.
@@ -6649,6 +6955,19 @@
     if (emoteActive) { stopEmote(); return; }
     const now = clock.elapsedTime;
     if (now - lastAttackTime < ATTACK_COOLDOWN) return;
+    if (inBossArena){
+      if (player.pos.distanceTo(bossGroup.position) > BOSS_HIT_RANGE) return; // only allowed to hit while actually in range
+      lastAttackTime = now;
+      attackSwingT = 1;
+      sfx.punch();
+      damageBoss(1);
+      bossHitFlashT = 0.25;
+      totalTrophies += BOSS_TROPHY_PER_HIT;
+      storageSet('rankmann_totalTrophies', totalTrophies);
+      spawnTrophyFly(BOSS_TROPHY_PER_HIT);
+      sfx.trophy();
+      return;
+    }
     const target = findAttackableEnemy();
     if (!target) return; // only allowed to attack while an enemy is in range
     lastAttackTime = now;
@@ -7739,6 +8058,11 @@
     spawnSpecialRing();
     showAdminToast('🎯 Bonus-Ring ausgelöst — Welt ' + specialRing.world);
   });
+  document.getElementById('adminTriggerBossBtn').addEventListener('click', () => {
+    if (!firebaseReady()){ showAdminToast('⚠️ Keine Verbindung — Boss-Event kann nicht gestartet werden'); return; }
+    startBossEvent();
+    showAdminToast('👹 Boss-Gegner ausgelöst — alle Spieler werden in die Arena geholt');
+  });
   document.getElementById('adminAnnounceBtn').addEventListener('click', () => {
     const input = document.getElementById('adminAnnounceInput');
     const text = input.value.trim();
@@ -8724,6 +9048,17 @@
   }
 
   function respawnPlayer(){
+    if (inBossArena){
+      // Dying mid-fight puts you right back on the arena platform, not
+      // back in whichever normal world you came from — the whole point is
+      // to keep trying against the boss, not to get bounced out of the
+      // event by a single death.
+      respawnAtBossPlatform();
+      resetStreak();
+      stopEmote();
+      closeEmoteWheel();
+      return;
+    }
     const hub = selectedWorld === 3 ? islandsW3[0] : selectedWorld === 2 ? islandsW2[0] : islandsW1[0];
     player.pos.set(hub.pos.x, hub.top + 5, hub.pos.z);
     player.vel.set(0,0,0);
@@ -9315,6 +9650,7 @@
     updateRoomSync(dt);
     updateFriendBroadcast(dt);
     updateCloudBackup(dt);
+    updateBossFight(dt);
     updateGhosts(dt);
     updateCoopUIExtras();
     updateSwingTrail(dt);
