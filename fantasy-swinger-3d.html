@@ -2016,15 +2016,7 @@
   <div id="specialRingBadge"></div>
   <div id="viewerCountBadge"></div>
 
-  <div id="bossFadeOverlay">
-    <div id="bossFadeText"></div>
-  </div>
-  <div id="damageVignette"></div>
-  <div id="bossHpBarWrap">
-    <div id="bossHpBarName">👹 BOSS</div>
-    <div id="bossHpBarBg"><div id="bossHpBarFill"></div></div>
-  </div>
-  <div id="streakDisplay">
+        <div id="streakDisplay">
     <div id="streakPct">🔥+10% mehr Pokale</div>
     <div id="streakSub">steigt nur auf der Plattform, wo du dreimal hintereinander gelandet bist</div>
   </div>
@@ -2046,6 +2038,16 @@
     </div>
   </div>
 </div>
+
+<div id="damageVignette"></div>
+<div id="bossFadeOverlay">
+    <div id="bossFadeText"></div>
+  </div>
+<div id="bossHpBarWrap">
+    <div id="bossHpBarName">👹 BOSS</div>
+    <div id="bossHpBarBg"><div id="bossHpBarFill"></div></div>
+  </div>
+
 
 <div id="globalAnnouncementBanner"></div>
 <div id="spectateBanner">
@@ -4953,19 +4955,37 @@
       if (el) el.style.visibility = hidden ? 'hidden' : '';
     });
   }
-  function fadeToBlack(){
-    setGameUiHiddenForBossTransition(true);
+  // Driven directly in JS rather than via a CSS transition — CSS
+  // transitions on this overlay turned out to be unreliable whenever they
+  // start in the same tick as a bunch of OTHER DOM changes (hiding ~18 HUD
+  // elements right before it), which was silently skipping the whole
+  // animation. A manual requestAnimationFrame loop sidesteps that entirely
+  // and gives full, predictable control over the timing besides.
+  function animateOverlayOpacity(overlay, from, to, duration){
     return new Promise(resolve => {
-      const overlay = document.getElementById('bossFadeOverlay');
-      overlay.classList.add('show');
-      setTimeout(resolve, 1400); // matches the CSS transition duration
+      const start = performance.now();
+      overlay.style.opacity = from;
+      function step(now){
+        const t = Math.min(1, (now - start) / duration);
+        overlay.style.opacity = from + (to - from) * t;
+        if (t < 1) requestAnimationFrame(step);
+        else resolve();
+      }
+      requestAnimationFrame(step);
     });
   }
-  function fadeFromBlack(){
+  async function fadeToBlack(){
+    setGameUiHiddenForBossTransition(true);
+    const overlay = document.getElementById('bossFadeOverlay');
+    overlay.classList.add('show'); // still used for pointer-events: auto — opacity itself is now hand-animated below
+    await animateOverlayOpacity(overlay, 0, 1, 1400);
+  }
+  async function fadeFromBlack(){
     const overlay = document.getElementById('bossFadeOverlay');
     const textEl = document.getElementById('bossFadeText');
     textEl.classList.remove('show');
     textEl.textContent = '';
+    await animateOverlayOpacity(overlay, 1, 0, 1400);
     overlay.classList.remove('show');
     setGameUiHiddenForBossTransition(false);
   }
@@ -4992,8 +5012,9 @@
       fill.style.background = 'linear-gradient(90deg, #ffe22d, #fff6b0)';
     }
   }
+  let bossArenaEntering = false; // guards against enterBossArena() being triggered multiple times concurrently (the Firebase listener can fire more than once in quick succession), which was letting overlapping calls fight over the SAME fade class and cancel each other's transition
   async function enterBossArena(){
-    if (inBossArena) return;
+    if (inBossArena || bossArenaEntering) return;
     if (!running){
       // Not actually playing right now (still on the menu, say) — nothing
       // sensible to fade/teleport. They'll simply miss this particular
@@ -5001,6 +5022,7 @@
       bossEventActive = false;
       return;
     }
+    bossArenaEntering = true;
     if (paused) closePauseMenu();
     preBossPos = player.pos.clone();
     preBossWorld = selectedWorld;
@@ -5020,9 +5042,12 @@
     showBossFadeText('👹 BOSS KAMPF!');
     await new Promise(r => setTimeout(r, 2000)); // longer hold than before — enough time to actually read it, not just a flash
     fadeFromBlack();
+    bossArenaEntering = false;
   }
+  let bossArenaExiting = false; // same concurrent-call protection as bossArenaEntering above
   async function endBossEventLocally(showVictory){
-    if (!inBossArena){ bossVictoryPending = false; return; }
+    if (!inBossArena || bossArenaExiting){ bossVictoryPending = false; return; }
+    bossArenaExiting = true;
     if (showVictory){
       await fadeToBlack();
       showBossFadeText('👹 BOSS BESIEGT!');
@@ -5045,6 +5070,7 @@
     preBossWorld = null;
     bossVictoryPending = false;
     fadeFromBlack();
+    bossArenaExiting = false;
   }
   async function triggerBossVictorySequence(){
     // Only actually plays the "you were there" sequence for players who
