@@ -90,7 +90,10 @@
   #goldenHourBadge.show {
     transform: translateX(-50%) translateY(0); opacity: 1; visibility: visible;
     transition: transform 0.45s cubic-bezier(.2,.8,.3,1.1), opacity 0.4s ease, visibility 0s linear 0s;
-    animation: chaosBadgePulse 1.2s ease-in-out infinite;
+    /* No continuous pulse animation here — it kept shifting the close
+       button's position by a few px every cycle, making a real mouse click
+       on it unreliable (it would only "work" via a programmatic click,
+       which ignores actual on-screen position entirely). */
   }
   #specialRingBadge {
     position: fixed; top: 172px; left: 50%; z-index: 47;
@@ -106,7 +109,6 @@
   #specialRingBadge.show {
     transform: translateX(-50%) translateY(0); opacity: 1; visibility: visible;
     transition: transform 0.45s cubic-bezier(.2,.8,.3,1.1), opacity 0.4s ease, visibility 0s linear 0s;
-    animation: chaosBadgePulse 1.2s ease-in-out infinite;
   }
   #goldenHourBadge .notifCloseBtn, #specialRingBadge .notifCloseBtn {
     background: rgba(0,0,0,0.15); color: rgba(0,0,0,0.7);
@@ -203,6 +205,7 @@
     font-size: 12px; font-weight: 700; line-height: 1; padding: 0;
     display: flex; align-items: center; justify-content: center;
     transition: background 0.15s ease, transform 0.15s ease;
+    pointer-events: auto; /* #hud (an ancestor of some of these badges) sets pointer-events:none on itself so clicks pass through to the game world beneath it — this opts the close button back in specifically, since it's the one thing here that SHOULD be clickable */
   }
   .notifCloseBtn:hover { background: rgba(255,255,255,0.25); transform: translateY(-50%) scale(1.1); }
   #spectateBanner {
@@ -4884,85 +4887,102 @@
   const BOSS_ATTACK_RANGE = 24; // the boss's body alone has a 9-unit radius (icosahedron radius) plus spikes reaching further — this needs real margin beyond that or the boss can never actually reach anyone standing near it
   const BOSS_HIT_RANGE = 22; // same reasoning — 7.5 was actually SMALLER than the boss's own body radius, meaning landing a hit required standing almost inside it
 
-  // Arena platform — plain and solid, big enough to comfortably fight on.
-  const bossArenaGroup = new THREE.Group();
-  bossArenaGroup.position.copy(BOSS_ARENA_POS);
-  bossArenaGroup.visible = false;
-  const bossPlatform = new THREE.Mesh(
-    new THREE.CylinderGeometry(26, 28, 4, 24),
-    new THREE.MeshStandardMaterial({ color: 0x241436, roughness: 0.75 })
-  );
-  bossPlatform.position.y = -2;
-  bossArenaGroup.add(bossPlatform);
-  const bossPlatformRim = new THREE.Mesh(
-    new THREE.TorusGeometry(27, 0.6, 8, 40),
-    new THREE.MeshStandardMaterial({ color: 0xff2d55, emissive: 0xff2d55, emissiveIntensity: 0.6, roughness: 0.4 })
-  );
-  bossPlatformRim.rotation.x = Math.PI / 2;
-  bossPlatformRim.position.y = 0.1;
-  bossArenaGroup.add(bossPlatformRim);
-  scene.add(bossArenaGroup);
-  // Register the platform as a real collidable surface — no `world`
-  // property, so applyWorldTheme() (which only touches islands tagged for
-  // world 1/2/3) leaves this alone; visibility is controlled entirely by
-  // bossArenaGroup.visible instead.
-  islands.push({
-    mesh: bossPlatform,
-    pos: BOSS_ARENA_POS,
-    radius: 27,
-    top: BOSS_ARENA_POS.y,
-    bottom: BOSS_ARENA_POS.y - 4,
-    baseHue: 0.95,
-  });
-  // A ring of grapple anchors floating around the arena's rim, up high
-  // enough to swing between while circling the boss — so fighting it still
-  // feels like the same game (swinging around, not just standing still
-  // trading hits), rather than a totally different mode bolted on.
-  const bossAnchors = [];
-  for (let i = 0; i < 8; i++){
-    const a = (i / 8) * Math.PI * 2;
-    const ax = BOSS_ARENA_POS.x + Math.cos(a) * 24;
-    const az = BOSS_ARENA_POS.z + Math.sin(a) * 24;
-    const ay = BOSS_ARENA_POS.y + 22 + (i % 2 === 0 ? 4 : -4);
-    makeAnchor(ax, ay, az, 'boss');
-    bossAnchors.push(anchors[anchors.length - 1]);
-    bossAnchors[bossAnchors.length - 1].visible = false;
-  }
+  // All the actual 3D content below is built LAZILY, the first time it's
+  // actually needed, rather than unconditionally at page load — a scene
+  // permanently carrying a detailed shadow-casting boss model plus arena
+  // geometry plus 8 extra anchors (even hidden, far away, and never used
+  // this whole session for most players) was measurably dragging down the
+  // frame rate for EVERYONE the whole time they played, which in turn made
+  // admin-triggered UI updates elsewhere (like the golden hour badge) feel
+  // like they were arriving several seconds late — they weren't actually
+  // delayed, there just weren't many animation frames happening per second
+  // for the change to show up on.
+  let bossArenaGroup, bossPlatform, bossAnchors, bossGroup, bossBodyMat;
+  let bossContentBuilt = false;
+  function ensureBossContentBuilt(){
+    if (bossContentBuilt) return;
+    bossContentBuilt = true;
 
-  // The boss itself — a massively scaled-up version of the small-enemy
-  // "spiky blob" look (same design language, just towering instead of
-  // scuttling), with a few extra menacing details befitting something this
-  // size: a crown of spikes and a slow, heavy bob so it reads as alive
-  // despite barely moving.
-  const bossGroup = new THREE.Group();
-  const bossBodyMat = new THREE.MeshStandardMaterial({ color: 0x2a0a1a, emissive: 0xff2d55, emissiveIntensity: 0.45, roughness: 0.5 });
-  const bossBody = new THREE.Mesh(new THREE.IcosahedronGeometry(9, 1), bossBodyMat);
-  bossBody.castShadow = true;
-  bossGroup.add(bossBody);
-  [-1, 1].forEach(side => {
-    const eye = new THREE.Mesh(new THREE.SphereGeometry(1.3, 12, 12), new THREE.MeshBasicMaterial({ color: 0xffe27a }));
-    eye.position.set(side * 3.2, 1.6, 6.8);
-    bossGroup.add(eye);
-  });
-  for (let i = 0; i < 10; i++){
-    const a = (i / 10) * Math.PI * 2;
-    const spike = new THREE.Mesh(new THREE.ConeGeometry(1.1, 5, 6), bossBodyMat);
-    spike.position.set(Math.cos(a) * 7.5, 4 + Math.sin(i) * 1.5, Math.sin(a) * 7.5);
-    spike.lookAt(spike.position.clone().multiplyScalar(1.6));
-    spike.rotateX(Math.PI / 2);
-    bossGroup.add(spike);
+    // Arena platform — plain and solid, big enough to comfortably fight on.
+    bossArenaGroup = new THREE.Group();
+    bossArenaGroup.position.copy(BOSS_ARENA_POS);
+    bossArenaGroup.visible = false;
+    bossPlatform = new THREE.Mesh(
+      new THREE.CylinderGeometry(26, 28, 4, 24),
+      new THREE.MeshStandardMaterial({ color: 0x241436, roughness: 0.75 })
+    );
+    bossPlatform.position.y = -2;
+    bossArenaGroup.add(bossPlatform);
+    const bossPlatformRim = new THREE.Mesh(
+      new THREE.TorusGeometry(27, 0.6, 8, 40),
+      new THREE.MeshStandardMaterial({ color: 0xff2d55, emissive: 0xff2d55, emissiveIntensity: 0.6, roughness: 0.4 })
+    );
+    bossPlatformRim.rotation.x = Math.PI / 2;
+    bossPlatformRim.position.y = 0.1;
+    bossArenaGroup.add(bossPlatformRim);
+    scene.add(bossArenaGroup);
+    // Register the platform as a real collidable surface — no `world`
+    // property, so applyWorldTheme() (which only touches islands tagged for
+    // world 1/2/3) leaves this alone; visibility is controlled entirely by
+    // bossArenaGroup.visible instead.
+    islands.push({
+      mesh: bossPlatform,
+      pos: BOSS_ARENA_POS,
+      radius: 27,
+      top: BOSS_ARENA_POS.y,
+      bottom: BOSS_ARENA_POS.y - 4,
+      baseHue: 0.95,
+    });
+    // A ring of grapple anchors floating around the arena's rim, up high
+    // enough to swing between while circling the boss — so fighting it still
+    // feels like the same game (swinging around, not just standing still
+    // trading hits), rather than a totally different mode bolted on.
+    bossAnchors = [];
+    for (let i = 0; i < 8; i++){
+      const a = (i / 8) * Math.PI * 2;
+      const ax = BOSS_ARENA_POS.x + Math.cos(a) * 24;
+      const az = BOSS_ARENA_POS.z + Math.sin(a) * 24;
+      const ay = BOSS_ARENA_POS.y + 22 + (i % 2 === 0 ? 4 : -4);
+      makeAnchor(ax, ay, az, 'boss');
+      bossAnchors.push(anchors[anchors.length - 1]);
+      bossAnchors[bossAnchors.length - 1].visible = false;
+    }
+
+    // The boss itself — a massively scaled-up version of the small-enemy
+    // "spiky blob" look (same design language, just towering instead of
+    // scuttling), with a few extra menacing details befitting something this
+    // size: a crown of spikes and a slow, heavy bob so it reads as alive
+    // despite barely moving.
+    bossGroup = new THREE.Group();
+    bossBodyMat = new THREE.MeshStandardMaterial({ color: 0x2a0a1a, emissive: 0xff2d55, emissiveIntensity: 0.45, roughness: 0.5 });
+    const bossBody = new THREE.Mesh(new THREE.IcosahedronGeometry(9, 1), bossBodyMat);
+    bossBody.castShadow = true;
+    bossGroup.add(bossBody);
+    [-1, 1].forEach(side => {
+      const eye = new THREE.Mesh(new THREE.SphereGeometry(1.3, 12, 12), new THREE.MeshBasicMaterial({ color: 0xffe27a }));
+      eye.position.set(side * 3.2, 1.6, 6.8);
+      bossGroup.add(eye);
+    });
+    for (let i = 0; i < 10; i++){
+      const a = (i / 10) * Math.PI * 2;
+      const spike = new THREE.Mesh(new THREE.ConeGeometry(1.1, 5, 6), bossBodyMat);
+      spike.position.set(Math.cos(a) * 7.5, 4 + Math.sin(i) * 1.5, Math.sin(a) * 7.5);
+      spike.lookAt(spike.position.clone().multiplyScalar(1.6));
+      spike.rotateX(Math.PI / 2);
+      bossGroup.add(spike);
+    }
+    for (let i = 0; i < 6; i++){
+      const a = (i / 6) * Math.PI * 2 + 0.3;
+      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 6, 6), bossBodyMat);
+      leg.position.set(Math.cos(a) * 8, -6, Math.sin(a) * 8);
+      leg.rotation.z = Math.cos(a) * 0.4;
+      leg.rotation.x = Math.sin(a) * 0.4;
+      bossGroup.add(leg);
+    }
+    bossGroup.position.set(BOSS_ARENA_POS.x, BOSS_ARENA_POS.y + 12, BOSS_ARENA_POS.z);
+    scene.add(bossGroup);
+    bossGroup.visible = false;
   }
-  for (let i = 0; i < 6; i++){
-    const a = (i / 6) * Math.PI * 2 + 0.3;
-    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 6, 6), bossBodyMat);
-    leg.position.set(Math.cos(a) * 8, -6, Math.sin(a) * 8);
-    leg.rotation.z = Math.cos(a) * 0.4;
-    leg.rotation.x = Math.sin(a) * 0.4;
-    bossGroup.add(leg);
-  }
-  bossGroup.position.set(BOSS_ARENA_POS.x, BOSS_ARENA_POS.y + 12, BOSS_ARENA_POS.z);
-  scene.add(bossGroup);
-  bossGroup.visible = false;
 
   let bossHp = BOSS_MAX_HP;
   let bossEventActive = false;
@@ -5067,6 +5087,7 @@
       return;
     }
     bossArenaEntering = true;
+    ensureBossContentBuilt(); // lazily built right before it's actually needed for the very first time
     if (paused) closePauseMenu();
     preBossPos = player.pos.clone();
     preBossWorld = selectedWorld;
