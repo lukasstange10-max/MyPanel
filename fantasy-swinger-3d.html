@@ -3408,6 +3408,7 @@
     // those same local variables on every client instead of only the
     // admin's own.
     const globalEffectsRef = firebase.database().ref('globalEffects');
+    let lastHandledRingBroadcast = 0; // the ring is a one-time SPAWN action, not a continuous "forced until" state like the others — this tracks which broadcast was already acted on, so the same one doesn't re-trigger every time this listener fires
     globalEffectsRef.on('value', snapshot => {
       const data = snapshot.val() || {};
       if (data.storm && data.storm.expiresAt > Date.now()){
@@ -3419,6 +3420,11 @@
       }
       if (data.goldenHour && data.goldenHour.expiresAt > Date.now()){
         goldenHourForceUntil = data.goldenHour.expiresAt;
+      }
+      if (data.specialRing && data.specialRing.broadcastAt && data.specialRing.broadcastAt > lastHandledRingBroadcast && data.specialRing.expiresAt > Date.now()){
+        lastHandledRingBroadcast = data.specialRing.broadcastAt;
+        removeSpecialRing();
+        spawnSpecialRing({ world: data.specialRing.world, posIndex: data.specialRing.posIndex });
       }
     }, () => {});
     function broadcastGlobalEffect(key, durationMs, extra){
@@ -5437,16 +5443,21 @@
   const SPECIAL_RING_HIT_RADIUS = 5.5; // generous — this is meant to be an easy, satisfying catch, not a precision test
   let specialRing = null;
   let specialRingTimer = 45; // first one appears fairly soon after loading, not a 2-hour wait on a fresh session
-  function spawnSpecialRing(){
+  function spawnSpecialRing(sync){
     const worldPositions = { 1: ringPositionsW1, 2: ringPositionsW2, 3: ringPositionsW3 };
-    const world = 1 + Math.floor(Math.random() * 3);
+    const world = (sync && sync.world) || (1 + Math.floor(Math.random() * 3));
     const positions = worldPositions[world];
     // Spawn at the MIDPOINT between two consecutive checkpoints — out in
     // open air along the natural swing path — rather than right at a
     // checkpoint itself. Checkpoints are already a tight, precise landing
     // target; stacking the ring there too made it needlessly hard to catch
     // both. A gap in open air is much easier to just fly through.
-    const i = Math.floor(Math.random() * (positions.length - 1));
+    // When `sync` is provided (a global broadcast received from someone
+    // else), the exact same posIndex is reused instead of re-rolling one
+    // locally — otherwise every connected player would each see the ring
+    // floating in a DIFFERENT spot despite it supposedly being "the same"
+    // bonus ring event.
+    const i = (sync && typeof sync.posIndex === 'number') ? sync.posIndex : Math.floor(Math.random() * (positions.length - 1));
     const a = positions[i], b = positions[i + 1];
     const spawnPos = new THREE.Vector3(
       (a[0] + b[0]) / 2,
@@ -8315,8 +8326,17 @@
   });
   document.getElementById('adminTriggerRingBtn').addEventListener('click', () => {
     removeSpecialRing(); // clear any existing one first so this doesn't leave a duplicate behind
-    spawnSpecialRing();
-    showAdminToast('🎯 Bonus-Ring ausgelöst — Welt ' + specialRing.world);
+    // Picked once, here, then broadcast — everyone connected (the admin
+    // included) ends up with the exact same ring in the exact same spot,
+    // rather than each client randomly rolling its own.
+    const world = 1 + Math.floor(Math.random() * 3);
+    const worldPositions = { 1: ringPositionsW1, 2: ringPositionsW2, 3: ringPositionsW3 };
+    const posIndex = Math.floor(Math.random() * (worldPositions[world].length - 1));
+    const broadcastAt = Date.now();
+    lastHandledRingBroadcast = broadcastAt; // pre-acknowledge our OWN upcoming broadcast so the listener echo doesn't spawn a second, duplicate ring locally
+    spawnSpecialRing({ world, posIndex });
+    if (firebaseReady()) globalEffectsRef.child('specialRing').set({ world, posIndex, broadcastAt, expiresAt: Date.now() + SPECIAL_RING_LIFETIME * 1000 }).catch(() => {});
+    showAdminToast('🎯 Bonus-Ring global ausgelöst — Welt ' + specialRing.world);
   });
   document.getElementById('adminTriggerBossBtn').addEventListener('click', () => {
     if (!firebaseReady()){ showAdminToast('⚠️ Keine Verbindung — Boss-Event kann nicht gestartet werden'); return; }
