@@ -5003,7 +5003,7 @@
   // fully done (either into the fight or back out of it).
   const BOSS_TRANSITION_HIDE_IDS = [
     'hud', 'chaosBadge', 'stormBadge', 'weatherForecastBadge', 'viewerCountBadge',
-    'coopPlayerCountBadge', 'coopOffscreenArrows', 'specialRingBadge',
+    'coopPlayerCountBadge', 'coopOffscreenArrows',
     'globalAnnouncementBanner', 'friendReqToast', 'coopInviteToast', 'spectateBanner',
     'emoteHudBtn', 'settingsFab', 'adminFab', 'musicFab', 'touchControls', 'crosshair',
     'bossHpBarWrap', 'bossTimerWrap',
@@ -5477,6 +5477,7 @@
     const badge = document.getElementById('specialRingBadge');
     if (badge){
       document.getElementById('specialRingBadgeText').textContent = '🎯 Bonus-Ring erschienen in Welt ' + world + ' — flieg durch für +' + SPECIAL_RING_REWARD + ' Pokale!';
+      badge.style.visibility = ''; // clear any leftover inline visibility:hidden from an earlier boss-transition, in case it never got restored — the .show class below is what should actually control this
       badge.classList.add('show');
     }
     sfx.trophy();
