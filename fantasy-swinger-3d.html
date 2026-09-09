@@ -3730,6 +3730,13 @@
     return { start, end };
   }
   function updateGoldenHour(){
+    if (inBossArena){
+      // No stacking bonuses during the fight — boss trophies are their own
+      // fixed reward, not meant to be multiplied by an unrelated event.
+      const badge = document.getElementById('goldenHourBadge');
+      if (goldenHourActive){ goldenHourActive = false; if (badge) badge.classList.remove('show'); }
+      return;
+    }
     const { start, end } = getGoldenHourWindow();
     const now = new Date();
     const isActive = (now >= start && now <= end) || Date.now() < goldenHourForceUntil;
@@ -4418,7 +4425,7 @@
     if (badge) badge.classList.remove('show');
   }
   function updateChaosMode(dt){
-    if (!running || paused) return;
+    if (!running || paused || inBossArena) return;
     // A global broadcast takes priority — keeps chaos alive (with the
     // broadcast's specific type) for as long as the synced expiry says,
     // regardless of the local random timer.
@@ -4538,6 +4545,8 @@
     if (inBossArena){
       muteRainAudio();
       rainMat.opacity = 0;
+      document.getElementById('stormBadge').classList.remove('show');
+      document.getElementById('weatherForecastBadge').classList.remove('show');
       return;
     }
     // A global broadcast takes priority over the local random cycle — keeps
@@ -5047,6 +5056,12 @@
     await fadeToBlack();
     inBossArena = true;
     bossCountdownActive = true;
+    // No leftover chaos/weather/golden-hour/ring effects carrying INTO the
+    // fight from whatever was happening right before it started.
+    if (chaosActive) endChaosMode();
+    if (goldenHourActive){ goldenHourActive = false; document.getElementById('goldenHourBadge').classList.remove('show'); }
+    if (specialRing) removeSpecialRing();
+    updateTouchControlsVisibility(); // tucks the mobile pause button away for the duration
     bossGroup.visible = true;
     bossArenaGroup.visible = true;
     bossAnchors.forEach(a => { a.visible = true; });
@@ -5092,6 +5107,7 @@
     inBossArena = false;
     bossCountdownActive = false;
     bossFightTimer = 0;
+    updateTouchControlsVisibility(); // brings the mobile pause button back now that the fight is over
     document.getElementById('bossTimerWrap').classList.remove('show');
     bossGroup.visible = false;
     bossArenaGroup.visible = false;
@@ -5435,7 +5451,7 @@
     if (badge) badge.classList.remove('show');
   }
   function updateSpecialRing(dt){
-    if (!running || paused) return;
+    if (!running || paused || inBossArena) return;
     if (specialRing){
       specialRing.mesh.visible = specialRing.world === selectedWorld;
       specialRing.mesh.children[0].rotation.y += dt * 0.5; // slow turn, like a gate — matches the now-upright orientation
@@ -9194,7 +9210,7 @@
     if (rainAudioNodes) rainAudioNodes.gain.gain.value = 0;
   }
   function openPauseMenu(){
-    if (!running || paused) return;
+    if (!running || paused || inBossArena) return; // no pausing mid-fight — keeps the timer and the fight itself fair and consistent for everyone
     paused = true;
     savePlaytime();
     closeEmoteWheel();
@@ -9891,7 +9907,7 @@
     // turn) still make sense, but jump/attack/grapple/sprint/pause don't.
     document.getElementById('touchButtons').style.display = photoModeActive ? 'none' : '';
     document.getElementById('touchSprintBtn').style.display = photoModeActive ? 'none' : '';
-    document.getElementById('touchPauseBtn').style.display = photoModeActive ? 'none' : '';
+    document.getElementById('touchPauseBtn').style.display = (photoModeActive || inBossArena) ? 'none' : '';
     // The emote button is shown on PC too (not gated by mobileControlsWanted),
     // so it works as an on-screen alternative to pressing B — hidden while
     // spectating too, since there's no character here to emote with.
