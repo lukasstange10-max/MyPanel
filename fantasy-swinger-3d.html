@@ -78,7 +78,7 @@
   }
   #goldenHourBadge {
     position: fixed; top: 130px; left: 50%; z-index: 47;
-    padding: 9px 22px; border-radius: 999px; font-size: 13px; font-weight: 900;
+    padding: 9px 40px 9px 22px; border-radius: 999px; font-size: 13px; font-weight: 900;
     background: linear-gradient(135deg, #ffe27a, #ffb347, #ffe27a);
     background-size: 300% 300%;
     color: #2a1f00; text-shadow: 0 1px 2px rgba(255,255,255,0.3);
@@ -94,7 +94,7 @@
   }
   #specialRingBadge {
     position: fixed; top: 172px; left: 50%; z-index: 47;
-    padding: 9px 22px; border-radius: 999px; font-size: 13px; font-weight: 900;
+    padding: 9px 40px 9px 22px; border-radius: 999px; font-size: 13px; font-weight: 900;
     background: linear-gradient(135deg, #ffe27a, #ff9d4a, #ffe27a);
     background-size: 300% 300%;
     color: #2a1300; text-shadow: 0 1px 2px rgba(255,255,255,0.3);
@@ -108,6 +108,10 @@
     transition: transform 0.45s cubic-bezier(.2,.8,.3,1.1), opacity 0.4s ease, visibility 0s linear 0s;
     animation: chaosBadgePulse 1.2s ease-in-out infinite;
   }
+  #goldenHourBadge .notifCloseBtn, #specialRingBadge .notifCloseBtn {
+    background: rgba(0,0,0,0.15); color: rgba(0,0,0,0.7);
+  }
+  #goldenHourBadge .notifCloseBtn:hover, #specialRingBadge .notifCloseBtn:hover { background: rgba(0,0,0,0.28); }
   #viewerCountBadge {
     position: fixed; top: 90px; left: 20px; z-index: 45;
     padding: 7px 16px; border-radius: 999px; font-size: 12.5px; font-weight: 800;
@@ -192,6 +196,15 @@
     transition: transform 0.45s cubic-bezier(.2,.8,.3,1.1), opacity 0.4s ease, visibility 0s linear 0s;
   }
   #globalAnnouncementBanner .announceName { color: #7ab8ff; font-weight: 900; }
+  .notifCloseBtn {
+    position: absolute; top: 50%; right: 14px; transform: translateY(-50%);
+    width: 22px; height: 22px; border-radius: 50%; border: none; cursor: pointer;
+    background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.85);
+    font-size: 12px; font-weight: 700; line-height: 1; padding: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s ease, transform 0.15s ease;
+  }
+  .notifCloseBtn:hover { background: rgba(255,255,255,0.25); transform: translateY(-50%) scale(1.1); }
   #spectateBanner {
     position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 200;
     display: none; align-items: center; gap: 14px;
@@ -376,11 +389,13 @@
   #friendReqToast {
     position: fixed; top: 20px; right: 20px; z-index: 260;
     background: rgba(20,10,38,0.95); border: 2px solid rgba(122,170,255,0.6);
-    border-radius: 14px; padding: 14px 16px;
+    border-radius: 14px; padding: 14px 30px 14px 16px;
     box-shadow: 0 15px 40px rgba(0,0,0,0.5), 0 0 25px rgba(122,170,255,0.25);
     transform: translateX(130%); transition: transform 0.35s cubic-bezier(.2,.8,.3,1.2);
     max-width: 260px;
   }
+  #friendReqToast .notifCloseBtn, #coopInviteToast .notifCloseBtn { top: 12px; transform: none; }
+  #friendReqToast .notifCloseBtn:hover, #coopInviteToast .notifCloseBtn:hover { transform: scale(1.1); }
   #friendReqToast.show { transform: translateX(0); }
   #friendReqToast .frtTitle { font-size: 13px; font-weight: 800; color: #fff; margin-bottom: 4px; }
   #friendReqToast .frtName { color: #7aa8ff; }
@@ -395,7 +410,7 @@
   #coopInviteToast {
     position: fixed; top: 140px; right: 20px; z-index: 260;
     background: rgba(20,10,38,0.95); border: 2px solid rgba(255,184,77,0.6);
-    border-radius: 14px; padding: 14px 16px;
+    border-radius: 14px; padding: 14px 30px 14px 16px;
     box-shadow: 0 15px 40px rgba(0,0,0,0.5), 0 0 25px rgba(255,184,77,0.25);
     transform: translateX(130%); transition: transform 0.35s cubic-bezier(.2,.8,.3,1.2);
     max-width: 260px;
@@ -2023,8 +2038,8 @@
   <div id="stormBadge">💨 Sturm — Wind erschwert das Schwingen!</div>
   <div id="weatherForecastBadge"></div>
   <div id="chaosBadge"></div>
-  <div id="goldenHourBadge">✨ Goldene Stunde — 3x Pokale für 5 Minuten!</div>
-  <div id="specialRingBadge"></div>
+  <div id="goldenHourBadge"><span id="goldenHourBadgeText">✨ Goldene Stunde — 3x Pokale für 5 Minuten!</span><button class="notifCloseBtn" id="goldenHourBadgeCloseBtn">✕</button></div>
+  <div id="specialRingBadge"><span id="specialRingBadgeText"></span><button class="notifCloseBtn" id="specialRingBadgeCloseBtn">✕</button></div>
   <div id="viewerCountBadge"></div>
 
         <div id="streakDisplay">
@@ -2061,7 +2076,7 @@
   <div id="bossTimerWrap">⏱️ <span id="bossTimerLabel">1:30</span></div>
 
 
-<div id="globalAnnouncementBanner"></div>
+<div id="globalAnnouncementBanner"><span id="globalAnnouncementText"></span></div>
 <div id="spectateBanner">
   👀 Du schaust <span id="spectateBannerName"></span> zu
   <button id="spectateStopBtn">Beenden (ESC)</button>
@@ -2074,6 +2089,7 @@
 </div>
 
 <div id="friendReqToast">
+  <button id="friendReqCloseBtn" class="notifCloseBtn">✕</button>
   <div class="frtTitle">🤝 <span class="frtName" id="friendReqToastName"></span> möchte dich als Freund</div>
   <div class="frtBtns">
     <button id="friendReqAcceptBtn">✓ Annehmen</button>
@@ -2082,6 +2098,7 @@
 </div>
 
 <div id="coopInviteToast">
+  <button id="coopInviteCloseBtn" class="notifCloseBtn">✕</button>
   <div class="frtTitle">🎮 <span class="frtName" id="coopInviteToastName"></span> lädt dich zum Koop-Spiel ein</div>
   <div class="frtBtns">
     <button id="coopInviteAcceptBtn">✓ Beitreten</button>
@@ -3456,7 +3473,7 @@
     function showGlobalAnnouncement(name, text){
       const el = document.getElementById('globalAnnouncementBanner');
       if (!el) return;
-      el.innerHTML = '<span class="announceName">' + name + '</span>: ' + text;
+      document.getElementById('globalAnnouncementText').innerHTML = '<span class="announceName">' + name + '</span>: ' + text;
       el.classList.add('show');
       sfx.announce();
       clearTimeout(showGlobalAnnouncement._t);
@@ -5437,7 +5454,7 @@
     specialRing = { mesh: g, ringMat, beamMat, pos: spawnPos, world, lifeLeft: SPECIAL_RING_LIFETIME };
     const badge = document.getElementById('specialRingBadge');
     if (badge){
-      badge.textContent = '🎯 Bonus-Ring erschienen in Welt ' + world + ' — flieg durch für +' + SPECIAL_RING_REWARD + ' Pokale!';
+      document.getElementById('specialRingBadgeText').textContent = '🎯 Bonus-Ring erschienen in Welt ' + world + ' — flieg durch für +' + SPECIAL_RING_REWARD + ' Pokale!';
       badge.classList.add('show');
     }
     sfx.trophy();
@@ -8056,6 +8073,24 @@
   });
   document.getElementById('friendReqDismissBtn').addEventListener('click', () => {
     document.getElementById('friendReqToast').classList.remove('show');
+  });
+  document.getElementById('friendReqCloseBtn').addEventListener('click', () => {
+    document.getElementById('friendReqToast').classList.remove('show');
+  });
+  document.getElementById('goldenHourBadgeCloseBtn').addEventListener('click', () => {
+    // Only dismisses the notification badge — the golden hour itself (the
+    // 3x trophy bonus) stays active in the background exactly as long as
+    // it normally would, this just stops showing the reminder about it.
+    document.getElementById('goldenHourBadge').classList.remove('show');
+  });
+  document.getElementById('specialRingBadgeCloseBtn').addEventListener('click', () => {
+    // Same idea — the ring itself stays out there to be found and flown
+    // through, only the notification about it goes away.
+    document.getElementById('specialRingBadge').classList.remove('show');
+  });
+  document.getElementById('coopInviteCloseBtn').addEventListener('click', () => {
+    document.getElementById('coopInviteToast').classList.remove('show');
+    pendingCoopInvite = null;
   });
   document.getElementById('coopInviteAcceptBtn').addEventListener('click', acceptCoopInvite);
   document.getElementById('coopInviteDismissBtn').addEventListener('click', () => {
