@@ -152,6 +152,18 @@
     transition: width 0.35s ease, background 0.4s ease;
   }
 
+  #bossTimerWrap {
+    position: fixed; top: 62px; left: 50%; transform: translateX(-50%); z-index: 60;
+    display: none; padding: 5px 16px; border-radius: 999px;
+    background: rgba(20,5,15,0.75); border: 1.5px solid rgba(255,226,122,0.4);
+    color: #ffe27a; font-size: 15px; font-weight: 800;
+  }
+  #bossTimerWrap.show { display: block; }
+  #bossTimerWrap.urgent {
+    color: #ff6b6b; border-color: rgba(255,45,85,0.6);
+    animation: chaosBadgePulse 0.7s ease-in-out infinite;
+  }
+
   #damageVignette {
     position: fixed; inset: 0; z-index: 90; pointer-events: none;
     background: radial-gradient(ellipse at center, transparent 45%, rgba(255,20,40,0.55) 100%);
@@ -2046,6 +2058,7 @@
     <div id="bossHpBarName">👹 BOSS</div>
     <div id="bossHpBarBg"><div id="bossHpBarFill"></div></div>
   </div>
+  <div id="bossTimerWrap">⏱️ <span id="bossTimerLabel">1:30</span></div>
 
 
 <div id="globalAnnouncementBanner"></div>
@@ -3399,7 +3412,7 @@
     bossEventRef.on('value', snapshot => {
       const data = snapshot.val();
       if (!data || !data.active){
-        if (bossEventActive) endBossEventLocally(false); // event was cleared/reset without a proper victory — just quietly send everyone back
+        if (bossEventActive) endBossEventLocally(null); // event was cleared/reset without a proper victory — just quietly send everyone back
         bossEventActive = false;
         return;
       }
@@ -4946,7 +4959,7 @@
     'coopPlayerCountBadge', 'coopOffscreenArrows', 'specialRingBadge',
     'globalAnnouncementBanner', 'friendReqToast', 'coopInviteToast', 'spectateBanner',
     'emoteHudBtn', 'settingsFab', 'adminFab', 'musicFab', 'touchControls', 'crosshair',
-    'bossHpBarWrap',
+    'bossHpBarWrap', 'bossTimerWrap',
   ];
   function setGameUiHiddenForBossTransition(hidden){
     BOSS_TRANSITION_HIDE_IDS.forEach(id => {
@@ -4988,9 +5001,12 @@
     overlay.classList.remove('show');
     setGameUiHiddenForBossTransition(false);
   }
-  function showBossFadeText(text){
+  function showBossFadeText(text, color){
     const textEl = document.getElementById('bossFadeText');
     textEl.textContent = text;
+    const c = color || '#ff2d55';
+    textEl.style.color = c;
+    textEl.style.textShadow = '0 0 30px ' + c + '99';
     textEl.classList.add('show');
   }
   function updateBossHpBarUI(){
@@ -5012,6 +5028,9 @@
     }
   }
   let bossArenaEntering = false; // guards against enterBossArena() being triggered multiple times concurrently (the Firebase listener can fire more than once in quick succession), which was letting overlapping calls fight over the SAME fade class and cancel each other's transition
+  const BOSS_FIGHT_TIME_LIMIT = 90; // 1:30 — once the countdown ends and the fight actually starts, this much time to bring the boss down
+  let bossFightTimer = 0;
+  let bossCountdownActive = false; // true during the 3-2-1 — boss doesn't attack and hits don't land yet, so nobody gets sucker-punched before they even know the fight has started
   async function enterBossArena(){
     if (inBossArena || bossArenaEntering) return;
     if (!running){
@@ -5027,6 +5046,7 @@
     preBossWorld = selectedWorld;
     await fadeToBlack();
     inBossArena = true;
+    bossCountdownActive = true;
     bossGroup.visible = true;
     bossArenaGroup.visible = true;
     bossAnchors.forEach(a => { a.visible = true; });
@@ -5039,22 +5059,40 @@
     resetStreak();
     updateBossHpBarUI();
     showBossFadeText('👹 BOSS KAMPF!');
-    await new Promise(r => setTimeout(r, 2000)); // longer hold than before — enough time to actually read it, not just a flash
+    await new Promise(r => setTimeout(r, 1600));
+    // 3-2-1 countdown — still behind the black screen, so it's the very
+    // last thing shown right before the arena is actually revealed, rather
+    // than counting down over a view of the boss they can't yet act in.
+    for (const n of ['3', '2', '1']){
+      showBossFadeText(n);
+      await new Promise(r => setTimeout(r, 800));
+    }
     fadeFromBlack();
+    bossCountdownActive = false;
+    bossFightTimer = BOSS_FIGHT_TIME_LIMIT;
+    updateBossTimerUI();
     bossArenaEntering = false;
   }
   let bossArenaExiting = false; // same concurrent-call protection as bossArenaEntering above
-  async function endBossEventLocally(showVictory){
+  async function endBossEventLocally(reason){
+    // reason: 'victory' | 'timeout' | falsy (silent — friend/session ended early, no message needed)
     if (!inBossArena || bossArenaExiting){ bossVictoryPending = false; return; }
     bossArenaExiting = true;
-    if (showVictory){
+    if (reason === 'victory'){
       await fadeToBlack();
-      showBossFadeText('👹 BOSS BESIEGT!');
+      showBossFadeText('👹 BOSS BESIEGT!', '#7affc4');
+      await new Promise(r => setTimeout(r, 1800));
+    } else if (reason === 'timeout'){
+      await fadeToBlack();
+      showBossFadeText('⏱️ ENDE', '#ff2d55');
       await new Promise(r => setTimeout(r, 1800));
     } else {
       await fadeToBlack();
     }
     inBossArena = false;
+    bossCountdownActive = false;
+    bossFightTimer = 0;
+    document.getElementById('bossTimerWrap').classList.remove('show');
     bossGroup.visible = false;
     bossArenaGroup.visible = false;
     bossAnchors.forEach(a => { a.visible = false; });
@@ -5075,8 +5113,21 @@
     // Only actually plays the "you were there" sequence for players who
     // were IN the arena — someone who never joined this particular fight
     // shouldn't get a random black screen with a victory message.
-    if (inBossArena) await endBossEventLocally(true);
+    if (inBossArena) await endBossEventLocally('victory');
     else bossVictoryPending = false;
+  }
+  function updateBossTimerUI(){
+    const wrap = document.getElementById('bossTimerWrap');
+    const label = document.getElementById('bossTimerLabel');
+    if (!wrap || !label) return;
+    const show = inBossArena && !bossCountdownActive && bossFightTimer > 0;
+    wrap.classList.toggle('show', show);
+    if (show){
+      const totalSec = Math.max(0, Math.ceil(bossFightTimer));
+      const m = Math.floor(totalSec / 60), s = totalSec % 60;
+      label.textContent = m + ':' + String(s).padStart(2, '0');
+      wrap.classList.toggle('urgent', bossFightTimer <= 15);
+    }
   }
   function respawnAtBossPlatform(){
     player.pos.set(BOSS_ARENA_POS.x, BOSS_ARENA_POS.y + 6, BOSS_ARENA_POS.z + 22);
@@ -5089,6 +5140,19 @@
   }
   function updateBossFight(dt){
     if (!inBossArena) return;
+
+    // Fight timer — only ticks once the countdown is over and the fight
+    // has actually started. Running out with the boss still alive ends the
+    // event the same way a victory does, just with a different message.
+    if (!bossCountdownActive && bossFightTimer > 0){
+      bossFightTimer -= dt;
+      updateBossTimerUI();
+      if (bossFightTimer <= 0 && bossHp > 0 && !bossVictoryPending){
+        bossVictoryPending = true;
+        endBossEventLocally('timeout');
+      }
+    }
+
     // Gentle idle bob so something this size still reads as alive even
     // though it never actually moves from its spot.
     bossGroup.position.y = BOSS_ARENA_POS.y + 12 + Math.sin(clock.elapsedTime * 0.8) * 1.2;
@@ -5131,7 +5195,7 @@
     const hpPct = bossHp / BOSS_MAX_HP;
     const attackInterval = hpPct > 0.66 ? 4.5 : hpPct > 0.33 ? 3.2 : 2.2;
     bossAttackTimer += dt;
-    if (bossAttackTimer >= attackInterval){
+    if (!bossCountdownActive && bossAttackTimer >= attackInterval){
       bossAttackTimer = 0;
       bossLungeT = BOSS_LUNGE_DURATION; // visible on EVERY attack swing, whether or not it actually lands, so a dodged attack still reads clearly as an attack
       const dist = player.pos.distanceTo(bossGroup.position);
@@ -7076,6 +7140,7 @@
     const now = clock.elapsedTime;
     if (now - lastAttackTime < ATTACK_COOLDOWN) return;
     if (inBossArena){
+      if (bossCountdownActive) return; // fight hasn't actually started yet — no free hits during the 3-2-1
       if (player.pos.distanceTo(bossGroup.position) > BOSS_HIT_RANGE) return; // only allowed to hit while actually in range
       lastAttackTime = now;
       attackSwingT = 1;
