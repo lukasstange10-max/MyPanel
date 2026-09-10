@@ -110,23 +110,23 @@
     transform: translateX(-50%) translateY(0); opacity: 1; visibility: visible;
     transition: transform 0.45s cubic-bezier(.2,.8,.3,1.1), opacity 0.4s ease, visibility 0s linear 0s;
   }
-  #meteorShowerBadge {
+  #iceAgeBadge {
     position: fixed; top: 214px; left: 50%; z-index: 90;
     padding: 9px 40px 9px 22px; border-radius: 999px; font-size: 13px; font-weight: 900;
-    background: linear-gradient(135deg, #6b7aff, #b47aff, #6b7aff);
+    background: linear-gradient(135deg, #7ec8ff, #cfe9ff, #7ec8ff);
     background-size: 300% 300%;
-    color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,0.4);
-    box-shadow: 0 6px 22px rgba(120,110,255,0.5);
+    color: #0a2a4a; text-shadow: 0 1px 3px rgba(255,255,255,0.5);
+    box-shadow: 0 6px 22px rgba(130,190,255,0.55);
     transform: translateX(-50%) translateY(-140%);
     opacity: 0; visibility: hidden;
     transition: transform 0.45s cubic-bezier(.2,.8,.3,1.1), opacity 0.4s ease, visibility 0s linear 0.45s;
   }
-  #meteorShowerBadge.show {
+  #iceAgeBadge.show {
     transform: translateX(-50%) translateY(0); opacity: 1; visibility: visible;
     transition: transform 0.45s cubic-bezier(.2,.8,.3,1.1), opacity 0.4s ease, visibility 0s linear 0s;
   }
-  #meteorShowerBadge .notifCloseBtn { background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.85); }
-  #meteorShowerBadge .notifCloseBtn:hover { background: rgba(255,255,255,0.28); }
+  #iceAgeBadge .notifCloseBtn { background: rgba(10,40,70,0.15); color: rgba(10,40,70,0.75); }
+  #iceAgeBadge .notifCloseBtn:hover { background: rgba(10,40,70,0.28); }
   #goldenHourBadge .notifCloseBtn, #specialRingBadge .notifCloseBtn {
     background: rgba(0,0,0,0.15); color: rgba(0,0,0,0.7);
   }
@@ -2099,7 +2099,7 @@
 </div>
 <div id="goldenHourBadge"><span id="goldenHourBadgeText">✨ Goldene Stunde — 3x Pokale für 5 Minuten!</span><button class="notifCloseBtn" id="goldenHourBadgeCloseBtn">✕</button></div>
 <div id="specialRingBadge"><span id="specialRingBadgeText"></span><button class="notifCloseBtn" id="specialRingBadgeCloseBtn">✕</button></div>
-<div id="meteorShowerBadge"><span>🌠 Meteor-Schauer — schwing durch für Bonus-Pokale!</span><button class="notifCloseBtn" id="meteorShowerBadgeCloseBtn">✕</button></div>
+<div id="iceAgeBadge"><span>🧊 Eiszeit — die Plattformen sind vereist!</span><button class="notifCloseBtn" id="iceAgeBadgeCloseBtn">✕</button></div>
 
 
 <div id="damageVignette"></div>
@@ -3041,7 +3041,7 @@
         <button class="adminActionBtn" id="adminTriggerGoldenHourBtn">✨ Goldene Stunde testen (2min)</button>
         <button class="adminActionBtn" id="adminTriggerRingBtn">🎯 Bonus-Ring auslösen</button>
         <button class="adminActionBtn" id="adminTriggerBossBtn">👹 Boss-Gegner auslösen</button>
-        <button class="adminActionBtn" id="adminTriggerMeteorBtn">🌠 Meteor-Schauer auslösen (3min)</button>
+        <button class="adminActionBtn" id="adminTriggerIceAgeBtn">🧊 Eiszeit auslösen (3min)</button>
       </div>
       <div class="settingsToggleRow" style="margin-top:12px;">
         <span>🛡️ God Mode (unverwundbar)</span>
@@ -3457,8 +3457,8 @@
       if (data.goldenHour && data.goldenHour.expiresAt > Date.now()){
         goldenHourForceUntil = data.goldenHour.expiresAt;
       }
-      if (data.meteorShower && data.meteorShower.expiresAt > Date.now()){
-        meteorShowerForceUntil = data.meteorShower.expiresAt;
+      if (data.iceAge && data.iceAge.expiresAt > Date.now()){
+        iceAgeForceUntil = data.iceAge.expiresAt;
       }
       if (data.specialRing && data.specialRing.broadcastAt && data.specialRing.broadcastAt > lastHandledRingBroadcast && data.specialRing.expiresAt > Date.now()){
         lastHandledRingBroadcast = data.specialRing.broadcastAt;
@@ -4760,9 +4760,17 @@
     top.position.y = scale*0.15;
     top.castShadow = true; top.receiveShadow = true;
     g.add(top);
+    // A thin icy cap, hidden until the Ice Age event turns it on — sits
+    // right at the surface, tinting the platform frosty blue-white without
+    // needing to touch (and later restore) the island's own real colors.
+    const iceMat = new THREE.MeshStandardMaterial({ color: 0xcfe9ff, roughness: 0.15, metalness: 0.1, transparent: true, opacity: 0.88 });
+    const iceOverlay = new THREE.Mesh(new THREE.CylinderGeometry(scale*0.625, scale*0.625, scale*0.03, 8), iceMat);
+    iceOverlay.position.y = scale*0.28;
+    iceOverlay.visible = false;
+    g.add(iceOverlay);
     g.position.set(x,y,z);
     scene.add(g);
-    const entry = {mesh:g, pos:new THREE.Vector3(x,y,z), radius: scale*0.62, top: y + scale*0.27, bottom: y - scale*0.95, rockMat, grassMat, baseHue: hue, topOffset: scale*0.27, bottomOffset: -scale*0.95, homeY: y};
+    const entry = {mesh:g, pos:new THREE.Vector3(x,y,z), radius: scale*0.62, top: y + scale*0.27, bottom: y - scale*0.95, rockMat, grassMat, iceOverlay, baseHue: hue, topOffset: scale*0.27, bottomOffset: -scale*0.95, homeY: y};
     islands.push(entry);
     return entry;
   }
@@ -5154,9 +5162,8 @@
     if (chaosActive) endChaosMode();
     if (goldenHourActive){ goldenHourActive = false; document.getElementById('goldenHourBadge').classList.remove('show'); }
     if (specialRing) removeSpecialRing();
-    while (activeMeteors.length) removeMeteor(activeMeteors[0]);
-    while (landedMeteors.length) removeLandedMeteor(landedMeteors[0]);
-    document.getElementById('meteorShowerBadge').classList.remove('show');
+    if (iceAgeActive){ iceAgeActive = false; setIceOverlaysVisible(false); }
+    document.getElementById('iceAgeBadge').classList.remove('show');
     updateTouchControlsVisibility(); // tucks the mobile pause button away for the duration
     bossGroup.visible = true;
     bossArenaGroup.visible = true;
@@ -5490,241 +5497,44 @@
   addCheckpointSet(ringPositionsW3, 3);
 
   // ---------- SPECIAL BONUS RING ----------
-  // ---------- METEOR SHOWER EVENT ----------
-  // A rare, admin-triggered global event: for a few minutes, glowing
-  // meteors fly around the sky as ambient atmosphere, and every so often
-  // one of them breaks off, arcs down, and actually crashes into a nearby
-  // platform — visibly impacting it — leaving a collectible glowing ember
-  // behind to go pick up. Purely local/ambient (every player sees their
-  // OWN meteors near THEM), so nobody has to travel anywhere for the
-  // AMBIENT show to start, though reaching a LANDED one does take a
-  // moment of actually swinging over to that specific platform.
-  const METEOR_FLYBY_REWARD = 15; // catching one mid-flight, before it lands anywhere
-  const METEOR_LANDED_REWARD = 25; // more than a flyby — landed ones take a deliberate trip to reach
-  const METEOR_HIT_RADIUS = 4.5;
-  const METEOR_TRAVEL_TIME = 2.8; // seconds a flyby meteor takes to streak across
-  const METEOR_FALL_TIME = 1.8; // seconds a landing meteor takes to fall from sky to platform
-  const METEOR_FLYBY_INTERVAL = 1.6; // seconds between new ambient flyby meteors
-  const METEOR_LANDING_INTERVAL = 7; // seconds between meteors that actually target a platform
-  const METEOR_LANDED_LIFETIME = 25; // seconds a landed ember stays collectible before fading
-  let meteorShowerForceUntil = 0;
-  let meteorShowerActive = false;
-  let meteorFlybyTimer = 0;
-  let meteorLandingTimer = 0;
-  const activeMeteors = []; // flying (either ambient flyby or falling-to-land)
-  const landedMeteors = []; // already impacted, sitting on a platform waiting to be collected
-  function makeMeteorMesh(){
-    const g = new THREE.Group();
-    const headMat = new THREE.MeshBasicMaterial({ color: 0xfff2c9 });
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.55, 10, 10), headMat);
-    g.add(head);
-    // A tapering trail behind it, built from a few fading segments rather
-    // than a single cone — reads more like a streak of light than a solid
-    // shape when moving fast.
-    const trailMat = new THREE.MeshBasicMaterial({ color: 0xffd27a, transparent: true, opacity: 0.55 });
-    for (let i = 1; i <= 4; i++){
-      const seg = new THREE.Mesh(new THREE.SphereGeometry(0.55 - i * 0.1, 6, 6), trailMat.clone());
-      seg.material.opacity = 0.5 - i * 0.1;
-      seg.position.z = i * 0.9;
-      g.add(seg);
+  // ---------- ICE AGE EVENT ----------
+  // Happens eventually on its own, same as the storm — an independent
+  // random cycle, not scheduled or forecast in advance, so it's a genuine
+  // surprise rather than something to watch a countdown for. Also
+  // admin-triggerable/globally-broadcastable for testing or as a
+  // deliberate live event. While active, every platform's surface visibly
+  // freezes over.
+  let iceAgeActive = false;
+  let iceAgeForceUntil = 0;
+  let iceAgeNaturalTimer = 240 + Math.random() * 240; // first natural occurrence 4–8 minutes into a session
+  function setIceOverlaysVisible(visible){
+    islands.forEach(isl => { if (isl.iceOverlay) isl.iceOverlay.visible = visible; });
+  }
+  function updateIceAge(dt){
+    const badge = document.getElementById('iceAgeBadge');
+    if (inBossArena){
+      if (iceAgeActive){ iceAgeActive = false; setIceOverlaysVisible(false); if (badge) badge.classList.remove('show'); }
+      return;
     }
-    const light = new THREE.PointLight(0xffd27a, 1.2, 12);
-    g.add(light);
-    scene.add(g);
-    return g;
-  }
-  function spawnFlybyMeteor(){
-    // Purely decorative — streaks past somewhere near the player, high
-    // overhead, and is gone. Catching one mid-flight IS still possible and
-    // still pays out, but that's a bonus, not the main point of these.
-    const angle = Math.random() * Math.PI * 2;
-    const dist = 15 + Math.random() * 20;
-    const startHeight = 35 + Math.random() * 15;
-    const start = new THREE.Vector3(
-      player.pos.x + Math.cos(angle) * dist,
-      player.pos.y + startHeight,
-      player.pos.z + Math.sin(angle) * dist
-    );
-    const endAngle = angle + (Math.random() - 0.5) * 1.4;
-    const end = new THREE.Vector3(
-      player.pos.x + Math.cos(endAngle) * dist * 0.4,
-      player.pos.y + 6 + Math.random() * 10,
-      player.pos.z + Math.sin(endAngle) * dist * 0.4
-    );
-    const mesh = makeMeteorMesh();
-    mesh.position.copy(start);
-    mesh.lookAt(end);
-    activeMeteors.push({ mesh, start, end, elapsed: 0, duration: METEOR_TRAVEL_TIME, landing: false, reward: METEOR_FLYBY_REWARD, collected: false });
-  }
-  function pickNearbyLandingIsland(){
-    // A real platform (checkpoint or plain island — anything with a
-    // usable top surface) in the player's CURRENT world, close enough to
-    // actually see the impact happen without having to already be staring
-    // at the right spot.
-    const candidates = islands.filter(isl => isl.world === selectedWorld && isl.pos.distanceTo(player.pos) < 60);
-    if (!candidates.length) return null;
-    return candidates[Math.floor(Math.random() * candidates.length)];
-  }
-  function spawnLandingMeteor(){
-    const island = pickNearbyLandingIsland();
-    if (!island) return; // no suitable platform nearby right now — just skip this cycle, the next one will likely find one
-    const angle = Math.random() * Math.PI * 2;
-    const r = Math.random() * island.radius * 0.6; // lands somewhere within the platform, not always dead-center
-    const end = new THREE.Vector3(
-      island.pos.x + Math.cos(angle) * r,
-      island.top + 0.3,
-      island.pos.z + Math.sin(angle) * r
-    );
-    const start = new THREE.Vector3(
-      end.x + (Math.random() - 0.5) * 10,
-      end.y + 45 + Math.random() * 15,
-      end.z + (Math.random() - 0.5) * 10
-    );
-    const mesh = makeMeteorMesh();
-    mesh.position.copy(start);
-    mesh.lookAt(end);
-    activeMeteors.push({ mesh, start, end, elapsed: 0, duration: METEOR_FALL_TIME, landing: true, island, collected: false });
-  }
-  function spawnImpactFlash(pos){
-    // A quick, bright expanding ring plus a handful of scattering embers —
-    // visible from well above the platform, so the impact actually READS
-    // as an impact even if you're watching from a distance or mid-swing.
-    const flashMat = new THREE.MeshBasicMaterial({ color: 0xffe9b0, transparent: true, opacity: 0.9, side: THREE.DoubleSide });
-    const flash = new THREE.Mesh(new THREE.RingGeometry(0.2, 0.5, 20), flashMat);
-    flash.rotation.x = -Math.PI / 2;
-    flash.position.copy(pos);
-    flash.position.y += 0.15;
-    scene.add(flash);
-    const embers = [];
-    for (let i = 0; i < 7; i++){
-      const emberMat = new THREE.MeshBasicMaterial({ color: 0xffcf7a });
-      const ember = new THREE.Mesh(new THREE.SphereGeometry(0.16, 6, 6), emberMat);
-      ember.position.copy(pos);
-      const a = Math.random() * Math.PI * 2;
-      ember.userData.vel = new THREE.Vector3(Math.cos(a) * (2 + Math.random() * 3), 3 + Math.random() * 3, Math.sin(a) * (2 + Math.random() * 3));
-      scene.add(ember);
-      embers.push(ember);
-    }
-    const light = new THREE.PointLight(0xffcf7a, 3, 16);
-    light.position.copy(pos);
-    scene.add(light);
-    let t = 0;
-    function step(){
-      t += 0.05;
-      flash.scale.setScalar(1 + t * 14);
-      flashMat.opacity = Math.max(0, 0.9 - t * 1.8);
-      light.intensity = Math.max(0, 3 - t * 6);
-      embers.forEach(e => {
-        e.position.addScaledVector(e.userData.vel, 0.05);
-        e.userData.vel.y -= 0.15; // gravity
-        e.material.opacity = Math.max(0, 1 - t * 1.5);
-        e.material.transparent = true;
-      });
-      if (t < 0.6){
-        requestAnimationFrame(step);
-      } else {
-        scene.remove(flash); flashMat.dispose(); flash.geometry.dispose();
-        scene.remove(light);
-        embers.forEach(e => { scene.remove(e); e.geometry.dispose(); e.material.dispose(); });
-      }
-    }
-    requestAnimationFrame(step);
-    sfx.punch(); // reuse the existing punchy impact sound rather than adding a whole new sample for this
-  }
-  function makeLandedMeteorMesh(){
-    const g = new THREE.Group();
-    const mat = new THREE.MeshStandardMaterial({ color: 0x3a1c0a, emissive: 0xffb347, emissiveIntensity: 0.9, roughness: 0.6 });
-    const rock = new THREE.Mesh(new THREE.IcosahedronGeometry(0.7, 0), mat);
-    g.add(rock);
-    const light = new THREE.PointLight(0xffb347, 1.4, 10);
-    light.position.y = 0.6;
-    g.add(light);
-    scene.add(g);
-    return { group: g, mat };
-  }
-  function removeMeteor(m){
-    scene.remove(m.mesh);
-    m.mesh.traverse(obj => { if (obj.geometry) obj.geometry.dispose(); if (obj.material) obj.material.dispose(); });
-    const i = activeMeteors.indexOf(m);
-    if (i >= 0) activeMeteors.splice(i, 1);
-  }
-  function removeLandedMeteor(lm){
-    scene.remove(lm.group);
-    lm.group.traverse(obj => { if (obj.geometry) obj.geometry.dispose(); if (obj.material) obj.material.dispose(); });
-    const i = landedMeteors.indexOf(lm);
-    if (i >= 0) landedMeteors.splice(i, 1);
-  }
-  function collectMeteorReward(amount){
-    totalTrophies += amount;
-    storageSet('rankmann_totalTrophies', totalTrophies);
-    spawnTrophyFly(amount);
-    sfx.trophy();
-  }
-  function updateMeteorShower(dt){
-    const badge = document.getElementById('meteorShowerBadge');
-    const isActive = Date.now() < meteorShowerForceUntil && !inBossArena;
-    if (isActive && !meteorShowerActive){
-      meteorShowerActive = true;
-      meteorFlybyTimer = 0;
-      meteorLandingTimer = METEOR_LANDING_INTERVAL * 0.4; // first landing meteor a bit sooner than a full interval, so the "lands on a platform" part of the event doesn't feel like an afterthought
+    const isActive = Date.now() < iceAgeForceUntil;
+    if (isActive && !iceAgeActive){
+      iceAgeActive = true;
+      setIceOverlaysVisible(true);
       if (badge) badge.classList.add('show');
-    } else if (!isActive && meteorShowerActive){
-      meteorShowerActive = false;
+      sfx.freeze();
+    } else if (!isActive && iceAgeActive){
+      iceAgeActive = false;
+      setIceOverlaysVisible(false);
       if (badge) badge.classList.remove('show');
-      while (activeMeteors.length) removeMeteor(activeMeteors[0]);
-      while (landedMeteors.length) removeLandedMeteor(landedMeteors[0]);
     }
-    if (meteorShowerActive){
-      meteorFlybyTimer += dt;
-      if (meteorFlybyTimer >= METEOR_FLYBY_INTERVAL){
-        meteorFlybyTimer = 0;
-        spawnFlybyMeteor();
+    if (!isActive){
+      iceAgeNaturalTimer -= dt;
+      if (iceAgeNaturalTimer <= 0){
+        iceAgeForceUntil = Date.now() + (2 + Math.random() * 2) * 60000; // 2–4 minutes
+        iceAgeNaturalTimer = 360 + Math.random() * 480; // next natural occurrence 6–14 minutes later
       }
-      meteorLandingTimer += dt;
-      if (meteorLandingTimer >= METEOR_LANDING_INTERVAL){
-        meteorLandingTimer = 0;
-        spawnLandingMeteor();
-      }
-    }
-    for (let i = activeMeteors.length - 1; i >= 0; i--){
-      const m = activeMeteors[i];
-      m.elapsed += dt;
-      const t = Math.min(1, m.elapsed / m.duration);
-      m.mesh.position.lerpVectors(m.start, m.end, t);
-      if (m.landing){
-        if (t >= 1){
-          // Impact — flash, then becomes a landed collectible sitting right there.
-          spawnImpactFlash(m.end);
-          const built = makeLandedMeteorMesh();
-          built.group.position.copy(m.end);
-          landedMeteors.push({ ...built, pos: m.end.clone(), lifeLeft: METEOR_LANDED_LIFETIME, elapsed: 0 });
-          removeMeteor(m);
-        }
-        continue; // landing meteors are only collectible AFTER impact, not mid-fall
-      }
-      if (!m.collected && m.mesh.position.distanceTo(player.pos) < METEOR_HIT_RADIUS){
-        m.collected = true;
-        collectMeteorReward(m.reward);
-        removeMeteor(m);
-        continue;
-      }
-      if (t >= 1) removeMeteor(m);
-    }
-    for (let i = landedMeteors.length - 1; i >= 0; i--){
-      const lm = landedMeteors[i];
-      lm.elapsed += dt;
-      lm.lifeLeft -= dt;
-      lm.group.rotation.y += dt * 1.2;
-      lm.group.position.y = lm.pos.y + 0.25 + Math.sin(lm.elapsed * 3) * 0.08; // gentle hover/pulse so it reads as a pickup, not debris
-      if (lm.pos.distanceTo(player.pos) < METEOR_HIT_RADIUS){
-        collectMeteorReward(METEOR_LANDED_REWARD);
-        removeLandedMeteor(lm);
-        continue;
-      }
-      if (lm.lifeLeft <= 0) removeLandedMeteor(lm);
     }
   }
-
 
   // A rare, announced event — like the Golden Hour, but a physical target
   // instead of a time window. Every 2 hours, one big glowing ring appears
@@ -7367,6 +7177,12 @@
       playTone(660, 0.32, 'sine', 0.16);
       setTimeout(() => playTone(880, 0.4, 'sine', 0.14), 130);
     },
+    freeze: () => {
+      // A cold, glassy descending chime plus a brief crackle of noise —
+      // reads as ice actually forming, not a warning/alarm.
+      [1400, 1100, 850, 650].forEach((f, i) => setTimeout(() => playTone(f, 0.3, 'sine', 0.15), i * 80));
+      playNoiseBurst(0.18, 2400, 0.09);
+    },
   };
 
   // ---------- GRAPPLE STATE ----------
@@ -8426,8 +8242,8 @@
     // through, only the notification about it goes away.
     document.getElementById('specialRingBadge').classList.remove('show');
   });
-  document.getElementById('meteorShowerBadgeCloseBtn').addEventListener('click', () => {
-    document.getElementById('meteorShowerBadge').classList.remove('show');
+  document.getElementById('iceAgeBadgeCloseBtn').addEventListener('click', () => {
+    document.getElementById('iceAgeBadge').classList.remove('show');
   });
   document.getElementById('coopInviteCloseBtn').addEventListener('click', () => {
     document.getElementById('coopInviteToast').classList.remove('show');
@@ -8650,11 +8466,11 @@
     startBossEvent();
     showAdminToast('👹 Boss-Gegner ausgelöst — alle Spieler werden in die Arena geholt');
   });
-  document.getElementById('adminTriggerMeteorBtn').addEventListener('click', () => {
-    meteorShowerForceUntil = Date.now() + 3 * 60000;
-    updateMeteorShower(0); // show the badge immediately instead of waiting for the next animation frame
-    broadcastGlobalEffect('meteorShower', 3 * 60000);
-    showAdminToast('🌠 Meteor-Schauer global ausgelöst — 3 Minuten bei allen Spielern');
+  document.getElementById('adminTriggerIceAgeBtn').addEventListener('click', () => {
+    iceAgeForceUntil = Date.now() + 3 * 60000;
+    updateIceAge(0); // show the badge (and play the freeze sound) immediately instead of waiting for the next animation frame
+    broadcastGlobalEffect('iceAge', 3 * 60000);
+    showAdminToast('🧊 Eiszeit global ausgelöst — 3 Minuten bei allen Spielern');
   });
   document.getElementById('adminAnnounceBtn').addEventListener('click', () => {
     const input = document.getElementById('adminAnnounceInput');
@@ -10256,7 +10072,7 @@
     updateChaosMode(dt);
     updateGoldenHour();
     updateSpecialRing(dt);
-    updateMeteorShower(dt);
+    updateIceAge(dt);
     dust.rotation.y += dt*0.01;
     if (starfield.visible){
       starfield.position.set(player.pos.x, 0, player.pos.z);
