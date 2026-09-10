@@ -3386,6 +3386,8 @@
   let globalEventExpiresAt = null; // ms epoch, or null (no expiry)
   let globalEventRef = null;
   let friendBroadcastRef = null;
+  let globalEffectsRef = null;
+  let lastHandledRingBroadcast = 0; // the ring is a one-time SPAWN action, not a continuous "forced until" state like the others — this tracks which broadcast was already acted on, so the same one doesn't re-trigger every time this listener fires
   try {
     firebase.initializeApp({ databaseURL: FIREBASE_DB_URL });
     globalEventRef = firebase.database().ref('globalEvent');
@@ -3407,8 +3409,7 @@
     // the admin test buttons already used — a synced broadcast just sets
     // those same local variables on every client instead of only the
     // admin's own.
-    const globalEffectsRef = firebase.database().ref('globalEffects');
-    let lastHandledRingBroadcast = 0; // the ring is a one-time SPAWN action, not a continuous "forced until" state like the others — this tracks which broadcast was already acted on, so the same one doesn't re-trigger every time this listener fires
+    globalEffectsRef = firebase.database().ref('globalEffects');
     globalEffectsRef.on('value', snapshot => {
       const data = snapshot.val() || {};
       if (data.storm && data.storm.expiresAt > Date.now()){
