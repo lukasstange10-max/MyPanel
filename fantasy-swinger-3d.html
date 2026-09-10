@@ -110,6 +110,23 @@
     transform: translateX(-50%) translateY(0); opacity: 1; visibility: visible;
     transition: transform 0.45s cubic-bezier(.2,.8,.3,1.1), opacity 0.4s ease, visibility 0s linear 0s;
   }
+  #meteorShowerBadge {
+    position: fixed; top: 214px; left: 50%; z-index: 90;
+    padding: 9px 40px 9px 22px; border-radius: 999px; font-size: 13px; font-weight: 900;
+    background: linear-gradient(135deg, #6b7aff, #b47aff, #6b7aff);
+    background-size: 300% 300%;
+    color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,0.4);
+    box-shadow: 0 6px 22px rgba(120,110,255,0.5);
+    transform: translateX(-50%) translateY(-140%);
+    opacity: 0; visibility: hidden;
+    transition: transform 0.45s cubic-bezier(.2,.8,.3,1.1), opacity 0.4s ease, visibility 0s linear 0.45s;
+  }
+  #meteorShowerBadge.show {
+    transform: translateX(-50%) translateY(0); opacity: 1; visibility: visible;
+    transition: transform 0.45s cubic-bezier(.2,.8,.3,1.1), opacity 0.4s ease, visibility 0s linear 0s;
+  }
+  #meteorShowerBadge .notifCloseBtn { background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.85); }
+  #meteorShowerBadge .notifCloseBtn:hover { background: rgba(255,255,255,0.28); }
   #goldenHourBadge .notifCloseBtn, #specialRingBadge .notifCloseBtn {
     background: rgba(0,0,0,0.15); color: rgba(0,0,0,0.7);
   }
@@ -2082,6 +2099,7 @@
 </div>
 <div id="goldenHourBadge"><span id="goldenHourBadgeText">✨ Goldene Stunde — 3x Pokale für 5 Minuten!</span><button class="notifCloseBtn" id="goldenHourBadgeCloseBtn">✕</button></div>
 <div id="specialRingBadge"><span id="specialRingBadgeText"></span><button class="notifCloseBtn" id="specialRingBadgeCloseBtn">✕</button></div>
+<div id="meteorShowerBadge"><span>🌠 Meteor-Schauer — schwing durch für Bonus-Pokale!</span><button class="notifCloseBtn" id="meteorShowerBadgeCloseBtn">✕</button></div>
 
 
 <div id="damageVignette"></div>
@@ -3023,6 +3041,7 @@
         <button class="adminActionBtn" id="adminTriggerGoldenHourBtn">✨ Goldene Stunde testen (2min)</button>
         <button class="adminActionBtn" id="adminTriggerRingBtn">🎯 Bonus-Ring auslösen</button>
         <button class="adminActionBtn" id="adminTriggerBossBtn">👹 Boss-Gegner auslösen</button>
+        <button class="adminActionBtn" id="adminTriggerMeteorBtn">🌠 Meteor-Schauer auslösen (3min)</button>
       </div>
       <div class="settingsToggleRow" style="margin-top:12px;">
         <span>🛡️ God Mode (unverwundbar)</span>
@@ -3437,6 +3456,9 @@
       }
       if (data.goldenHour && data.goldenHour.expiresAt > Date.now()){
         goldenHourForceUntil = data.goldenHour.expiresAt;
+      }
+      if (data.meteorShower && data.meteorShower.expiresAt > Date.now()){
+        meteorShowerForceUntil = data.meteorShower.expiresAt;
       }
       if (data.specialRing && data.specialRing.broadcastAt && data.specialRing.broadcastAt > lastHandledRingBroadcast && data.specialRing.expiresAt > Date.now()){
         lastHandledRingBroadcast = data.specialRing.broadcastAt;
@@ -5132,6 +5154,8 @@
     if (chaosActive) endChaosMode();
     if (goldenHourActive){ goldenHourActive = false; document.getElementById('goldenHourBadge').classList.remove('show'); }
     if (specialRing) removeSpecialRing();
+    while (activeMeteors.length) removeMeteor(activeMeteors[0]);
+    document.getElementById('meteorShowerBadge').classList.remove('show');
     updateTouchControlsVisibility(); // tucks the mobile pause button away for the duration
     bossGroup.visible = true;
     bossArenaGroup.visible = true;
@@ -5465,6 +5489,110 @@
   addCheckpointSet(ringPositionsW3, 3);
 
   // ---------- SPECIAL BONUS RING ----------
+  // ---------- METEOR SHOWER EVENT ----------
+  // A rare, admin-triggered global event: for a few minutes, glowing
+  // meteors periodically streak across the sky near wherever each player
+  // currently is — fly through one while swinging to catch it for a bonus.
+  // Unlike the bonus ring (one fixed physical object everyone has to reach
+  // the same spot for), each meteor is purely local/ambient — every
+  // player sees their OWN meteors streaking near THEM, so nobody has to
+  // travel anywhere to take part once the shower starts.
+  const METEOR_REWARD = 15;
+  const METEOR_HIT_RADIUS = 4.5;
+  const METEOR_TRAVEL_TIME = 2.6; // seconds a single meteor takes to streak across
+  const METEOR_SPAWN_INTERVAL = 2.2; // seconds between new meteors while the shower is active
+  let meteorShowerForceUntil = 0;
+  let meteorShowerActive = false;
+  let meteorSpawnTimer = 0;
+  const activeMeteors = [];
+  function makeMeteorMesh(){
+    const g = new THREE.Group();
+    const headMat = new THREE.MeshBasicMaterial({ color: 0xfff2c9 });
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.55, 10, 10), headMat);
+    g.add(head);
+    // A tapering trail behind it, built from a few fading segments rather
+    // than a single cone — reads more like a streak of light than a solid
+    // shape when moving fast.
+    const trailMat = new THREE.MeshBasicMaterial({ color: 0xffd27a, transparent: true, opacity: 0.55 });
+    for (let i = 1; i <= 4; i++){
+      const seg = new THREE.Mesh(new THREE.SphereGeometry(0.55 - i * 0.1, 6, 6), trailMat.clone());
+      seg.material.opacity = 0.5 - i * 0.1;
+      seg.position.z = i * 0.9;
+      g.add(seg);
+    }
+    const light = new THREE.PointLight(0xffd27a, 1.2, 12);
+    g.add(light);
+    scene.add(g);
+    return g;
+  }
+  function spawnMeteor(){
+    // Streaks past somewhere near the player — high overhead, diagonally
+    // down across their general area — close enough to be reachable by
+    // swinging up to meet it, far enough that it doesn't feel like it's
+    // spawning right on top of them.
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 15 + Math.random() * 20;
+    const startHeight = 35 + Math.random() * 15;
+    const start = new THREE.Vector3(
+      player.pos.x + Math.cos(angle) * dist,
+      player.pos.y + startHeight,
+      player.pos.z + Math.sin(angle) * dist
+    );
+    const endAngle = angle + (Math.random() - 0.5) * 1.4;
+    const end = new THREE.Vector3(
+      player.pos.x + Math.cos(endAngle) * dist * 0.4,
+      player.pos.y + 6 + Math.random() * 10,
+      player.pos.z + Math.sin(endAngle) * dist * 0.4
+    );
+    const mesh = makeMeteorMesh();
+    mesh.position.copy(start);
+    mesh.lookAt(end);
+    activeMeteors.push({ mesh, start, end, elapsed: 0, collected: false });
+  }
+  function removeMeteor(m){
+    scene.remove(m.mesh);
+    m.mesh.traverse(obj => { if (obj.geometry) obj.geometry.dispose(); if (obj.material) obj.material.dispose(); });
+    const i = activeMeteors.indexOf(m);
+    if (i >= 0) activeMeteors.splice(i, 1);
+  }
+  function updateMeteorShower(dt){
+    const badge = document.getElementById('meteorShowerBadge');
+    const isActive = Date.now() < meteorShowerForceUntil && !inBossArena;
+    if (isActive && !meteorShowerActive){
+      meteorShowerActive = true;
+      meteorSpawnTimer = 0;
+      if (badge) badge.classList.add('show');
+    } else if (!isActive && meteorShowerActive){
+      meteorShowerActive = false;
+      if (badge) badge.classList.remove('show');
+      while (activeMeteors.length) removeMeteor(activeMeteors[0]);
+    }
+    if (meteorShowerActive){
+      meteorSpawnTimer += dt;
+      if (meteorSpawnTimer >= METEOR_SPAWN_INTERVAL){
+        meteorSpawnTimer = 0;
+        spawnMeteor();
+      }
+    }
+    for (let i = activeMeteors.length - 1; i >= 0; i--){
+      const m = activeMeteors[i];
+      m.elapsed += dt;
+      const t = Math.min(1, m.elapsed / METEOR_TRAVEL_TIME);
+      m.mesh.position.lerpVectors(m.start, m.end, t);
+      if (!m.collected && m.mesh.position.distanceTo(player.pos) < METEOR_HIT_RADIUS){
+        m.collected = true;
+        totalTrophies += METEOR_REWARD;
+        storageSet('rankmann_totalTrophies', totalTrophies);
+        spawnTrophyFly(METEOR_REWARD);
+        sfx.trophy();
+        removeMeteor(m);
+        continue;
+      }
+      if (t >= 1) removeMeteor(m);
+    }
+  }
+
+
   // A rare, announced event — like the Golden Hour, but a physical target
   // instead of a time window. Every 2 hours, one big glowing ring appears
   // at a random spot in a random world, stays up for a generous window so
@@ -8386,6 +8514,12 @@
     startBossEvent();
     showAdminToast('👹 Boss-Gegner ausgelöst — alle Spieler werden in die Arena geholt');
   });
+  document.getElementById('adminTriggerMeteorBtn').addEventListener('click', () => {
+    meteorShowerForceUntil = Date.now() + 3 * 60000;
+    updateMeteorShower(0); // show the badge immediately instead of waiting for the next animation frame
+    broadcastGlobalEffect('meteorShower', 3 * 60000);
+    showAdminToast('🌠 Meteor-Schauer global ausgelöst — 3 Minuten bei allen Spielern');
+  });
   document.getElementById('adminAnnounceBtn').addEventListener('click', () => {
     const input = document.getElementById('adminAnnounceInput');
     const text = input.value.trim();
@@ -9986,6 +10120,7 @@
     updateChaosMode(dt);
     updateGoldenHour();
     updateSpecialRing(dt);
+    updateMeteorShower(dt);
     dust.rotation.y += dt*0.01;
     if (starfield.visible){
       starfield.position.set(player.pos.x, 0, player.pos.z);
