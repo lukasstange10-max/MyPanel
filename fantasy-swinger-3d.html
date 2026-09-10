@@ -3403,6 +3403,7 @@
   let friendBroadcastRef = null;
   let globalEffectsRef = null;
   let lastHandledRingBroadcast = 0; // the ring is a one-time SPAWN action, not a continuous "forced until" state like the others — this tracks which broadcast was already acted on, so the same one doesn't re-trigger every time this listener fires
+  let bossEventRef = null;
   try {
     firebase.initializeApp({ databaseURL: FIREBASE_DB_URL });
     globalEventRef = firebase.database().ref('globalEvent');
@@ -3451,7 +3452,7 @@
     // Boss event — everyone connected reacts the moment this flips on/off,
     // and the boss's HP itself lives here too (shared, synced) so every
     // player is fighting the exact same health pool at once.
-    const bossEventRef = firebase.database().ref('bossEvent');
+    bossEventRef = firebase.database().ref('bossEvent');
     bossEventRef.on('value', snapshot => {
       const data = snapshot.val();
       if (!data || !data.active){
@@ -5192,6 +5193,15 @@
     preBossPos = null;
     preBossWorld = null;
     bossVictoryPending = false;
+    bossEventActive = false; // without this, a NEW boss event could never be triggered again — the listener's "only enter on the rising edge" check would keep thinking one was still active forever
+    if ((reason === 'victory' || reason === 'timeout') && firebaseReady()){
+      // Tell Firebase (and by extension every other connected player) the
+      // event is genuinely over, not just for this one client — otherwise
+      // the admin's NEXT "Boss-Gegner auslösen" click would write a fresh
+      // hp/startedAt, but everyone's local bossEventActive flag (still
+      // true from the previous fight) would just ignore it.
+      bossEventRef.set({ active: false }).catch(() => {});
+    }
     fadeFromBlack();
     bossArenaExiting = false;
   }
