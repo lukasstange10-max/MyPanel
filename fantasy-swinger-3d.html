@@ -30,7 +30,7 @@
     z-index: 10;
   }
   #stormBadge {
-    position: fixed; top: 18px; left: 50%; z-index: 46;
+    position: fixed; top: 72px; left: 50%; z-index: 46;
     padding: 8px 20px; border-radius: 999px; font-size: 12.5px; font-weight: 800;
     background: linear-gradient(135deg, rgba(90,110,180,0.92), rgba(50,60,110,0.92));
     color: #dfe6ff; box-shadow: 0 6px 20px rgba(40,50,110,0.5);
@@ -44,7 +44,7 @@
     animation: stormBadgeShake 0.35s ease-in-out infinite;
   }
   #weatherForecastBadge {
-    position: fixed; top: 18px; left: 50%; z-index: 46;
+    position: fixed; top: 72px; left: 50%; z-index: 46;
     padding: 7px 18px; border-radius: 999px; font-size: 12px; font-weight: 700;
     background: rgba(20,10,38,0.75); border: 1px solid rgba(140,160,220,0.4);
     color: #c9d4ff; backdrop-filter: blur(4px);
@@ -185,19 +185,20 @@
 
   #globalAnnouncementBanner {
     position: fixed; top: 24px; left: 50%; z-index: 400;
+    transform: translateX(-50%);
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+    pointer-events: none;
+  }
+  .announcementEntry {
     min-width: 480px; max-width: 96vw; padding: 20px 90px;
     font-size: 22px; font-weight: 700; text-align: center; line-height: 1.4;
     background: linear-gradient(90deg, transparent, rgba(0,0,0,0.4) 25%, rgba(0,0,0,0.4) 75%, transparent);
     color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,0.8);
-    transform: translateX(-50%) translateY(-160%);
-    opacity: 0; visibility: hidden;
-    transition: transform 0.45s cubic-bezier(.2,.8,.3,1.1), opacity 0.4s ease, visibility 0s linear 0.45s;
+    opacity: 0; transform: translateY(-30px);
+    transition: transform 0.45s cubic-bezier(.2,.8,.3,1.1), opacity 0.4s ease;
   }
-  #globalAnnouncementBanner.show {
-    transform: translateX(-50%) translateY(0); opacity: 1; visibility: visible;
-    transition: transform 0.45s cubic-bezier(.2,.8,.3,1.1), opacity 0.4s ease, visibility 0s linear 0s;
-  }
-  #globalAnnouncementBanner .announceName { color: #7ab8ff; font-weight: 900; }
+  .announcementEntry.show { opacity: 1; transform: translateY(0); }
+  .announcementEntry .announceName { color: #7ab8ff; font-weight: 900; }
   .notifCloseBtn {
     position: absolute; top: 50%; right: 14px; transform: translateY(-50%);
     width: 22px; height: 22px; border-radius: 50%; border: none; cursor: pointer;
@@ -2080,7 +2081,7 @@
   <div id="bossTimerWrap">⏱️ <span id="bossTimerLabel">1:30</span></div>
 
 
-<div id="globalAnnouncementBanner"><span id="globalAnnouncementText"></span></div>
+<div id="globalAnnouncementBanner"></div>
 <div id="spectateBanner">
   👀 Du schaust <span id="spectateBannerName"></span> zu
   <button id="spectateStopBtn">Beenden (ESC)</button>
@@ -3482,13 +3483,22 @@
       showGlobalAnnouncement(data.name || 'Admin', data.text);
     }, () => {});
     function showGlobalAnnouncement(name, text){
-      const el = document.getElementById('globalAnnouncementBanner');
-      if (!el) return;
-      document.getElementById('globalAnnouncementText').innerHTML = '<span class="announceName">' + name + '</span>: ' + text;
-      el.classList.add('show');
+      const container = document.getElementById('globalAnnouncementBanner');
+      if (!container) return;
+      // Each announcement gets its OWN entry, appended at the bottom of the
+      // stack — a fresh one arriving no longer replaces/interrupts one
+      // that's still showing; they each independently fade out on their
+      // own 8s timer, so several can be visible at once, stacked.
+      const entry = document.createElement('div');
+      entry.className = 'announcementEntry';
+      entry.innerHTML = '<span class="announceName">' + name + '</span>: ' + text;
+      container.appendChild(entry);
       sfx.announce();
-      clearTimeout(showGlobalAnnouncement._t);
-      showGlobalAnnouncement._t = setTimeout(() => el.classList.remove('show'), 8000);
+      requestAnimationFrame(() => entry.classList.add('show')); // one frame delay so the initial (pre-show) styles actually get a chance to apply before transitioning, or the fade-in gets skipped entirely
+      setTimeout(() => {
+        entry.classList.remove('show');
+        setTimeout(() => entry.remove(), 450); // matches the CSS transition duration — removed only once actually faded out, not abruptly mid-fade
+      }, 8000);
     }
     function sendGlobalAnnouncement(text){
       const meta = (typeof getActiveProfileMeta === 'function') ? getActiveProfileMeta() : null;
