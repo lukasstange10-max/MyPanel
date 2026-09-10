@@ -9561,7 +9561,11 @@
 
     const sprinting = (keys['ShiftLeft'] || keys['ShiftRight']) && player.onGround && !grapple.active;
     const sprintMult = sprinting ? 1.8 : 1;
-    const accel = (grapple.active ? 18 : (player.onGround ? 30 : 8)) * sprintMult;
+    // Less responsive acceleration on icy ground too — not just slow to
+    // stop, but also slow to actually CHANGE direction, the way real ice
+    // feels underfoot.
+    const groundAccel = (iceAgeActive && player.onGround) ? 14 : 30;
+    const accel = (grapple.active ? 18 : (player.onGround ? groundAccel : 8)) * sprintMult;
     player.vel.x += moveDir.x * accel * dt;
     player.vel.z += moveDir.z * accel * dt;
 
@@ -9616,9 +9620,12 @@
         player.vel.y += 2.0*dt;
       }
     } else {
-      // air/ground drag
-      player.vel.x *= player.onGround ? 0.86 : 0.985;
-      player.vel.z *= player.onGround ? 0.86 : 0.985;
+      // air/ground drag — much less friction while standing on iced ground
+      // during the Ice Age event, so momentum actually carries you (sliding)
+      // instead of stopping almost immediately like normal footing does.
+      const groundDrag = (iceAgeActive && player.onGround) ? 0.985 : 0.86;
+      player.vel.x *= player.onGround ? groundDrag : 0.985;
+      player.vel.z *= player.onGround ? groundDrag : 0.985;
     }
 
     // integrate position
