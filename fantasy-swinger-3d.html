@@ -6640,7 +6640,15 @@
   canvas.addEventListener('pointerdown', e => {
     if (e.pointerType === 'mouse' && e.button === 2) {
       if (!running) return;
-      if (findAttackableEnemy()) performAttack();
+      // In the boss arena, attack takes priority ONLY when actually close
+      // enough to land a hit — findAttackableEnemy() has no idea the boss
+      // even exists (a totally separate system), so without checking this
+      // directly, right-click always fell through to grappling instead,
+      // making the boss un-attackable with a mouse. Falling back to
+      // attachGrapple() when out of range keeps swinging between the
+      // arena's anchors working exactly as before.
+      const bossInRange = inBossArena && player.pos.distanceTo(bossGroup.position) <= BOSS_HIT_RANGE;
+      if (bossInRange || findAttackableEnemy()) performAttack();
       else attachGrapple();
       return;
     }
