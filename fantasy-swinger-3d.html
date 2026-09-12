@@ -9734,11 +9734,11 @@
     if (chaosActive && chaosType === 'controls') moveDir.multiplyScalar(-1); // WASD flipped for the duration
 
     const sprinting = (keys['ShiftLeft'] || keys['ShiftRight']) && player.onGround && !grapple.active;
-    const sprintMult = sprinting ? 1.8 : 1;
+    const sprintMult = sprinting ? 1.9 : 1; // dialed back from 2.3 alongside the base accel reduction, keeping roughly the same relative gap over normal walking as before
     // Less responsive acceleration on icy ground too — not just slow to
     // stop, but also slow to actually CHANGE direction, the way real ice
     // feels underfoot.
-    const groundAccel = (iceAgeActive && player.onGround) ? 14 : 30;
+    const groundAccel = (iceAgeActive && player.onGround) ? 16 : 34; // dialed back from 20/42 — that was too fast; this is a more modest bump over the original 14/30, aiming for noticeably-but-not-excessively faster
     const accel = (grapple.active ? 18 : (player.onGround ? groundAccel : 8)) * sprintMult;
     player.vel.x += moveDir.x * accel * dt;
     player.vel.z += moveDir.z * accel * dt;
