@@ -4927,7 +4927,7 @@
     }
   });
   function setKeyboardKeysVisible(visible){
-    allKeyCaps.forEach(k => { k.mesh.visible = visible && k.world === selectedWorld; });
+    allKeyCaps.forEach(k => { k.mesh.visible = (visible || k.golden) && k.world === selectedWorld; });
   }
 
   // ---------- GOLDEN KEYCAPS EVENT ----------
@@ -4938,6 +4938,7 @@
   const GOLDEN_KEYCAP_COUNT_PER_WORLD = 5;
   let goldenKeycapExpiresAt = 0;
   const goldBeamGeo = new THREE.CylinderGeometry(0.25, 0.4, 6, 8, 1, true);
+  const activeGoldenKeycaps = []; // every currently-golden entry — kept as its own small list so players with the keycap decoration turned OFF don't need every single one of the ~1800 regular keycaps checked each frame just to make golden ones (which stay collectible regardless of that setting) work
   function setKeycapGolden(k, golden){
     k.golden = golden;
     if (golden){
@@ -4961,12 +4962,17 @@
       k.goldGlow.visible = true;
       k.goldBeam.visible = true;
       k.goldPulseT = Math.random() * Math.PI * 2; // random phase so they don't all pulse in perfect unison
+      k.mesh.visible = k.world === selectedWorld; // visible regardless of the keyboardKeysWanted setting — a global reward event should be playable by everyone, not just people who happen to have the keycap decoration turned on
+      if (!activeGoldenKeycaps.includes(k)) activeGoldenKeycaps.push(k);
     } else {
       k.mesh.material.color.setHex(k.originalColor);
       k.mesh.material.emissive = new THREE.Color(0x000000);
       k.mesh.material.emissiveIntensity = 0;
       if (k.goldGlow) k.goldGlow.visible = false;
       if (k.goldBeam) k.goldBeam.visible = false;
+      k.mesh.visible = keyboardKeysWanted && k.world === selectedWorld; // back to the normal visibility rule now that it's no longer a special golden one
+      const gi = activeGoldenKeycaps.indexOf(k);
+      if (gi !== -1) activeGoldenKeycaps.splice(gi, 1);
     }
   }
   function pickGoldenKeycapIndices(){
@@ -4984,7 +4990,7 @@
     return chosen;
   }
   function applyGoldenKeycaps(indices, expiresAt){
-    allKeyCaps.forEach(k => { if (k.golden) setKeycapGolden(k, false); }); // clear any previous batch first
+    activeGoldenKeycaps.slice().forEach(k => setKeycapGolden(k, false)); // clear any previous batch first (copy the array first — setKeycapGolden mutates activeGoldenKeycaps as it goes)
     indices.forEach(i => { if (allKeyCaps[i]) setKeycapGolden(allKeyCaps[i], true); });
     goldenKeycapExpiresAt = expiresAt;
     const badge = document.getElementById('goldenKeycapsBadge');
@@ -4995,13 +5001,12 @@
   }
   function updateGoldenKeycaps(dt){
     if (goldenKeycapExpiresAt && Date.now() > goldenKeycapExpiresAt){
-      allKeyCaps.forEach(k => { if (k.golden) setKeycapGolden(k, false); });
+      activeGoldenKeycaps.slice().forEach(k => setKeycapGolden(k, false));
       goldenKeycapExpiresAt = 0;
       const badge = document.getElementById('goldenKeycapsBadge');
       if (badge) badge.classList.remove('show');
     }
-    allKeyCaps.forEach(k => {
-      if (!k.golden) return;
+    activeGoldenKeycaps.forEach(k => {
       k.goldPulseT = (k.goldPulseT || 0) + dt * 3.2;
       const pulse = 0.5 + Math.sin(k.goldPulseT) * 0.5; // 0..1
       k.mesh.material.emissiveIntensity = 0.7 + pulse * 1.3;
@@ -5013,7 +5018,33 @@
   const KEY_PRESS_RADIUS = 1.1; // how close (horizontally) the player needs to be, roughly standing ON the key
   const KEY_PRESS_SPEED = 10; // how fast the animated press/release happens
   function updateKeyboardKeys(dt){
-    if (!keyboardKeysWanted) return;
+    if (!keyboardKeysWanted){
+      // The decorative keycap grid itself is off, but golden keycap events
+      // should still be playable for everyone — just check the (much
+      // smaller) list of currently-golden keys instead of every single one
+      // of the ~1800 regular keycaps, since those stay invisible/inert here.
+      for (const k of activeGoldenKeycaps){
+        if (k.world !== selectedWorld) continue;
+        const dx = player.pos.x - k.mesh.position.x;
+        const dz = player.pos.z - k.mesh.position.z;
+        const horizDist = Math.sqrt(dx*dx + dz*dz);
+        const isStandingOn = player.onGround && horizDist < KEY_PRESS_RADIUS && Math.abs((player.pos.y - player.radius) - k.restY) < 1.2;
+        if (isStandingOn && !k.pressed){
+          k.pressed = true;
+          const reward = GOLDEN_KEYCAP_REWARD[k.world] || 10;
+          totalTrophies += reward;
+          storageSet('rankmann_totalTrophies', totalTrophies);
+          spawnTrophyFly(reward);
+          sfx.trophy && sfx.trophy();
+          setKeycapGolden(k, false); // also removes k from activeGoldenKeycaps — fine to do while iterating a for..of since we don't touch this array again this loop
+        } else if (!isStandingOn && k.pressed){
+          k.pressed = false;
+        }
+        const targetY = k.pressed ? k.pressedY : k.restY;
+        k.mesh.position.y += (targetY - k.mesh.position.y) * Math.min(1, KEY_PRESS_SPEED * dt);
+      }
+      return;
+    }
     let anyPressedThisFrame = false;
     for (const k of allKeyCaps){
       const dx = player.pos.x - k.mesh.position.x;
@@ -5464,7 +5495,7 @@
       selectedWorld = preBossWorld;
       applyWorldTheme(selectedWorld);
     }
-    allKeyCaps.forEach(k => { k.mesh.visible = keyboardKeysWanted && k.world === selectedWorld; }); // restore keycap visibility for whichever world we're back in — applyWorldTheme above only runs (and would otherwise handle this) if the world actually differed
+    allKeyCaps.forEach(k => { k.mesh.visible = (keyboardKeysWanted || k.golden) && k.world === selectedWorld; }); // restore keycap visibility for whichever world we're back in — applyWorldTheme above only runs (and would otherwise handle this) if the world actually differed; golden ones stay visible regardless of the setting
     if (goldenKeycapExpiresAt && Date.now() < goldenKeycapExpiresAt) document.getElementById('goldenKeycapsBadge').classList.add('show'); // the event may still be running after coming back from the boss fight — bring the badge back too, not just the keys themselves
     if (preBossPos){ player.pos.copy(preBossPos); }
     player.vel.set(0, 0, 0);
@@ -5916,7 +5947,7 @@
     });
     checkpoints.forEach(cp => { cp.group.visible = (cp.world === n); });
     anchors.forEach(a => { if (a.world !== 'boss') a.visible = (a.world === n); }); // boss-arena anchors are managed entirely by enterBossArena/endBossEventLocally instead, since they're not part of the normal world 1/2/3 rotation
-    allKeyCaps.forEach(k => { k.mesh.visible = keyboardKeysWanted && k.world === n; }); // keys were floating "somewhere on the map" before this — they're built once at load and never moved, so without this they stayed visible regardless of which world's platforms were actually showing
+    allKeyCaps.forEach(k => { k.mesh.visible = (keyboardKeysWanted || k.golden) && k.world === n; }); // keys were floating "somewhere on the map" before this — they're built once at load and never moved, so without this they stayed visible regardless of which world's platforms were actually showing; golden ones stay visible regardless of the keycap decoration setting
     starfield.visible = (n === 3);
   }
 
