@@ -127,6 +127,23 @@
   }
   #iceAgeBadge .notifCloseBtn { background: rgba(10,40,70,0.15); color: rgba(10,40,70,0.75); }
   #iceAgeBadge .notifCloseBtn:hover { background: rgba(10,40,70,0.28); }
+  #goldenKeycapsBadge {
+    position: fixed; top: 256px; left: 50%; z-index: 90;
+    padding: 9px 40px 9px 22px; border-radius: 999px; font-size: 13px; font-weight: 900;
+    background: linear-gradient(135deg, #ffd700, #fff3b0, #ffd700);
+    background-size: 300% 300%;
+    color: #4a3600; text-shadow: 0 1px 2px rgba(255,255,255,0.4);
+    box-shadow: 0 6px 22px rgba(255,215,0,0.55);
+    transform: translateX(-50%) translateY(-140%);
+    opacity: 0; visibility: hidden;
+    transition: transform 0.45s cubic-bezier(.2,.8,.3,1.1), opacity 0.4s ease, visibility 0s linear 0.45s;
+  }
+  #goldenKeycapsBadge.show {
+    transform: translateX(-50%) translateY(0); opacity: 1; visibility: visible;
+    transition: transform 0.45s cubic-bezier(.2,.8,.3,1.1), opacity 0.4s ease, visibility 0s linear 0s;
+  }
+  #goldenKeycapsBadge .notifCloseBtn { background: rgba(0,0,0,0.15); color: rgba(0,0,0,0.7); }
+  #goldenKeycapsBadge .notifCloseBtn:hover { background: rgba(0,0,0,0.28); }
   #goldenHourBadge .notifCloseBtn, #specialRingBadge .notifCloseBtn {
     background: rgba(0,0,0,0.15); color: rgba(0,0,0,0.7);
   }
@@ -2109,6 +2126,7 @@
 </div>
 <div id="goldenHourBadge"><span id="goldenHourBadgeText">✨ Goldene Stunde — 3x Pokale für 5 Minuten!</span><button class="notifCloseBtn" id="goldenHourBadgeCloseBtn">✕</button></div>
 <div id="specialRingBadge"><span id="specialRingBadgeText"></span><button class="notifCloseBtn" id="specialRingBadgeCloseBtn">✕</button></div>
+<div id="goldenKeycapsBadge"><span id="goldenKeycapsBadgeText"></span><button class="notifCloseBtn" id="goldenKeycapsBadgeCloseBtn">✕</button></div>
 <div id="iceAgeBadge"><span>🧊 Eiszeit — die Plattformen sind vereist!</span><button class="notifCloseBtn" id="iceAgeBadgeCloseBtn">✕</button></div>
 
 
@@ -4969,11 +4987,18 @@
     allKeyCaps.forEach(k => { if (k.golden) setKeycapGolden(k, false); }); // clear any previous batch first
     indices.forEach(i => { if (allKeyCaps[i]) setKeycapGolden(allKeyCaps[i], true); });
     goldenKeycapExpiresAt = expiresAt;
+    const badge = document.getElementById('goldenKeycapsBadge');
+    if (badge){
+      document.getElementById('goldenKeycapsBadgeText').textContent = '✨ ' + indices.length + ' Golden Keycaps sind im Server erschienen — schnell einsammeln!';
+      badge.classList.add('show');
+    }
   }
   function updateGoldenKeycaps(dt){
     if (goldenKeycapExpiresAt && Date.now() > goldenKeycapExpiresAt){
       allKeyCaps.forEach(k => { if (k.golden) setKeycapGolden(k, false); });
       goldenKeycapExpiresAt = 0;
+      const badge = document.getElementById('goldenKeycapsBadge');
+      if (badge) badge.classList.remove('show');
     }
     allKeyCaps.forEach(k => {
       if (!k.golden) return;
@@ -5381,6 +5406,7 @@
     if (specialRing) removeSpecialRing();
     if (iceAgeActive){ iceAgeActive = false; setIceOverlaysVisible(false); }
     document.getElementById('iceAgeBadge').classList.remove('show');
+    document.getElementById('goldenKeycapsBadge').classList.remove('show');
     allKeyCaps.forEach(k => { k.mesh.visible = false; }); // keycaps (golden ones included) belong to the normal world 1/2/3 rotation, never the boss arena — this was already implicitly true visually most of the time since selectedWorld doesn't change here, but explicit is safer
     updateTouchControlsVisibility(); // tucks the mobile pause button away for the duration
     bossGroup.visible = true;
@@ -5439,6 +5465,7 @@
       applyWorldTheme(selectedWorld);
     }
     allKeyCaps.forEach(k => { k.mesh.visible = keyboardKeysWanted && k.world === selectedWorld; }); // restore keycap visibility for whichever world we're back in — applyWorldTheme above only runs (and would otherwise handle this) if the world actually differed
+    if (goldenKeycapExpiresAt && Date.now() < goldenKeycapExpiresAt) document.getElementById('goldenKeycapsBadge').classList.add('show'); // the event may still be running after coming back from the boss fight — bring the badge back too, not just the keys themselves
     if (preBossPos){ player.pos.copy(preBossPos); }
     player.vel.set(0, 0, 0);
     preBossPos = null;
@@ -8508,6 +8535,10 @@
     // through, only the notification about it goes away.
     document.getElementById('specialRingBadge').classList.remove('show');
   });
+  document.getElementById('goldenKeycapsBadgeCloseBtn').addEventListener('click', () => {
+    // Same idea — the golden keycaps themselves stay out there to be found and collected, only the notification about them goes away.
+    document.getElementById('goldenKeycapsBadge').classList.remove('show');
+  });
   document.getElementById('iceAgeBadgeCloseBtn').addEventListener('click', () => {
     document.getElementById('iceAgeBadge').classList.remove('show');
   });
@@ -8741,10 +8772,8 @@
   document.getElementById('adminGoldenKeycapsBtn').addEventListener('click', () => {
     const indices = pickGoldenKeycapIndices();
     const expiresAt = Date.now() + 5 * 60000; // 5 minutes to find and collect them before they revert on their own
-    applyGoldenKeycaps(indices, expiresAt); // show it to the admin immediately too, without waiting on the round-trip through Firebase
+    applyGoldenKeycaps(indices, expiresAt); // shows the goldenKeycapsBadge to the admin immediately too, without waiting on the round-trip through Firebase
     globalEffectsRef.child('goldenKeycaps').set({ indices, broadcastAt: Date.now(), expiresAt }).catch(() => {});
-    const name = sendGlobalAnnouncement('✨ ' + indices.length + ' Golden Keycaps sind im Server erschienen! Verteilt über alle drei Welten — schnell einsammeln!');
-    showGlobalAnnouncement(name, '✨ ' + indices.length + ' Golden Keycaps sind im Server erschienen! Verteilt über alle drei Welten — schnell einsammeln!'); // show it to the admin too, immediately, same as the other admin broadcast buttons do
     showAdminToast('✨ Golden Keycaps global ausgelöst — je ' + GOLDEN_KEYCAP_COUNT_PER_WORLD + ' pro Welt, 5 Minuten Zeit');
   });
   document.getElementById('adminAnnounceBtn').addEventListener('click', () => {
