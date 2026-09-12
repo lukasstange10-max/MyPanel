@@ -3065,6 +3065,7 @@
         <button class="adminActionBtn" id="adminTriggerRingBtn">🎯 Bonus-Ring auslösen</button>
         <button class="adminActionBtn" id="adminTriggerBossBtn">👹 Boss-Gegner auslösen</button>
         <button class="adminActionBtn" id="adminTriggerIceAgeBtn">🧊 Eiszeit auslösen (3min)</button>
+        <button class="adminActionBtn" id="adminGoldenKeycapsBtn">✨ Golden Keycaps</button>
       </div>
       <div class="settingsToggleRow" style="margin-top:12px;">
         <span>🛡️ God Mode (unverwundbar)</span>
@@ -3445,6 +3446,7 @@
   let friendBroadcastRef = null;
   let globalEffectsRef = null;
   let lastHandledRingBroadcast = 0; // the ring is a one-time SPAWN action, not a continuous "forced until" state like the others — this tracks which broadcast was already acted on, so the same one doesn't re-trigger every time this listener fires
+  let lastHandledGoldenKeycapsBroadcast = 0; // same one-time-action pattern as the ring above
   let bossEventRef = null;
   try {
     firebase.initializeApp({ databaseURL: FIREBASE_DB_URL });
@@ -3487,6 +3489,10 @@
         lastHandledRingBroadcast = data.specialRing.broadcastAt;
         removeSpecialRing();
         spawnSpecialRing({ world: data.specialRing.world, posIndex: data.specialRing.posIndex });
+      }
+      if (data.goldenKeycaps && data.goldenKeycaps.broadcastAt && data.goldenKeycaps.broadcastAt > lastHandledGoldenKeycapsBroadcast && data.goldenKeycaps.expiresAt > Date.now()){
+        lastHandledGoldenKeycapsBroadcast = data.goldenKeycaps.broadcastAt;
+        applyGoldenKeycaps(data.goldenKeycaps.indices || [], data.goldenKeycaps.expiresAt);
       }
     }, () => {});
     function broadcastGlobalEffect(key, durationMs, extra){
@@ -4862,6 +4868,8 @@
   const keyCapGeo = new THREE.BoxGeometry(1.3, 0.4, 1.3);
   const keyLetterGeo = new THREE.PlaneGeometry(1.0, 1.0);
   const allKeyCaps = [];
+  const GOLDEN_KEYCAP_REWARD = { 1: 10, 2: 20, 3: 30 }; // trophies awarded per world when a golden keycap is collected there
+  const GOLDEN_KEYCAP_COLOR = 0xffd700;
   function makeKeyCap(x, y, z, world){
     const letter = KEY_LETTERS[Math.floor(Math.random() * KEY_LETTERS.length)];
     const color = KEY_COLORS[Math.floor(Math.random() * KEY_COLORS.length)];
@@ -4876,7 +4884,7 @@
     cap.position.set(x, y + 0.2, z); // resting (unpressed) height — box is 0.4 tall, so this puts its BOTTOM face flush with the platform surface instead of floating above it
     cap.visible = keyboardKeysWanted && world === selectedWorld;
     scene.add(cap);
-    const entry = { mesh: cap, restY: y + 0.2, pressedY: y + 0.05, pressed: false, pressT: 0, world };
+    const entry = { mesh: cap, restY: y + 0.2, pressedY: y + 0.05, pressed: false, pressT: 0, world, originalColor: color, golden: false, goldGlow: null };
     allKeyCaps.push(entry);
     return entry;
   }
@@ -4903,6 +4911,67 @@
   function setKeyboardKeysVisible(visible){
     allKeyCaps.forEach(k => { k.mesh.visible = visible && k.world === selectedWorld; });
   }
+
+  // ---------- GOLDEN KEYCAPS EVENT ----------
+  // Admin-triggered: a handful of random keycaps in each of the three
+  // worlds turn gold and glow, and the first player to step on one collects
+  // trophies (amount depends on which world it's in). Broadcast via
+  // Firebase so every connected player sees the exact same keys light up.
+  const GOLDEN_KEYCAP_COUNT_PER_WORLD = 5;
+  let goldenKeycapExpiresAt = 0;
+  function setKeycapGolden(k, golden){
+    k.golden = golden;
+    if (golden){
+      k.mesh.material.color.setHex(GOLDEN_KEYCAP_COLOR);
+      k.mesh.material.emissive = new THREE.Color(GOLDEN_KEYCAP_COLOR);
+      k.mesh.material.emissiveIntensity = 0.6;
+      if (!k.goldGlow){
+        k.goldGlow = new THREE.PointLight(GOLDEN_KEYCAP_COLOR, 1.2, 3.5);
+        k.goldGlow.position.set(0, 0.6, 0);
+        k.mesh.add(k.goldGlow);
+      }
+      k.goldGlow.visible = true;
+      k.goldPulseT = Math.random() * Math.PI * 2; // random phase so they don't all pulse in perfect unison
+    } else {
+      k.mesh.material.color.setHex(k.originalColor);
+      k.mesh.material.emissive = new THREE.Color(0x000000);
+      k.mesh.material.emissiveIntensity = 0;
+      if (k.goldGlow) k.goldGlow.visible = false;
+    }
+  }
+  function pickGoldenKeycapIndices(){
+    // Group keycap array-indices by world, then randomly pick a handful from each — guarantees every world actually gets some, rather than leaving it to pure chance across the combined pool.
+    const byWorld = { 1: [], 2: [], 3: [] };
+    allKeyCaps.forEach((k, i) => { if (byWorld[k.world]) byWorld[k.world].push(i); });
+    const chosen = [];
+    [1, 2, 3].forEach(w => {
+      const pool = byWorld[w].slice();
+      for (let n = 0; n < GOLDEN_KEYCAP_COUNT_PER_WORLD && pool.length > 0; n++){
+        const pick = pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
+        chosen.push(pick);
+      }
+    });
+    return chosen;
+  }
+  function applyGoldenKeycaps(indices, expiresAt){
+    allKeyCaps.forEach(k => { if (k.golden) setKeycapGolden(k, false); }); // clear any previous batch first
+    indices.forEach(i => { if (allKeyCaps[i]) setKeycapGolden(allKeyCaps[i], true); });
+    goldenKeycapExpiresAt = expiresAt;
+  }
+  function updateGoldenKeycaps(dt){
+    if (goldenKeycapExpiresAt && Date.now() > goldenKeycapExpiresAt){
+      allKeyCaps.forEach(k => { if (k.golden) setKeycapGolden(k, false); });
+      goldenKeycapExpiresAt = 0;
+    }
+    allKeyCaps.forEach(k => {
+      if (!k.golden) return;
+      k.goldPulseT = (k.goldPulseT || 0) + dt * 3.2;
+      const pulse = 0.5 + Math.sin(k.goldPulseT) * 0.5; // 0..1
+      k.mesh.material.emissiveIntensity = 0.4 + pulse * 0.9;
+      if (k.goldGlow) k.goldGlow.intensity = 0.8 + pulse * 1.4;
+    });
+  }
+
   const KEY_PRESS_RADIUS = 1.1; // how close (horizontally) the player needs to be, roughly standing ON the key
   const KEY_PRESS_SPEED = 10; // how fast the animated press/release happens
   function updateKeyboardKeys(dt){
@@ -4916,6 +4985,14 @@
       if (isStandingOn && !k.pressed){
         k.pressed = true;
         sfx.keyPress && sfx.keyPress();
+        if (k.golden){
+          const reward = GOLDEN_KEYCAP_REWARD[k.world] || 10;
+          totalTrophies += reward;
+          storageSet('rankmann_totalTrophies', totalTrophies);
+          spawnTrophyFly(reward);
+          sfx.trophy && sfx.trophy();
+          setKeycapGolden(k, false);
+        }
       } else if (!isStandingOn && k.pressed){
         k.pressed = false;
       }
@@ -5291,6 +5368,7 @@
     if (specialRing) removeSpecialRing();
     if (iceAgeActive){ iceAgeActive = false; setIceOverlaysVisible(false); }
     document.getElementById('iceAgeBadge').classList.remove('show');
+    allKeyCaps.forEach(k => { k.mesh.visible = false; }); // keycaps (golden ones included) belong to the normal world 1/2/3 rotation, never the boss arena — this was already implicitly true visually most of the time since selectedWorld doesn't change here, but explicit is safer
     updateTouchControlsVisibility(); // tucks the mobile pause button away for the duration
     bossGroup.visible = true;
     bossArenaGroup.visible = true;
@@ -5347,6 +5425,7 @@
       selectedWorld = preBossWorld;
       applyWorldTheme(selectedWorld);
     }
+    allKeyCaps.forEach(k => { k.mesh.visible = keyboardKeysWanted && k.world === selectedWorld; }); // restore keycap visibility for whichever world we're back in — applyWorldTheme above only runs (and would otherwise handle this) if the world actually differed
     if (preBossPos){ player.pos.copy(preBossPos); }
     player.vel.set(0, 0, 0);
     preBossPos = null;
@@ -8646,6 +8725,13 @@
     broadcastGlobalEffect('iceAge', 3 * 60000);
     showAdminToast('🧊 Eiszeit global ausgelöst — 3 Minuten bei allen Spielern');
   });
+  document.getElementById('adminGoldenKeycapsBtn').addEventListener('click', () => {
+    const indices = pickGoldenKeycapIndices();
+    const expiresAt = Date.now() + 5 * 60000; // 5 minutes to find and collect them before they revert on their own
+    applyGoldenKeycaps(indices, expiresAt); // show it to the admin immediately too, without waiting on the round-trip through Firebase
+    globalEffectsRef.child('goldenKeycaps').set({ indices, broadcastAt: Date.now(), expiresAt }).catch(() => {});
+    showAdminToast('✨ Golden Keycaps global ausgelöst — je ' + GOLDEN_KEYCAP_COUNT_PER_WORLD + ' pro Welt, 5 Minuten Zeit');
+  });
   document.getElementById('adminAnnounceBtn').addEventListener('click', () => {
     const input = document.getElementById('adminAnnounceInput');
     const text = input.value.trim();
@@ -10255,6 +10341,7 @@
     updateSpecialRing(dt);
     updateIceAge(dt);
     updateKeyboardKeys(dt);
+    updateGoldenKeycaps(dt);
     dust.rotation.y += dt*0.01;
     if (starfield.visible){
       starfield.position.set(player.pos.x, 0, player.pos.z);
