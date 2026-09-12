@@ -4993,11 +4993,19 @@
     activeGoldenKeycaps.slice().forEach(k => setKeycapGolden(k, false)); // clear any previous batch first (copy the array first — setKeycapGolden mutates activeGoldenKeycaps as it goes)
     indices.forEach(i => { if (allKeyCaps[i]) setKeycapGolden(allKeyCaps[i], true); });
     goldenKeycapExpiresAt = expiresAt;
+    updateGoldenKeycapsBadgeText();
     const badge = document.getElementById('goldenKeycapsBadge');
-    if (badge){
-      document.getElementById('goldenKeycapsBadgeText').textContent = '✨ ' + indices.length + ' Golden Keycaps sind im Server erschienen — schnell einsammeln!';
-      badge.classList.add('show');
-    }
+    if (badge) badge.classList.add('show');
+  }
+  function updateGoldenKeycapsBadgeText(){
+    // Every player might be standing in a different world, so the count
+    // shown has to be "how many in the world YOU'RE currently in" — not the
+    // total across all three, which is what was being shown before and
+    // didn't match what people actually found on their own platforms.
+    const el = document.getElementById('goldenKeycapsBadgeText');
+    if (!el) return;
+    const countHere = activeGoldenKeycaps.filter(k => k.world === selectedWorld).length;
+    el.textContent = '✨ ' + countHere + ' Golden Keycaps sind in deiner Welt erschienen — schnell einsammeln!';
   }
   function updateGoldenKeycaps(dt){
     if (goldenKeycapExpiresAt && Date.now() > goldenKeycapExpiresAt){
@@ -5037,6 +5045,7 @@
           spawnTrophyFly(reward);
           sfx.trophy && sfx.trophy();
           setKeycapGolden(k, false); // also removes k from activeGoldenKeycaps — fine to do while iterating a for..of since we don't touch this array again this loop
+          updateGoldenKeycapsBadgeText();
         } else if (!isStandingOn && k.pressed){
           k.pressed = false;
         }
@@ -5061,6 +5070,7 @@
           spawnTrophyFly(reward);
           sfx.trophy && sfx.trophy();
           setKeycapGolden(k, false);
+          updateGoldenKeycapsBadgeText();
         }
       } else if (!isStandingOn && k.pressed){
         k.pressed = false;
@@ -5496,6 +5506,7 @@
       applyWorldTheme(selectedWorld);
     }
     allKeyCaps.forEach(k => { k.mesh.visible = (keyboardKeysWanted || k.golden) && k.world === selectedWorld; }); // restore keycap visibility for whichever world we're back in — applyWorldTheme above only runs (and would otherwise handle this) if the world actually differed; golden ones stay visible regardless of the setting
+    if (goldenKeycapExpiresAt) updateGoldenKeycapsBadgeText(); // in case the world differs from before entering the boss arena
     if (goldenKeycapExpiresAt && Date.now() < goldenKeycapExpiresAt) document.getElementById('goldenKeycapsBadge').classList.add('show'); // the event may still be running after coming back from the boss fight — bring the badge back too, not just the keys themselves
     if (preBossPos){ player.pos.copy(preBossPos); }
     player.vel.set(0, 0, 0);
@@ -5948,6 +5959,7 @@
     checkpoints.forEach(cp => { cp.group.visible = (cp.world === n); });
     anchors.forEach(a => { if (a.world !== 'boss') a.visible = (a.world === n); }); // boss-arena anchors are managed entirely by enterBossArena/endBossEventLocally instead, since they're not part of the normal world 1/2/3 rotation
     allKeyCaps.forEach(k => { k.mesh.visible = (keyboardKeysWanted || k.golden) && k.world === n; }); // keys were floating "somewhere on the map" before this — they're built once at load and never moved, so without this they stayed visible regardless of which world's platforms were actually showing; golden ones stay visible regardless of the keycap decoration setting
+    if (goldenKeycapExpiresAt) updateGoldenKeycapsBadgeText(); // the count shown is "in your world", so it has to be recalculated whenever the world itself changes
     starfield.visible = (n === 3);
   }
 
