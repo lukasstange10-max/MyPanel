@@ -144,6 +144,25 @@
   }
   #goldenKeycapsBadge .notifCloseBtn { background: rgba(0,0,0,0.15); color: rgba(0,0,0,0.7); }
   #goldenKeycapsBadge .notifCloseBtn:hover { background: rgba(0,0,0,0.28); }
+  #rainbowKeycapsBadge {
+    position: fixed; top: 298px; left: 50%; z-index: 90;
+    padding: 9px 40px 9px 22px; border-radius: 999px; font-size: 13px; font-weight: 900;
+    background: linear-gradient(90deg, #ff5e5e, #ffd15e, #7dff7d, #5ecbff, #b98bff, #ff5e5e);
+    background-size: 400% 100%;
+    animation: rainbowBadgeShift 3s linear infinite;
+    color: #2a0a3a; text-shadow: 0 1px 2px rgba(255,255,255,0.5);
+    box-shadow: 0 6px 22px rgba(180,120,255,0.5);
+    transform: translateX(-50%) translateY(-140%);
+    opacity: 0; visibility: hidden;
+    transition: transform 0.45s cubic-bezier(.2,.8,.3,1.1), opacity 0.4s ease, visibility 0s linear 0.45s;
+  }
+  #rainbowKeycapsBadge.show {
+    transform: translateX(-50%) translateY(0); opacity: 1; visibility: visible;
+    transition: transform 0.45s cubic-bezier(.2,.8,.3,1.1), opacity 0.4s ease, visibility 0s linear 0s;
+  }
+  @keyframes rainbowBadgeShift { from { background-position: 0% 50%; } to { background-position: 400% 50%; } }
+  #rainbowKeycapsBadge .notifCloseBtn { background: rgba(0,0,0,0.18); color: rgba(0,0,0,0.75); }
+  #rainbowKeycapsBadge .notifCloseBtn:hover { background: rgba(0,0,0,0.3); }
   #goldenHourBadge .notifCloseBtn, #specialRingBadge .notifCloseBtn {
     background: rgba(0,0,0,0.15); color: rgba(0,0,0,0.7);
   }
@@ -2127,6 +2146,7 @@
 <div id="goldenHourBadge"><span id="goldenHourBadgeText">✨ Goldene Stunde — 3x Pokale für 5 Minuten!</span><button class="notifCloseBtn" id="goldenHourBadgeCloseBtn">✕</button></div>
 <div id="specialRingBadge"><span id="specialRingBadgeText"></span><button class="notifCloseBtn" id="specialRingBadgeCloseBtn">✕</button></div>
 <div id="goldenKeycapsBadge"><span id="goldenKeycapsBadgeText"></span><button class="notifCloseBtn" id="goldenKeycapsBadgeCloseBtn">✕</button></div>
+<div id="rainbowKeycapsBadge"><span id="rainbowKeycapsBadgeText"></span><button class="notifCloseBtn" id="rainbowKeycapsBadgeCloseBtn">✕</button></div>
 <div id="iceAgeBadge"><span>🧊 Eiszeit — die Plattformen sind vereist!</span><button class="notifCloseBtn" id="iceAgeBadgeCloseBtn">✕</button></div>
 
 
@@ -3084,6 +3104,7 @@
         <button class="adminActionBtn" id="adminTriggerBossBtn">👹 Boss-Gegner auslösen</button>
         <button class="adminActionBtn" id="adminTriggerIceAgeBtn">🧊 Eiszeit auslösen (3min)</button>
         <button class="adminActionBtn" id="adminGoldenKeycapsBtn">✨ Golden Keycaps</button>
+        <button class="adminActionBtn" id="adminRainbowKeycapsBtn">🌈 Regenbogen Keycaps</button>
       </div>
       <div class="settingsToggleRow" style="margin-top:12px;">
         <span>🛡️ God Mode (unverwundbar)</span>
@@ -3465,6 +3486,7 @@
   let globalEffectsRef = null;
   let lastHandledRingBroadcast = 0; // the ring is a one-time SPAWN action, not a continuous "forced until" state like the others — this tracks which broadcast was already acted on, so the same one doesn't re-trigger every time this listener fires
   let lastHandledGoldenKeycapsBroadcast = 0; // same one-time-action pattern as the ring above
+  let lastHandledRainbowKeycapsBroadcast = 0;
   let bossEventRef = null;
   try {
     firebase.initializeApp({ databaseURL: FIREBASE_DB_URL });
@@ -3511,6 +3533,10 @@
       if (data.goldenKeycaps && data.goldenKeycaps.broadcastAt && data.goldenKeycaps.broadcastAt > lastHandledGoldenKeycapsBroadcast && data.goldenKeycaps.expiresAt > Date.now()){
         lastHandledGoldenKeycapsBroadcast = data.goldenKeycaps.broadcastAt;
         applyGoldenKeycaps(data.goldenKeycaps.indices || [], data.goldenKeycaps.expiresAt);
+      }
+      if (data.rainbowKeycaps && data.rainbowKeycaps.broadcastAt && data.rainbowKeycaps.broadcastAt > lastHandledRainbowKeycapsBroadcast && data.rainbowKeycaps.expiresAt > Date.now()){
+        lastHandledRainbowKeycapsBroadcast = data.rainbowKeycaps.broadcastAt;
+        applyRainbowKeycaps(data.rainbowKeycaps.indices || [], data.rainbowKeycaps.expiresAt);
       }
     }, () => {});
     function broadcastGlobalEffect(key, durationMs, extra){
@@ -4888,6 +4914,8 @@
   const allKeyCaps = [];
   const GOLDEN_KEYCAP_REWARD = { 1: 10, 2: 20, 3: 30 }; // trophies awarded per world when a golden keycap is collected there
   const GOLDEN_KEYCAP_COLOR = 0xffd700;
+  const RAINBOW_KEYCAP_REWARD = { 1: 20, 2: 40, 3: 60 }; // exactly double the golden reward per world
+  const RAINBOW_KEYCAP_COUNT_PER_WORLD = 2; // much rarer than golden (5 per world) — the bigger reward is balanced by scarcity
   function makeKeyCap(x, y, z, world){
     const letter = KEY_LETTERS[Math.floor(Math.random() * KEY_LETTERS.length)];
     const color = KEY_COLORS[Math.floor(Math.random() * KEY_COLORS.length)];
@@ -4927,7 +4955,7 @@
     }
   });
   function setKeyboardKeysVisible(visible){
-    allKeyCaps.forEach(k => { k.mesh.visible = (visible || k.golden) && k.world === selectedWorld; });
+    allKeyCaps.forEach(k => { k.mesh.visible = (visible || k.golden || k.rainbow) && k.world === selectedWorld; });
   }
 
   // ---------- GOLDEN KEYCAPS EVENT ----------
@@ -4976,7 +5004,7 @@
   function pickGoldenKeycapIndices(){
     // Group keycap array-indices by world, then randomly pick a handful from each — guarantees every world actually gets some, rather than leaving it to pure chance across the combined pool.
     const byWorld = { 1: [], 2: [], 3: [] };
-    allKeyCaps.forEach((k, i) => { if (byWorld[k.world]) byWorld[k.world].push(i); });
+    allKeyCaps.forEach((k, i) => { if (byWorld[k.world] && !k.rainbow) byWorld[k.world].push(i); }); // skip any currently-rainbow key so the two events never collide on the same keycap
     const chosen = [];
     [1, 2, 3].forEach(w => {
       const pool = byWorld[w].slice();
@@ -5022,11 +5050,84 @@
 
   const KEY_PRESS_RADIUS = 1.1; // how close (horizontally) the player needs to be, roughly standing ON the key
   const KEY_PRESS_SPEED = 10; // how fast the animated press/release happens
+
+  // ---------- RAINBOW KEYCAPS EVENT ----------
+  // Same idea as golden keycaps, but rarer (2 per world instead of 5),
+  // worth double the trophies, and constantly cycling through colors
+  // instead of sitting on one fixed gold tone. A key can only be one or the
+  // other at a time — picking never selects one that's currently the other.
+  let rainbowKeycapExpiresAt = 0;
+  const activeRainbowKeycaps = [];
+  function setKeycapRainbow(k, rainbow){
+    k.rainbow = rainbow;
+    if (rainbow){
+      k.rainbowHue = Math.random(); // each key starts at a random point in the color cycle so they're not all in sync
+      k.mesh.material.emissiveIntensity = 1.0;
+      if (!k.rainbowBeam){
+        const beamMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.35, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending });
+        k.rainbowBeam = new THREE.Mesh(goldBeamGeo, beamMat); // reuses the same beam geometry as golden keycaps — only the color animates differently
+        k.rainbowBeam.position.set(0, 3.2, 0);
+        k.mesh.add(k.rainbowBeam);
+      }
+      k.rainbowBeam.visible = true;
+      k.mesh.visible = k.world === selectedWorld; // visible regardless of the keyboardKeysWanted setting, same reasoning as golden keycaps
+      if (!activeRainbowKeycaps.includes(k)) activeRainbowKeycaps.push(k);
+    } else {
+      k.mesh.material.color.setHex(k.originalColor);
+      k.mesh.material.emissive = new THREE.Color(0x000000);
+      k.mesh.material.emissiveIntensity = 0;
+      if (k.rainbowBeam) k.rainbowBeam.visible = false;
+      k.mesh.visible = keyboardKeysWanted && k.world === selectedWorld;
+      const ri = activeRainbowKeycaps.indexOf(k);
+      if (ri !== -1) activeRainbowKeycaps.splice(ri, 1);
+    }
+  }
+  function pickRainbowKeycapIndices(){
+    const byWorld = { 1: [], 2: [], 3: [] };
+    allKeyCaps.forEach((k, i) => { if (byWorld[k.world] && !k.golden) byWorld[k.world].push(i); }); // skip any currently-golden key so the two events never collide on the same keycap
+    const chosen = [];
+    [1, 2, 3].forEach(w => {
+      const pool = byWorld[w].slice();
+      for (let n = 0; n < RAINBOW_KEYCAP_COUNT_PER_WORLD && pool.length > 0; n++){
+        const pick = pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
+        chosen.push(pick);
+      }
+    });
+    return chosen;
+  }
+  function applyRainbowKeycaps(indices, expiresAt){
+    activeRainbowKeycaps.slice().forEach(k => setKeycapRainbow(k, false));
+    indices.forEach(i => { if (allKeyCaps[i]) setKeycapRainbow(allKeyCaps[i], true); });
+    rainbowKeycapExpiresAt = expiresAt;
+    updateRainbowKeycapsBadgeText();
+    const badge = document.getElementById('rainbowKeycapsBadge');
+    if (badge) badge.classList.add('show');
+  }
+  function updateRainbowKeycapsBadgeText(){
+    const el = document.getElementById('rainbowKeycapsBadgeText');
+    if (!el) return;
+    const countHere = activeRainbowKeycaps.filter(k => k.world === selectedWorld).length;
+    el.textContent = '🌈 ' + countHere + ' Regenbogen-Keycaps sind in deiner Welt erschienen — doppelte Pokale!';
+  }
+  function updateRainbowKeycaps(dt){
+    if (rainbowKeycapExpiresAt && Date.now() > rainbowKeycapExpiresAt){
+      activeRainbowKeycaps.slice().forEach(k => setKeycapRainbow(k, false));
+      rainbowKeycapExpiresAt = 0;
+      const badge = document.getElementById('rainbowKeycapsBadge');
+      if (badge) badge.classList.remove('show');
+    }
+    activeRainbowKeycaps.forEach(k => {
+      k.rainbowHue = (k.rainbowHue + dt * 0.35) % 1; // slow continuous cycle through the color wheel — "wechselt ständig die Farbe"
+      k.mesh.material.color.setHSL(k.rainbowHue, 1, 0.55);
+      k.mesh.material.emissive.setHSL(k.rainbowHue, 1, 0.5);
+      if (k.rainbowBeam) k.rainbowBeam.material.color.setHSL(k.rainbowHue, 1, 0.6);
+    });
+  }
   function updateKeyboardKeys(dt){
     if (!keyboardKeysWanted){
-      // The decorative keycap grid itself is off, but golden keycap events
-      // should still be playable for everyone — just check the (much
-      // smaller) list of currently-golden keys instead of every single one
+      // The decorative keycap grid itself is off, but golden/rainbow keycap
+      // events should still be playable for everyone — just check the (much
+      // smaller) lists of currently-special keys instead of every single one
       // of the ~1800 regular keycaps, since those stay invisible/inert here.
       for (const k of activeGoldenKeycaps){
         if (k.world !== selectedWorld) continue;
@@ -5043,6 +5144,27 @@
           sfx.goldenCollect && sfx.goldenCollect();
           setKeycapGolden(k, false); // also removes k from activeGoldenKeycaps — fine to do while iterating a for..of since we don't touch this array again this loop
           updateGoldenKeycapsBadgeText();
+        } else if (!isStandingOn && k.pressed){
+          k.pressed = false;
+        }
+        const targetY = k.pressed ? k.pressedY : k.restY;
+        k.mesh.position.y += (targetY - k.mesh.position.y) * Math.min(1, KEY_PRESS_SPEED * dt);
+      }
+      for (const k of activeRainbowKeycaps){
+        if (k.world !== selectedWorld) continue;
+        const dx = player.pos.x - k.mesh.position.x;
+        const dz = player.pos.z - k.mesh.position.z;
+        const horizDist = Math.sqrt(dx*dx + dz*dz);
+        const isStandingOn = player.onGround && horizDist < KEY_PRESS_RADIUS && Math.abs((player.pos.y - player.radius) - k.restY) < 1.2;
+        if (isStandingOn && !k.pressed){
+          k.pressed = true;
+          const reward = RAINBOW_KEYCAP_REWARD[k.world] || 20;
+          totalTrophies += reward;
+          storageSet('rankmann_totalTrophies', totalTrophies);
+          spawnTrophyFly(reward);
+          sfx.rainbowCollect && sfx.rainbowCollect();
+          setKeycapRainbow(k, false);
+          updateRainbowKeycapsBadgeText();
         } else if (!isStandingOn && k.pressed){
           k.pressed = false;
         }
@@ -5068,6 +5190,14 @@
           sfx.goldenCollect && sfx.goldenCollect();
           setKeycapGolden(k, false);
           updateGoldenKeycapsBadgeText();
+        } else if (k.rainbow){
+          const reward = RAINBOW_KEYCAP_REWARD[k.world] || 20;
+          totalTrophies += reward;
+          storageSet('rankmann_totalTrophies', totalTrophies);
+          spawnTrophyFly(reward);
+          sfx.rainbowCollect && sfx.rainbowCollect();
+          setKeycapRainbow(k, false);
+          updateRainbowKeycapsBadgeText();
         }
       } else if (!isStandingOn && k.pressed){
         k.pressed = false;
@@ -5084,6 +5214,7 @@
     anyKeyPressedLastFrame = anyPressedThisFrame;
   }
   let anyKeyPressedLastFrame = false;
+
 
   // ---------- GRAPPLE ANCHOR POINTS (glowing crystals in the sky) ----------
   const anchors = [];
@@ -5445,7 +5576,8 @@
     if (iceAgeActive){ iceAgeActive = false; setIceOverlaysVisible(false); }
     document.getElementById('iceAgeBadge').classList.remove('show');
     document.getElementById('goldenKeycapsBadge').classList.remove('show');
-    allKeyCaps.forEach(k => { k.mesh.visible = false; }); // keycaps (golden ones included) belong to the normal world 1/2/3 rotation, never the boss arena — this was already implicitly true visually most of the time since selectedWorld doesn't change here, but explicit is safer
+    document.getElementById('rainbowKeycapsBadge').classList.remove('show');
+    allKeyCaps.forEach(k => { k.mesh.visible = false; }); // keycaps (golden/rainbow ones included) belong to the normal world 1/2/3 rotation, never the boss arena — this was already implicitly true visually most of the time since selectedWorld doesn't change here, but explicit is safer
     updateTouchControlsVisibility(); // tucks the mobile pause button away for the duration
     bossGroup.visible = true;
     bossArenaGroup.visible = true;
@@ -5502,9 +5634,11 @@
       selectedWorld = preBossWorld;
       applyWorldTheme(selectedWorld);
     }
-    allKeyCaps.forEach(k => { k.mesh.visible = (keyboardKeysWanted || k.golden) && k.world === selectedWorld; }); // restore keycap visibility for whichever world we're back in — applyWorldTheme above only runs (and would otherwise handle this) if the world actually differed; golden ones stay visible regardless of the setting
+    allKeyCaps.forEach(k => { k.mesh.visible = (keyboardKeysWanted || k.golden || k.rainbow) && k.world === selectedWorld; }); // restore keycap visibility for whichever world we're back in — applyWorldTheme above only runs (and would otherwise handle this) if the world actually differed; golden ones stay visible regardless of the setting
     if (goldenKeycapExpiresAt) updateGoldenKeycapsBadgeText(); // in case the world differs from before entering the boss arena
+    if (rainbowKeycapExpiresAt) updateRainbowKeycapsBadgeText();
     if (goldenKeycapExpiresAt && Date.now() < goldenKeycapExpiresAt) document.getElementById('goldenKeycapsBadge').classList.add('show'); // the event may still be running after coming back from the boss fight — bring the badge back too, not just the keys themselves
+    if (rainbowKeycapExpiresAt && Date.now() < rainbowKeycapExpiresAt) document.getElementById('rainbowKeycapsBadge').classList.add('show');
     if (preBossPos){ player.pos.copy(preBossPos); }
     player.vel.set(0, 0, 0);
     preBossPos = null;
@@ -5955,8 +6089,9 @@
     });
     checkpoints.forEach(cp => { cp.group.visible = (cp.world === n); });
     anchors.forEach(a => { if (a.world !== 'boss') a.visible = (a.world === n); }); // boss-arena anchors are managed entirely by enterBossArena/endBossEventLocally instead, since they're not part of the normal world 1/2/3 rotation
-    allKeyCaps.forEach(k => { k.mesh.visible = (keyboardKeysWanted || k.golden) && k.world === n; }); // keys were floating "somewhere on the map" before this — they're built once at load and never moved, so without this they stayed visible regardless of which world's platforms were actually showing; golden ones stay visible regardless of the keycap decoration setting
+    allKeyCaps.forEach(k => { k.mesh.visible = (keyboardKeysWanted || k.golden || k.rainbow) && k.world === n; }); // keys were floating "somewhere on the map" before this — they're built once at load and never moved, so without this they stayed visible regardless of which world's platforms were actually showing; golden ones stay visible regardless of the keycap decoration setting
     if (goldenKeycapExpiresAt) updateGoldenKeycapsBadgeText(); // the count shown is "in your world", so it has to be recalculated whenever the world itself changes
+    if (rainbowKeycapExpiresAt) updateRainbowKeycapsBadgeText();
     starfield.visible = (n === 3);
   }
 
@@ -7470,6 +7605,17 @@
       [784, 880, 1047, 1319, 1568, 2093].forEach((f, i) => setTimeout(() => playTone(f, 0.14, 'sine', 0.2), i * 38));
       setTimeout(() => playNoiseBurst(0.25, 6000, 0.1), 190);
     },
+    rainbowCollect: () => {
+      // Bigger and richer than goldenCollect, to match the doubled reward —
+      // a wider, faster ascending run plus a second, offset harmony layer
+      // a third above it (two notes ringing together instead of one), and
+      // a glide-up "whoosh" at the end instead of just a noise burst.
+      const run = [523, 659, 784, 988, 1175, 1397, 1661, 1976];
+      run.forEach((f, i) => setTimeout(() => playTone(f, 0.16, 'sine', 0.18), i * 32));
+      run.forEach((f, i) => setTimeout(() => playTone(f * 1.25, 0.16, 'triangle', 0.1), i * 32 + 16));
+      setTimeout(() => playNoiseBurst(0.3, 7000, 0.12), 230);
+      setTimeout(() => playTone(1200, 0.35, 'sine', 0.14, 2400), 250);
+    },
     netShoot: () => {
       playSoundBuffer('webshoot', 0.75, 1.25);
       playNoiseBurst(0.06, 900, 0.12);
@@ -8587,6 +8733,9 @@
     // Same idea — the golden keycaps themselves stay out there to be found and collected, only the notification about them goes away.
     document.getElementById('goldenKeycapsBadge').classList.remove('show');
   });
+  document.getElementById('rainbowKeycapsBadgeCloseBtn').addEventListener('click', () => {
+    document.getElementById('rainbowKeycapsBadge').classList.remove('show');
+  });
   document.getElementById('iceAgeBadgeCloseBtn').addEventListener('click', () => {
     document.getElementById('iceAgeBadge').classList.remove('show');
   });
@@ -8823,6 +8972,13 @@
     applyGoldenKeycaps(indices, expiresAt); // shows the goldenKeycapsBadge to the admin immediately too, without waiting on the round-trip through Firebase
     globalEffectsRef.child('goldenKeycaps').set({ indices, broadcastAt: Date.now(), expiresAt }).catch(() => {});
     showAdminToast('✨ Golden Keycaps global ausgelöst — je ' + GOLDEN_KEYCAP_COUNT_PER_WORLD + ' pro Welt, 5 Minuten Zeit');
+  });
+  document.getElementById('adminRainbowKeycapsBtn').addEventListener('click', () => {
+    const indices = pickRainbowKeycapIndices();
+    const expiresAt = Date.now() + 5 * 60000;
+    applyRainbowKeycaps(indices, expiresAt);
+    globalEffectsRef.child('rainbowKeycaps').set({ indices, broadcastAt: Date.now(), expiresAt }).catch(() => {});
+    showAdminToast('🌈 Regenbogen Keycaps global ausgelöst — je ' + RAINBOW_KEYCAP_COUNT_PER_WORLD + ' pro Welt, doppelte Pokale, 5 Minuten Zeit');
   });
   document.getElementById('adminAnnounceBtn').addEventListener('click', () => {
     const input = document.getElementById('adminAnnounceInput');
@@ -10443,6 +10599,7 @@
     updateIceAge(dt);
     updateKeyboardKeys(dt);
     updateGoldenKeycaps(dt);
+    updateRainbowKeycaps(dt);
     dust.rotation.y += dt*0.01;
     if (starfield.visible){
       starfield.position.set(player.pos.x, 0, player.pos.z);
