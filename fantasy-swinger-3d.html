@@ -2362,14 +2362,14 @@
   <div id="bigUpdateScreen" class="hidden">
     <div class="startPanel" style="max-width:480px; position:relative; overflow:visible;">
       <div id="bigUpdateConfetti"></div>
-      <div style="font-size:56px; margin-bottom:6px;">🎉</div>
-      <h1 style="font-size:26px; margin:0 0 6px; background:linear-gradient(135deg,#ffe27a,#ff9d6c,#9d7bff); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;">Das größte Update aller Zeiten!</h1>
+      <div style="font-size:56px; margin-bottom:6px;">🌊</div>
+      <h1 style="font-size:26px; margin:0 0 6px; background:linear-gradient(135deg,#ffe27a,#ff9d6c,#9d7bff); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;">Welt 4 ist da!</h1>
       <p class="heroTagline" style="margin-bottom:18px;">So viel Neues ist gerade dazugekommen:</p>
       <div style="text-align:left; display:flex; flex-direction:column; gap:10px; margin-bottom:20px;">
-        <div class="changelogEntry" style="padding:12px 16px;">🤝 <strong>Echtes Freunde-System</strong> — Anfragen senden, annehmen, sehen wer online ist</div>
-        <div class="changelogEntry" style="padding:12px 16px;">🎮 <strong>Koop-Einladungen</strong> — Freund direkt einladen, kein Raum-Code nötig</div>
-        <div class="changelogEntry" style="padding:12px 16px;">👀 <strong>Zuschauen</strong> — sieh live zu, wenn ein Freund spielt, inklusive Netz &amp; Zuschauerzahl</div>
-        <div class="changelogEntry" style="padding:12px 16px;">🤸 <strong>Trick-System &amp; 🎪 Chaos-Modus</strong> — Saltos, Bonus-Punkte und Zufalls-Überraschungen</div>
+        <div class="changelogEntry" style="padding:12px 16px;">🌊 <strong>Neue Welt 4 "Ozeanreich"</strong> — komplett unter Wasser, mit echter Schwimm-Mechanik statt Springen</div>
+        <div class="changelogEntry" style="padding:12px 16px;">🫧 <strong>Sauerstoff-System</strong> — Luft geht beim Schwimmen aus, auf Plattformen füllt sie sich wieder auf</div>
+        <div class="changelogEntry" style="padding:12px 16px;">✨ <strong>Golden &amp; 🌈 Regenbogen-Keycaps</strong> — seltene, zeitlich begrenzte Events mit satten Pokal-Belohnungen</div>
+        <div class="changelogEntry" style="padding:12px 16px;">🏃 <strong>Schnelleres Lauftempo</strong> — spürbar flüssigere Grundgeschwindigkeit und Sprint</div>
       </div>
       <button id="bigUpdateSeeAllBtn" class="menuBtn" style="margin-bottom:10px;">📋 Alle Updates ansehen</button>
       <button id="bigUpdateCloseBtn" class="menuBtn" style="background:linear-gradient(135deg, rgba(122,255,196,0.3), rgba(60,200,150,0.3)); border-color:rgba(122,255,196,0.6);">Los geht's! 🚀</button>
@@ -2486,6 +2486,31 @@
             <li>🎮 Koop-Einladungen — Freund direkt in deinen Raum einladen, kein Code nötig</li>
             <li>👀 Freunden beim Spielen zuschauen — live, mit Netz-Anzeige und "wer schaut gerade zu"-Anzeige</li>
             <li>🚪 Sauberes Verhalten beim Verlassen — Zuschauen endet automatisch, wenn der Freund aufhört zu spielen</li>
+          </ul>
+        </div>
+
+        <div class="changelogEntry">
+          <div class="changelogDate">13. September</div>
+          <h3>⌨️ Tastatur-Deko & Golden/Regenbogen-Keycaps</h3>
+          <ul>
+            <li>⌨️ Optionale Tastatur-Deko — bunte, drückbare Tasten bedecken jede Plattform in allen Welten</li>
+            <li>✨ <strong>Golden Keycaps</strong> — Admin-Event, 5 goldene Tasten pro Welt, gestaffelte Pokal-Belohnung (10/20/30)</li>
+            <li>🌈 <strong>Regenbogen-Keycaps</strong> — noch seltener (2 pro Welt), dafür doppelte Belohnung, Farbe wechselt live</li>
+            <li>🔊 Eigene, echte Klick-Sounds statt synthetischer Töne, sauber abgestimmt gegen Windgeräusche</li>
+            <li>🏃 Grundgeschwindigkeit und Sprint spürbar erhöht</li>
+          </ul>
+        </div>
+
+        <div class="changelogEntry">
+          <div class="changelogDate">13. September, später</div>
+          <h3>🌊 Neue Welt 4 — Ozeanreich</h3>
+          <ul>
+            <li>🌊 Komplett neue vierte Welt, ganz unter Wasser — ab 600 Pokalen freischaltbar</li>
+            <li>🏊 Echte Schwimm-Mechanik — schwerelos schwimmen statt springen, Blickrichtung steuert auch hoch/runter</li>
+            <li>🫧 Sauerstoff-Anzeige — Luft geht beim Schwimmen zur Neige, füllt sich auf Plattformen wieder auf, sonst Dauerschaden</li>
+            <li>🐠 Lebendiges Riff — schwimmende Fischschwärme, wogender Seetang, bunte Korallen-Cluster</li>
+            <li>🗺️ 9 eigene Pokal-Checkpoints, weiter auseinander als in den anderen Welten — passend zum freien Schwimmen</li>
+            <li>🌤️ Kein Regen oder Sturm unter Wasser, dafür eigene gedämpfte Unterwasser-Klangkulisse</li>
           </ul>
         </div>
 
@@ -11931,7 +11956,7 @@
   // through the full changelog to find out anything changed at all.
   // The daily-reward popup (if there is one to show today) waits until
   // AFTER this closes, so a brand-new session never stacks two popups.
-  const BIG_UPDATE_VERSION = 'friends1';
+  const BIG_UPDATE_VERSION = 'ocean1';
   if (storageGet('rankmann_seenBigUpdate', null) !== BIG_UPDATE_VERSION){
     document.getElementById('bigUpdateScreen').classList.remove('hidden');
     spawnConfetti('bigUpdateConfetti', 40);
