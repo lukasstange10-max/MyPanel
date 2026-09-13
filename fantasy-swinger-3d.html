@@ -5043,7 +5043,7 @@
           totalTrophies += reward;
           storageSet('rankmann_totalTrophies', totalTrophies);
           spawnTrophyFly(reward);
-          sfx.trophy && sfx.trophy();
+          sfx.goldenCollect && sfx.goldenCollect();
           setKeycapGolden(k, false); // also removes k from activeGoldenKeycaps — fine to do while iterating a for..of since we don't touch this array again this loop
           updateGoldenKeycapsBadgeText();
         } else if (!isStandingOn && k.pressed){
@@ -5068,7 +5068,7 @@
           totalTrophies += reward;
           storageSet('rankmann_totalTrophies', totalTrophies);
           spawnTrophyFly(reward);
-          sfx.trophy && sfx.trophy();
+          sfx.goldenCollect && sfx.goldenCollect();
           setKeycapGolden(k, false);
           updateGoldenKeycapsBadgeText();
         }
@@ -7464,6 +7464,14 @@
     },
     trophy: () => {
       [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => playTone(f, 0.18, 'triangle', 0.24), i * 65));
+    },
+    goldenCollect: () => {
+      // A brighter, sparklier jingle than the normal trophy sound — a fast
+      // ascending run up a pentatonic scale (sounds "magical" rather than
+      // just "rewarding"), topped off with a shimmering high-frequency
+      // noise burst for a bit of sparkle texture.
+      [784, 880, 1047, 1319, 1568, 2093].forEach((f, i) => setTimeout(() => playTone(f, 0.14, 'sine', 0.2), i * 38));
+      setTimeout(() => playNoiseBurst(0.25, 6000, 0.1), 190);
     },
     netShoot: () => {
       playSoundBuffer('webshoot', 0.75, 1.25);
