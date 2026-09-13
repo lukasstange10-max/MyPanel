@@ -30,7 +30,7 @@
     z-index: 10;
   }
   #stormBadge {
-    position: fixed; top: 72px; left: 50%; z-index: 46;
+    position: fixed; top: 102px; left: 50%; z-index: 46;
     padding: 8px 20px; border-radius: 999px; font-size: 12.5px; font-weight: 800;
     background: linear-gradient(135deg, rgba(90,110,180,0.92), rgba(50,60,110,0.92));
     color: #dfe6ff; box-shadow: 0 6px 20px rgba(40,50,110,0.5);
@@ -44,7 +44,7 @@
     animation: stormBadgeShake 0.35s ease-in-out infinite;
   }
   #weatherForecastBadge {
-    position: fixed; top: 72px; left: 50%; z-index: 46;
+    position: fixed; top: 102px; left: 50%; z-index: 46;
     padding: 7px 18px; border-radius: 999px; font-size: 12px; font-weight: 700;
     background: rgba(20,10,38,0.75); border: 1px solid rgba(140,160,220,0.4);
     color: #c9d4ff; backdrop-filter: blur(4px);
@@ -384,6 +384,21 @@
   #lives-bar-fill {
     height: 100%; width: 100%;
     background: linear-gradient(90deg, #ff7a90, #ff4d6d);
+    border-radius: 5px;
+    transition: width 0.3s ease, background 0.3s ease;
+  }
+  #box-oxygen {
+    display: none; /* only shown while actually in World 4 — toggled in JS */
+  }
+  #box-oxygen .stat-icon { background: radial-gradient(circle, #7adfff55, transparent 70%); }
+  #oxygen-bar-bg {
+    width: 130px; height: 15px; margin-top: 5px;
+    background: rgba(0,0,0,0.4); border: 1px solid rgba(122,223,255,0.4);
+    border-radius: 8px; overflow: hidden;
+  }
+  #oxygen-bar-fill {
+    height: 100%; width: 100%;
+    background: linear-gradient(90deg, #7adfff, #2fa9d8);
     border-radius: 5px;
     transition: width 0.3s ease, background 0.3s ease;
   }
@@ -2141,6 +2156,13 @@
         <div id="lives-bar-bg"><div id="lives-bar-fill"></div></div>
       </div>
     </div>
+    <div class="stat-box" id="box-oxygen">
+      <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3c-3 4-5 6.8-5 9.5a5 5 0 0 0 10 0C17 9.8 15 7 12 3z" fill="#7adfff"/></svg></div>
+      <div class="stat-text">
+        <span class="stat-label">Luft</span>
+        <div id="oxygen-bar-bg"><div id="oxygen-bar-fill"></div></div>
+      </div>
+    </div>
   </div>
 </div>
 <div id="goldenHourBadge"><span id="goldenHourBadgeText">✨ Goldene Stunde — 3x Pokale für 5 Minuten!</span><button class="notifCloseBtn" id="goldenHourBadgeCloseBtn">✕</button></div>
@@ -2491,6 +2513,7 @@
       <button id="worldBtn1" class="worldBtn" data-i18n="world1Btn">Welt 1 · Zauberreich</button>
       <button id="worldBtn2" class="worldBtn" data-i18n="world2Btn">Welt 2 · Frostreich</button>
       <button id="worldBtn3" class="worldBtn" data-i18n="world3Btn">Welt 3 · Sternenreich</button>
+      <button id="worldBtn4" class="worldBtn" data-i18n="world4Btn">Welt 4 · Ozeanreich</button>
     </div>
     <p id="worldSelectError" data-i18n="worldSelectError">Nicht genug Pokale!</p>
   </div>
@@ -3952,7 +3975,7 @@
       startBtn: 'Start game', shopBtnMenu: '🛒 Shop', achievementsBtnMenu: '🏅 Achievements', galleryBtnMenu: '🖼️ Gallery',
       updateNewBadge: '🆕 New', updateNewTitle: 'See all updates',
       updateNewSub: 'Click here to see everything that changed',
-      worldSelectBadge: '🗺️ Choose world', world1Btn: 'World 1 · Magic Realm', world2Btn: 'World 2 · Frost Realm', world3Btn: 'World 3 · Star Realm',
+      worldSelectBadge: '🗺️ Choose world', world1Btn: 'World 1 · Magic Realm', world2Btn: 'World 2 · Frost Realm', world3Btn: 'World 3 · Star Realm', world4Btn: 'World 4 · Ocean Realm',
       worldSelectError: 'Not enough trophies!',
       deviceSurveyTitle: 'Which device are you playing on?', deviceSurveySub: 'So we can set up the controls correctly',
       deviceBtnPC: '🖥️<br>PC', deviceBtnMobile: '📱<br>Mobile device',
@@ -4014,7 +4037,7 @@
       startBtn: 'Démarrer', shopBtnMenu: '🛒 Boutique', achievementsBtnMenu: '🏅 Succès', galleryBtnMenu: '🖼️ Galerie',
       updateNewBadge: '🆕 Nouveau', updateNewTitle: 'Voir toutes les mises à jour',
       updateNewSub: 'Clique ici pour voir tout ce qui a changé',
-      worldSelectBadge: '🗺️ Choisir un monde', world1Btn: 'Monde 1 · Royaume Magique', world2Btn: 'Monde 2 · Royaume du Gel', world3Btn: 'Monde 3 · Royaume Stellaire',
+      worldSelectBadge: '🗺️ Choisir un monde', world1Btn: 'Monde 1 · Royaume Magique', world2Btn: 'Monde 2 · Royaume du Gel', world3Btn: 'Monde 3 · Royaume Stellaire', world4Btn: 'Monde 4 · Royaume Océanique',
       worldSelectError: 'Pas assez de trophées !',
       deviceSurveyTitle: 'Sur quel appareil joues-tu ?', deviceSurveySub: 'Pour bien régler les commandes',
       deviceBtnPC: '🖥️<br>PC', deviceBtnMobile: '📱<br>Mobile',
@@ -4076,7 +4099,7 @@
       startBtn: 'Iniciar juego', shopBtnMenu: '🛒 Tienda', achievementsBtnMenu: '🏅 Logros', galleryBtnMenu: '🖼️ Galería',
       updateNewBadge: '🆕 Nuevo', updateNewTitle: 'Ver todas las actualizaciones',
       updateNewSub: 'Haz clic aquí para ver todo lo que cambió',
-      worldSelectBadge: '🗺️ Elegir mundo', world1Btn: 'Mundo 1 · Reino Mágico', world2Btn: 'Mundo 2 · Reino Helado', world3Btn: 'Mundo 3 · Reino Estelar',
+      worldSelectBadge: '🗺️ Elegir mundo', world1Btn: 'Mundo 1 · Reino Mágico', world2Btn: 'Mundo 2 · Reino Helado', world3Btn: 'Mundo 3 · Reino Estelar', world4Btn: 'Mundo 4 · Reino Oceánico',
       worldSelectError: '¡No tienes suficientes trofeos!',
       deviceSurveyTitle: '¿En qué dispositivo estás jugando?', deviceSurveySub: 'Para configurar bien los controles',
       deviceBtnPC: '🖥️<br>PC', deviceBtnMobile: '📱<br>Móvil',
@@ -4138,7 +4161,7 @@
       startBtn: 'Iniciar jogo', shopBtnMenu: '🛒 Loja', achievementsBtnMenu: '🏅 Conquistas', galleryBtnMenu: '🖼️ Galeria',
       updateNewBadge: '🆕 Novo', updateNewTitle: 'Ver todas as atualizações',
       updateNewSub: 'Clique aqui para ver tudo o que mudou',
-      worldSelectBadge: '🗺️ Escolher mundo', world1Btn: 'Mundo 1 · Reino Mágico', world2Btn: 'Mundo 2 · Reino do Gelo', world3Btn: 'Mundo 3 · Reino Estelar',
+      worldSelectBadge: '🗺️ Escolher mundo', world1Btn: 'Mundo 1 · Reino Mágico', world2Btn: 'Mundo 2 · Reino do Gelo', world3Btn: 'Mundo 3 · Reino Estelar', world4Btn: 'Mundo 4 · Reino Oceânico',
       worldSelectError: 'Troféus insuficientes!',
       deviceSurveyTitle: 'Em qual dispositivo você está jogando?', deviceSurveySub: 'Para configurarmos os controles corretamente',
       deviceBtnPC: '🖥️<br>PC', deviceBtnMobile: '📱<br>Celular',
@@ -4483,11 +4506,25 @@
     { t: 0.80, skyTop: 0x05050f, skyBottom: 0x140a2c, sunColor: 0x9fb8ff, sunI: 0.5, hemiSky: 0x3f2f6a, hemiGround: 0x030308, hemiI: 0.4, fog: 0x08071c, fogD: 0.003 },
     { t: 1.00, skyTop: 0x030308, skyBottom: 0x0a0818, sunColor: 0x8fa8ff, sunI: 0.4, hemiSky: 0x2a1f4a, hemiGround: 0x020204, hemiI: 0.3, fog: 0x040410, fogD: 0.0035 },
   ];
+  // World 4 — "Ozeanreich": underwater blue-teal palette with much denser
+  // fog than the other worlds (limited visibility, like real open water)
+  // and a soft, diffused light quality instead of a sharp sun — even at
+  // "midday" there's no harsh bright sky, just a brighter blue-green glow
+  // filtering down from the surface.
+  const DAY_KEYFRAMES_W4 = [
+    { t: 0.00, skyTop: 0x01050f, skyBottom: 0x02121f, sunColor: 0x3a7a8f, sunI: 0.2, hemiSky: 0x0d3040, hemiGround: 0x010509, hemiI: 0.3, fog: 0x021520, fogD: 0.045 },
+    { t: 0.20, skyTop: 0x021a2c, skyBottom: 0x0a3248, sunColor: 0x4a95a8, sunI: 0.35, hemiSky: 0x155060, hemiGround: 0x03121c, hemiI: 0.42, fog: 0x0a2838, fogD: 0.04 },
+    { t: 0.32, skyTop: 0x0a3548, skyBottom: 0x1a6a80, sunColor: 0x8fdaee, sunI: 0.85, hemiSky: 0x2f95a8, hemiGround: 0x0a3040, hemiI: 0.75, fog: 0x144858, fogD: 0.033 },
+    { t: 0.50, skyTop: 0x14506a, skyBottom: 0x3fa8c0, sunColor: 0xcdf5ff, sunI: 1.05, hemiSky: 0x5fc4d8, hemiGround: 0x145868, hemiI: 0.9, fog: 0x1e6478, fogD: 0.028 },
+    { t: 0.68, skyTop: 0x0a3548, skyBottom: 0x1a6a80, sunColor: 0x8fdaee, sunI: 0.85, hemiSky: 0x2f95a8, hemiGround: 0x0a3040, hemiI: 0.75, fog: 0x144858, fogD: 0.033 },
+    { t: 0.80, skyTop: 0x03202f, skyBottom: 0x0f4258, sunColor: 0x5fa8bc, sunI: 0.45, hemiSky: 0x1f6478, hemiGround: 0x051c28, hemiI: 0.5, fog: 0x0d3a4a, fogD: 0.038 },
+    { t: 1.00, skyTop: 0x01050f, skyBottom: 0x02121f, sunColor: 0x3a7a8f, sunI: 0.2, hemiSky: 0x0d3040, hemiGround: 0x010509, hemiI: 0.3, fog: 0x021520, fogD: 0.045 },
+  ];
   const _c1 = new THREE.Color(), _c2 = new THREE.Color();
   function lerpKeyColor(key, a, b, f){ _c1.setHex(a[key]); _c2.setHex(b[key]); return _c1.lerp(_c2, f); }
   function updateDayNight(dt){
     dayTime = (dayTime + dt / DAY_CYCLE_SECONDS) % 1;
-    const KEYFRAMES = selectedWorld === 3 ? DAY_KEYFRAMES_W3 : selectedWorld === 2 ? DAY_KEYFRAMES_W2 : DAY_KEYFRAMES_W1;
+    const KEYFRAMES = selectedWorld === 4 ? DAY_KEYFRAMES_W4 : selectedWorld === 3 ? DAY_KEYFRAMES_W3 : selectedWorld === 2 ? DAY_KEYFRAMES_W2 : DAY_KEYFRAMES_W1;
     let a = KEYFRAMES[0], b = KEYFRAMES[KEYFRAMES.length - 1], f = 0;
     for (let i = 0; i < KEYFRAMES.length - 1; i++){
       if (dayTime >= KEYFRAMES[i].t && dayTime <= KEYFRAMES[i+1].t){
@@ -4539,6 +4576,42 @@
   const starfield = new THREE.Points(starGeo, starMat);
   starfield.visible = false;
   scene.add(starfield);
+
+  // ---------- WORLD 4 BUBBLES ----------
+  // Rising bubble particles, positioned relative to the player and looping
+  // back to the bottom once they drift above a certain height — cheap way
+  // to get a constant stream of bubbles around wherever you're swimming,
+  // without tracking real per-bubble lifetimes.
+  const bubbleGeo = new THREE.BufferGeometry();
+  const bubbleCount = 300;
+  const bubblePos = new Float32Array(bubbleCount*3);
+  const bubbleSpeed = new Float32Array(bubbleCount);
+  for (let i=0;i<bubbleCount;i++){
+    bubblePos[i*3] = (Math.random()-0.5)*140;
+    bubblePos[i*3+1] = Math.random()*90 - 30;
+    bubblePos[i*3+2] = (Math.random()-0.5)*140;
+    bubbleSpeed[i] = 2.5 + Math.random()*3.5;
+  }
+  bubbleGeo.setAttribute('position', new THREE.BufferAttribute(bubblePos,3));
+  const bubbleMat = new THREE.PointsMaterial({ color: 0xcdf5ff, size: 0.35, transparent:true, opacity:0.55, sizeAttenuation:true });
+  const bubbles = new THREE.Points(bubbleGeo, bubbleMat);
+  bubbles.visible = false;
+  scene.add(bubbles);
+  function updateBubbles(dt){
+    if (!bubbles.visible) return;
+    const pos = bubbleGeo.attributes.position.array;
+    for (let i=0;i<bubbleCount;i++){
+      pos[i*3+1] += bubbleSpeed[i] * dt; // rise
+      pos[i*3] += Math.sin((pos[i*3+1] + i) * 0.4) * dt * 0.3; // gentle side-to-side drift so they don't rise in perfectly straight lines
+      if (pos[i*3+1] > player.pos.y + 60){
+        // recycle back down to below the player once a bubble has risen far enough past them
+        pos[i*3+1] = player.pos.y - 30;
+        pos[i*3] = player.pos.x + (Math.random()-0.5)*140;
+        pos[i*3+2] = player.pos.z + (Math.random()-0.5)*140;
+      }
+    }
+    bubbleGeo.attributes.position.needsUpdate = true;
+  }
 
   // ---------- CHAOS MODE ----------
   // A rare, short-lived random modifier — one of three effects (reversed
@@ -4686,12 +4759,65 @@
     rainAudioNodes = { gain };
   }
 
+  // looping underwater ambience for World 4 — a heavily muffled noise bed
+  // (very low lowpass cutoff, since sound underwater loses its high end)
+  // with a slow LFO breathing the volume up and down, like the ambient
+  // pressure/current hum you'd hear submerged rather than a flat drone.
+  let underwaterAudioNodes = null;
+  function ensureUnderwaterAudio(){
+    const ctx = ensureAudio();
+    if (!ctx || underwaterAudioNodes) return;
+    const bufSize = ctx.sampleRate * 3;
+    const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < bufSize; i++) data[i] = Math.random()*2-1;
+    const src = ctx.createBufferSource();
+    src.buffer = buf; src.loop = true;
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass'; filter.frequency.value = 350; // much darker/muffled than the rain's 1800Hz — this is the "underwater" quality
+    const gain = ctx.createGain();
+    gain.gain.value = 0;
+    const lfo = ctx.createOscillator();
+    lfo.frequency.value = 0.12; // one slow breath roughly every 8 seconds
+    const lfoGain = ctx.createGain();
+    lfoGain.gain.value = 0.15; // depth of the breathing modulation
+    lfo.connect(lfoGain).connect(gain.gain);
+    lfo.start();
+    src.connect(filter).connect(gain).connect(sfxVolumeGain);
+    src.start();
+    underwaterAudioNodes = { gain, baseGain: 0 };
+  }
+  function updateUnderwaterAudio(){
+    const shouldPlay = selectedWorld === 4 && !inBossArena;
+    const target = shouldPlay ? 0.22 : 0;
+    if (shouldPlay) ensureUnderwaterAudio();
+    if (underwaterAudioNodes){
+      underwaterAudioNodes.baseGain += (target - underwaterAudioNodes.baseGain) * 0.04; // smooth fade rather than an abrupt on/off when switching worlds
+      underwaterAudioNodes.gain.gain.value = underwaterAudioNodes.baseGain;
+    }
+  }
+
   function updateWeather(dt){
     // No weather in the boss arena at all — it's a separate, enclosed space
     // far from any of the normal worlds, so the ambient rain sound (and any
     // leftover rain particles) from wherever the player was standing before
     // getting pulled into the fight would be completely out of place here.
     if (inBossArena){
+      muteRainAudio();
+      rainMat.opacity = 0;
+      document.getElementById('stormBadge').classList.remove('show');
+      document.getElementById('weatherForecastBadge').classList.remove('show');
+      return;
+    }
+    // No storm/rain in World 4 at all, ever — it's already fully underwater,
+    // so wind gusts and rain falling from above make no sense there. This is
+    // an unconditional exclusion (unlike World 3's, further below, which
+    // still only blocks the natural random cycle) because a global admin-
+    // forced storm broadcast would otherwise override even that.
+    if (selectedWorld === 4){
+      weatherTarget = 0;
+      isStorm = false;
+      rainIntensity = Math.max(0, rainIntensity - dt * 0.6);
       muteRainAudio();
       rainMat.opacity = 0;
       document.getElementById('stormBadge').classList.remove('show');
@@ -4732,7 +4858,7 @@
       }
     }
     }
-    if ((!gameSettings.weatherEnabled || selectedWorld === 3) && Date.now() >= stormForceUntil) weatherTarget = 0; // no rain in the void of space, and respects the weather-effects setting — unless a global broadcast is actively forcing it
+    if ((!gameSettings.weatherEnabled || selectedWorld === 3 || selectedWorld === 4) && Date.now() >= stormForceUntil) weatherTarget = 0; // no rain in the void of space, and none falling from above while already underwater either — respects the weather-effects setting unless a global broadcast is actively forcing it
     rainIntensity += (weatherTarget - rainIntensity) * Math.min(1, dt * 0.35);
     // Duck the wind/rain ambience while walking on keycaps, smoothly, so the
     // click stays consistently audible everywhere instead of varying with
@@ -4882,7 +5008,148 @@
   ];
   const islandsW3 = islandDataW3.map(d => makeIsland(...d));
   islandsW3.forEach(isl => { isl.world = 3; });
+  // World 4 — "Ozeanreich": coral reef platforms scattered through open
+  // water, spaced noticeably further apart than the other worlds — since
+  // swimming gives free movement in every direction (not just a jump arc),
+  // tight gaps would feel wrong here; the whole point is covering open
+  // water, not carefully hopping. Extended further out to reach past the
+  // checkpoints, which now start much further from spawn than before.
+  const islandDataW4 = [
+    [0,0,0,14,0.5],[44,6,-37,10,0.52],[-41,-4,-68,11,0.54],[24,10,-105,9,0.5],
+    [-27,-8,-139,12,0.56],[37,4,-177,10,0.52],[-14,-12,-218,13,0.5],[61,8,-27,8,0.55],
+    [-58,2,14,9,0.53],[10,-14,-255,15,0.5],[78,-2,-99,8,0.54],[-68,6,-156,9,0.52],
+    [30,-4,-300,10,0.55],[-32,4,-350,11,0.5],[15,-8,-400,9,0.53],[-10,2,-450,13,0.56]
+  ];
+  const islandsW4 = islandDataW4.map(d => makeIsland(...d));
+  islandsW4.forEach(isl => { isl.world = 4; });
   const islandMeshes = islands.map(isl => isl.mesh);
+
+  // ---------- WORLD 4 DECORATION: KELP, CORAL CLUSTERS, FISH ----------
+  const kelpGroup = new THREE.Group();
+  kelpGroup.visible = false;
+  scene.add(kelpGroup);
+  const kelpStalks = []; // { mesh, swayPhase, swaySpeed } — swayed each frame in updateWorld4Decor
+  const kelpSegGeo = new THREE.CylinderGeometry(0.12, 0.16, 1.4, 5);
+  function makeKelpStalk(x, y, z, segments, hue){
+    const mat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(hue, 0.55, 0.32), roughness: 0.8 });
+    const root = new THREE.Group();
+    root.position.set(x, y, z);
+    let parent = root;
+    for (let i = 0; i < segments; i++){
+      const seg = new THREE.Mesh(kelpSegGeo, mat);
+      seg.position.y = i === 0 ? 0.7 : 1.4;
+      parent.add(seg);
+      const joint = new THREE.Group();
+      joint.position.y = i === 0 ? 1.4 : 1.4;
+      seg.add(joint);
+      parent = joint;
+    }
+    kelpGroup.add(root);
+    kelpStalks.push({ mesh: root, segments: segments, swayPhase: Math.random() * Math.PI * 2, swaySpeed: 0.5 + Math.random() * 0.4 });
+    return root;
+  }
+
+  const coralGroup = new THREE.Group();
+  coralGroup.visible = false;
+  scene.add(coralGroup);
+  function makeCoralCluster(x, y, z, scale, hue){
+    // A little cluster of blobby cone/sphere shapes in warm coral tones —
+    // purely decorative, sits right at the base of a reef platform.
+    const mat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(hue, 0.7, 0.55), roughness: 0.6 });
+    const cluster = new THREE.Group();
+    const pieceCount = 3 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < pieceCount; i++){
+      const isBranch = Math.random() < 0.5;
+      const piece = isBranch
+        ? new THREE.Mesh(new THREE.ConeGeometry(0.35 * scale, 1.1 * scale, 6), mat)
+        : new THREE.Mesh(new THREE.SphereGeometry(0.5 * scale, 8, 6), mat);
+      const a = Math.random() * Math.PI * 2;
+      const r = Math.random() * scale * 1.2;
+      piece.position.set(Math.cos(a) * r, (isBranch ? 0.55 : 0.3) * scale, Math.sin(a) * r);
+      piece.rotation.z = (Math.random() - 0.5) * 0.5;
+      piece.castShadow = true;
+      cluster.add(piece);
+    }
+    cluster.position.set(x, y, z);
+    coralGroup.add(cluster);
+    return cluster;
+  }
+
+  // Scatter kelp + coral around every World 4 island's edge, sized to that
+  // island's own radius so bigger platforms get proportionally more.
+  islandsW4.forEach(isl => {
+    // Placed at 96–120% of the platform's radius — just past where keycaps
+    // stop (they cover up to 94%), so kelp/coral form a reef "fringe"
+    // around the edge instead of poking straight up through the keycap grid.
+    const kelpCount = 4 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < kelpCount; i++){
+      const a = Math.random() * Math.PI * 2;
+      const r = isl.radius * (0.96 + Math.random() * 0.24);
+      makeKelpStalk(isl.pos.x + Math.cos(a) * r, isl.top, isl.pos.z + Math.sin(a) * r, 3 + Math.floor(Math.random() * 3), 0.32 + Math.random() * 0.12);
+    }
+    const coralCount = 3 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < coralCount; i++){
+      const a = Math.random() * Math.PI * 2;
+      const r = isl.radius * (0.96 + Math.random() * 0.24);
+      makeCoralCluster(isl.pos.x + Math.cos(a) * r, isl.top, isl.pos.z + Math.sin(a) * r, 0.8 + Math.random() * 0.8, Math.random());
+    }
+  });
+
+  // Small fish schools — a handful of loop-swimming groups, each fish a
+  // simple cone body + flat tail, banking gently into its own circular path.
+  const fishGroup = new THREE.Group();
+  fishGroup.visible = false;
+  scene.add(fishGroup);
+  const fishSchools = [];
+  const fishBodyGeo = new THREE.ConeGeometry(0.35, 1.1, 6);
+  const fishTailGeo = new THREE.ConeGeometry(0.32, 0.5, 4);
+  function makeFishSchool(centerX, centerY, centerZ, radius, count, hue){
+    const mat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(hue, 0.6, 0.55), roughness: 0.5, metalness: 0.15 });
+    const fish = [];
+    for (let i = 0; i < count; i++){
+      const body = new THREE.Mesh(fishBodyGeo, mat);
+      body.rotation.x = Math.PI / 2; // cone points forward instead of up
+      const tail = new THREE.Mesh(fishTailGeo, mat);
+      tail.position.set(0, 0, 0.75);
+      tail.rotation.x = Math.PI / 2;
+      body.add(tail);
+      fishGroup.add(body);
+      fish.push({ mesh: body, tail, angle: Math.random() * Math.PI * 2, speed: 0.25 + Math.random() * 0.15, depthOffset: (Math.random() - 0.5) * 4, tailPhase: Math.random() * Math.PI * 2 });
+    }
+    fishSchools.push({ fish, centerX, centerY, centerZ, radius });
+  }
+
+  function updateWorld4Decor(dt){
+    if (!kelpGroup.visible && !fishGroup.visible) return;
+    kelpStalks.forEach(k => {
+      k.swayPhase += dt * k.swaySpeed;
+      let joint = k.mesh;
+      for (let i = 0; i < k.segments; i++){
+        const seg = joint.children[0];
+        if (!seg) break;
+        seg.rotation.z = Math.sin(k.swayPhase + i * 0.6) * 0.18;
+        joint = seg.children[0];
+        if (!joint) break;
+      }
+    });
+    fishSchools.forEach(school => {
+      school.fish.forEach(f => {
+        f.angle += dt * f.speed;
+        f.tailPhase += dt * 6;
+        const x = school.centerX + Math.cos(f.angle) * school.radius;
+        const z = school.centerZ + Math.sin(f.angle) * school.radius;
+        const y = school.centerY + f.depthOffset + Math.sin(f.angle * 2) * 1.2;
+        f.mesh.position.set(x, y, z);
+        f.mesh.rotation.y = -f.angle - Math.PI / 2; // face the direction of travel around the circle
+        f.tail.rotation.y = Math.sin(f.tailPhase) * 0.5;
+      });
+    });
+  }
+  // A handful of schools at varying depths/positions around the World 4 spread
+  makeFishSchool(20, 4, -50, 14, 7, 0.55);
+  makeFishSchool(-20, -6, -110, 18, 9, 0.08);
+  makeFishSchool(40, 6, -180, 12, 6, 0.75);
+  makeFishSchool(0, -10, -20, 10, 6, 0.15);
 
   // ---------- KEYBOARD KEYS DECORATION ----------
   // Optional, toggled at setup time (right after picking PC/mobile) —
@@ -5818,7 +6085,7 @@
     return sprite;
   }
 
-  function makeCheckpointPlatform(pos, index){
+  function makeCheckpointPlatform(pos, displayNumber){
     const RADIUS = 6.5, HEIGHT = 0.5;
     const group = new THREE.Group();
     group.position.set(pos[0], pos[1], pos[2]);
@@ -5872,7 +6139,7 @@
     glowLight.position.y = 1.4;
     group.add(glowLight);
 
-    const numSprite = makeNumberSprite(index + 1, '#eafff5');
+    const numSprite = makeNumberSprite(displayNumber, '#eafff5');
     numSprite.position.y = HOLO_RING_Y + 1.7;
     group.add(numSprite);
 
@@ -5880,9 +6147,10 @@
   }
 
   const checkpoints = [];
-  function addCheckpointSet(positions, world){
+  function addCheckpointSet(positions, world, numberOffset){
     positions.forEach((p, i) => {
-      const plat = makeCheckpointPlatform(p, i);
+      const displayNumber = i + 1 + numberOffset; // continues the sequence across worlds (1..6, 7..14, 15..24, 25..33, ...) instead of restarting at 1 every world, which is what the ring's own number used to show regardless of actual reward
+      const plat = makeCheckpointPlatform(p, displayNumber);
       checkpoints.push({
         group: plat.group, pos: new THREE.Vector3(...p), passed: false, wasOnPlatform: false, index: i,
         radius: plat.radius, rim: plat.rim, innerRing: plat.innerRing, center: plat.center,
@@ -5901,19 +6169,30 @@
   const ringPositionsW1 = [
     [8,15,-15],[-5,22,-42],[10,28,-70],[-15,34,-98],[5,40,-128],[0,46,-152]
   ];
-  addCheckpointSet(ringPositionsW1, 1);
+  addCheckpointSet(ringPositionsW1, 1, 0);
   // World 2 — its own 8 platforms matching the new layout, rewards 7..14
   const ringPositionsW2 = [
     [-14,15,-16],[14,20,-36],[-16,26,-56],[16,32,-76],[-12,38,-96],[8,44,-116],
     [-6,50,-140],[18,56,-172]
   ];
-  addCheckpointSet(ringPositionsW2, 2);
+  addCheckpointSet(ringPositionsW2, 2, 6);
   // World 3 — 10 platforms across the wide low-gravity spread, rewards 15..24
   const ringPositionsW3 = [
     [10,15,-18],[-12,28,-44],[14,42,-72],[-16,56,-102],[12,70,-134],
     [-14,84,-166],[8,98,-198],[-10,112,-224],[16,58,-16],[-18,20,-8]
   ];
-  addCheckpointSet(ringPositionsW3, 3);
+  addCheckpointSet(ringPositionsW3, 3, 14);
+  // World 4 — 9 platforms winding through the reef, rewards 25..33, spaced
+  // out to match the wider island layout above. Ordered strictly by distance
+  // from spawn (Z gets steadily more negative) so higher numbers are always
+  // further away. Pushed much further out overall — the first one (25) was
+  // sitting right next to the spawn platform, way too close for a "first
+  // trophy checkpoint" compared to the other worlds.
+  const ringPositionsW4 = [
+    [18,4,-60],[-18,-2,-105],[22,6,-155],[-15,-6,-205],[24,2,-255],
+    [-19,-8,-305],[17,4,-355],[-24,0,-405],[12,-4,-455]
+  ];
+  addCheckpointSet(ringPositionsW4, 4, 24);
 
   // ---------- SPECIAL BONUS RING ----------
   // ---------- ICE AGE EVENT ----------
@@ -5969,7 +6248,7 @@
   let specialRing = null;
   let specialRingTimer = 45; // first one appears fairly soon after loading, not a 2-hour wait on a fresh session
   function spawnSpecialRing(sync){
-    const worldPositions = { 1: ringPositionsW1, 2: ringPositionsW2, 3: ringPositionsW3 };
+    const worldPositions = { 1: ringPositionsW1, 2: ringPositionsW2, 3: ringPositionsW3, 4: ringPositionsW4 };
     const world = (sync && sync.world) || (1 + Math.floor(Math.random() * 3));
     const positions = worldPositions[world];
     // Spawn at the MIDPOINT between two consecutive checkpoints — out in
@@ -6069,6 +6348,9 @@
         } else if (n === 3){
           isl.rockMat.color.setHSL(0.72, 0.12, 0.16); // dark grey-violet asteroid rock
           isl.grassMat.color.setHSL(0.62, 0.7, 0.55); // glowing cyan-violet crystal cap
+        } else if (n === 4){
+          isl.rockMat.color.setHSL(0.52 + isl.baseHue*0.03, 0.4, 0.28); // dark reef rock, blue-teal
+          isl.grassMat.color.setHSL(0.05 + isl.baseHue*0.15, 0.65, 0.55); // warm coral top (orange/pink range) contrasting the blue water
         } else {
           isl.rockMat.color.setHSL(isl.baseHue, 0.35, 0.32);
           isl.grassMat.color.setHSL(isl.baseHue + 0.28, 0.55, 0.42);
@@ -6093,11 +6375,41 @@
     if (goldenKeycapExpiresAt) updateGoldenKeycapsBadgeText(); // the count shown is "in your world", so it has to be recalculated whenever the world itself changes
     if (rainbowKeycapExpiresAt) updateRainbowKeycapsBadgeText();
     starfield.visible = (n === 3);
+    bubbles.visible = (n === 4);
+    kelpGroup.visible = (n === 4);
+    coralGroup.visible = (n === 4);
+    fishGroup.visible = (n === 4);
+    dust.visible = (n !== 4); // the ambient purple dust motes don't fit underwater — bubbles take over entirely in World 4
   }
 
   applyWorldTheme(1); // safe default until startGame() applies the actual selected world
+  // Pre-warm every world's geometry with one throwaway render pass right
+  // now, before the menu is even visible — meshes that have never been
+  // rendered (everything outside World 1, since only one world is visible
+  // at a time) haven't had their buffers uploaded to the GPU yet, and doing
+  // that upload the FIRST time they turn visible is exactly what caused the
+  // stutter when picking a different world from the menu. Forcing it all to
+  // happen here, in one hidden frame at load time, means later world
+  // switches are just a visibility flag flip with nothing left to upload.
+  (function prewarmAllWorldGeometry(){
+    islands.forEach(isl => { isl.mesh.visible = true; });
+    checkpoints.forEach(cp => { cp.group.visible = true; });
+    allKeyCaps.forEach(k => { k.mesh.visible = true; });
+    bubbles.visible = true; kelpGroup.visible = true; coralGroup.visible = true; fishGroup.visible = true;
+    anchors.forEach(a => { a.visible = true; });
+    starfield.visible = true;
+    renderer.render(scene, camera);
+    applyWorldTheme(selectedWorld); // restore correct per-world visibility for whatever the player actually has selected
+    setKeyboardKeysVisible(keyboardKeysWanted);
+  })();
 
   // ---------- PLAYER ----------
+  // Reused each frame for the swim pitch/yaw quaternion composition, rather
+  // than allocating new THREE.Quaternion/Vector3 instances every frame.
+  const _swimYawQuat = new THREE.Quaternion();
+  const _swimPitchQuat = new THREE.Quaternion();
+  const _worldUpAxis = new THREE.Vector3(0, 1, 0);
+  const _localRightAxis = new THREE.Vector3(1, 0, 0);
   const player = {
     pos: new THREE.Vector3(0, 18, 0),
     vel: new THREE.Vector3(0,0,0),
@@ -7040,7 +7352,7 @@
     if (e.code === 'KeyE' && running && !spectatingKey) attachGrapple();
     if (e.code === 'KeyF' && running && !spectatingKey) performAttack();
     if (e.code === 'KeyB' && running && !paused && !spectatingKey) toggleEmoteWheel();
-    if (e.code === 'Space' && running && !paused && !spectatingKey && !player.onGround && !grapple.active && !emoteActive) startTrick();
+    if (e.code === 'Space' && running && !paused && !spectatingKey && !player.onGround && !grapple.active && !emoteActive && !(selectedWorld === 4 && !inBossArena)) startTrick(); // Space is the swim-up control in World 4, held constantly — triggering a flip on every single press there was the annoying nonstop spinning
     if (e.code === 'Escape' && spectatingKey) { stopSpectating(); e.stopImmediatePropagation(); }
     if (emoteActive && ['KeyW','KeyA','KeyS','KeyD','Space'].includes(e.code)) stopEmote();
   });
@@ -7308,7 +7620,7 @@
   }
   bindTouchBtn('touchJumpBtn', () => {
     if (emoteActive) stopEmote();
-    if (running && !paused && !player.onGround && !grapple.active) startTrick();
+    if (running && !paused && !player.onGround && !grapple.active && !(selectedWorld === 4 && !inBossArena)) startTrick(); // same reasoning as the keyboard Space handler — this button is swim-up in World 4, not a jump/trick trigger there
     keys['Space'] = true;
   }, () => { keys['Space'] = false; });
   bindTouchBtn('touchGrappleBtn', () => { if (running) attachGrapple(); }, () => { releaseGrapple(); });
@@ -7953,6 +8265,8 @@
   const WORLD2_COST = 250;
   let world3Unlocked = storageGet('rankmann_world3Unlocked', false);
   const WORLD3_COST = 400;
+  let world4Unlocked = storageGet('rankmann_world4Unlocked', false);
+  const WORLD4_COST = 600;
 
   // ---------- ACHIEVEMENTS ----------
   let unlockedAchievements = storageGet('rankmann_unlockedAchievements', []);
@@ -7970,6 +8284,8 @@
       check: () => world2Unlocked },
     { id: 'world3', icon: '🌌', name: 'Sternenwanderer', desc: 'Schalte das Sternenreich frei', category: 'exploration',
       check: () => world3Unlocked },
+    { id: 'world4', icon: '🌊', name: 'Ozeanwanderer', desc: 'Schalte das Ozeanreich frei', category: 'exploration',
+      check: () => world4Unlocked },
     { id: 'ownSkins3', icon: '🎨', name: 'Kleiderschrank', desc: 'Besitze 3 verschiedene Skins', category: 'cosmetic',
       check: () => ownedSkins.length >= 3 },
     { id: 'ownSkins6', icon: '👗', name: 'Modekönig', desc: 'Besitze 6 verschiedene Skins', category: 'cosmetic',
@@ -8947,7 +9263,7 @@
     // included) ends up with the exact same ring in the exact same spot,
     // rather than each client randomly rolling its own.
     const world = 1 + Math.floor(Math.random() * 3);
-    const worldPositions = { 1: ringPositionsW1, 2: ringPositionsW2, 3: ringPositionsW3 };
+    const worldPositions = { 1: ringPositionsW1, 2: ringPositionsW2, 3: ringPositionsW3, 4: ringPositionsW4 };
     const posIndex = Math.floor(Math.random() * (worldPositions[world].length - 1));
     const broadcastAt = Date.now();
     lastHandledRingBroadcast = broadcastAt; // pre-acknowledge our OWN upcoming broadcast so the listener echo doesn't spawn a second, duplicate ring locally
@@ -9210,7 +9526,8 @@
     const btn1 = document.getElementById('worldBtn1');
     const btn2 = document.getElementById('worldBtn2');
     const btn3 = document.getElementById('worldBtn3');
-    if (!btn1 || !btn2 || !btn3) return;
+    const btn4 = document.getElementById('worldBtn4');
+    if (!btn1 || !btn2 || !btn3 || !btn4) return;
     btn1.textContent = t('world1Btn');
     btn1.className = 'worldBtn' + (selectedWorld === 1 ? ' selected' : '');
     if (world2Unlocked) {
@@ -9227,11 +9544,29 @@
       btn3.innerHTML = '<span>🔒 ' + t('world3Btn') + '</span><span class="worldBtnCost">' + WORLD3_COST + ' 🏆</span>';
       btn3.className = 'worldBtn locked';
     }
+    if (world4Unlocked) {
+      btn4.textContent = t('world4Btn');
+      btn4.className = 'worldBtn' + (selectedWorld === 4 ? ' selected' : '');
+    } else {
+      btn4.innerHTML = '<span>🔒 ' + t('world4Btn') + '</span><span class="worldBtnCost">' + WORLD4_COST + ' 🏆</span>';
+      btn4.className = 'worldBtn locked';
+    }
   }
   function selectWorld(n){
     selectedWorld = n;
     storageSet('rankmann_selectedWorld', selectedWorld);
-    updateWorldSelectUI();
+    updateWorldSelectUI(); // this one stays synchronous — the button highlight should react instantly to the click
+    if (!running){
+      // Deferred to the next frame instead of running inline in the click
+      // handler — toggling visibility for potentially thousands of objects
+      // (every keycap across all worlds, islands, checkpoints, etc.) plus
+      // the render call it triggers is real work, and doing it synchronously
+      // inside the click handler was exactly what made the button feel like
+      // it stutters the moment you press it. Letting the click handler
+      // finish first and doing the actual scene swap on the next animation
+      // frame keeps the click itself feeling instant.
+      requestAnimationFrame(() => applyWorldTheme(n));
+    }
   }
   let worldErrorTimeout = null;
   function showWorldSelectError(msg){
@@ -9291,6 +9626,30 @@
     storageSet('rankmann_world3Unlocked', true);
     updateTrophyDisplay();
     selectWorld(3);
+  }
+  function handleWorld4Click(){
+    if (world4Unlocked) {
+      selectWorld(4);
+      return;
+    }
+    if (totalTrophies < WORLD4_COST) {
+      const btn4 = document.getElementById('worldBtn4');
+      if (btn4) {
+        btn4.animate(
+          [{ transform: 'translateX(0)' }, { transform: 'translateX(-4px)' }, { transform: 'translateX(4px)' }, { transform: 'translateX(0)' }],
+          { duration: 250 }
+        );
+      }
+      const missing = WORLD4_COST - totalTrophies;
+      showWorldSelectError(`Nicht genug Pokale! Dir fehlen noch ${missing} 🏆`);
+      return;
+    }
+    totalTrophies -= WORLD4_COST;
+    world4Unlocked = true;
+    storageSet('rankmann_totalTrophies', totalTrophies);
+    storageSet('rankmann_world4Unlocked', true);
+    updateTrophyDisplay();
+    selectWorld(4);
   }
   updateWorldSelectUI();
 
@@ -9751,6 +10110,24 @@
     skyDome.visible = visible;
     rain.visible = visible;
     ropeLine.visible = visible && grapple.active;
+    // Keycaps (and the World 4 underwater decoration) were missing from this
+    // list entirely — they kept their normal in-world visibility even while
+    // the rest of the scene was hidden for the shop's 360° character
+    // preview, which is why they showed up floating behind the character.
+    // Restoring "true" re-derives each one's actual visibility rule instead
+    // of just flipping a flag back on, since keycap visibility depends on
+    // several things (the keycap-decoration setting, current world, and
+    // golden/rainbow status) — not always simply "on".
+    if (visible){
+      allKeyCaps.forEach(k => { k.mesh.visible = (keyboardKeysWanted || k.golden || k.rainbow) && k.world === selectedWorld; });
+    } else {
+      allKeyCaps.forEach(k => { k.mesh.visible = false; });
+    }
+    const inWorld4 = visible && selectedWorld === 4;
+    bubbles.visible = inWorld4;
+    kelpGroup.visible = inWorld4;
+    coralGroup.visible = inWorld4;
+    fishGroup.visible = inWorld4;
   }
 
   function renderPreviewBar(){
@@ -9866,6 +10243,59 @@
       : 'linear-gradient(90deg, #ff7a90, #ff4d6d)';
   }
   updateLivesDisplay();
+
+  // ---------- WORLD 4 OXYGEN ----------
+  // Makes actually reaching the far-out trophy checkpoints in the ocean
+  // realm a real challenge instead of a given: a full tank lasts about 50
+  // seconds of continuous swimming, refills quickly the moment you touch
+  // down on any reef platform, and drains to damage-over-time if it hits
+  // zero — so covering the wide gaps between checkpoints means planning a
+  // route with air stops, not just swimming in a straight line.
+  const OXYGEN_MAX = 100;
+  let playerOxygen = OXYGEN_MAX;
+  const oxygenBarFill = document.getElementById('oxygen-bar-fill');
+  const oxygenBox = document.getElementById('box-oxygen');
+  let oxygenDamageTimer = 0;
+  function updateOxygen(dt){
+    const inWorld4 = selectedWorld === 4 && !inBossArena;
+    if (oxygenBox) oxygenBox.style.display = inWorld4 ? 'flex' : 'none'; // '' would NOT override the #box-oxygen{display:none} stylesheet rule — needs an actual value matching .stat-box's real display type
+    if (!inWorld4){
+      playerOxygen = OXYGEN_MAX; // always full by the time you're back, so you're never punished for air spent on a previous visit
+      oxygenDamageTimer = 0;
+      return;
+    }
+    if (player.onGround){
+      playerOxygen = Math.min(OXYGEN_MAX, playerOxygen + dt * 40); // quick refill — a few seconds resting on a platform tops the tank back up
+    } else {
+      playerOxygen = Math.max(0, playerOxygen - dt * (OXYGEN_MAX / 50)); // full tank ≈ 50 seconds of continuous swimming
+    }
+    if (oxygenBarFill){
+      const pct = playerOxygen / OXYGEN_MAX;
+      oxygenBarFill.style.width = (pct * 100) + '%';
+      oxygenBarFill.style.background = pct < 0.25
+        ? 'linear-gradient(90deg, #ff7a90, #ff4d6d)' // warns red when critically low, same as the lives bar
+        : 'linear-gradient(90deg, #7adfff, #2fa9d8)';
+    }
+    if (playerOxygen <= 0){
+      oxygenDamageTimer -= dt;
+      if (oxygenDamageTimer <= 0 && !adminGodMode && player.invuln <= 0){
+        oxygenDamageTimer = 1.4; // a damage tick roughly every 1.4s while completely out of air, not instant multi-hits
+        player.lives -= 1;
+        player.invuln = 1.5;
+        updateLivesDisplay();
+        pulseBox('box-lives', 'shake');
+        flashDamageVignette();
+        vibrate(45);
+        if (player.lives <= 0){
+          player.lives = 3;
+          updateLivesDisplay();
+          respawnPlayer();
+        }
+      }
+    } else {
+      oxygenDamageTimer = 0;
+    }
+  }
 
   function pulseBox(id, cls){
     const el = document.getElementById(id);
@@ -9988,7 +10418,7 @@
       closeEmoteWheel();
       return;
     }
-    const hub = selectedWorld === 3 ? islandsW3[0] : selectedWorld === 2 ? islandsW2[0] : islandsW1[0];
+    const hub = selectedWorld === 4 ? islandsW4[0] : selectedWorld === 3 ? islandsW3[0] : selectedWorld === 2 ? islandsW2[0] : islandsW1[0];
     player.pos.set(hub.pos.x, hub.top + 5, hub.pos.z);
     player.vel.set(0,0,0);
     player.wasOnGround = false;
@@ -10035,6 +10465,13 @@
       }
       camera.position.copy(previewCamPos);
       camera.lookAt(headTarget);
+      // Face the character toward wherever the camera currently is (the
+      // opposite of the normal walking convention, where facing "forward"
+      // points AWAY from a camera sitting behind you) — otherwise the
+      // player just stares off in whatever direction they last walked
+      // before opening the shop, which could easily leave the camera
+      // looking at the back of their head instead of their face.
+      playerMesh.rotation.y = player.yaw;
       playerMesh.visible = true;
       renderer.render(scene, camera);
       return;
@@ -10061,10 +10498,31 @@
       renderer.render(scene, camera);
       return;
     }
-    if (!running || paused) { renderer.render(scene, camera); return; }
+    if (!running || paused) {
+      playerMesh.visible = running; // hides the character behind the blurred start-screen menu (it was showing through, staring at whatever direction it last faced) — still shown normally for an actual mid-game pause, only hidden pre-start
+      renderer.render(scene, camera);
+      return;
+    }
 
-    // camera direction vectors (yaw only for movement)
-    const forward = new THREE.Vector3(Math.sin(player.yaw), 0, Math.cos(player.yaw)).negate();
+    // camera direction vectors (yaw only for movement, EXCEPT while
+    // swimming in World 4 — there, pressing W also carries the player up or
+    // down to match wherever the camera is actually looking, since diving
+    // and surfacing by just looking around is a lot more natural underwater
+    // than needing a separate always-just-horizontal control scheme).
+    const isSwimming = selectedWorld === 4 && !inBossArena; // declared here, early, so it's available both for the pitch-aware forward vector right below and the accel calculation further down
+    let forward;
+    if (isSwimming){
+      // Reading this straight from the camera itself (Three.js's own API,
+      // guaranteed to match whatever's actually on screen) instead of
+      // re-deriving it from player.yaw/pitch by hand — manually rebuilding
+      // it kept ending up backwards no matter which sign was tried, since
+      // it's easy to mix up which way the camera-offset vector actually
+      // points versus which way is "forward" for movement.
+      forward = new THREE.Vector3();
+      camera.getWorldDirection(forward);
+    } else {
+      forward = new THREE.Vector3(Math.sin(player.yaw), 0, Math.cos(player.yaw)).negate();
+    }
     const right = new THREE.Vector3(-forward.z, 0, forward.x);
 
     const moveDir = new THREE.Vector3();
@@ -10082,9 +10540,10 @@
     // stop, but also slow to actually CHANGE direction, the way real ice
     // feels underfoot.
     const groundAccel = (iceAgeActive && player.onGround) ? 16 : 34; // dialed back from 20/42 — that was too fast; this is a more modest bump over the original 14/30, aiming for noticeably-but-not-excessively faster
-    const accel = (grapple.active ? 18 : (player.onGround ? groundAccel : 8)) * sprintMult;
+    const accel = (grapple.active ? 18 : (player.onGround ? groundAccel : (isSwimming ? 22 : 8))) * sprintMult; // swimming gets its own, much higher "air" control than normal falling/jumping — you're actively propelling yourself through water, not just drifting with limited air control
     player.vel.x += moveDir.x * accel * dt;
     player.vel.z += moveDir.z * accel * dt;
+    if (isSwimming) player.vel.y += moveDir.y * accel * dt; // no extra multiplier needed now — moveDir.y already reflects the camera's real vertical look component properly (see the getWorldDirection() change above), whereas the manual formula's weaker output was why this got boosted 1.8x before; that boost made swimming feel too fast once the direction was actually reading correctly
 
     // Storm wind — gusty (varies in strength via two offset sine waves so it
     // never feels like a flat, predictable push, but with a baseline floor
@@ -10103,14 +10562,29 @@
 
     // gravity — World 3 ("Sternenreich") uses much lower gravity, giving
     // higher, slower-falling jumps that suit its wide low-g island spread.
-    // Chaos mode's "gravity" type simply flips the sign, so the player
-    // slowly floats UP instead of falling — swinging is then the only way
-    // to actually pull yourself back down onto a platform.
-    const baseGravity = selectedWorld === 3 ? GRAVITY * 0.45 : GRAVITY;
+    // World 4 ("Ozeanreich") goes even further: near-neutral buoyancy while
+    // actively swimming — holding Space, OR moving with any upward component
+    // to the current look direction (e.g. holding W while looking up) — but
+    // sinks noticeably faster the moment you stop entirely, like actually
+    // letting yourself sink instead of treading water forever. Without the
+    // moveDir.y check, looking up and holding W still got the strong "not
+    // swimming" sink, which fought against and often outweighed the modest
+    // upward thrust from moveDir alone. Chaos mode's "gravity" type simply
+    // flips the sign, so the player slowly floats UP instead of falling —
+    // swinging is then the only way to actually pull yourself back down.
+    const activelySwimmingUp = (keys['Space'] && !emoteActive) || moveDir.y > 0.05;
+    const swimGravityMult = activelySwimmingUp ? 0.12 : 0.28;
+    const baseGravity = selectedWorld === 3 ? GRAVITY * 0.45 : (isSwimming ? GRAVITY * swimGravityMult : GRAVITY);
     player.vel.y += (chaosActive && chaosType === 'gravity' ? -baseGravity : baseGravity) * dt;
 
-    // jump — chaos mode's "bouncy" type triples jump strength
-    if (keys['Space'] && player.onGround && !emoteActive){
+    // jump — chaos mode's "bouncy" type triples jump strength. While
+    // swimming, holding Space is a continuous upward stroke instead of a
+    // single jump impulse (and works whether or not you're touching a
+    // platform), which is what actually makes it feel like swimming rather
+    // than a low-gravity jump.
+    if (isSwimming){
+      if (keys['Space'] && !emoteActive) player.vel.y += 20 * dt;
+    } else if (keys['Space'] && player.onGround && !emoteActive){
       player.vel.y = (chaosActive && chaosType === 'bouncy') ? 24 : 10;
       player.onGround = false;
     }
@@ -10140,9 +10614,13 @@
       // air/ground drag — much less friction while standing on iced ground
       // during the Ice Age event, so momentum actually carries you (sliding)
       // instead of stopping almost immediately like normal footing does.
+      // Swimming uses its own heavier drag on all three axes, since water
+      // resistance slows every direction of movement, not just horizontal.
       const groundDrag = (iceAgeActive && player.onGround) ? 0.985 : 0.86;
-      player.vel.x *= player.onGround ? groundDrag : 0.985;
-      player.vel.z *= player.onGround ? groundDrag : 0.985;
+      const drag = isSwimming ? 0.9 : (player.onGround ? groundDrag : 0.985);
+      player.vel.x *= drag;
+      player.vel.z *= drag;
+      if (isSwimming) player.vel.y *= 0.92; // keeps vertical drift controlled and floaty instead of endlessly speeding up while sinking or holding Space
     }
 
     // integrate position
@@ -10233,7 +10711,24 @@
       diff = ((diff + Math.PI) % (Math.PI * 2)) - Math.PI;
       player.faceYaw += diff * Math.min(1, dt * 10);
     }
-    playerMesh.rotation.y = player.faceYaw;
+    // Swimming pitches the whole character flat/horizontal — like an actual
+    // swimming stroke — instead of staying upright the way walking/falling
+    // does. Only while actually in open water, not while standing on a reef
+    // platform (still stands normally there).
+    // Composed via quaternions (yaw around world-up, then pitch around the
+    // character's own local right-axis) instead of setting rotation.x and
+    // rotation.y directly — combining two Euler angles like that doesn't
+    // actually give "face this direction, tilted forward that much"; it
+    // introduces an unwanted diagonal roll the moment yaw and pitch are both
+    // nonzero at once, which was exactly why swimming looked crooked instead
+    // of straight.
+    const targetSwimPitch = (isSwimming && !player.onGround)
+      ? THREE.MathUtils.clamp(Math.PI / 2 + player.pitch, Math.PI / 2 - 0.9, Math.PI / 2 + 0.9) // base flat-forward pose, tilted further by however much the camera itself is looking up/down — sign matches the movement fix (positive pitch = looking/swimming up)
+      : 0;
+    player.swimPitch = (player.swimPitch || 0) + (targetSwimPitch - (player.swimPitch || 0)) * Math.min(1, dt * 5);
+    _swimYawQuat.setFromAxisAngle(_worldUpAxis, player.faceYaw);
+    _swimPitchQuat.setFromAxisAngle(_localRightAxis, player.swimPitch);
+    playerMesh.quaternion.copy(_swimYawQuat).multiply(_swimPitchQuat);
 
     // ---- procedural animation: hero landing > running gait > swinging pose > airborne ----
     anim.time += dt;
@@ -10312,6 +10807,26 @@
       body.rotation.z *= 0.85;
       torsoGroup.position.y += (0.85 - torsoGroup.position.y) * 0.2;
       if (!player.onGround && !grapple.active) {
+        if (isSwimming) {
+          // swimming stroke: arms sweep through a circular breaststroke
+          // motion, legs flutter-kick roughly twice per arm stroke. No extra
+          // torso pitch here anymore — the whole character is already lying
+          // flat/horizontal via playerMesh.rotation.x above, so this only
+          // needs to move the limbs relative to that now-horizontal body.
+          anim.walkPhase += dt * 4.5; // steady stroke rhythm, independent of speed (unlike the walk cycle)
+          const stroke = Math.sin(anim.walkPhase);
+          const strokeCos = Math.cos(anim.walkPhase);
+          armPivots[0].rotation.x += (-0.9 + stroke * 0.9 - armPivots[0].rotation.x) * 0.3;
+          armPivots[1].rotation.x += (-0.9 - stroke * 0.9 - armPivots[1].rotation.x) * 0.3;
+          armPivots[0].rotation.z += (-0.15 + strokeCos * 0.15 - armPivots[0].rotation.z) * 0.3;
+          armPivots[1].rotation.z += (0.15 - strokeCos * 0.15 - armPivots[1].rotation.z) * 0.3;
+          const kick = Math.sin(anim.walkPhase * 2); // flutter-kicks faster than the arms stroke
+          legPivots[0].rotation.x += (kick * 0.35 - legPivots[0].rotation.x) * 0.3;
+          legPivots[1].rotation.x += (-kick * 0.35 - legPivots[1].rotation.x) * 0.3;
+          torsoGroup.rotation.x *= 0.85; // ease out any leftover pitch from another pose — the body-level pitch above handles the "lying flat" look now
+          torsoGroup.position.y += (0.85 - torsoGroup.position.y) * 0.2;
+          body.rotation.z *= 0.85;
+        } else {
         // dive pose: the faster the fall, the more it stretches into a streamlined dive —
         // arms swept back, legs together and trailing, torso pitched forward, with a
         // subtle bank based on sideways momentum for a more dynamic silhouette
@@ -10333,6 +10848,7 @@
         const localVX = player.vel.x * cosY - player.vel.z * sinY;
         const diveBank = THREE.MathUtils.clamp(localVX * 0.04, -0.5, 0.5) * diveT;
         body.rotation.z += (diveBank - body.rotation.z) * 0.12;
+        }
       } else {
         body.rotation.z *= 0.85;
       }
@@ -10530,7 +11046,7 @@
       const isOnPlatformNow = player.onGround && horizDist < cp.radius + 1.5;
       if (isOnPlatformNow && !cp.wasOnPlatform){
         // rising edge only — landing once, not every frame while standing still
-        const reward = cp.index + 1 + (cp.world === 3 ? 14 : cp.world === 2 ? 6 : 0); // World 1: 1..6, World 2: 7..14, World 3: 15..24
+        const reward = cp.index + 1 + (cp.world === 4 ? 24 : cp.world === 3 ? 14 : cp.world === 2 ? 6 : 0); // World 1: 1..6, World 2: 7..14, World 3: 15..24, World 4: 25..33 — now matches the number actually printed on each ring (see addCheckpointSet)
         if (!cp.passed){
           cp.passed = true;
           // completion glow: rim/base shift to gold, holo-ring brightens
@@ -10557,7 +11073,7 @@
         sfx.trophy();
 
         // send the player straight back to the spawn platform — instant, no effect
-        const hub = selectedWorld === 3 ? islandsW3[0] : selectedWorld === 2 ? islandsW2[0] : islandsW1[0];
+        const hub = selectedWorld === 4 ? islandsW4[0] : selectedWorld === 3 ? islandsW3[0] : selectedWorld === 2 ? islandsW2[0] : islandsW1[0];
         player.pos.set(0, hub.top + player.radius, 0);
         player.vel.set(0, 0, 0);
         player.onGround = true;
@@ -10601,6 +11117,10 @@
     updateGoldenKeycaps(dt);
     updateRainbowKeycaps(dt);
     dust.rotation.y += dt*0.01;
+    updateBubbles(dt);
+    updateWorld4Decor(dt);
+    updateOxygen(dt);
+    updateUnderwaterAudio();
     if (starfield.visible){
       starfield.position.set(player.pos.x, 0, player.pos.z);
       starfield.rotation.y += dt*0.004;
@@ -10625,6 +11145,7 @@
     stopEmote();
     closeEmoteWheel();
     running = true;
+    playerMesh.visible = true; // was hidden behind the start-screen menu background — bring it back now that gameplay is actually starting
     updateTouchControlsVisibility();
     setTimeout(() => {
       document.getElementById('hint').classList.add('faded');
@@ -11257,6 +11778,7 @@
   document.getElementById('worldBtn1').addEventListener('click', () => selectWorld(1));
   document.getElementById('worldBtn2').addEventListener('click', handleWorld2Click);
   document.getElementById('worldBtn3').addEventListener('click', handleWorld3Click);
+  document.getElementById('worldBtn4').addEventListener('click', handleWorld4Click);
   document.getElementById('shopTabCharacter').addEventListener('click', () => {
     document.getElementById('shopTabCharacter').classList.add('active');
     document.getElementById('shopTabVine').classList.remove('active');
