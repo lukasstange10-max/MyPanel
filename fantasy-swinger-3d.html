@@ -11585,8 +11585,18 @@
     document.getElementById('galleryGrid').classList.toggle('hidden', tab !== 'mine');
     document.getElementById('galleryEmptyMsg').style.display = (tab === 'mine' && galleryPhotos.length === 0) ? 'block' : 'none';
     document.getElementById('communityGalleryGrid').classList.toggle('hidden', tab !== 'community');
-    if (tab === 'community') loadCommunityGallery();
-    else stopCommunityGalleryLiveUpdates(); // switching back to "my photos" — no need for a live Firebase listener running in the background while it's not even shown
+    if (tab === 'community'){
+      // Exit select mode when leaving "my photos" — it doesn't apply to the
+      // community tab at all, and leaving it active with a stale selection
+      // in the background was a plausible way for "my photos" to end up
+      // looking wrong (or even get bulk-deleted) once switching back,
+      // depending on what got clicked while it was still silently on.
+      if (gallerySelectMode) setGallerySelectMode(false);
+      loadCommunityGallery();
+    } else {
+      stopCommunityGalleryLiveUpdates(); // switching back to "my photos" — no need for a live Firebase listener running in the background while it's not even shown
+      updateGalleryUI(); // re-render "my photos" fresh from the current galleryPhotos array every time this tab becomes active, rather than trusting whatever was left over in the DOM from before
+    }
   }
   let communityGalleryQuery = null; // the exact query object .on() was attached to — needed to detach it later, since .off() must be called on the same query, not just the base ref
   function loadCommunityGallery(){
