@@ -1367,6 +1367,14 @@
   }
   .communityLikeBtn:active { transform: scale(0.85); }
   .communityLikeBtn.liked { color: #ff6b8a; }
+  .communityDeleteBtn {
+    position: absolute; top: 5px; right: 5px;
+    width: 22px; height: 22px; border-radius: 50%; border: none;
+    background: rgba(0,0,0,0.55); color: #ff9aa2; font-size: 11px;
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+    transition: background 0.15s ease;
+  }
+  .communityDeleteBtn:hover { background: rgba(255,60,80,0.6); color: #fff; }
   #communityGalleryEmptyMsg, #communityGalleryLoadingMsg { margin-top: 20px; font-size: 13px; color: rgba(255,255,255,0.6); }
   #galleryShareBtn { border-color: rgba(122,220,255,0.5) !important; color: #9fe6ff; }
 
@@ -11547,11 +11555,6 @@
   }
 
   // ---------- COMMUNITY GALLERY ----------
-  // Sanitized the same way myNameKey is elsewhere — used both as the "who
-  // shared this" label key and to track which photos THIS player has liked,
-  // without needing a real account/auth system. Reads the active profile
-  // directly (via the globally-scoped ACTIVE_PROFILE_ID) rather than reusing
-  // the try-block-local myProfileMeta, which isn't reachable from here.
   function getMyProfileName(){
     try {
       const profiles = JSON.parse(localStorage.getItem('rankmann_profiles') || '[]');
@@ -11559,8 +11562,19 @@
       return (me && me.name) ? me.name : 'Spieler';
     } catch(e){ return 'Spieler'; }
   }
+  // Used to track "has THIS specific player liked this photo" — this has to
+  // be ACTIVE_PROFILE_ID itself, not a sanitized version of the display
+  // name. Two different real players who happened to pick the same or a
+  // similar name would sanitize down to the exact same key, meaning they'd
+  // share one like between them: one person's like showing as already
+  // liked for the other, and un-liking it for themselves the moment they
+  // tried to like it too. ACTIVE_PROFILE_ID already includes a timestamp
+  // plus random characters and is generated once per profile regardless of
+  // its name, so it can't collide the way a name-derived key can. It's also
+  // already alphanumeric-only (see finalizeProfileCreation), so it's
+  // already safe to use directly as a Firebase path segment.
   function communityUserKey(){
-    return encodeURIComponent(getMyProfileName().trim().toLowerCase()).replace(/[.#$\[\]]/g, '_');
+    return ACTIVE_PROFILE_ID || 'anon';
   }
   let communityGalleryTab = 'mine'; // 'mine' | 'community'
   let communityPhotosCache = []; // [{ id, url, name, time, likes: {key:true} }], newest first
@@ -11651,8 +11665,29 @@
       meta.appendChild(likeBtn);
       card.appendChild(img);
       card.appendChild(meta);
+      // Only shown on photos THIS player shared themselves (older entries
+      // from before ownerId was tracked won't have one — those can't be
+      // attributed to anyone reliably, so no delete option shows for them).
+      if (photo.ownerId && photo.ownerId === myKey){
+        const delBtn = document.createElement('button');
+        delBtn.className = 'communityDeleteBtn';
+        delBtn.title = 'Aus der Community entfernen';
+        delBtn.textContent = '🗑️';
+        delBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          deleteCommunityPhoto(photo.id);
+        });
+        card.appendChild(delBtn);
+      }
       grid.appendChild(card);
     });
+  }
+  function deleteCommunityPhoto(photoId){
+    if (!communityGalleryRef) return;
+    communityGalleryRef.child(photoId).remove().catch(() => {});
+    // no need to touch communityPhotosCache/re-render here — the live
+    // listener (see loadCommunityGallery) will pick the removal up and
+    // refresh the grid on its own once Firebase confirms it
   }
   function toggleCommunityLike(photoId){
     if (!communityGalleryRef) return;
@@ -11692,6 +11727,7 @@
       url: photo.url,
       name: getMyProfileName().slice(0, 24),
       time: Date.now(),
+      ownerId: communityUserKey(), // lets renderCommunityGallery show a delete option only to whoever actually shared this one
     }).then(() => {
       photo.shared = true;
       storageSet('rankmann_galleryPhotos', galleryPhotos);
