@@ -11665,13 +11665,16 @@
       meta.appendChild(likeBtn);
       card.appendChild(img);
       card.appendChild(meta);
-      // Only shown on photos THIS player shared themselves (older entries
-      // from before ownerId was tracked won't have one — those can't be
-      // attributed to anyone reliably, so no delete option shows for them).
-      if (photo.ownerId && photo.ownerId === myKey){
+      // Shown on photos THIS player shared themselves, OR for admins on any
+      // photo — older entries from before ownerId was tracked don't have
+      // one, so a regular player can never prove/be shown as the owner of
+      // those; letting admins delete any of them is the only way those can
+      // get cleaned up at all.
+      const canDelete = (photo.ownerId && photo.ownerId === myKey) || isAdminUser;
+      if (canDelete){
         const delBtn = document.createElement('button');
         delBtn.className = 'communityDeleteBtn';
-        delBtn.title = 'Aus der Community entfernen';
+        delBtn.title = isAdminUser && photo.ownerId !== myKey ? 'Als Admin entfernen' : 'Aus der Community entfernen';
         delBtn.textContent = '🗑️';
         delBtn.addEventListener('click', (e) => {
           e.stopPropagation();
