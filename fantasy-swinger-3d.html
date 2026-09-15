@@ -1375,6 +1375,14 @@
     transition: background 0.15s ease;
   }
   .communityDeleteBtn:hover { background: rgba(255,60,80,0.6); color: #fff; }
+  .communitySaveBtn {
+    position: absolute; top: 5px; left: 5px;
+    width: 22px; height: 22px; border-radius: 50%; border: none;
+    background: rgba(0,0,0,0.55); color: #9fe6ff; font-size: 11px;
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+    transition: background 0.15s ease;
+  }
+  .communitySaveBtn:hover { background: rgba(80,180,255,0.6); color: #fff; }
   #communityGalleryEmptyMsg, #communityGalleryLoadingMsg { margin-top: 20px; font-size: 13px; color: rgba(255,255,255,0.6); }
   #galleryShareBtn { border-color: rgba(122,220,255,0.5) !important; color: #9fe6ff; }
 
@@ -11675,6 +11683,30 @@
       meta.appendChild(likeBtn);
       card.appendChild(img);
       card.appendChild(meta);
+      // A way to pull one of YOUR OWN shared photos back into your local
+      // "my photos" gallery — useful if it's somehow missing from there
+      // locally (e.g. after the browser/device cleared site storage) even
+      // though the shared copy up on the server is still fine.
+      if (photo.ownerId && photo.ownerId === myKey){
+        const saveBtn = document.createElement('button');
+        saveBtn.className = 'communitySaveBtn';
+        saveBtn.title = 'In meine Galerie speichern';
+        saveBtn.textContent = '💾';
+        saveBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          galleryPhotos.unshift({ url: photo.url, time: photo.time || Date.now(), shared: true });
+          const saved = storageSet('rankmann_galleryPhotos', galleryPhotos);
+          if (saved){
+            saveBtn.textContent = '✅';
+            setTimeout(() => { saveBtn.textContent = '💾'; }, 1500);
+          } else {
+            saveBtn.textContent = '⚠️';
+            saveBtn.title = 'Speichern fehlgeschlagen — evtl. zu wenig Speicherplatz im Browser';
+            setTimeout(() => { saveBtn.textContent = '💾'; }, 2500);
+          }
+        });
+        card.appendChild(saveBtn);
+      }
       // Shown on photos THIS player shared themselves, OR for admins on any
       // photo — older entries from before ownerId was tracked don't have
       // one, so a regular player can never prove/be shown as the owner of
