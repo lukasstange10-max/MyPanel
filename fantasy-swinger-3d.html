@@ -11678,19 +11678,38 @@
         delBtn.textContent = '🗑️';
         delBtn.addEventListener('click', (e) => {
           e.stopPropagation();
-          deleteCommunityPhoto(photo.id);
+          delBtn.disabled = true;
+          delBtn.textContent = '⏳';
+          deleteCommunityPhoto(photo.id, (ok) => {
+            if (!ok){
+              // Visible failure feedback — silently doing nothing on a
+              // permission error (as this used to) made it look like the
+              // button just wasn't working at all, with no way to tell why.
+              delBtn.disabled = false;
+              delBtn.textContent = '⚠️';
+              delBtn.title = 'Löschen fehlgeschlagen — evtl. fehlende Berechtigung';
+              setTimeout(() => { delBtn.textContent = '🗑️'; }, 2500);
+            }
+            // on success: no need to reset the button — the live listener
+            // will re-render the whole grid without this card in it at all
+          });
         });
         card.appendChild(delBtn);
       }
       grid.appendChild(card);
     });
   }
-  function deleteCommunityPhoto(photoId){
-    if (!communityGalleryRef) return;
-    communityGalleryRef.child(photoId).remove().catch(() => {});
-    // no need to touch communityPhotosCache/re-render here — the live
-    // listener (see loadCommunityGallery) will pick the removal up and
-    // refresh the grid on its own once Firebase confirms it
+  function deleteCommunityPhoto(photoId, callback){
+    if (!communityGalleryRef){ if (callback) callback(false); return; }
+    communityGalleryRef.child(photoId).remove().then(() => {
+      if (callback) callback(true);
+    }).catch((err) => {
+      console.error('Community photo delete failed:', err);
+      if (callback) callback(false);
+    });
+    // On success there's no need to touch communityPhotosCache/re-render
+    // here ourselves — the live listener (see loadCommunityGallery) picks
+    // the removal up from Firebase and refreshes the grid on its own.
   }
   function toggleCommunityLike(photoId){
     if (!communityGalleryRef) return;
