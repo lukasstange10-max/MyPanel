@@ -11522,6 +11522,7 @@
   }
   function closeGallery(){
     document.getElementById('galleryScreen').classList.add('hidden');
+    stopCommunityGalleryLiveUpdates(); // no point keeping a live Firebase listener running while the whole screen is closed
     updateTouchControlsVisibility();
   }
   let galleryViewerIndex = -1;
@@ -11530,6 +11531,14 @@
     document.getElementById('galleryViewerImg').src = galleryPhotos[i].url;
     document.getElementById('galleryViewer').classList.remove('hidden');
     document.getElementById('galleryMobileHint').classList.toggle('show', isTouchDevice);
+    const shareBtn = document.getElementById('galleryShareBtn');
+    if (galleryPhotos[i].shared){
+      shareBtn.disabled = true;
+      shareBtn.textContent = '✅ Bereits geteilt';
+    } else {
+      shareBtn.disabled = false;
+      shareBtn.textContent = '🌍 Mit Community teilen';
+    }
     updateGalleryNavButtons();
   }
   function closeGalleryViewer(){
@@ -11563,7 +11572,9 @@
     document.getElementById('galleryEmptyMsg').style.display = (tab === 'mine' && galleryPhotos.length === 0) ? 'block' : 'none';
     document.getElementById('communityGalleryGrid').classList.toggle('hidden', tab !== 'community');
     if (tab === 'community') loadCommunityGallery();
+    else stopCommunityGalleryLiveUpdates(); // switching back to "my photos" — no need for a live Firebase listener running in the background while it's not even shown
   }
+  let communityGalleryQuery = null; // the exact query object .on() was attached to — needed to detach it later, since .off() must be called on the same query, not just the base ref
   function loadCommunityGallery(){
     const grid = document.getElementById('communityGalleryGrid');
     const emptyMsg = document.getElementById('communityGalleryEmptyMsg');
@@ -11577,18 +11588,35 @@
     emptyMsg.classList.add('hidden');
     loadingMsg.classList.remove('hidden');
     grid.innerHTML = '';
-    communityGalleryRef.orderByChild('time').limitToLast(40).once('value').then(snapshot => {
+    stopCommunityGalleryLiveUpdates(); // in case the tab was somehow opened twice without closing first
+    communityGalleryQuery = communityGalleryRef.orderByChild('time').limitToLast(40);
+    // A LIVE listener rather than a one-off fetch — this is specifically
+    // what makes new likes (from anyone, on any photo, including your own)
+    // show up automatically while the tab is open, instead of only ever
+    // reflecting a single snapshot from the moment you opened it. Someone
+    // who shared a photo couldn't see its like count changing at all before.
+    let firstLoad = true;
+    communityGalleryQuery.on('value', snapshot => {
       const data = snapshot.val() || {};
       communityPhotosCache = Object.keys(data)
         .map(id => Object.assign({ id }, data[id]))
         .sort((a, b) => b.time - a.time); // newest first
       loadingMsg.classList.add('hidden');
       renderCommunityGallery();
-    }).catch(() => {
-      loadingMsg.classList.add('hidden');
-      emptyMsg.classList.remove('hidden');
-      emptyMsg.textContent = 'Konnte Community-Galerie nicht laden — später nochmal versuchen.';
+      firstLoad = false;
+    }, () => {
+      if (firstLoad){
+        loadingMsg.classList.add('hidden');
+        emptyMsg.classList.remove('hidden');
+        emptyMsg.textContent = 'Konnte Community-Galerie nicht laden — später nochmal versuchen.';
+      }
     });
+  }
+  function stopCommunityGalleryLiveUpdates(){
+    if (communityGalleryQuery){
+      communityGalleryQuery.off();
+      communityGalleryQuery = null;
+    }
   }
   function renderCommunityGallery(){
     const grid = document.getElementById('communityGalleryGrid');
@@ -11643,12 +11671,21 @@
   function shareCurrentPhotoToCommunity(){
     if (galleryViewerIndex < 0 || !galleryPhotos[galleryViewerIndex]) return;
     const shareBtn = document.getElementById('galleryShareBtn');
-    if (!communityGalleryRef){
-      shareBtn.textContent = '🌍 Gerade nicht erreichbar';
-      setTimeout(() => { shareBtn.textContent = '🌍 Mit Community teilen'; }, 2200);
+    const photo = galleryPhotos[galleryViewerIndex];
+    if (photo.shared){
+      // Already shared — the button reverting to a plain clickable "share"
+      // state a couple seconds after a successful share (rather than
+      // staying marked) was exactly what let the same photo (or, if you'd
+      // browsed to a different one in the meantime, a DIFFERENT photo) get
+      // shared again without really meaning to. Once shared, it stays
+      // shared — no accidental re-shares possible from here anymore.
       return;
     }
-    const photo = galleryPhotos[galleryViewerIndex];
+    if (!communityGalleryRef){
+      shareBtn.textContent = '🌍 Gerade nicht erreichbar';
+      setTimeout(() => { if (!photo.shared) shareBtn.textContent = '🌍 Mit Community teilen'; }, 2200);
+      return;
+    }
     shareBtn.disabled = true;
     shareBtn.textContent = '🌍 Wird geteilt…';
     communityGalleryRef.push({
@@ -11656,12 +11693,21 @@
       name: getMyProfileName().slice(0, 24),
       time: Date.now(),
     }).then(() => {
-      shareBtn.textContent = '✅ Geteilt!';
-      setTimeout(() => { shareBtn.disabled = false; shareBtn.textContent = '🌍 Mit Community teilen'; }, 2000);
+      photo.shared = true;
+      storageSet('rankmann_galleryPhotos', galleryPhotos);
+      // Only update the button if still looking at THIS same photo — the
+      // player may well have already clicked next/prev while this was in
+      // flight, and this shouldn't reach into whatever photo they're on now.
+      if (galleryPhotos[galleryViewerIndex] === photo){
+        shareBtn.textContent = '✅ Bereits geteilt';
+        shareBtn.disabled = true;
+      }
     }).catch(() => {
-      shareBtn.disabled = false;
-      shareBtn.textContent = '⚠️ Teilen fehlgeschlagen';
-      setTimeout(() => { shareBtn.textContent = '🌍 Mit Community teilen'; }, 2200);
+      if (galleryPhotos[galleryViewerIndex] === photo){
+        shareBtn.disabled = false;
+        shareBtn.textContent = '⚠️ Teilen fehlgeschlagen';
+        setTimeout(() => { if (!photo.shared && galleryPhotos[galleryViewerIndex] === photo) shareBtn.textContent = '🌍 Mit Community teilen'; }, 2200);
+      }
     });
   }
 
@@ -11673,6 +11719,14 @@
     if (i < 0 || i >= galleryPhotos.length) return;
     galleryViewerIndex = i;
     document.getElementById('galleryViewerImg').src = galleryPhotos[i].url;
+    const shareBtn = document.getElementById('galleryShareBtn');
+    if (galleryPhotos[i].shared){
+      shareBtn.disabled = true;
+      shareBtn.textContent = '✅ Bereits geteilt';
+    } else {
+      shareBtn.disabled = false;
+      shareBtn.textContent = '🌍 Mit Community teilen';
+    }
     updateGalleryNavButtons();
   }
   function deleteCurrentGalleryPhoto(){
