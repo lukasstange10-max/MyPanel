@@ -1328,64 +1328,6 @@
   .galleryThumbWrap.selected .galleryThumbCheck { background: #2fbf8a; border-color: #7affc4; }
   #galleryEmptyMsg { display: none; margin-top: 20px; font-size: 13px; color: rgba(255,255,255,0.6); }
 
-  #galleryTabs {
-    display: flex; gap: 8px; margin: 14px 0 4px; justify-content: center;
-  }
-  .galleryTabBtn {
-    padding: 8px 18px; font-size: 13px; font-weight: 800;
-    background: rgba(255,255,255,0.06); border: 1px solid rgba(180,140,255,0.3);
-    border-radius: 999px; color: rgba(255,255,255,0.75); cursor: pointer;
-    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
-  }
-  .galleryTabBtn:hover { background: rgba(255,255,255,0.12); }
-  .galleryTabBtn.active {
-    background: linear-gradient(135deg, rgba(122,255,196,0.35), rgba(80,180,255,0.35));
-    border-color: rgba(122,255,196,0.7); color: #fff;
-  }
-
-  #communityGalleryGrid {
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
-    margin-top: 16px;
-  }
-  #communityGalleryGrid.hidden, #communityGalleryEmptyMsg.hidden, #communityGalleryLoadingMsg.hidden { display: none; }
-  .communityPhotoCard { position: relative; border-radius: 10px; overflow: hidden; }
-  .communityPhotoImg {
-    aspect-ratio: 1; width: 100%; object-fit: cover; display: block;
-    border: 1px solid rgba(180,140,255,0.3);
-  }
-  .communityPhotoMeta {
-    position: absolute; left: 0; right: 0; bottom: 0;
-    padding: 5px 7px; font-size: 10.5px; color: #fff;
-    background: linear-gradient(0deg, rgba(0,0,0,0.75), transparent);
-    display: flex; align-items: center; justify-content: space-between; gap: 4px;
-  }
-  .communityPhotoName { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 62%; }
-  .communityLikeBtn {
-    background: none; border: none; color: #fff; font-size: 11px; cursor: pointer;
-    display: flex; align-items: center; gap: 3px; padding: 2px 4px; border-radius: 8px;
-    transition: transform 0.1s ease;
-  }
-  .communityLikeBtn:active { transform: scale(0.85); }
-  .communityLikeBtn.liked { color: #ff6b8a; }
-  .communityDeleteBtn {
-    position: absolute; top: 5px; right: 5px;
-    width: 22px; height: 22px; border-radius: 50%; border: none;
-    background: rgba(0,0,0,0.55); color: #ff9aa2; font-size: 11px;
-    display: flex; align-items: center; justify-content: center; cursor: pointer;
-    transition: background 0.15s ease;
-  }
-  .communityDeleteBtn:hover { background: rgba(255,60,80,0.6); color: #fff; }
-  .communitySaveBtn {
-    position: absolute; top: 5px; left: 5px;
-    width: 22px; height: 22px; border-radius: 50%; border: none;
-    background: rgba(0,0,0,0.55); color: #9fe6ff; font-size: 11px;
-    display: flex; align-items: center; justify-content: center; cursor: pointer;
-    transition: background 0.15s ease;
-  }
-  .communitySaveBtn:hover { background: rgba(80,180,255,0.6); color: #fff; }
-  #communityGalleryEmptyMsg, #communityGalleryLoadingMsg { margin-top: 20px; font-size: 13px; color: rgba(255,255,255,0.6); }
-  #galleryShareBtn { border-color: rgba(122,220,255,0.5) !important; color: #9fe6ff; }
-
   #statsScreen {
     position: fixed; inset: 0; z-index: 250;
     background: rgba(6,3,14,0.5);
@@ -3143,10 +3085,6 @@
         <h1 style="font-size:32px;" data-i18n="galleryTitle">🖼️ Galerie</h1>
       </div>
       <p class="heroTagline" data-i18n="gallerySub">Deine gemachten Fotos aus dem Foto-Modus</p>
-      <div id="galleryTabs">
-        <button class="galleryTabBtn active" id="galleryTabMine">📷 Meine Fotos</button>
-        <button class="galleryTabBtn" id="galleryTabCommunity">🌍 Community</button>
-      </div>
       <div id="gallerySelectBar" class="hidden">
         <span id="gallerySelectCount">0 <span data-i18n="gallerySelectedWord">ausgewählt</span></span>
         <div id="gallerySelectActions">
@@ -3157,9 +3095,6 @@
       </div>
       <div id="galleryGrid"></div>
       <p id="galleryEmptyMsg" data-i18n="galleryEmptyMsg">Noch keine Fotos — geh in den Foto-Modus (Pause-Menü) und mach welche!</p>
-      <div id="communityGalleryGrid" class="hidden"></div>
-      <p id="communityGalleryEmptyMsg" class="hidden">Noch keine geteilten Fotos — sei die/der Erste! Öffne ein eigenes Foto und tippe auf "Mit Community teilen".</p>
-      <p id="communityGalleryLoadingMsg" class="hidden">Lade geteilte Fotos…</p>
       <button id="galleryCloseBtn" class="menuBtn" style="margin-top:20px;" data-i18n="closeBtn3">Schließen</button>
     </div>
   </div>
@@ -3413,7 +3348,6 @@
   <button id="galleryPrevBtn" class="galleryNavBtn">‹</button>
   <button id="galleryNextBtn" class="galleryNavBtn galleryNavBtnRight">›</button>
   <div id="galleryViewerBar">
-    <button id="galleryShareBtn">🌍 Mit Community teilen</button>
     <button id="galleryDownloadBtn">⬇️ Herunterladen</button>
     <button id="galleryDeleteBtn">🗑️ Löschen</button>
     <button id="galleryViewerCloseBtn">✕ Schließen</button>
@@ -3602,11 +3536,9 @@
   let lastHandledGoldenKeycapsBroadcast = 0; // same one-time-action pattern as the ring above
   let lastHandledRainbowKeycapsBroadcast = 0;
   let bossEventRef = null;
-  let communityGalleryRef = null;
   try {
     firebase.initializeApp({ databaseURL: FIREBASE_DB_URL });
     globalEventRef = firebase.database().ref('globalEvent');
-    communityGalleryRef = firebase.database().ref('communityGallery'); // shared photo feed — fetched on demand (see loadCommunityGallery), not with a continuous listener like the others, since it's just browsed when the tab is opened rather than needing instant live updates
     globalEventRef.on('value', snapshot => {
       const data = snapshot.val();
       const expiresAt = data && data.expiresAt ? data.expiresAt : null;
@@ -11532,13 +11464,11 @@
   }
   function openGallery(){
     setGallerySelectMode(false);
-    setGalleryTab('mine'); // always opens back on "my photos" — community can get big, no need to refetch it just from opening the screen
     document.getElementById('galleryScreen').classList.remove('hidden');
     updateTouchControlsVisibility();
   }
   function closeGallery(){
     document.getElementById('galleryScreen').classList.add('hidden');
-    stopCommunityGalleryLiveUpdates(); // no point keeping a live Firebase listener running while the whole screen is closed
     updateTouchControlsVisibility();
   }
   let galleryViewerIndex = -1;
@@ -11547,268 +11477,11 @@
     document.getElementById('galleryViewerImg').src = galleryPhotos[i].url;
     document.getElementById('galleryViewer').classList.remove('hidden');
     document.getElementById('galleryMobileHint').classList.toggle('show', isTouchDevice);
-    const shareBtn = document.getElementById('galleryShareBtn');
-    if (galleryPhotos[i].shared){
-      shareBtn.disabled = true;
-      shareBtn.textContent = '✅ Bereits geteilt';
-    } else {
-      shareBtn.disabled = false;
-      shareBtn.textContent = '🌍 Mit Community teilen';
-    }
     updateGalleryNavButtons();
   }
   function closeGalleryViewer(){
     document.getElementById('galleryViewer').classList.add('hidden');
     galleryViewerIndex = -1;
-  }
-
-  // ---------- COMMUNITY GALLERY ----------
-  function getMyProfileName(){
-    try {
-      const profiles = JSON.parse(localStorage.getItem('rankmann_profiles') || '[]');
-      const me = profiles.find(p => p.id === ACTIVE_PROFILE_ID);
-      return (me && me.name) ? me.name : 'Spieler';
-    } catch(e){ return 'Spieler'; }
-  }
-  // Used to track "has THIS specific player liked this photo" — this has to
-  // be ACTIVE_PROFILE_ID itself, not a sanitized version of the display
-  // name. Two different real players who happened to pick the same or a
-  // similar name would sanitize down to the exact same key, meaning they'd
-  // share one like between them: one person's like showing as already
-  // liked for the other, and un-liking it for themselves the moment they
-  // tried to like it too. ACTIVE_PROFILE_ID already includes a timestamp
-  // plus random characters and is generated once per profile regardless of
-  // its name, so it can't collide the way a name-derived key can. It's also
-  // already alphanumeric-only (see finalizeProfileCreation), so it's
-  // already safe to use directly as a Firebase path segment.
-  function communityUserKey(){
-    return ACTIVE_PROFILE_ID || 'anon';
-  }
-  let communityGalleryTab = 'mine'; // 'mine' | 'community'
-  let communityPhotosCache = []; // [{ id, url, name, time, likes: {key:true} }], newest first
-  function setGalleryTab(tab){
-    communityGalleryTab = tab;
-    document.getElementById('galleryTabMine').classList.toggle('active', tab === 'mine');
-    document.getElementById('galleryTabCommunity').classList.toggle('active', tab === 'community');
-    document.getElementById('galleryGrid').classList.toggle('hidden', tab !== 'mine');
-    document.getElementById('galleryEmptyMsg').style.display = (tab === 'mine' && galleryPhotos.length === 0) ? 'block' : 'none';
-    document.getElementById('communityGalleryGrid').classList.toggle('hidden', tab !== 'community');
-    if (tab === 'community'){
-      // Exit select mode when leaving "my photos" — it doesn't apply to the
-      // community tab at all, and leaving it active with a stale selection
-      // in the background was a plausible way for "my photos" to end up
-      // looking wrong (or even get bulk-deleted) once switching back,
-      // depending on what got clicked while it was still silently on.
-      if (gallerySelectMode) setGallerySelectMode(false);
-      loadCommunityGallery();
-    } else {
-      stopCommunityGalleryLiveUpdates(); // switching back to "my photos" — no need for a live Firebase listener running in the background while it's not even shown
-      updateGalleryUI(); // re-render "my photos" fresh from the current galleryPhotos array every time this tab becomes active, rather than trusting whatever was left over in the DOM from before
-    }
-  }
-  let communityGalleryQuery = null; // the exact query object .on() was attached to — needed to detach it later, since .off() must be called on the same query, not just the base ref
-  function loadCommunityGallery(){
-    const grid = document.getElementById('communityGalleryGrid');
-    const emptyMsg = document.getElementById('communityGalleryEmptyMsg');
-    const loadingMsg = document.getElementById('communityGalleryLoadingMsg');
-    if (!communityGalleryRef){
-      loadingMsg.classList.add('hidden');
-      emptyMsg.classList.remove('hidden');
-      emptyMsg.textContent = 'Community-Galerie gerade nicht erreichbar — später nochmal versuchen.';
-      return;
-    }
-    emptyMsg.classList.add('hidden');
-    loadingMsg.classList.remove('hidden');
-    grid.innerHTML = '';
-    stopCommunityGalleryLiveUpdates(); // in case the tab was somehow opened twice without closing first
-    communityGalleryQuery = communityGalleryRef.orderByChild('time').limitToLast(40);
-    // A LIVE listener rather than a one-off fetch — this is specifically
-    // what makes new likes (from anyone, on any photo, including your own)
-    // show up automatically while the tab is open, instead of only ever
-    // reflecting a single snapshot from the moment you opened it. Someone
-    // who shared a photo couldn't see its like count changing at all before.
-    let firstLoad = true;
-    communityGalleryQuery.on('value', snapshot => {
-      const data = snapshot.val() || {};
-      communityPhotosCache = Object.keys(data)
-        .map(id => Object.assign({ id }, data[id]))
-        .sort((a, b) => b.time - a.time); // newest first
-      loadingMsg.classList.add('hidden');
-      renderCommunityGallery();
-      firstLoad = false;
-    }, () => {
-      if (firstLoad){
-        loadingMsg.classList.add('hidden');
-        emptyMsg.classList.remove('hidden');
-        emptyMsg.textContent = 'Konnte Community-Galerie nicht laden — später nochmal versuchen.';
-      }
-    });
-  }
-  function stopCommunityGalleryLiveUpdates(){
-    if (communityGalleryQuery){
-      communityGalleryQuery.off();
-      communityGalleryQuery = null;
-    }
-  }
-  function renderCommunityGallery(){
-    const grid = document.getElementById('communityGalleryGrid');
-    const emptyMsg = document.getElementById('communityGalleryEmptyMsg');
-    grid.innerHTML = '';
-    if (communityPhotosCache.length === 0){
-      emptyMsg.classList.remove('hidden');
-      emptyMsg.textContent = 'Noch keine geteilten Fotos — sei die/der Erste! Öffne ein eigenes Foto und tippe auf "Mit Community teilen".';
-      return;
-    }
-    emptyMsg.classList.add('hidden');
-    const myKey = communityUserKey();
-    communityPhotosCache.forEach(photo => {
-      const card = document.createElement('div');
-      card.className = 'communityPhotoCard';
-      const img = document.createElement('img');
-      img.className = 'communityPhotoImg';
-      img.src = photo.url;
-      img.loading = 'lazy';
-      const meta = document.createElement('div');
-      meta.className = 'communityPhotoMeta';
-      const name = document.createElement('span');
-      name.className = 'communityPhotoName';
-      name.textContent = photo.name || 'Spieler';
-      const likeBtn = document.createElement('button');
-      const likeCount = photo.likes ? Object.keys(photo.likes).length : 0;
-      const iLiked = !!(photo.likes && photo.likes[myKey]);
-      likeBtn.className = 'communityLikeBtn' + (iLiked ? ' liked' : '');
-      likeBtn.textContent = (iLiked ? '❤️' : '🤍') + ' ' + likeCount;
-      likeBtn.addEventListener('click', () => toggleCommunityLike(photo.id));
-      meta.appendChild(name);
-      meta.appendChild(likeBtn);
-      card.appendChild(img);
-      card.appendChild(meta);
-      // A way to pull one of YOUR OWN shared photos back into your local
-      // "my photos" gallery — useful if it's somehow missing from there
-      // locally (e.g. after the browser/device cleared site storage) even
-      // though the shared copy up on the server is still fine.
-      if (photo.ownerId && photo.ownerId === myKey){
-        const saveBtn = document.createElement('button');
-        saveBtn.className = 'communitySaveBtn';
-        saveBtn.title = 'In meine Galerie speichern';
-        saveBtn.textContent = '💾';
-        saveBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          galleryPhotos.unshift({ url: photo.url, time: photo.time || Date.now(), shared: true });
-          const saved = storageSet('rankmann_galleryPhotos', galleryPhotos);
-          if (saved){
-            saveBtn.textContent = '✅';
-            setTimeout(() => { saveBtn.textContent = '💾'; }, 1500);
-          } else {
-            saveBtn.textContent = '⚠️';
-            saveBtn.title = 'Speichern fehlgeschlagen — evtl. zu wenig Speicherplatz im Browser';
-            setTimeout(() => { saveBtn.textContent = '💾'; }, 2500);
-          }
-        });
-        card.appendChild(saveBtn);
-      }
-      // Shown on photos THIS player shared themselves, OR for admins on any
-      // photo — older entries from before ownerId was tracked don't have
-      // one, so a regular player can never prove/be shown as the owner of
-      // those; letting admins delete any of them is the only way those can
-      // get cleaned up at all.
-      const canDelete = (photo.ownerId && photo.ownerId === myKey) || isAdminUser;
-      if (canDelete){
-        const delBtn = document.createElement('button');
-        delBtn.className = 'communityDeleteBtn';
-        delBtn.title = isAdminUser && photo.ownerId !== myKey ? 'Als Admin entfernen' : 'Aus der Community entfernen';
-        delBtn.textContent = '🗑️';
-        delBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          delBtn.disabled = true;
-          delBtn.textContent = '⏳';
-          deleteCommunityPhoto(photo.id, (ok) => {
-            if (!ok){
-              // Visible failure feedback — silently doing nothing on a
-              // permission error (as this used to) made it look like the
-              // button just wasn't working at all, with no way to tell why.
-              delBtn.disabled = false;
-              delBtn.textContent = '⚠️';
-              delBtn.title = 'Löschen fehlgeschlagen — evtl. fehlende Berechtigung';
-              setTimeout(() => { delBtn.textContent = '🗑️'; }, 2500);
-            }
-            // on success: no need to reset the button — the live listener
-            // will re-render the whole grid without this card in it at all
-          });
-        });
-        card.appendChild(delBtn);
-      }
-      grid.appendChild(card);
-    });
-  }
-  function deleteCommunityPhoto(photoId, callback){
-    if (!communityGalleryRef){ if (callback) callback(false); return; }
-    communityGalleryRef.child(photoId).remove().then(() => {
-      if (callback) callback(true);
-    }).catch((err) => {
-      console.error('Community photo delete failed:', err);
-      if (callback) callback(false);
-    });
-    // On success there's no need to touch communityPhotosCache/re-render
-    // here ourselves — the live listener (see loadCommunityGallery) picks
-    // the removal up from Firebase and refreshes the grid on its own.
-  }
-  function toggleCommunityLike(photoId){
-    if (!communityGalleryRef) return;
-    const photo = communityPhotosCache.find(p => p.id === photoId);
-    if (!photo) return;
-    const myKey = communityUserKey();
-    const likeRef = communityGalleryRef.child(photoId).child('likes').child(myKey);
-    const currentlyLiked = !!(photo.likes && photo.likes[myKey]);
-    // update local cache + UI immediately, don't wait on the round-trip
-    if (!photo.likes) photo.likes = {};
-    if (currentlyLiked) delete photo.likes[myKey]; else photo.likes[myKey] = true;
-    renderCommunityGallery();
-    if (currentlyLiked) likeRef.remove().catch(() => {});
-    else likeRef.set(true).catch(() => {});
-  }
-  function shareCurrentPhotoToCommunity(){
-    if (galleryViewerIndex < 0 || !galleryPhotos[galleryViewerIndex]) return;
-    const shareBtn = document.getElementById('galleryShareBtn');
-    const photo = galleryPhotos[galleryViewerIndex];
-    if (photo.shared){
-      // Already shared — the button reverting to a plain clickable "share"
-      // state a couple seconds after a successful share (rather than
-      // staying marked) was exactly what let the same photo (or, if you'd
-      // browsed to a different one in the meantime, a DIFFERENT photo) get
-      // shared again without really meaning to. Once shared, it stays
-      // shared — no accidental re-shares possible from here anymore.
-      return;
-    }
-    if (!communityGalleryRef){
-      shareBtn.textContent = '🌍 Gerade nicht erreichbar';
-      setTimeout(() => { if (!photo.shared) shareBtn.textContent = '🌍 Mit Community teilen'; }, 2200);
-      return;
-    }
-    shareBtn.disabled = true;
-    shareBtn.textContent = '🌍 Wird geteilt…';
-    communityGalleryRef.push({
-      url: photo.url,
-      name: getMyProfileName().slice(0, 24),
-      time: Date.now(),
-      ownerId: communityUserKey(), // lets renderCommunityGallery show a delete option only to whoever actually shared this one
-    }).then(() => {
-      photo.shared = true;
-      storageSet('rankmann_galleryPhotos', galleryPhotos);
-      // Only update the button if still looking at THIS same photo — the
-      // player may well have already clicked next/prev while this was in
-      // flight, and this shouldn't reach into whatever photo they're on now.
-      if (galleryPhotos[galleryViewerIndex] === photo){
-        shareBtn.textContent = '✅ Bereits geteilt';
-        shareBtn.disabled = true;
-      }
-    }).catch(() => {
-      if (galleryPhotos[galleryViewerIndex] === photo){
-        shareBtn.disabled = false;
-        shareBtn.textContent = '⚠️ Teilen fehlgeschlagen';
-        setTimeout(() => { if (!photo.shared && galleryPhotos[galleryViewerIndex] === photo) shareBtn.textContent = '🌍 Mit Community teilen'; }, 2200);
-      }
-    });
   }
 
   function updateGalleryNavButtons(){
@@ -11819,14 +11492,6 @@
     if (i < 0 || i >= galleryPhotos.length) return;
     galleryViewerIndex = i;
     document.getElementById('galleryViewerImg').src = galleryPhotos[i].url;
-    const shareBtn = document.getElementById('galleryShareBtn');
-    if (galleryPhotos[i].shared){
-      shareBtn.disabled = true;
-      shareBtn.textContent = '✅ Bereits geteilt';
-    } else {
-      shareBtn.disabled = false;
-      shareBtn.textContent = '🌍 Mit Community teilen';
-    }
     updateGalleryNavButtons();
   }
   function deleteCurrentGalleryPhoto(){
@@ -12148,9 +11813,6 @@
   document.getElementById('galleryViewerCloseBtn').addEventListener('click', closeGalleryViewer);
   document.getElementById('galleryDeleteBtn').addEventListener('click', deleteCurrentGalleryPhoto);
   document.getElementById('galleryDownloadBtn').addEventListener('click', downloadCurrentGalleryPhoto);
-  document.getElementById('galleryShareBtn').addEventListener('click', shareCurrentPhotoToCommunity);
-  document.getElementById('galleryTabMine').addEventListener('click', () => setGalleryTab('mine'));
-  document.getElementById('galleryTabCommunity').addEventListener('click', () => setGalleryTab('community'));
   document.getElementById('gallerySelectBtn').addEventListener('click', () => setGallerySelectMode(!gallerySelectMode));
   document.getElementById('gallerySelectCancelBtn').addEventListener('click', () => setGallerySelectMode(false));
   document.getElementById('gallerySelectDeleteBtn').addEventListener('click', deleteSelectedGalleryPhotos);
