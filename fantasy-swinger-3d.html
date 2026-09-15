@@ -1328,6 +1328,48 @@
   .galleryThumbWrap.selected .galleryThumbCheck { background: #2fbf8a; border-color: #7affc4; }
   #galleryEmptyMsg { display: none; margin-top: 20px; font-size: 13px; color: rgba(255,255,255,0.6); }
 
+  #galleryTabs {
+    display: flex; gap: 8px; margin: 14px 0 4px; justify-content: center;
+  }
+  .galleryTabBtn {
+    padding: 8px 18px; font-size: 13px; font-weight: 800;
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(180,140,255,0.3);
+    border-radius: 999px; color: rgba(255,255,255,0.75); cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  }
+  .galleryTabBtn:hover { background: rgba(255,255,255,0.12); }
+  .galleryTabBtn.active {
+    background: linear-gradient(135deg, rgba(122,255,196,0.35), rgba(80,180,255,0.35));
+    border-color: rgba(122,255,196,0.7); color: #fff;
+  }
+
+  #communityGalleryGrid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+    margin-top: 16px;
+  }
+  #communityGalleryGrid.hidden, #communityGalleryEmptyMsg.hidden, #communityGalleryLoadingMsg.hidden { display: none; }
+  .communityPhotoCard { position: relative; border-radius: 10px; overflow: hidden; }
+  .communityPhotoImg {
+    aspect-ratio: 1; width: 100%; object-fit: cover; display: block;
+    border: 1px solid rgba(180,140,255,0.3);
+  }
+  .communityPhotoMeta {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    padding: 5px 7px; font-size: 10.5px; color: #fff;
+    background: linear-gradient(0deg, rgba(0,0,0,0.75), transparent);
+    display: flex; align-items: center; justify-content: space-between; gap: 4px;
+  }
+  .communityPhotoName { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 62%; }
+  .communityLikeBtn {
+    background: none; border: none; color: #fff; font-size: 11px; cursor: pointer;
+    display: flex; align-items: center; gap: 3px; padding: 2px 4px; border-radius: 8px;
+    transition: transform 0.1s ease;
+  }
+  .communityLikeBtn:active { transform: scale(0.85); }
+  .communityLikeBtn.liked { color: #ff6b8a; }
+  #communityGalleryEmptyMsg, #communityGalleryLoadingMsg { margin-top: 20px; font-size: 13px; color: rgba(255,255,255,0.6); }
+  #galleryShareBtn { border-color: rgba(122,220,255,0.5) !important; color: #9fe6ff; }
+
   #statsScreen {
     position: fixed; inset: 0; z-index: 250;
     background: rgba(6,3,14,0.5);
@@ -3085,6 +3127,10 @@
         <h1 style="font-size:32px;" data-i18n="galleryTitle">🖼️ Galerie</h1>
       </div>
       <p class="heroTagline" data-i18n="gallerySub">Deine gemachten Fotos aus dem Foto-Modus</p>
+      <div id="galleryTabs">
+        <button class="galleryTabBtn active" id="galleryTabMine">📷 Meine Fotos</button>
+        <button class="galleryTabBtn" id="galleryTabCommunity">🌍 Community</button>
+      </div>
       <div id="gallerySelectBar" class="hidden">
         <span id="gallerySelectCount">0 <span data-i18n="gallerySelectedWord">ausgewählt</span></span>
         <div id="gallerySelectActions">
@@ -3095,6 +3141,9 @@
       </div>
       <div id="galleryGrid"></div>
       <p id="galleryEmptyMsg" data-i18n="galleryEmptyMsg">Noch keine Fotos — geh in den Foto-Modus (Pause-Menü) und mach welche!</p>
+      <div id="communityGalleryGrid" class="hidden"></div>
+      <p id="communityGalleryEmptyMsg" class="hidden">Noch keine geteilten Fotos — sei die/der Erste! Öffne ein eigenes Foto und tippe auf "Mit Community teilen".</p>
+      <p id="communityGalleryLoadingMsg" class="hidden">Lade geteilte Fotos…</p>
       <button id="galleryCloseBtn" class="menuBtn" style="margin-top:20px;" data-i18n="closeBtn3">Schließen</button>
     </div>
   </div>
@@ -3348,6 +3397,7 @@
   <button id="galleryPrevBtn" class="galleryNavBtn">‹</button>
   <button id="galleryNextBtn" class="galleryNavBtn galleryNavBtnRight">›</button>
   <div id="galleryViewerBar">
+    <button id="galleryShareBtn">🌍 Mit Community teilen</button>
     <button id="galleryDownloadBtn">⬇️ Herunterladen</button>
     <button id="galleryDeleteBtn">🗑️ Löschen</button>
     <button id="galleryViewerCloseBtn">✕ Schließen</button>
@@ -3536,9 +3586,11 @@
   let lastHandledGoldenKeycapsBroadcast = 0; // same one-time-action pattern as the ring above
   let lastHandledRainbowKeycapsBroadcast = 0;
   let bossEventRef = null;
+  let communityGalleryRef = null;
   try {
     firebase.initializeApp({ databaseURL: FIREBASE_DB_URL });
     globalEventRef = firebase.database().ref('globalEvent');
+    communityGalleryRef = firebase.database().ref('communityGallery'); // shared photo feed — fetched on demand (see loadCommunityGallery), not with a continuous listener like the others, since it's just browsed when the tab is opened rather than needing instant live updates
     globalEventRef.on('value', snapshot => {
       const data = snapshot.val();
       const expiresAt = data && data.expiresAt ? data.expiresAt : null;
@@ -11464,6 +11516,7 @@
   }
   function openGallery(){
     setGallerySelectMode(false);
+    setGalleryTab('mine'); // always opens back on "my photos" — community can get big, no need to refetch it just from opening the screen
     document.getElementById('galleryScreen').classList.remove('hidden');
     updateTouchControlsVisibility();
   }
@@ -11483,6 +11536,135 @@
     document.getElementById('galleryViewer').classList.add('hidden');
     galleryViewerIndex = -1;
   }
+
+  // ---------- COMMUNITY GALLERY ----------
+  // Sanitized the same way myNameKey is elsewhere — used both as the "who
+  // shared this" label key and to track which photos THIS player has liked,
+  // without needing a real account/auth system. Reads the active profile
+  // directly (via the globally-scoped ACTIVE_PROFILE_ID) rather than reusing
+  // the try-block-local myProfileMeta, which isn't reachable from here.
+  function getMyProfileName(){
+    try {
+      const profiles = JSON.parse(localStorage.getItem('rankmann_profiles') || '[]');
+      const me = profiles.find(p => p.id === ACTIVE_PROFILE_ID);
+      return (me && me.name) ? me.name : 'Spieler';
+    } catch(e){ return 'Spieler'; }
+  }
+  function communityUserKey(){
+    return encodeURIComponent(getMyProfileName().trim().toLowerCase()).replace(/[.#$\[\]]/g, '_');
+  }
+  let communityGalleryTab = 'mine'; // 'mine' | 'community'
+  let communityPhotosCache = []; // [{ id, url, name, time, likes: {key:true} }], newest first
+  function setGalleryTab(tab){
+    communityGalleryTab = tab;
+    document.getElementById('galleryTabMine').classList.toggle('active', tab === 'mine');
+    document.getElementById('galleryTabCommunity').classList.toggle('active', tab === 'community');
+    document.getElementById('galleryGrid').classList.toggle('hidden', tab !== 'mine');
+    document.getElementById('galleryEmptyMsg').style.display = (tab === 'mine' && galleryPhotos.length === 0) ? 'block' : 'none';
+    document.getElementById('communityGalleryGrid').classList.toggle('hidden', tab !== 'community');
+    if (tab === 'community') loadCommunityGallery();
+  }
+  function loadCommunityGallery(){
+    const grid = document.getElementById('communityGalleryGrid');
+    const emptyMsg = document.getElementById('communityGalleryEmptyMsg');
+    const loadingMsg = document.getElementById('communityGalleryLoadingMsg');
+    if (!communityGalleryRef){
+      loadingMsg.classList.add('hidden');
+      emptyMsg.classList.remove('hidden');
+      emptyMsg.textContent = 'Community-Galerie gerade nicht erreichbar — später nochmal versuchen.';
+      return;
+    }
+    emptyMsg.classList.add('hidden');
+    loadingMsg.classList.remove('hidden');
+    grid.innerHTML = '';
+    communityGalleryRef.orderByChild('time').limitToLast(40).once('value').then(snapshot => {
+      const data = snapshot.val() || {};
+      communityPhotosCache = Object.keys(data)
+        .map(id => Object.assign({ id }, data[id]))
+        .sort((a, b) => b.time - a.time); // newest first
+      loadingMsg.classList.add('hidden');
+      renderCommunityGallery();
+    }).catch(() => {
+      loadingMsg.classList.add('hidden');
+      emptyMsg.classList.remove('hidden');
+      emptyMsg.textContent = 'Konnte Community-Galerie nicht laden — später nochmal versuchen.';
+    });
+  }
+  function renderCommunityGallery(){
+    const grid = document.getElementById('communityGalleryGrid');
+    const emptyMsg = document.getElementById('communityGalleryEmptyMsg');
+    grid.innerHTML = '';
+    if (communityPhotosCache.length === 0){
+      emptyMsg.classList.remove('hidden');
+      emptyMsg.textContent = 'Noch keine geteilten Fotos — sei die/der Erste! Öffne ein eigenes Foto und tippe auf "Mit Community teilen".';
+      return;
+    }
+    emptyMsg.classList.add('hidden');
+    const myKey = communityUserKey();
+    communityPhotosCache.forEach(photo => {
+      const card = document.createElement('div');
+      card.className = 'communityPhotoCard';
+      const img = document.createElement('img');
+      img.className = 'communityPhotoImg';
+      img.src = photo.url;
+      img.loading = 'lazy';
+      const meta = document.createElement('div');
+      meta.className = 'communityPhotoMeta';
+      const name = document.createElement('span');
+      name.className = 'communityPhotoName';
+      name.textContent = photo.name || 'Spieler';
+      const likeBtn = document.createElement('button');
+      const likeCount = photo.likes ? Object.keys(photo.likes).length : 0;
+      const iLiked = !!(photo.likes && photo.likes[myKey]);
+      likeBtn.className = 'communityLikeBtn' + (iLiked ? ' liked' : '');
+      likeBtn.textContent = (iLiked ? '❤️' : '🤍') + ' ' + likeCount;
+      likeBtn.addEventListener('click', () => toggleCommunityLike(photo.id));
+      meta.appendChild(name);
+      meta.appendChild(likeBtn);
+      card.appendChild(img);
+      card.appendChild(meta);
+      grid.appendChild(card);
+    });
+  }
+  function toggleCommunityLike(photoId){
+    if (!communityGalleryRef) return;
+    const photo = communityPhotosCache.find(p => p.id === photoId);
+    if (!photo) return;
+    const myKey = communityUserKey();
+    const likeRef = communityGalleryRef.child(photoId).child('likes').child(myKey);
+    const currentlyLiked = !!(photo.likes && photo.likes[myKey]);
+    // update local cache + UI immediately, don't wait on the round-trip
+    if (!photo.likes) photo.likes = {};
+    if (currentlyLiked) delete photo.likes[myKey]; else photo.likes[myKey] = true;
+    renderCommunityGallery();
+    if (currentlyLiked) likeRef.remove().catch(() => {});
+    else likeRef.set(true).catch(() => {});
+  }
+  function shareCurrentPhotoToCommunity(){
+    if (galleryViewerIndex < 0 || !galleryPhotos[galleryViewerIndex]) return;
+    const shareBtn = document.getElementById('galleryShareBtn');
+    if (!communityGalleryRef){
+      shareBtn.textContent = '🌍 Gerade nicht erreichbar';
+      setTimeout(() => { shareBtn.textContent = '🌍 Mit Community teilen'; }, 2200);
+      return;
+    }
+    const photo = galleryPhotos[galleryViewerIndex];
+    shareBtn.disabled = true;
+    shareBtn.textContent = '🌍 Wird geteilt…';
+    communityGalleryRef.push({
+      url: photo.url,
+      name: getMyProfileName().slice(0, 24),
+      time: Date.now(),
+    }).then(() => {
+      shareBtn.textContent = '✅ Geteilt!';
+      setTimeout(() => { shareBtn.disabled = false; shareBtn.textContent = '🌍 Mit Community teilen'; }, 2000);
+    }).catch(() => {
+      shareBtn.disabled = false;
+      shareBtn.textContent = '⚠️ Teilen fehlgeschlagen';
+      setTimeout(() => { shareBtn.textContent = '🌍 Mit Community teilen'; }, 2200);
+    });
+  }
+
   function updateGalleryNavButtons(){
     document.getElementById('galleryPrevBtn').disabled = galleryViewerIndex <= 0;
     document.getElementById('galleryNextBtn').disabled = galleryViewerIndex >= galleryPhotos.length - 1;
@@ -11812,6 +11994,9 @@
   document.getElementById('galleryViewerCloseBtn').addEventListener('click', closeGalleryViewer);
   document.getElementById('galleryDeleteBtn').addEventListener('click', deleteCurrentGalleryPhoto);
   document.getElementById('galleryDownloadBtn').addEventListener('click', downloadCurrentGalleryPhoto);
+  document.getElementById('galleryShareBtn').addEventListener('click', shareCurrentPhotoToCommunity);
+  document.getElementById('galleryTabMine').addEventListener('click', () => setGalleryTab('mine'));
+  document.getElementById('galleryTabCommunity').addEventListener('click', () => setGalleryTab('community'));
   document.getElementById('gallerySelectBtn').addEventListener('click', () => setGallerySelectMode(!gallerySelectMode));
   document.getElementById('gallerySelectCancelBtn').addEventListener('click', () => setGallerySelectMode(false));
   document.getElementById('gallerySelectDeleteBtn').addEventListener('click', deleteSelectedGalleryPhotos);
