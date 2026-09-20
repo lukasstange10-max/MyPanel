@@ -2978,17 +2978,17 @@
       var statusBox = document.getElementById('forgotPasswordStatusBox');
       var statusEl = document.getElementById('forgotPasswordStatus');
       statusBox.classList.remove('hidden');
-      statusEl.textContent = '⏳ Anfrage wird gesendet...';
+      statusEl.textContent = t('pwResetSending');
       fetch(FIREBASE_DB_URL + '/passwordResetRequests/' + key + '.json', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ requestedAt: Date.now(), name: name }),
       }).then(function(){
-        statusEl.textContent = '📨 Anfrage an den Admin gesendet. Diese Seite offen lassen — sobald ein neues Passwort vergeben wurde, erscheint es hier automatisch.';
+        statusEl.textContent = t('pwResetSent');
         pendingResetKey = key;
         startPolling(key);
       }).catch(function(){
-        statusEl.textContent = '❌ Anfrage konnte nicht gesendet werden — bitte den Admin direkt ansprechen.';
+        statusEl.textContent = t('pwResetFailed');
       });
     });
     function startPolling(key){
@@ -3750,7 +3750,7 @@
         const count = Object.keys(data).length;
         const badge = document.getElementById('viewerCountBadge');
         if (!badge) return;
-        badge.textContent = '👀 ' + count + (count === 1 ? ' schaut zu' : ' schauen zu');
+        badge.textContent = tf(count === 1 ? 'viewerCountOne' : 'viewerCountMany', { n: count });
         badge.classList.toggle('show', count > 0 && running);
       });
 
@@ -3798,7 +3798,7 @@
     if (!badge) return;
     const show = !!currentRoomCode && typeof running !== 'undefined' && running;
     badge.classList.toggle('hidden', !show);
-    if (show) badge.textContent = '👥 ' + coopRoomPlayerCount + ' im Raum';
+    if (show) badge.textContent = tf('coopRoomCount', { n: coopRoomPlayerCount });
   }
   function onRoomPlayersUpdate(snapshot){
     const data = snapshot.val() || {};
@@ -4048,6 +4048,21 @@
       newChallengesIn: '🔄 New challenges in', catTrophies: 'Trophies', catCombat: 'Combat', catCollecting: 'Collecting', catExploration: 'Exploration', catCosmetic: 'Cosmetic',
       previewTitle: 'Preview', ownedTag: '✅ Owned', freeTag: 'Free', equippedBtn: 'Equipped', equipBtn: 'Equip', buyBtn: 'Buy',
       activeEmotePrefix: 'Active:', emoteChooseWord: 'Choose an emote', emoteInShopSuffix: '— in shop', unlockedBtn: 'Unlocked', musicOff: 'Music off', trackStandard: 'Standard',
+      stormCountdown: '⛈️ Storm in {time}',
+      goldenKeycapSpawn: '✨ {n} Golden Keycaps have appeared in your world — grab them fast!',
+      rainbowKeycapSpawn: '🌈 {n} Rainbow Keycaps have appeared in your world — double trophies!',
+      bonusRingSpawn: '🎯 Bonus Ring appeared in World {world} — fly through for +{reward} trophies!',
+      streakBonusPct: '🔥+{pct}% more trophies',
+      viewerCountOne: '👀 {n} watching', viewerCountMany: '👀 {n} watching',
+      coopRoomCount: '👥 {n} in room',
+      friendRequestSent: '✅ Request sent to {name} — waiting for confirmation.',
+      friendRequestFailed: 'Request could not be sent.',
+      saveCodeCopied: '✅ Copied!', saveCodeRestored: '✅ Restored! Page is reloading...',
+      saveCodeInvalid: '❌ Invalid code — please check and try again.',
+      pwResetSending: '⏳ Sending request...',
+      pwResetSent: '📨 Request sent to the admin. Keep this page open — once a new password is set, it will appear here automatically.',
+      pwResetFailed: '❌ Request could not be sent — please contact the admin directly.',
+      acceptBtn: '✓ Accept', inviteBtn: '🎮 Invite', spectateBtnLabel: '👀 Watch',
     },
     fr: {
       heroTagline: 'Balance-toi à travers un monde fantastique flottant',
@@ -4110,6 +4125,21 @@
       newChallengesIn: '🔄 Nouveaux défis dans', catTrophies: 'Trophées', catCombat: 'Combat', catCollecting: 'Collection', catExploration: 'Exploration', catCosmetic: 'Cosmétique',
       previewTitle: 'Aperçu', ownedTag: '✅ Possédé', freeTag: 'Gratuit', equippedBtn: 'Équipé', equipBtn: 'Équiper', buyBtn: 'Acheter',
       activeEmotePrefix: 'Actif :', emoteChooseWord: 'Choisir une émote', emoteInShopSuffix: '— en boutique', unlockedBtn: 'Débloqué', musicOff: 'Musique coupée', trackStandard: 'Standard',
+      stormCountdown: '⛈️ Orage dans {time}',
+      goldenKeycapSpawn: '✨ {n} Keycaps dorées sont apparues dans ton monde — récupère-les vite !',
+      rainbowKeycapSpawn: '🌈 {n} Keycaps arc-en-ciel sont apparues dans ton monde — trophées doublés !',
+      bonusRingSpawn: '🎯 Anneau bonus apparu dans le Monde {world} — traverse-le pour +{reward} trophées !',
+      streakBonusPct: '🔥+{pct}% de trophées en plus',
+      viewerCountOne: '👀 {n} regarde', viewerCountMany: '👀 {n} regardent',
+      coopRoomCount: '👥 {n} dans la salle',
+      friendRequestSent: '✅ Demande envoyée à {name} — en attente de confirmation.',
+      friendRequestFailed: 'La demande n\u2019a pas pu être envoyée.',
+      saveCodeCopied: '✅ Copié !', saveCodeRestored: '✅ Restauré ! La page se recharge...',
+      saveCodeInvalid: '❌ Code invalide — vérifie et réessaie.',
+      pwResetSending: '⏳ Envoi de la demande...',
+      pwResetSent: '📨 Demande envoyée à l\u2019administrateur. Laisse cette page ouverte — dès qu\u2019un nouveau mot de passe sera défini, il apparaîtra ici automatiquement.',
+      pwResetFailed: '❌ La demande n\u2019a pas pu être envoyée — merci de contacter directement l\u2019administrateur.',
+      acceptBtn: '✓ Accepter', inviteBtn: '🎮 Inviter', spectateBtnLabel: '👀 Regarder',
     },
     es: {
       heroTagline: 'Balancéate por un mundo de fantasía flotante',
@@ -4172,6 +4202,21 @@
       newChallengesIn: '🔄 Nuevos desafíos en', catTrophies: 'Trofeos', catCombat: 'Combate', catCollecting: 'Recolección', catExploration: 'Exploración', catCosmetic: 'Cosmético',
       previewTitle: 'Vista previa', ownedTag: '✅ En posesión', freeTag: 'Gratis', equippedBtn: 'Equipado', equipBtn: 'Equipar', buyBtn: 'Comprar',
       activeEmotePrefix: 'Activo:', emoteChooseWord: 'Elige un emote', emoteInShopSuffix: '— en la tienda', unlockedBtn: 'Desbloqueado', musicOff: 'Música desactivada', trackStandard: 'Estándar',
+      stormCountdown: '⛈️ Tormenta en {time}',
+      goldenKeycapSpawn: '✨ ¡{n} Keycaps doradas han aparecido en tu mundo — recógelas rápido!',
+      rainbowKeycapSpawn: '🌈 ¡{n} Keycaps arcoíris han aparecido en tu mundo — trofeos dobles!',
+      bonusRingSpawn: '🎯 ¡Anillo de bonificación apareció en el Mundo {world} — atraviésalo por +{reward} trofeos!',
+      streakBonusPct: '🔥+{pct}% más trofeos',
+      viewerCountOne: '👀 {n} mirando', viewerCountMany: '👀 {n} mirando',
+      coopRoomCount: '👥 {n} en la sala',
+      friendRequestSent: '✅ Solicitud enviada a {name} — esperando confirmación.',
+      friendRequestFailed: 'No se pudo enviar la solicitud.',
+      saveCodeCopied: '✅ ¡Copiado!', saveCodeRestored: '✅ ¡Restaurado! La página se está recargando...',
+      saveCodeInvalid: '❌ Código inválido — verifica e inténtalo de nuevo.',
+      pwResetSending: '⏳ Enviando solicitud...',
+      pwResetSent: '📨 Solicitud enviada al administrador. Deja esta página abierta — en cuanto se establezca una nueva contraseña, aparecerá aquí automáticamente.',
+      pwResetFailed: '❌ No se pudo enviar la solicitud — por favor contacta al administrador directamente.',
+      acceptBtn: '✓ Aceptar', inviteBtn: '🎮 Invitar', spectateBtnLabel: '👀 Ver',
     },
     pt: {
       heroTagline: 'Balance-se por um mundo de fantasia flutuante',
@@ -4234,6 +4279,21 @@
       newChallengesIn: '🔄 Novos desafios em', catTrophies: 'Troféus', catCombat: 'Combate', catCollecting: 'Coleta', catExploration: 'Exploração', catCosmetic: 'Cosmético',
       previewTitle: 'Prévia', ownedTag: '✅ Adquirido', freeTag: 'Grátis', equippedBtn: 'Equipado', equipBtn: 'Equipar', buyBtn: 'Comprar',
       activeEmotePrefix: 'Ativo:', emoteChooseWord: 'Escolha um emote', emoteInShopSuffix: '— na loja', unlockedBtn: 'Desbloqueado', musicOff: 'Música desligada', trackStandard: 'Padrão',
+      stormCountdown: '⛈️ Tempestade em {time}',
+      goldenKeycapSpawn: '✨ {n} Keycaps douradas apareceram no seu mundo — pegue rápido!',
+      rainbowKeycapSpawn: '🌈 {n} Keycaps arco-íris apareceram no seu mundo — troféus em dobro!',
+      bonusRingSpawn: '🎯 Anel de bônus apareceu no Mundo {world} — voe através dele por +{reward} troféus!',
+      streakBonusPct: '🔥+{pct}% mais troféus',
+      viewerCountOne: '👀 {n} assistindo', viewerCountMany: '👀 {n} assistindo',
+      coopRoomCount: '👥 {n} na sala',
+      friendRequestSent: '✅ Solicitação enviada para {name} — aguardando confirmação.',
+      friendRequestFailed: 'Não foi possível enviar a solicitação.',
+      saveCodeCopied: '✅ Copiado!', saveCodeRestored: '✅ Restaurado! A página está recarregando...',
+      saveCodeInvalid: '❌ Código inválido — verifique e tente novamente.',
+      pwResetSending: '⏳ Enviando solicitação...',
+      pwResetSent: '📨 Solicitação enviada ao administrador. Deixe esta página aberta — assim que uma nova senha for definida, ela aparecerá aqui automaticamente.',
+      pwResetFailed: '❌ Não foi possível enviar a solicitação — entre em contato diretamente com o administrador.',
+      acceptBtn: '✓ Aceitar', inviteBtn: '🎮 Convidar', spectateBtnLabel: '👀 Assistir',
     },
   };
   let currentLang = storageGet('rankmann_lang', 'de');
@@ -4350,6 +4410,21 @@
     catTrophies: 'Pokale', catCombat: 'Kampf', catCollecting: 'Sammeln', catExploration: 'Erkundung', catCosmetic: 'Kosmetik',
     previewTitle: 'Vorschau', ownedTag: '✅ In Besitz', freeTag: 'Kostenlos', equippedBtn: 'Ausgerüstet', equipBtn: 'Ausrüsten', buyBtn: 'Kaufen',
     activeEmotePrefix: 'Aktiv:', emoteChooseWord: 'Emote wählen', emoteInShopSuffix: '— im Shop', unlockedBtn: 'Freigeschaltet',
+    stormCountdown: '⛈️ Sturm in {time}',
+    goldenKeycapSpawn: '✨ {n} Golden Keycaps sind in deiner Welt erschienen — schnell einsammeln!',
+    rainbowKeycapSpawn: '🌈 {n} Regenbogen-Keycaps sind in deiner Welt erschienen — doppelte Pokale!',
+    bonusRingSpawn: '🎯 Bonus-Ring erschienen in Welt {world} — flieg durch für +{reward} Pokale!',
+    streakBonusPct: '🔥+{pct}% mehr Pokale',
+    viewerCountOne: '👀 {n} schaut zu', viewerCountMany: '👀 {n} schauen zu',
+    coopRoomCount: '👥 {n} im Raum',
+    friendRequestSent: '✅ Anfrage an {name} gesendet — wartet auf Bestätigung.',
+    friendRequestFailed: 'Anfrage konnte nicht gesendet werden.',
+    saveCodeCopied: '✅ Kopiert!', saveCodeRestored: '✅ Wiederhergestellt! Seite lädt neu...',
+    saveCodeInvalid: '❌ Ungültiger Code — bitte prüfen und erneut versuchen.',
+    pwResetSending: '⏳ Anfrage wird gesendet...',
+    pwResetSent: '📨 Anfrage an den Admin gesendet. Diese Seite offen lassen — sobald ein neues Passwort vergeben wurde, erscheint es hier automatisch.',
+    pwResetFailed: '❌ Anfrage konnte nicht gesendet werden — bitte den Admin direkt ansprechen.',
+    acceptBtn: '✓ Annehmen', inviteBtn: '🎮 Einladen', spectateBtnLabel: '👀 Zuschauen',
     musicOff: 'Musik aus', trackStandard: 'Standard',
   };
   function t(key){
@@ -4357,6 +4432,17 @@
     if (I18N_DEFAULTS[key] !== undefined) return I18N_DEFAULTS[key];
     if (currentLang === 'de' && MANUAL_DE[key] !== undefined) return MANUAL_DE[key];
     return TRANSLATIONS.en[key] || MANUAL_DE[key] || key;
+  }
+  // t() with {token} substitution for the dynamic in-game notifications
+  // (storm countdown, keycap/ring spawns, etc.) — these are built at
+  // runtime from JS, not sitting in the DOM at load time, so they can't
+  // use the data-i18n auto-capture and need their own templated strings.
+  function tf(key, values){
+    let str = t(key);
+    if (values){
+      Object.keys(values).forEach(k => { str = str.split('{' + k + '}').join(values[k]); });
+    }
+    return str;
   }
   // Snapshot of the original German text for every translatable element,
   // captured once before any translation is applied — this is what "German"
@@ -4915,7 +5001,7 @@
       if (showForecast){
         const totalSec = Math.max(0, Math.floor(weatherTimer));
         const m = Math.floor(totalSec / 60), s = totalSec % 60;
-        forecastEl.textContent = '⛈️ Sturm in ' + m + ':' + String(s).padStart(2, '0');
+        forecastEl.textContent = tf('stormCountdown', { time: m + ':' + String(s).padStart(2, '0') });
       }
     }
 
@@ -5335,7 +5421,7 @@
     const el = document.getElementById('goldenKeycapsBadgeText');
     if (!el) return;
     const countHere = activeGoldenKeycaps.filter(k => k.world === selectedWorld).length;
-    el.textContent = '✨ ' + countHere + ' Golden Keycaps sind in deiner Welt erschienen — schnell einsammeln!';
+    el.textContent = tf('goldenKeycapSpawn', { n: countHere });
   }
   function updateGoldenKeycaps(dt){
     if (goldenKeycapExpiresAt && Date.now() > goldenKeycapExpiresAt){
@@ -5412,7 +5498,7 @@
     const el = document.getElementById('rainbowKeycapsBadgeText');
     if (!el) return;
     const countHere = activeRainbowKeycaps.filter(k => k.world === selectedWorld).length;
-    el.textContent = '🌈 ' + countHere + ' Regenbogen-Keycaps sind in deiner Welt erschienen — doppelte Pokale!';
+    el.textContent = tf('rainbowKeycapSpawn', { n: countHere });
   }
   function updateRainbowKeycaps(dt){
     if (rainbowKeycapExpiresAt && Date.now() > rainbowKeycapExpiresAt){
@@ -6329,7 +6415,7 @@
     specialRing = { mesh: g, ringMat, beamMat, pos: spawnPos, world, lifeLeft: SPECIAL_RING_LIFETIME };
     const badge = document.getElementById('specialRingBadge');
     if (badge){
-      document.getElementById('specialRingBadgeText').textContent = '🎯 Bonus-Ring erschienen in Welt ' + world + ' — flieg durch für +' + SPECIAL_RING_REWARD + ' Pokale!';
+      document.getElementById('specialRingBadgeText').textContent = tf('bonusRingSpawn', { world: world, reward: SPECIAL_RING_REWARD });
       badge.style.visibility = ''; // clear any leftover inline visibility:hidden from an earlier boss-transition, in case it never got restored — the .show class below is what should actually control this
       badge.classList.add('show');
     }
@@ -6545,7 +6631,7 @@
       return;
     }
     el.style.color = streakColor(pct);
-    document.getElementById('streakPct').textContent = '🔥+' + pct + '% mehr Pokale';
+    document.getElementById('streakPct').textContent = tf('streakBonusPct', { pct: pct });
     el.classList.add('show');
   }
   function resetStreak(){
@@ -8936,7 +9022,7 @@
         const btnGroup = document.createElement('span');
         btnGroup.style.cssText = 'display:flex; gap:6px;';
         const acceptBtn = document.createElement('button');
-        acceptBtn.textContent = '✓ Annehmen';
+        acceptBtn.textContent = t('acceptBtn');
         acceptBtn.className = 'friendsSpectateBtn';
         acceptBtn.addEventListener('click', () => {
           const list = getFriendsList();
@@ -9005,7 +9091,7 @@
         if (data && data.online && !alreadyInMyRoom && !btnGroup.querySelector('.friendsInviteBtn')){
           const inviteBtn = document.createElement('button');
           inviteBtn.className = 'friendsSpectateBtn friendsInviteBtn';
-          inviteBtn.textContent = '🎮 Einladen';
+          inviteBtn.textContent = t('inviteBtn');
           inviteBtn.addEventListener('click', () => inviteFriendToCoop(name, key));
           btnGroup.insertBefore(inviteBtn, removeBtn);
         }
@@ -9016,7 +9102,7 @@
         if (isFresh && !btnGroup.querySelector('.friendsWatchBtn')){
           const specBtn = document.createElement('button');
           specBtn.className = 'friendsSpectateBtn friendsWatchBtn';
-          specBtn.textContent = '👀 Zuschauen';
+          specBtn.textContent = t('spectateBtnLabel');
           specBtn.addEventListener('click', () => startSpectatingFriend(name, key));
           btnGroup.insertBefore(specBtn, removeBtn);
         }
@@ -9072,10 +9158,10 @@
     firebase.database().ref('friendRequests/' + targetKey + '/' + friendNameKey(myName)).set({
       fromName: myName, sentAt: Date.now(),
     }).then(() => {
-      statusEl.style.color = '#7affc4'; statusEl.textContent = '✅ Anfrage an ' + name + ' gesendet — wartet auf Bestätigung.';
+      statusEl.style.color = '#7affc4'; statusEl.textContent = tf('friendRequestSent', { name: name });
       input.value = '';
     }).catch(() => {
-      statusEl.style.color = '#ff9d9d'; statusEl.textContent = 'Anfrage konnte nicht gesendet werden.';
+      statusEl.style.color = '#ff9d9d'; statusEl.textContent = t('friendRequestFailed');
     });
   });
   document.getElementById('friendsCloseBtn').addEventListener('click', () => {
@@ -11738,7 +11824,7 @@
     el.select();
     navigator.clipboard.writeText(el.value).then(() => {
       document.getElementById('saveCodeStatus').style.color = '#7affc4';
-      document.getElementById('saveCodeStatus').textContent = '✅ Kopiert!';
+      document.getElementById('saveCodeStatus').textContent = t('saveCodeCopied');
     }).catch(() => {
       document.getElementById('saveCodeStatus').style.color = '#ffb347';
       document.getElementById('saveCodeStatus').textContent = 'Konnte nicht automatisch kopieren — bitte manuell markieren & kopieren';
@@ -11756,11 +11842,11 @@
     const ok = importSaveCode(code);
     if (ok){
       statusEl.style.color = '#7affc4';
-      statusEl.textContent = '✅ Wiederhergestellt! Seite lädt neu...';
+      statusEl.textContent = t('saveCodeRestored');
       setTimeout(() => location.reload(), 1200);
     } else {
       statusEl.style.color = '#ff6b6b';
-      statusEl.textContent = '❌ Ungültiger Code — bitte prüfen und erneut versuchen.';
+      statusEl.textContent = t('saveCodeInvalid');
     }
   });
   document.getElementById('resetConfirmNo').addEventListener('click', () => {
