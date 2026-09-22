@@ -3871,8 +3871,26 @@
       }
       updateGhostFromRoomData(key, p);
       if (handOffSpectate && friendGhosts[key]) startSpectating(key);
+      // If we're currently spectating THIS player via their room entry
+      // (not the standalone Friends-list path, which already has its own
+      // "friend stopped playing" detection above) and their data now shows
+      // them as no longer actually playing, end the session gracefully
+      // instead of leaving the viewer frozen on a stale last position.
+      if (spectatingKey === key && !(p.world > 0 && p.updatedAt && (Date.now() - p.updatedAt < 5000))){
+        stopSpectating(true);
+      }
     });
-    Object.keys(friendGhosts).forEach(key => { if (!seenKeys.has(key)) removeGhost(key); });
+    Object.keys(friendGhosts).forEach(key => {
+      if (!seenKeys.has(key)) {
+        // Same reasoning as the staleness check above, for the case where
+        // the player disappears from the room's data entirely (left the
+        // room, not just stopped playing) rather than just going stale —
+        // stop spectating BEFORE the ghost gets deleted out from under it,
+        // since the spectate camera reads this ghost's position every frame.
+        if (spectatingKey === key) stopSpectating(true);
+        removeGhost(key);
+      }
+    });
   }
   function joinRoom(code){
     leaveRoom(); // clean up any previous room membership first
@@ -5354,7 +5372,7 @@
     }
   });
   function setKeyboardKeysVisible(visible){
-    allKeyCaps.forEach(k => { k.mesh.visible = (visible || k.golden || k.rainbow) && k.world === selectedWorld; });
+    allKeyCaps.forEach(k => { k.mesh.visible = visible && k.world === selectedWorld; }); // used to keep golden/rainbow keycaps visible regardless of this setting; per feedback, "without keys" should mean none at all
   }
 
   // ---------- GOLDEN KEYCAPS EVENT ----------
@@ -5388,7 +5406,7 @@
       }
       k.goldBeam.visible = true;
       k.goldPulseT = Math.random() * Math.PI * 2; // random phase so they don't all pulse in perfect unison
-      k.mesh.visible = k.world === selectedWorld; // visible regardless of the keyboardKeysWanted setting — a global reward event should be playable by everyone, not just people who happen to have the keycap decoration turned on
+      k.mesh.visible = keyboardKeysWanted && k.world === selectedWorld; // used to ignore the keyboardKeysWanted setting so the reward event stayed playable for everyone; per feedback, "without keys" should mean none at all, no exceptions
       if (!activeGoldenKeycaps.includes(k)) activeGoldenKeycaps.push(k);
     } else {
       k.mesh.material.color.setHex(k.originalColor);
@@ -5472,7 +5490,7 @@
         k.mesh.add(k.rainbowBeam);
       }
       k.rainbowBeam.visible = true;
-      k.mesh.visible = k.world === selectedWorld; // visible regardless of the keyboardKeysWanted setting, same reasoning as golden keycaps
+      k.mesh.visible = keyboardKeysWanted && k.world === selectedWorld; // same fix as golden keycaps above — "without keys" now really means none at all
       if (!activeRainbowKeycaps.includes(k)) activeRainbowKeycaps.push(k);
     } else {
       k.mesh.material.color.setHex(k.originalColor);
@@ -6037,7 +6055,7 @@
       selectedWorld = preBossWorld;
       applyWorldTheme(selectedWorld);
     }
-    allKeyCaps.forEach(k => { k.mesh.visible = (keyboardKeysWanted || k.golden || k.rainbow) && k.world === selectedWorld; }); // restore keycap visibility for whichever world we're back in — applyWorldTheme above only runs (and would otherwise handle this) if the world actually differed; golden ones stay visible regardless of the setting
+    allKeyCaps.forEach(k => { k.mesh.visible = keyboardKeysWanted && k.world === selectedWorld; }); // restore keycap visibility for whichever world we're back in — applyWorldTheme above only runs (and would otherwise handle this) if the world actually differed. Golden/rainbow ones used to stay visible regardless of the setting; "without keys" now really means none at all.
     if (goldenKeycapExpiresAt) updateGoldenKeycapsBadgeText(); // in case the world differs from before entering the boss arena
     if (rainbowKeycapExpiresAt) updateRainbowKeycapsBadgeText();
     if (goldenKeycapExpiresAt && Date.now() < goldenKeycapExpiresAt) document.getElementById('goldenKeycapsBadge').classList.add('show'); // the event may still be running after coming back from the boss fight — bring the badge back too, not just the keys themselves
@@ -6507,7 +6525,7 @@
     });
     checkpoints.forEach(cp => { cp.group.visible = (cp.world === n); });
     anchors.forEach(a => { if (a.world !== 'boss') a.visible = (a.world === n); }); // boss-arena anchors are managed entirely by enterBossArena/endBossEventLocally instead, since they're not part of the normal world 1/2/3 rotation
-    allKeyCaps.forEach(k => { k.mesh.visible = (keyboardKeysWanted || k.golden || k.rainbow) && k.world === n; }); // keys were floating "somewhere on the map" before this — they're built once at load and never moved, so without this they stayed visible regardless of which world's platforms were actually showing; golden ones stay visible regardless of the keycap decoration setting
+    allKeyCaps.forEach(k => { k.mesh.visible = keyboardKeysWanted && k.world === n; }); // keys were floating "somewhere on the map" before this — they're built once at load and never moved, so without this they stayed visible regardless of which world's platforms were actually showing. Golden/rainbow ones used to stay visible regardless of the decoration setting; "without keys" now really means none at all.
     if (goldenKeycapExpiresAt) updateGoldenKeycapsBadgeText(); // the count shown is "in your world", so it has to be recalculated whenever the world itself changes
     if (rainbowKeycapExpiresAt) updateRainbowKeycapsBadgeText();
     starfield.visible = (n === 3);
@@ -10290,7 +10308,7 @@
     // several things (the keycap-decoration setting, current world, and
     // golden/rainbow status) — not always simply "on".
     if (visible){
-      allKeyCaps.forEach(k => { k.mesh.visible = (keyboardKeysWanted || k.golden || k.rainbow) && k.world === selectedWorld; });
+      allKeyCaps.forEach(k => { k.mesh.visible = keyboardKeysWanted && k.world === selectedWorld; }); // "without keys" now hides every keycap type, including golden/rainbow — no more exceptions
     } else {
       allKeyCaps.forEach(k => { k.mesh.visible = false; });
     }
@@ -11455,6 +11473,18 @@
     // and whoever's watching never finds out this player actually left —
     // their view just silently freezes instead of ending gracefully.
     if (friendBroadcastRef) friendBroadcastRef.remove().catch(() => {});
+    if (myRoomPlayerRef){
+      // Same reasoning as friendBroadcastRef above, for the co-op room
+      // path: mark this player as "not currently playing" rather than just
+      // letting updateRoomSync's writes silently stop. Without this, a
+      // friend spectating you via the room (not the standalone Friends-list
+      // path) never finds out you left — their view just freezes on your
+      // last position instead of ending gracefully. Keeps the room entry
+      // itself (world: 0 is the same "joined but not playing yet" state
+      // joinRoom() sets initially) rather than removing it outright, so
+      // coming back to the room later doesn't require rejoining by code.
+      myRoomPlayerRef.update({ world: 0, updatedAt: firebase.database.ServerValue.TIMESTAMP }).catch(() => {});
+    }
     muteRainAudio();
     player.lives = 3;
     updateLivesDisplay();
