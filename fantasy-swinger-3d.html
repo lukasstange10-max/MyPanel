@@ -6580,41 +6580,28 @@
         g.add(leg);
       }
     } else {
-      // Normal (non-Halloween) enemy: a spiky purple-blue blob, matching the
-      // game's regular color palette. Icosahedron core with cone spikes
-      // poking outward in every direction — a classic "wild creature" read
-      // that has nothing pumpkin-shaped about it, for whenever the event is off.
-      const spikyPurple = 0x8a5cff;
-      bodyMat = new THREE.MeshStandardMaterial({ color: spikyPurple, emissive: 0x6a3cff, emissiveIntensity: 0.25, roughness: 0.5 });
-      const core = new THREE.Mesh(new THREE.IcosahedronGeometry(0.27, 0), bodyMat);
-      core.castShadow = true;
-      g.add(core);
-      const spikeMat = new THREE.MeshStandardMaterial({ color: 0x5a3acc, roughness: 0.6 });
-      const spikeCount = 10;
-      for (let i = 0; i < spikeCount; i++){
-        // Spread across the whole sphere (not just around the equator) using
-        // a simple golden-angle distribution, so spikes poke out in every
-        // direction rather than forming a flat ring.
-        const t = i / spikeCount;
-        const inc = Math.acos(1 - 2 * t);
-        const az = Math.PI * (1 + Math.sqrt(5)) * i;
-        const dir = new THREE.Vector3(Math.sin(inc) * Math.cos(az), Math.cos(inc), Math.sin(inc) * Math.sin(az));
-        const spike = new THREE.Mesh(new THREE.ConeGeometry(0.065, 0.24, 5), spikeMat);
-        spike.position.copy(dir).multiplyScalar(0.24);
-        spike.lookAt(dir.clone().multiplyScalar(2));
-        spike.rotateX(Math.PI / 2); // cones point along +Y by default; this aims them outward along dir instead
-        g.add(spike);
-      }
-      const glowMat = new THREE.MeshBasicMaterial({ color: 0xffe06a });
+      // The true original small-enemy look, restored exactly from before
+      // any Halloween work touched this file — a dark crimson icosahedron
+      // with two glowing red eyes and simple scuttling legs. (My first
+      // attempt at a "normal" fallback here invented a purple spiky design
+      // from scratch, since by the time this Halloween work started the
+      // pumpkin reskin had already fully replaced the original in this
+      // file with no non-Halloween variant left — but the real original
+      // was recoverable from an earlier session's transcript, so that's
+      // what ships here instead, for zero visible change to existing players.)
+      bodyMat = new THREE.MeshStandardMaterial({ color: 0x4a1030, emissive: 0xff2d55, emissiveIntensity: 0.35, roughness: 0.55 });
+      const body = new THREE.Mesh(new THREE.IcosahedronGeometry(0.42, 0), bodyMat);
+      body.castShadow = true;
+      g.add(body);
       [-1, 1].forEach(side => {
-        const eye = new THREE.Mesh(new THREE.SphereGeometry(0.06, 6, 6), glowMat);
-        eye.position.set(side * 0.13, 0.06, 0.24);
+        const eye = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 8), new THREE.MeshBasicMaterial({ color: 0xff2d55 }));
+        eye.position.set(side * 0.16, 0.08, 0.32);
         g.add(eye);
       });
-      const legMat = new THREE.MeshStandardMaterial({ color: 0x5a3acc, roughness: 0.6 });
+      // tiny legs for a scuttling look
       for (let i = 0; i < 4; i++){
         const a = (i / 4) * Math.PI * 2 + Math.PI/4;
-        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.22, 5), legMat);
+        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.22, 5), bodyMat);
         leg.position.set(Math.cos(a) * 0.32, -0.28, Math.sin(a) * 0.32);
         leg.rotation.z = Math.cos(a) * 0.5;
         leg.rotation.x = Math.sin(a) * 0.5;
