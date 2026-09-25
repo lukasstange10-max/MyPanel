@@ -37,6 +37,32 @@
     window.__halloweenActive = active;
     document.documentElement.classList.toggle('halloween-active', active);
   })();
+  // 🎄 Same pattern, same reasoning, for the Christmas/Winter event — a
+  // second independent flag rather than reusing the Halloween one, since
+  // both could in principle be forced on for testing at the same time
+  // without one accidentally overriding the other.
+  (function(){
+    function isChristmasDateWindow(){
+      var now = new Date();
+      var month = now.getMonth(); // 0-indexed: 11 = December, 0 = January
+      var day = now.getDate();
+      return (month === 11 && day >= 1) || (month === 0 && day <= 6);
+    }
+    var profileId = 'default';
+    try {
+      var rawProfile = localStorage.getItem('rankmann_activeProfileId');
+      if (rawProfile) profileId = JSON.parse(rawProfile);
+    } catch(e){}
+    var forceKey = 'rankmann_profile_' + profileId + '_rankmann_christmasAdminForce';
+    var force = null;
+    try {
+      var rawForce = localStorage.getItem(forceKey);
+      if (rawForce !== null) force = JSON.parse(rawForce);
+    } catch(e){}
+    var active = (force !== null) ? force : isChristmasDateWindow();
+    window.__christmasActive = active;
+    document.documentElement.classList.toggle('christmas-active', active);
+  })();
 </script>
 <style>
   html, body { margin: 0; padding: 0; overflow: hidden; background: #0a0518; font-family: 'Poppins', 'Segoe UI', Arial, sans-serif; }
@@ -814,6 +840,7 @@
     0%, 100% { transform: rotate(-14deg); }
     50% { transform: rotate(14deg); }
   }
+  .xmasCornerSnowflake { filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4)) drop-shadow(0 0 6px rgba(150,210,255,0.6)); }
 
   #menuClickCatcher {
     position: absolute; inset: 0; z-index: 0; cursor: pointer;
@@ -2342,6 +2369,52 @@
   }
   html.halloween-active .stat-box, html.halloween-active .startPanel #activeProfileBadge, html.halloween-active #worldSelectBox { border-color: rgba(255,160,60,0.25) !important; }
   html.halloween-active #totalTrophyLine, html.halloween-active .heroTagline { color: rgba(255,200,150,0.85) !important; }
+
+  /* ============================================================
+     🎄 CHRISTMAS/WINTER EVENT — menu-wide icy blue/white re-theme.
+     Exact same structure and reasoning as the Halloween block above, just
+     scoped to html.christmas-active instead — cool blue/white/silver in
+     place of warm orange. Both classes are mutually exclusive in practice
+     (only one season is ever actually active at a time via the date
+     windows), but nothing here assumes that, so an admin forcing both on
+     at once for testing won't visually collide in a broken way.
+     ============================================================ */
+  html.christmas-active #startBtn {
+    background: linear-gradient(135deg, #4fc3f7, #1565c0) !important;
+    box-shadow: 0 8px 26px rgba(80,180,255,0.55) !important;
+  }
+  html.christmas-active .menuBtn {
+    background: linear-gradient(135deg, rgba(120,190,255,0.28), rgba(60,130,220,0.22)) !important;
+    border-color: rgba(160,210,255,0.5) !important;
+  }
+  html.christmas-active .menuBtn:hover {
+    background: linear-gradient(135deg, rgba(120,190,255,0.5), rgba(60,130,220,0.4)) !important;
+  }
+  html.christmas-active #shopBtn, html.christmas-active #pauseShopBtn, html.christmas-active #achievementsBtn, html.christmas-active #galleryBtn, html.christmas-active #statsBtn, html.christmas-active #coopBtn, html.christmas-active #friendsBtn, html.christmas-active #adminPanelBtn {
+    background: linear-gradient(135deg, rgba(120,190,255,0.28), rgba(60,130,220,0.22)) !important;
+    border-color: rgba(160,210,255,0.5) !important;
+    color: #fff !important;
+  }
+  html.christmas-active #shopBtn:hover, html.christmas-active #pauseShopBtn:hover, html.christmas-active #achievementsBtn:hover, html.christmas-active #galleryBtn:hover, html.christmas-active #statsBtn:hover, html.christmas-active #coopBtn:hover, html.christmas-active #friendsBtn:hover, html.christmas-active #adminPanelBtn:hover {
+    background: linear-gradient(135deg, rgba(120,190,255,0.5), rgba(60,130,220,0.4)) !important;
+  }
+  html.christmas-active #startScreen h1, html.christmas-active #profileScreen h1, html.christmas-active #galleryScreen h1, html.christmas-active #shopScreen h1, html.christmas-active #achievementsScreen h1 {
+    background: linear-gradient(135deg, #ffffff, #7ec8ff, #4a6fff) !important;
+    -webkit-background-clip: text !important; background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+  }
+  html.christmas-active #activeProfileBadge:hover { background: rgba(120,190,255,0.15) !important; border-color: rgba(160,210,255,0.6) !important; }
+  html.christmas-active #worldSelectBadge, html.christmas-active .galleryTabBtn.active, html.christmas-active #worldSelectBox .worldBtn.selected {
+    background: linear-gradient(135deg, rgba(120,190,255,0.35), rgba(60,130,220,0.35)) !important;
+    border-color: rgba(160,210,255,0.7) !important;
+  }
+  html.christmas-active #musicUnlockHint span {
+    background: linear-gradient(135deg, rgba(120,190,255,0.3), rgba(60,130,220,0.15)) !important;
+    border-color: rgba(160,210,255,0.8) !important;
+    box-shadow: 0 15px 50px rgba(0,0,0,0.55), 0 0 45px rgba(100,170,255,0.45) !important;
+  }
+  html.christmas-active .stat-box, html.christmas-active .startPanel #activeProfileBadge, html.christmas-active #worldSelectBox { border-color: rgba(160,210,255,0.25) !important; }
+  html.christmas-active #totalTrophyLine, html.christmas-active .heroTagline { color: rgba(210,235,255,0.85) !important; }
 </style>
 </head>
 <body>
@@ -2366,6 +2439,26 @@
     });
   }
   document.addEventListener('DOMContentLoaded', addHalloweenPumpkinCorners);
+</script>
+
+<script>
+  // 🎄 Same idea, same corners, snowflakes instead of pumpkins — and its
+  // own independent "already added" flag, so a panel can pick up both at
+  // once without either function's check on the other's marker.
+  function addChristmasSnowflakeCorners(){
+    if (!window.__christmasActive) return;
+    document.querySelectorAll('.startPanel').forEach(panel => {
+      if (panel.dataset.xmasSnowflakesAdded) return;
+      panel.dataset.xmasSnowflakesAdded = '1';
+      ['tl','tr','bl','br'].forEach(corner => {
+        const span = document.createElement('span');
+        span.className = 'hwCornerPumpkin xmasCornerSnowflake ' + corner; // reuses the pumpkin corner's position/sway animation rules, just with its own class for the icon-specific styling
+        span.textContent = '❄️';
+        panel.appendChild(span);
+      });
+    });
+  }
+  document.addEventListener('DOMContentLoaded', addChristmasSnowflakeCorners);
 </script>
 
 <script>
@@ -3443,6 +3536,7 @@
         <button class="adminActionBtn hwOnlyAdminBtn" id="adminPumpkinKeycapsBtn">🎃 Kürbis Keycaps</button>
         <button class="adminActionBtn hwOnlyAdminBtn" id="adminGhostKeycapsBtn">👻 Geister Keycap</button>
         <button class="adminActionBtn" id="adminHalloweenForceBtn">🎃 Halloween-Version: AN</button>
+        <button class="adminActionBtn" id="adminChristmasForceBtn">🎄 Weihnachts-Version: AN</button>
       </div>
       <div class="settingsToggleRow" style="margin-top:12px;">
         <span>🛡️ God Mode (unverwundbar)</span>
@@ -3823,6 +3917,7 @@
   let friendBroadcastRef = null;
   let globalEffectsRef = null;
   let halloweenForceRef = null;
+  let christmasForceRef = null;
   let lastHandledRingBroadcast = 0; // the ring is a one-time SPAWN action, not a continuous "forced until" state like the others — this tracks which broadcast was already acted on, so the same one doesn't re-trigger every time this listener fires
   let lastHandledGoldenKeycapsBroadcast = 0; // same one-time-action pattern as the ring above
   let lastHandledRainbowKeycapsBroadcast = 0;
@@ -3945,6 +4040,17 @@
       storageSet('rankmann_halloweenAdminForce', incoming);
       location.reload();
     }, () => {}); // offline/permission-denied — just keep using whatever was last cached locally (or the real date, if nothing was ever cached)
+
+    // 🎄 Same global sync, same reasoning, for the Christmas/Winter event.
+    christmasForceRef = firebase.database().ref('globalSettings/christmasForce');
+    christmasForceRef.on('value', snapshot => {
+      const data = snapshot.val();
+      const incoming = (data && typeof data.force === 'boolean') ? data.force : null;
+      const cachedLocally = storageGet('rankmann_christmasAdminForce', null);
+      if (incoming === cachedLocally) return;
+      storageSet('rankmann_christmasAdminForce', incoming);
+      location.reload();
+    }, () => {});
 
     // Boss event — everyone connected reacts the moment this flips on/off,
     // and the boss's HP itself lives here too (shared, synced) so every
@@ -5853,6 +5959,17 @@
   let halloweenEventActive = window.__halloweenActive;
   moonMesh.visible = halloweenEventActive; // set here rather than at moon creation — this flag isn't declared yet at that point in the file
   moonGlow.visible = halloweenEventActive;
+  // 🎄 Christmas/Winter event — same reasoning and pattern as Halloween
+  // above, active Dec 1 – Jan 6 by default, with its own independent
+  // admin override synced through Firebase the same way.
+  function isChristmasDateWindow(){
+    const now = new Date();
+    const month = now.getMonth();
+    const day = now.getDate();
+    return (month === 11 && day >= 1) || (month === 0 && day <= 6);
+  }
+  let christmasAdminForce = storageGet('rankmann_christmasAdminForce', null);
+  let christmasEventActive = window.__christmasActive;
   function updateShopHalloweenBadgeVisibility(){
     const el = document.getElementById('shopHalloweenBadge');
     if (!el) return;
@@ -8152,29 +8269,34 @@
     head.position.y = 1.05;
     head.castShadow = true;
     torsoGroup.add(head);
-    // simple flat facial features on the front of the head
+    // simple flat facial features on the front of the head — parented to
+    // the head itself (not torsoGroup) so they actually turn along with
+    // it when the head rotates independently, e.g. the shop preview's
+    // mouse look-at. Positions below are relative to head's own local
+    // origin now, not torsoGroup's — each is the old torsoGroup-relative Y
+    // minus head's own 1.05 offset, so nothing visually moved from before.
     [-1, 1].forEach(side => {
       const eye = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.07, 0.02), faceFeatureMat);
-      eye.position.set(side*0.15, 1.08, 0.29);
-      torsoGroup.add(eye);
+      eye.position.set(side*0.15, 0.03, 0.29);
+      head.add(eye);
     });
     const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.03, 0.02), faceFeatureMat);
-    mouth.position.set(0, 0.92, 0.29);
-    torsoGroup.add(mouth);
+    mouth.position.set(0, -0.13, 0.29);
+    head.add(mouth);
     const eyebrowMat = faceFeatureMat;
     [-1, 1].forEach(side => {
       const brow = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.025, 0.02), eyebrowMat);
-      brow.position.set(side*0.15, 1.15, 0.29);
+      brow.position.set(side*0.15, 0.10, 0.29);
       brow.rotation.z = -side * 0.15;
-      torsoGroup.add(brow);
+      head.add(brow);
     });
 
     // messy but coherent hair — a single continuous, organically-bumped dome
     // (guaranteed no gaps or floating "pebbles") plus a few larger accent clumps
     // for a side-swept fringe, all firmly overlapping the dome
     const hairGroup = new THREE.Group();
-    hairGroup.position.set(0, 1.05, 0);
-    torsoGroup.add(hairGroup);
+    hairGroup.position.set(0, 0, 0); // was (0, 1.05, 0) under torsoGroup — now parented to head itself, so it sits at head's own local origin instead
+    head.add(hairGroup);
 
     let hairSeed = 7;
     function hairRandom(){ // small deterministic PRNG so the hairstyle is stable across reloads
@@ -9125,6 +9247,12 @@
     if (pointerLocked) {
       dx = e.movementX; dy = e.movementY;
     } else if (dragLooking) {
+      // Not negated (back to the original, un-flipped delta) — now that
+      // the character's default preview facing itself got flipped 180°
+      // (see enterPreview() above), the previous negation here ended up
+      // backwards again: flipping which way the character faces by default
+      // also flips which drag direction "feels" like it matches, since
+      // left/right are relative to which way you're already looking at it.
       dx = e.clientX - lastMouseX;
       dy = e.clientY - lastMouseY;
       lastMouseX = e.clientX;
@@ -11176,6 +11304,30 @@
       setTimeout(() => location.reload(), 900);
     }
   });
+  function updateChristmasForceBtnLabel(){
+    const btn = document.getElementById('adminChristmasForceBtn');
+    if (!btn) return;
+    btn.textContent = '🎄 Weihnachts-Version: ' + (christmasEventActive ? 'AN' : 'AUS');
+  }
+  updateChristmasForceBtnLabel();
+  document.getElementById('adminChristmasForceBtn').addEventListener('click', () => {
+    const newValue = !christmasEventActive;
+    if (firebaseReady() && christmasForceRef){
+      christmasForceRef.set({ force: newValue, updatedAt: firebase.database.ServerValue.TIMESTAMP }).then(() => {
+        showAdminToast('🎄 Weihnachts-Version global ' + (newValue ? 'AN' : 'AUS') + ' — wird bei allen Spielern (und bei dir) übernommen, Seite lädt gleich neu...');
+      }).catch(() => {
+        christmasAdminForce = newValue;
+        storageSet('rankmann_christmasAdminForce', newValue);
+        showAdminToast('⚠️ Konnte nicht global gesendet werden — nur lokal bei dir geändert. Seite lädt neu...');
+        setTimeout(() => location.reload(), 900);
+      });
+    } else {
+      christmasAdminForce = newValue;
+      storageSet('rankmann_christmasAdminForce', newValue);
+      showAdminToast('🎄 Weihnachts-Version ' + (newValue ? 'AN' : 'AUS') + ' (nur lokal, keine Verbindung) — Seite lädt neu...');
+      setTimeout(() => location.reload(), 900);
+    }
+  });
   document.getElementById('adminAnnounceBtn').addEventListener('click', () => {
     const input = document.getElementById('adminAnnounceInput');
     const text = input.value.trim();
@@ -12097,6 +12249,14 @@
 
   function enterPreview(){
     previewMode = true;
+    // Releases the gameplay camera's pointer lock, if it was still active
+    // from before the shop was opened — while locked, the OS cursor never
+    // actually moves, so mousemove events keep reporting a frozen
+    // clientX/clientY instead of the cursor's real screen position, which
+    // is exactly why the head-tracking below appeared to only respond
+    // while click-dragging (that happened to release the lock) rather than
+    // to plain mouse movement.
+    if (document.pointerLockElement) document.exitPointerLock();
     previewCamNeedsSnap = true;
     previewingSkinId = equippedSkin;
     applySkin(equippedSkin); // clear any leftover preview from the shop grid's own swatch clicks
@@ -12104,7 +12264,11 @@
     camZoom = 3.4; // close full-body framing, still free to scroll-zoom further
     player.pitch = 0.12; // a sensible default framing angle regardless of prior camera state
     playerMesh.position.copy(player.pos);
-    playerMesh.rotation.y = player.faceYaw;
+    // +Math.PI so the character's FACE is what greets you by default —
+    // player.faceYaw alone pointed it away from the camera (showing the
+    // back of the head/hair first), since it's the direction the character
+    // was actually walking in-game, not a "look at the camera" direction.
+    playerMesh.rotation.y = player.faceYaw + Math.PI;
     // Reset the pose to a clean idle stance — otherwise it can be frozen
     // mid-run/jump/attack from whatever was happening when the game paused.
     legPivots[0].rotation.x = 0;
@@ -12117,6 +12281,7 @@
     torsoGroup.rotation.z = 0;
     torsoGroup.position.y = 0.85;
     body.rotation.z = 0;
+    head.rotation.set(0, 0, 0); // clean slate for the mouse look-at below, instead of possibly starting mid-turn from a previous preview session
     anim.walkPhase = 0;
     anim.heroLandT = 0;
     attackSwingT = 0;
@@ -12154,6 +12319,57 @@
     scene.fog = worldFog;
     updateShopUI();
     updateTouchControlsVisibility();
+    // Reset the head/torso look-at from the preview back to neutral, so
+    // none of it carries over into normal gameplay poses once we leave.
+    head.rotation.set(0, 0, 0);
+    torsoGroup.rotation.y = 0;
+  }
+
+  // 🖱️ Minecraft-inventory-style look-at: while the character showcase
+  // (shop preview) is open, the head — and a smaller amount of the torso —
+  // turns to track the mouse cursor anywhere on screen, regardless of which
+  // direction the character actually faces. Tracked globally (cheap, just
+  // two numbers) but only ever actually applied while previewMode is true.
+  let previewMouseNX = 0, previewMouseNY = 0; // normalized -1..1 across the viewport
+  window.addEventListener('mousemove', (e) => {
+    previewMouseNX = (e.clientX / window.innerWidth) * 2 - 1;
+    previewMouseNY = (e.clientY / window.innerHeight) * 2 - 1;
+  });
+  function updatePreviewLookAt(dt){
+    if (!previewMode) return;
+    // While actively drag-rotating the character (holding the mouse down
+    // and moving — the existing system that spins the whole character via
+    // player.yaw, further up in this file), this simply doesn't touch the
+    // head/torso's own local rotation at all, rather than actively easing
+    // it toward neutral every frame — running extra rotation math on top
+    // of the drag each frame was itself adding visible jitter to what
+    // should just be the drag system's own smooth motion. The head stays
+    // exactly wherever it was and rides along with the whole-character
+    // spin for free (since it's a child transform), then simply resumes
+    // tracking the cursor once the drag ends.
+    if (dragLooking) return;
+    // player.yaw here doubles as "how far around the character the camera
+    // has orbited" (0 = viewing the front, π = viewing directly from
+    // behind) — the character itself no longer rotates in preview (see
+    // enterPreview()/the previewMode block above), only the camera does.
+    // Multiplying by cos(player.yaw) explicitly detects and compensates
+    // for that: at the front it's +1 (mouse-right turns the head to
+    // screen-right, as already confirmed correct), and it continuously
+    // flips through 0 and on to -1 as the camera swings around to the
+    // back — so the exact same rightward mouse movement ends up turning
+    // the head toward screen-LEFT once you're looking at the character
+    // from behind, matching how it'd actually look to walk around and
+    // watch someone's head turn from the far side, rather than leaving it
+    // to accidental projection geometry to (maybe) work out that way.
+    const facingSign = Math.cos(player.yaw);
+    const targetHeadYaw = previewMouseNX * 0.6 * facingSign;    // ~34° max left/right — flipped back per feedback: mouse-left should turn the head left on screen, not right
+    const targetHeadPitch = previewMouseNY * 0.4;   // ~23° max up/down — unaffected by the orbit angle, since looking up/down doesn't mirror the way left/right does
+    const targetTorsoYaw = previewMouseNX * 0.15 * facingSign;   // the body only turns a little, most of the tracking reads through the head
+    const easeHead = Math.min(1, dt * 8);
+    const easeTorso = Math.min(1, dt * 6);
+    head.rotation.y += (targetHeadYaw - head.rotation.y) * easeHead;
+    head.rotation.x += (targetHeadPitch - head.rotation.x) * easeHead;
+    torsoGroup.rotation.y += (targetTorsoYaw - torsoGroup.rotation.y) * easeTorso;
   }
 
   const livesBarFill = document.getElementById('lives-bar-fill');
@@ -12392,6 +12608,7 @@
       // Normal camera-follow only runs during active gameplay — while paused/
       // pre-start (which is when the shop is open) it wouldn't update at all,
       // so the 360° preview needs its own minimal camera updater here.
+      updatePreviewLookAt(dt); // same reasoning — the main per-frame update loop below never runs while previewMode is true (this block returns early before reaching it), so the mouse look-at needs to be driven from here instead
       const HEAD_OFFSET = 0.95;
       const headTarget = player.pos.clone().add(new THREE.Vector3(0, HEAD_OFFSET, 0));
       const lookDir = new THREE.Vector3(
@@ -12408,13 +12625,19 @@
       }
       camera.position.copy(previewCamPos);
       camera.lookAt(headTarget);
-      // Face the character toward wherever the camera currently is (the
-      // opposite of the normal walking convention, where facing "forward"
-      // points AWAY from a camera sitting behind you) — otherwise the
-      // player just stares off in whatever direction they last walked
-      // before opening the shop, which could easily leave the camera
-      // looking at the back of their head instead of their face.
-      playerMesh.rotation.y = player.yaw;
+      // Deliberately NOT re-syncing playerMesh.rotation.y to player.yaw
+      // here every frame anymore — that was the actual bug behind "dragging
+      // barely rotates the character before it starts acting up": since
+      // BOTH the camera's orbit position AND the character's facing were
+      // driven by the exact same yaw value, they always moved in lockstep,
+      // so the camera could never actually reveal a different side of the
+      // character — you'd always be looking at the same face-on view no
+      // matter how far you dragged, with the drag's own inertia/smoothing
+      // just briefly masking that before it visibly "snapped back". The
+      // character's facing is set ONCE, when entering preview (see
+      // enterPreview() above), and stays put from then on — only the
+      // camera orbits around it via yaw, which is what actually makes a
+      // drag show you different angles of the character.
       playerMesh.visible = true;
       renderer.render(scene, camera);
       return;
