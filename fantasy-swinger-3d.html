@@ -12249,6 +12249,14 @@
 
   function enterPreview(){
     previewMode = true;
+    // Hides the always-on settings/music buttons for the duration of the
+    // preview — they normally sit above the 3D scene during regular
+    // gameplay too, but the preview doesn't cover that area with its own
+    // backdrop the way the rest of the shop screen does, so they'd
+    // otherwise float distractingly over the character right in the
+    // middle of what's meant to be a focused "look at your skin" view.
+    document.getElementById('settingsFab').style.display = 'none';
+    document.getElementById('musicFab').style.display = 'none';
     // Releases the gameplay camera's pointer lock, if it was still active
     // from before the shop was opened — while locked, the OS cursor never
     // actually moves, so mousemove events keep reporting a frozen
@@ -12309,6 +12317,8 @@
     applySkin(equippedSkin); // revert any unbought preview
     document.getElementById('previewBar').classList.add('hidden');
     document.getElementById('shopScreen').classList.remove('hidden');
+    document.getElementById('settingsFab').style.display = '';
+    document.getElementById('musicFab').style.display = '';
     // Restore whichever menu was open before entering preview.
     if (!running) document.getElementById('startScreen').style.display = 'flex';
     else if (paused) document.getElementById('pauseScreen').style.display = 'flex';
