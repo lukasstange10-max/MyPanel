@@ -2419,6 +2419,25 @@
 </head>
 <body>
 
+<!--
+  🌀 Loading screen — deliberately placed as the very first thing in <body>,
+  before any script tag, so it's visible as soon as the browser has parsed
+  this far — even while the rest of this (fairly large) file is still
+  downloading over a slower connection. Pure HTML/CSS, no JS dependency,
+  so nothing has to finish loading first for it to actually show up.
+  Hidden by the window 'load' event at the very end of this file, which
+  only fires once every script tag (including the big one that builds the
+  entire 3D world/keycap grid) has finished running.
+-->
+<div id="rankmannLoadingScreen" style="position:fixed; inset:0; z-index:999999; background:#0a0518; display:flex; flex-direction:column; align-items:center; justify-content:center; font-family:'Poppins','Segoe UI',Arial,sans-serif; transition:opacity 0.5s ease;">
+  <div style="width:64px; height:64px; border-radius:50%; border:5px solid rgba(157,123,255,0.25); border-top-color:#9d7bff; animation:rankmannLoadSpin 0.9s linear infinite;"></div>
+  <div style="margin-top:22px; color:#fff; font-size:20px; font-weight:800; letter-spacing:0.3px;">Rankmann wird geladen…</div>
+  <div style="margin-top:8px; color:rgba(255,255,255,0.5); font-size:13px;">Einen Moment, die Welt wird aufgebaut</div>
+</div>
+<style>
+  @keyframes rankmannLoadSpin { to { transform: rotate(360deg); } }
+</style>
+
 <script>
   // 🎃 Adds a swaying pumpkin to each corner of every start-screen panel.
   // Done here (once, right after the panels exist in the HTML) rather than
@@ -14192,6 +14211,18 @@
   });
 
   animate();
+  // Loading screen's job is done — everything above has finished running,
+  // meaning the whole 3D world, the keycap grid, and the profile picker
+  // are all built and ready to interact with. Faded out rather than
+  // instantly removed, and taken out of the DOM afterward so it can never
+  // accidentally intercept a click once it's invisible.
+  (function(){
+    const loader = document.getElementById('rankmannLoadingScreen');
+    if (!loader) return;
+    loader.style.opacity = '0';
+    loader.style.pointerEvents = 'none'; // otherwise the still-fading (but invisible) overlay would keep swallowing clicks for the next 550ms
+    setTimeout(() => loader.remove(), 550);
+  })();
 })();
 </script>
 </body>
