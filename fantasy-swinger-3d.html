@@ -12083,10 +12083,18 @@
     document.getElementById('spinWheelResultText').textContent = '';
     updateSpinWheelBtnLabel();
     document.getElementById('spinWheelOverlay').classList.add('show');
+    // Same reasoning as the shop's character preview — these two float above
+    // the 3D scene during normal play, but the wheel's own backdrop doesn't
+    // get layered in behind them, so they'd otherwise sit distractingly on
+    // top of it in the corners.
+    document.getElementById('settingsFab').style.display = 'none';
+    document.getElementById('musicFab').style.display = 'none';
   }
   function closeSpinWheel(){
     if (spinWheelInProgress) return; // no closing mid-spin — the result needs to actually be seen and applied first
     document.getElementById('spinWheelOverlay').classList.remove('show');
+    document.getElementById('settingsFab').style.display = '';
+    document.getElementById('musicFab').style.display = '';
   }
   // Everything below is timed to the recorded spin sound ("spinWheel" clip,
   // ~10.5s): a ratchet that speeds up, then slows down click by click,
