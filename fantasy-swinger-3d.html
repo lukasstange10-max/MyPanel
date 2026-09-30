@@ -2483,6 +2483,29 @@
   @keyframes rankmannLoadSpin { to { transform: rotate(360deg); } }
 </style>
 <script>
+  // This runs before the profile picker and the main game script, so — same
+  // as the date-window detection right below — it needs its own tiny direct
+  // read of rankmann_lang (a global, not per-profile, key) rather than
+  // waiting for the real translation system to exist.
+  (function(){
+    var LOAD_I18N = {
+      de: ['Rankmann wird geladen…', 'Einen Moment, die Welt wird aufgebaut', 'Das dauert länger als erwartet…', 'Eventuell ist die Internetverbindung langsam, oder etwas ist schiefgelaufen.', 'Seite neu laden'],
+      en: ['Loading Rankmann…', 'One moment, the world is being built', 'This is taking longer than expected…', 'The internet connection might be slow, or something went wrong.', 'Reload page'],
+      fr: ['Chargement de Rankmann…', 'Un instant, le monde est en cours de création', 'Cela prend plus de temps que prévu…', 'La connexion internet est peut-être lente, ou quelque chose s\u2019est mal passé.', 'Recharger la page'],
+      es: ['Cargando Rankmann…', 'Un momento, se está construyendo el mundo', 'Esto está tardando más de lo esperado…', 'La conexión a internet podría ser lenta, o algo salió mal.', 'Recargar página'],
+      pt: ['Carregando Rankmann…', 'Um momento, o mundo está sendo construído', 'Isso está demorando mais do que o esperado…', 'A conexão com a internet pode estar lenta, ou algo deu errado.', 'Recarregar página'],
+    };
+    var lang = 'de';
+    try { var raw = localStorage.getItem('rankmann_lang'); if (raw) lang = JSON.parse(raw); } catch(e){}
+    var strs = LOAD_I18N[lang] || LOAD_I18N.de;
+    document.getElementById('rankmannLoadingTitle').textContent = strs[0];
+    document.getElementById('rankmannLoadingSubtitle').textContent = strs[1];
+    window.__loadI18nTimeout = strs[2];
+    window.__loadI18nTimeoutSub = strs[3];
+    document.getElementById('rankmannLoadingReloadBtn').textContent = strs[4];
+  })();
+</script>
+<script>
   // Safety net, completely independent of the huge game script further
   // down — if THAT script hangs or throws somewhere before ever reaching
   // its own "hide the loader" call at the very end (a slow connection, a
@@ -2495,8 +2518,8 @@
     var loader = document.getElementById('rankmannLoadingScreen');
     if (!loader || loader.style.opacity === '0') return; // already hidden the normal way — nothing to do
     document.getElementById('rankmannLoadingSpinner').style.display = 'none';
-    document.getElementById('rankmannLoadingTitle').textContent = 'Das dauert länger als erwartet…';
-    document.getElementById('rankmannLoadingSubtitle').textContent = 'Eventuell ist die Internetverbindung langsam, oder etwas ist schiefgelaufen.';
+    document.getElementById('rankmannLoadingTitle').textContent = window.__loadI18nTimeout;
+    document.getElementById('rankmannLoadingSubtitle').textContent = window.__loadI18nTimeoutSub;
     document.getElementById('rankmannLoadingReloadBtn').style.display = 'inline-block';
     document.getElementById('rankmannLoadingReloadBtn').onclick = function(){ location.reload(); };
   }, 20000);
@@ -3148,8 +3171,8 @@
 
 <div id="profileScreen" class="hidden">
   <div class="startPanel" id="profilePanel">
-    <h1 style="font-size:28px;">👤 Wer spielt?</h1>
-    <p class="heroTagline">Wähle dein Profil oder erstelle ein neues</p>
+    <h1 id="profileScreenTitle" style="font-size:28px;">👤 Wer spielt?</h1>
+    <p class="heroTagline" id="profileScreenSubtitle">Wähle dein Profil oder erstelle ein neues</p>
     <div id="profileList"></div>
     <form id="profileCreateForm" class="hidden" onsubmit="return false;" autocomplete="off">
       <p class="heroTagline" style="margin-bottom:0;" id="profileFormTitle">Avatar wählen</p>
@@ -3179,8 +3202,8 @@
 <div id="bannedScreen" class="hidden">
   <div id="bannedScreenInner">
     <div id="bannedIcon">🚫</div>
-    <h1>Gesperrt</h1>
-    <p>Dieses Profil wurde von einem Admin gesperrt und kann nicht mehr verwendet werden.</p>
+    <h1 id="bannedTitle">Gesperrt</h1>
+    <p id="bannedBody">Dieses Profil wurde von einem Admin gesperrt und kann nicht mehr verwendet werden.</p>
   </div>
 </div>
 
@@ -3192,6 +3215,133 @@
   (function(){
     var AVATARS = ['🦸','🧙','🥷','🧝','🐉','⚡','🌟','🎭','🦊','🐺','🌙','🔥','🏹','🛡️','💎','👑'];
     var FIREBASE_DB_URL = 'https://spider-man-1e227-default-rtdb.europe-west1.firebasedatabase.app';
+
+    // This whole screen runs before the main game script (and its full
+    // TRANSLATIONS table) even exists, so it needs its own small copy of
+    // just the strings it actually uses — wording kept identical to the
+    // main table's de/en/fr/es/pt entries for the same keys, so nothing
+    // reads differently once the main game takes over. rankmann_lang is a
+    // global (not per-profile) key, so it's safe to read directly here,
+    // before any profile has even been chosen yet.
+    var PP_I18N = {
+      de: {
+        whoPlays: '👤 Wer spielt?', chooseProfile: 'Wähle dein Profil oder erstelle ein neues',
+        chooseAvatar: 'Avatar wählen', nameInput: 'Name eingeben...', passwordInput: 'Passwort eingeben...',
+        passwordThinkUp: 'Passwort ausdenken...', forgotPassword: 'Passwort vergessen?', recheckNow: '🔄 Jetzt prüfen',
+        newPwGranted: '🔑 Ein Admin hat dir ein neues Passwort vergeben!', clickToReveal: '👆 Klicken zum Anzeigen',
+        confirmBtn: '✅ Bestätigen', cancelBtn: '✕ Abbrechen',
+        footerNote: '🔒 Jeder Name ist geräteübergreifend mit einem Passwort geschützt.',
+        banned: 'Gesperrt', bannedBody: 'Dieses Profil wurde von einem Admin gesperrt und kann nicht mehr verwendet werden.',
+        deleteTitle: 'Löschen', newProfile: 'Neues Profil',
+        confirmDelete: function(n){ return 'Profil "' + n + '" wirklich löschen? Der gesamte Spielstand geht verloren.'; },
+        helloEnterPw: function(n){ return 'Hallo ' + n + ' — bitte Passwort eingeben'; },
+        needPassword: 'Bitte ein Passwort für diesen Namen festlegen.', checkingName: '⏳ Prüfe Namen...',
+        nameBanned: '🚫 Dieser Name wurde gesperrt und kann nicht mehr verwendet werden.',
+        pwCorrect: '✅ Passwort korrekt', pwWrong: '❌ Falsches Passwort für diesen Namen.',
+        offlineFallback: '⚠️ Konnte nicht online prüfen — Profil wird trotzdem lokal erstellt.',
+        pwResetSending: '⏳ Anfrage wird gesendet...',
+        pwResetSent: '📨 Anfrage an den Admin gesendet. Diese Seite offen lassen — sobald ein neues Passwort vergeben wurde, erscheint es hier automatisch.',
+        pwResetFailed: '❌ Anfrage konnte nicht gesendet werden — bitte den Admin direkt ansprechen.',
+      },
+      en: {
+        whoPlays: "👤 Who's playing?", chooseProfile: 'Choose your profile or create a new one',
+        chooseAvatar: 'Choose an avatar', nameInput: 'Enter a name...', passwordInput: 'Enter password...',
+        passwordThinkUp: 'Think up a password...', forgotPassword: 'Forgot password?', recheckNow: '🔄 Check now',
+        newPwGranted: '🔑 An admin has set you a new password!', clickToReveal: '👆 Click to reveal',
+        confirmBtn: '✅ Confirm', cancelBtn: '✕ Cancel',
+        footerNote: '🔒 Every name is protected by a password across devices.',
+        banned: 'Banned', bannedBody: 'This profile was banned by an admin and can no longer be used.',
+        deleteTitle: 'Delete', newProfile: 'New profile',
+        confirmDelete: function(n){ return 'Really delete profile "' + n + '"? All save data will be lost.'; },
+        helloEnterPw: function(n){ return 'Hi ' + n + ' — please enter your password'; },
+        needPassword: 'Please set a password for this name.', checkingName: '⏳ Checking name...',
+        nameBanned: '🚫 This name has been banned and can no longer be used.',
+        pwCorrect: '✅ Password correct', pwWrong: '❌ Wrong password for this name.',
+        offlineFallback: '⚠️ Could not check online — profile will be created locally anyway.',
+        pwResetSending: '⏳ Sending request...',
+        pwResetSent: '📨 Request sent to the admin. Keep this page open — once a new password is set, it will appear here automatically.',
+        pwResetFailed: '❌ Request could not be sent — please contact the admin directly.',
+      },
+      fr: {
+        whoPlays: '👤 Qui joue ?', chooseProfile: 'Choisis ton profil ou crées-en un nouveau',
+        chooseAvatar: 'Choisir un avatar', nameInput: 'Entrer un nom...', passwordInput: 'Entrer le mot de passe...',
+        passwordThinkUp: 'Choisir un mot de passe...', forgotPassword: 'Mot de passe oublié ?', recheckNow: '🔄 Vérifier maintenant',
+        newPwGranted: '🔑 Un admin t\u2019a défini un nouveau mot de passe !', clickToReveal: '👆 Cliquer pour afficher',
+        confirmBtn: '✅ Confirmer', cancelBtn: '✕ Annuler',
+        footerNote: '🔒 Chaque nom est protégé par un mot de passe, quel que soit l\u2019appareil.',
+        banned: 'Banni', bannedBody: 'Ce profil a été banni par un admin et ne peut plus être utilisé.',
+        deleteTitle: 'Supprimer', newProfile: 'Nouveau profil',
+        confirmDelete: function(n){ return 'Vraiment supprimer le profil « ' + n + ' » ? Toute la progression sera perdue.'; },
+        helloEnterPw: function(n){ return 'Bonjour ' + n + ' — merci d\u2019entrer ton mot de passe'; },
+        needPassword: 'Merci de définir un mot de passe pour ce nom.', checkingName: '⏳ Vérification du nom...',
+        nameBanned: '🚫 Ce nom a été banni et ne peut plus être utilisé.',
+        pwCorrect: '✅ Mot de passe correct', pwWrong: '❌ Mot de passe incorrect pour ce nom.',
+        offlineFallback: '⚠️ Vérification en ligne impossible — le profil sera quand même créé localement.',
+        pwResetSending: '⏳ Envoi de la demande...',
+        pwResetSent: '📨 Demande envoyée à l\u2019administrateur. Laisse cette page ouverte — dès qu\u2019un nouveau mot de passe sera défini, il apparaîtra ici automatiquement.',
+        pwResetFailed: '❌ La demande n\u2019a pas pu être envoyée — merci de contacter directement l\u2019administrateur.',
+      },
+      es: {
+        whoPlays: '👤 ¿Quién juega?', chooseProfile: 'Elige tu perfil o crea uno nuevo',
+        chooseAvatar: 'Elegir avatar', nameInput: 'Escribe un nombre...', passwordInput: 'Escribe la contraseña...',
+        passwordThinkUp: 'Piensa una contraseña...', forgotPassword: '¿Olvidaste tu contraseña?', recheckNow: '🔄 Comprobar ahora',
+        newPwGranted: '🔑 ¡Un admin te ha asignado una nueva contraseña!', clickToReveal: '👆 Clic para mostrar',
+        confirmBtn: '✅ Confirmar', cancelBtn: '✕ Cancelar',
+        footerNote: '🔒 Cada nombre está protegido con una contraseña en todos los dispositivos.',
+        banned: 'Bloqueado', bannedBody: 'Este perfil fue bloqueado por un admin y ya no se puede usar.',
+        deleteTitle: 'Eliminar', newProfile: 'Nuevo perfil',
+        confirmDelete: function(n){ return '¿Eliminar de verdad el perfil "' + n + '"? Se perderá todo el progreso.'; },
+        helloEnterPw: function(n){ return 'Hola ' + n + ' — por favor introduce tu contraseña'; },
+        needPassword: 'Por favor define una contraseña para este nombre.', checkingName: '⏳ Comprobando nombre...',
+        nameBanned: '🚫 Este nombre ha sido bloqueado y ya no se puede usar.',
+        pwCorrect: '✅ Contraseña correcta', pwWrong: '❌ Contraseña incorrecta para este nombre.',
+        offlineFallback: '⚠️ No se pudo comprobar en línea — el perfil se creará localmente de todos modos.',
+        pwResetSending: '⏳ Enviando solicitud...',
+        pwResetSent: '📨 Solicitud enviada al administrador. Deja esta página abierta — en cuanto se establezca una nueva contraseña, aparecerá aquí automáticamente.',
+        pwResetFailed: '❌ No se pudo enviar la solicitud — por favor contacta al administrador directamente.',
+      },
+      pt: {
+        whoPlays: '👤 Quem vai jogar?', chooseProfile: 'Escolha seu perfil ou crie um novo',
+        chooseAvatar: 'Escolher avatar', nameInput: 'Digite um nome...', passwordInput: 'Digite a senha...',
+        passwordThinkUp: 'Pense em uma senha...', forgotPassword: 'Esqueceu a senha?', recheckNow: '🔄 Verificar agora',
+        newPwGranted: '🔑 Um admin definiu uma nova senha para você!', clickToReveal: '👆 Clique para mostrar',
+        confirmBtn: '✅ Confirmar', cancelBtn: '✕ Cancelar',
+        footerNote: '🔒 Cada nome é protegido por senha em todos os dispositivos.',
+        banned: 'Banido', bannedBody: 'Este perfil foi banido por um admin e não pode mais ser usado.',
+        deleteTitle: 'Excluir', newProfile: 'Novo perfil',
+        confirmDelete: function(n){ return 'Excluir mesmo o perfil "' + n + '"? Todo o progresso salvo será perdido.'; },
+        helloEnterPw: function(n){ return 'Olá ' + n + ' — digite sua senha'; },
+        needPassword: 'Defina uma senha para este nome.', checkingName: '⏳ Verificando nome...',
+        nameBanned: '🚫 Este nome foi banido e não pode mais ser usado.',
+        pwCorrect: '✅ Senha correta', pwWrong: '❌ Senha incorreta para este nome.',
+        offlineFallback: '⚠️ Não foi possível verificar online — o perfil será criado localmente mesmo assim.',
+        pwResetSending: '⏳ Enviando solicitação...',
+        pwResetSent: '📨 Solicitação enviada ao administrador. Deixe esta página aberta — assim que uma nova senha for definida, ela aparecerá aqui automaticamente.',
+        pwResetFailed: '❌ Não foi possível enviar a solicitação — entre em contato diretamente com o administrador.',
+      },
+    };
+    var ppLang = 'de';
+    try { var rawLang = localStorage.getItem('rankmann_lang'); if (rawLang) ppLang = JSON.parse(rawLang); } catch(e){}
+    if (!PP_I18N[ppLang]) ppLang = 'de';
+    function pt(key){ return PP_I18N[ppLang][key]; } // short for "picker translate" — "t" is already taken further down by the deliberately-undefined call this replaces
+
+    // One-time static text pass — everything below this is either built
+    // dynamically later (already routed through pt()) or was never touched
+    // by any translation at all until now.
+    document.getElementById('profileScreenTitle').textContent = pt('whoPlays');
+    document.getElementById('profileScreenSubtitle').textContent = pt('chooseProfile');
+    document.getElementById('profileFormTitle').textContent = pt('chooseAvatar');
+    document.getElementById('profileNameInput').placeholder = pt('nameInput');
+    document.getElementById('profilePasswordInput').placeholder = pt('passwordInput');
+    document.getElementById('forgotPasswordLink').textContent = pt('forgotPassword');
+    document.getElementById('forgotPasswordRecheckBtn').textContent = pt('recheckNow');
+    document.getElementById('newPasswordRevealLabel').textContent = pt('newPwGranted');
+    document.getElementById('newPasswordRevealBtn').textContent = pt('clickToReveal');
+    document.getElementById('profileCreateConfirmBtn').textContent = pt('confirmBtn');
+    document.getElementById('profileCreateCancelBtn').textContent = pt('cancelBtn');
+    document.getElementById('profilePickerFooter').textContent = pt('footerNote');
+    document.getElementById('bannedTitle').textContent = pt('banned');
+    document.getElementById('bannedBody').textContent = pt('bannedBody');
 
     function rawGet(key, fallback){
       try { var v = localStorage.getItem(key); return v === null ? fallback : JSON.parse(v); }
@@ -3253,11 +3403,11 @@
         card.className = 'profileCard';
         card.innerHTML = '<span class="profileCardAvatar">' + p.avatar + '</span>' +
           '<span class="profileCardName">' + escapeHtml(p.name) + '</span>' +
-          '<span class="profileCardDelete" title="Löschen">✕</span>';
+          '<span class="profileCardDelete" title="' + pt('deleteTitle') + '">✕</span>';
         card.addEventListener('click', function(e){
           if (e.target.classList.contains('profileCardDelete')){
             e.stopPropagation();
-            if (!confirm('Profil "' + p.name + '" wirklich löschen? Der gesamte Spielstand geht verloren.')) return;
+            if (!confirm(pt('confirmDelete')(p.name))) return;
             deleteProfileData(p.id);
             var remaining = profiles.filter(function(x){ return x.id !== p.id; });
             rawSet('rankmann_profiles', remaining);
@@ -3275,7 +3425,7 @@
       });
       var newCard = document.createElement('div');
       newCard.className = 'profileCard profileCardNew';
-      newCard.innerHTML = '<span class="profileCardAvatar">➕</span><span class="profileCardName">Neues Profil</span>';
+      newCard.innerHTML = '<span class="profileCardAvatar">➕</span><span class="profileCardName">' + pt('newProfile') + '</span>';
       newCard.addEventListener('click', showCreateForm);
       listEl.appendChild(newCard);
     }
@@ -3307,7 +3457,7 @@
       document.getElementById('profileList').classList.add('hidden');
       var form = document.getElementById('profileCreateForm');
       form.classList.remove('hidden');
-      document.getElementById('profileFormTitle').textContent = 'Avatar wählen';
+      document.getElementById('profileFormTitle').textContent = pt('chooseAvatar');
       document.getElementById('profileAvatarRow').classList.remove('hidden');
       var row = document.getElementById('profileAvatarRow');
       row.innerHTML = '';
@@ -3327,7 +3477,7 @@
       nameInput.value = '';
       nameInput.readOnly = false;
       document.getElementById('profilePasswordInput').value = '';
-      document.getElementById('profilePasswordInput').placeholder = 'Passwort ausdenken...';
+      document.getElementById('profilePasswordInput').placeholder = pt('passwordThinkUp');
       resetFormExtras();
       setStatus('', '');
       nameInput.focus();
@@ -3336,14 +3486,14 @@
       document.getElementById('profileList').classList.add('hidden');
       var form = document.getElementById('profileCreateForm');
       form.classList.remove('hidden');
-      document.getElementById('profileFormTitle').textContent = 'Hallo ' + profile.name + ' — bitte Passwort eingeben';
+      document.getElementById('profileFormTitle').textContent = pt('helloEnterPw')(profile.name);
       document.getElementById('profileAvatarRow').classList.add('hidden');
       chosenAvatar = profile.avatar; // unused for existing profiles, kept for consistency
       var nameInput = document.getElementById('profileNameInput');
       nameInput.value = profile.name;
       nameInput.readOnly = true;
       document.getElementById('profilePasswordInput').value = '';
-      document.getElementById('profilePasswordInput').placeholder = 'Passwort eingeben...';
+      document.getElementById('profilePasswordInput').placeholder = pt('passwordInput');
       resetFormExtras();
       setStatus('', '');
       document.getElementById('profilePasswordInput').focus();
@@ -3389,18 +3539,18 @@
       var name = nameInput.value.trim().slice(0, 16);
       var password = pwInput.value;
       if (!name){ nameInput.focus(); return; }
-      if (!password){ setStatus('Bitte ein Passwort für diesen Namen festlegen.', 'error'); pwInput.focus(); return; }
+      if (!password){ setStatus(pt('needPassword'), 'error'); pwInput.focus(); return; }
 
       var confirmBtn = document.getElementById('profileCreateConfirmBtn');
       confirmBtn.disabled = true;
-      setStatus('⏳ Prüfe Namen...', '');
+      setStatus(pt('checkingName'), '');
       var key = nameKey(name);
 
       fetchWithTimeout(FIREBASE_DB_URL + '/bannedNames/' + key + '.json', { cache: 'no-store' })
         .then(function(r){ return r.ok ? r.json() : null; })
         .then(function(banEntry){
           if (banEntry){
-            setStatus('🚫 Dieser Name wurde gesperrt und kann nicht mehr verwendet werden.', 'error');
+            setStatus(pt('nameBanned'), 'error');
             confirmBtn.disabled = false;
             return Promise.reject(new Error('banned')); // short-circuit the chain below
           }
@@ -3413,10 +3563,10 @@
             // must match to "log in" as it here too.
             return hashPassword(password).then(function(hash){
               if (hash === existing.passwordHash){
-                setStatus('✅ Passwort korrekt', 'ok');
+                setStatus(pt('pwCorrect'), 'ok');
                 finalizeProfileCreation(name);
               } else {
-                setStatus('❌ Falsches Passwort für diesen Namen.', 'error');
+                setStatus(pt('pwWrong'), 'error');
                 confirmBtn.disabled = false;
               }
             });
@@ -3437,7 +3587,7 @@
           // Firebase unreachable — don't block play over it, just skip the
           // cross-device check this time (best-effort protection, not a hard
           // guarantee, consistent with the rest of the game's offline handling).
-          setStatus('⚠️ Konnte nicht online prüfen — Profil wird trotzdem lokal erstellt.', 'error');
+          setStatus(pt('offlineFallback'), 'error');
           setTimeout(function(){ finalizeProfileCreation(name); }, 900);
         });
     });
@@ -3461,17 +3611,17 @@
       var statusBox = document.getElementById('forgotPasswordStatusBox');
       var statusEl = document.getElementById('forgotPasswordStatus');
       statusBox.classList.remove('hidden');
-      statusEl.textContent = t('pwResetSending');
+      statusEl.textContent = pt('pwResetSending');
       fetchWithTimeout(FIREBASE_DB_URL + '/passwordResetRequests/' + key + '.json', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ requestedAt: Date.now(), name: name }),
       }).then(function(){
-        statusEl.textContent = t('pwResetSent');
+        statusEl.textContent = pt('pwResetSent');
         pendingResetKey = key;
         startPolling(key);
       }).catch(function(){
-        statusEl.textContent = t('pwResetFailed');
+        statusEl.textContent = pt('pwResetFailed');
       });
     });
     function startPolling(key){
@@ -3816,7 +3966,7 @@
   </div>
 </div>
 
-<div id="settingsSavedToast">✅ Gespeichert</div>
+<div id="settingsSavedToast" data-i18n="settingsSaved">✅ Gespeichert</div>
 <div id="resetConfirmOverlay" class="hidden">
   <div id="resetConfirmCard">
     <p data-i18n="resetConfirmText">⚠️ Wirklich <b>alles</b> zurücksetzen? Pokale, Skins, Erfolge, Fotos — alles wird unwiderruflich gelöscht.</p>
@@ -4613,7 +4763,7 @@
       phoneBlockTitle: 'Only playable on PC &amp; tablet', phoneBlockText: "Rankmann currently doesn't run on phones. Please open the game on a computer or tablet to play.",
       hintBar: '<span class="key">WASD</span> move <span class="sep"></span> <span class="key">Shift</span> sprint <span class="sep"></span> <span class="key">Left click + drag</span> look around <span class="sep"></span> <span class="key">Wheel</span> zoom <span class="sep"></span> <span class="key">E</span> hold vine <span class="sep"></span> <span class="key">Right click</span> attack (in range) <span class="sep"></span> <span class="key">Space</span> jump',
       introUnmuteHint: '🔇 Sound is muted — click to enable',
-      musicUnlockHint: '🔊 Enable music',
+      musicUnlockHint: '🔊 Enable music', settingsSaved: '✅ Saved',
       profileSwitchHint: 'Switch', statsBtn: '📊 Statistics', statsTitle: '📊 Statistics', statsSub: 'Your progress at a glance',
       statsPlaytime: 'Playtime', statsTrophies: 'Trophies collected', statsAchievements: 'Achievements unlocked', statsSkins: 'Skins owned',
       statsEnemies: 'Enemies defeated', statsCrystals: 'Crystals collected', statsWorlds: 'Worlds unlocked', statsPhotos: 'Photos taken', closeBtn5: 'Close', statsBtnTitle: 'Statistics',
@@ -4695,7 +4845,7 @@
       phoneBlockTitle: 'Jouable uniquement sur PC et tablette', phoneBlockText: "Rankmann ne fonctionne actuellement pas sur téléphone. Merci d'ouvrir le jeu sur un ordinateur ou une tablette pour jouer.",
       hintBar: '<span class="key">WASD</span> se déplacer <span class="sep"></span> <span class="key">Shift</span> sprinter <span class="sep"></span> <span class="key">Clic gauche + glisser</span> regarder <span class="sep"></span> <span class="key">Molette</span> zoomer <span class="sep"></span> <span class="key">E</span> tenir la liane <span class="sep"></span> <span class="key">Clic droit</span> attaquer (à portée) <span class="sep"></span> <span class="key">Espace</span> sauter',
       introUnmuteHint: '🔇 Son coupé — cliquer pour activer',
-      musicUnlockHint: '🔊 Activer la musique',
+      musicUnlockHint: '🔊 Activer la musique', settingsSaved: '✅ Enregistré',
       profileSwitchHint: 'Changer', statsBtn: '📊 Statistiques', statsTitle: '📊 Statistiques', statsSub: "Ta progression en un coup d'œil",
       statsPlaytime: 'Temps de jeu', statsTrophies: 'Trophées collectés', statsAchievements: 'Succès débloqués', statsSkins: 'Skins possédés',
       statsEnemies: 'Ennemis vaincus', statsCrystals: 'Cristaux collectés', statsWorlds: 'Mondes débloqués', statsPhotos: 'Photos prises', closeBtn5: 'Fermer', statsBtnTitle: 'Statistiques',
@@ -4777,7 +4927,7 @@
       phoneBlockTitle: 'Solo se puede jugar en PC y tablet', phoneBlockText: 'Rankmann actualmente no funciona en móviles. Abre el juego en un ordenador o tablet para jugar.',
       hintBar: '<span class="key">WASD</span> moverse <span class="sep"></span> <span class="key">Shift</span> correr <span class="sep"></span> <span class="key">Clic izq. + arrastrar</span> mirar <span class="sep"></span> <span class="key">Rueda</span> zoom <span class="sep"></span> <span class="key">E</span> sujetar liana <span class="sep"></span> <span class="key">Clic derecho</span> atacar (a distancia) <span class="sep"></span> <span class="key">Espacio</span> saltar',
       introUnmuteHint: '🔇 Sonido silenciado — clic para activar',
-      musicUnlockHint: '🔊 Activar música',
+      musicUnlockHint: '🔊 Activar música', settingsSaved: '✅ Guardado',
       profileSwitchHint: 'Cambiar', statsBtn: '📊 Estadísticas', statsTitle: '📊 Estadísticas', statsSub: 'Tu progreso de un vistazo',
       statsPlaytime: 'Tiempo de juego', statsTrophies: 'Trofeos conseguidos', statsAchievements: 'Logros desbloqueados', statsSkins: 'Skins en posesión',
       statsEnemies: 'Enemigos derrotados', statsCrystals: 'Cristales recolectados', statsWorlds: 'Mundos desbloqueados', statsPhotos: 'Fotos tomadas', closeBtn5: 'Cerrar', statsBtnTitle: 'Estadísticas',
@@ -4859,7 +5009,7 @@
       phoneBlockTitle: 'Jogável apenas em PC e tablet', phoneBlockText: 'No momento o Rankmann não funciona em celulares. Abra o jogo em um computador ou tablet para jogar.',
       hintBar: '<span class="key">WASD</span> mover <span class="sep"></span> <span class="key">Shift</span> correr <span class="sep"></span> <span class="key">Clique esq. + arrastar</span> olhar ao redor <span class="sep"></span> <span class="key">Roda</span> zoom <span class="sep"></span> <span class="key">E</span> segurar o cipó <span class="sep"></span> <span class="key">Clique direito</span> atacar (ao alcance) <span class="sep"></span> <span class="key">Espaço</span> pular',
       introUnmuteHint: '🔇 Som mudo — clique para ativar',
-      musicUnlockHint: '🔊 Ativar música',
+      musicUnlockHint: '🔊 Ativar música', settingsSaved: '✅ Salvo',
       profileSwitchHint: 'Trocar', statsBtn: '📊 Estatísticas', statsTitle: '📊 Estatísticas', statsSub: 'Seu progresso em um relance',
       statsPlaytime: 'Tempo de jogo', statsTrophies: 'Troféus coletados', statsAchievements: 'Conquistas desbloqueadas', statsSkins: 'Skins adquiridas',
       statsEnemies: 'Inimigos derrotados', statsCrystals: 'Cristais coletados', statsWorlds: 'Mundos desbloqueados', statsPhotos: 'Fotos tiradas', closeBtn5: 'Fechar', statsBtnTitle: 'Estatísticas',
