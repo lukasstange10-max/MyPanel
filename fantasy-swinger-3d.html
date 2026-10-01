@@ -1088,6 +1088,48 @@
     background: linear-gradient(135deg, rgba(255,180,80,0.45), rgba(157,123,255,0.45));
   }
 
+    position: relative; margin-top: 28px;
+  }
+  .key { background: rgba(255,255,255,0.15); border-radius: 4px; padding: 2px 7px; font-weight: bold; }
+
+  #pauseScreen {
+    position: fixed; inset: 0; z-index: 150;
+    background: rgba(10,5,20,0.72);
+    backdrop-filter: blur(7px) saturate(1.2);
+    -webkit-backdrop-filter: blur(7px) saturate(1.2);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; text-align: center;
+  }
+  #pauseMenuButtons {
+    display: flex; flex-direction: column; gap: 12px;
+    margin-top: 22px;
+  }
+  .menuBtn {
+    padding: 13px 24px; font-size: 16px; font-weight: 700;
+    background: linear-gradient(135deg, rgba(138,92,255,0.25), rgba(92,140,255,0.25));
+    border: 1px solid rgba(180,140,255,0.4);
+    border-radius: 14px; color: #fff; cursor: pointer;
+    transition: transform 0.15s ease, background 0.2s ease;
+    letter-spacing: 0.3px;
+  }
+  .menuBtn:hover {
+    transform: translateY(-2px) scale(1.02);
+    background: linear-gradient(135deg, rgba(138,92,255,0.45), rgba(92,140,255,0.45));
+  }
+  #pauseControlsList {
+    margin-top: 26px; padding-top: 18px;
+    border-top: 1px solid rgba(255,255,255,0.15);
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .pauseControlRow {
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 13px; color: rgba(255,255,255,0.75);
+  }
+  .pauseControlRow .key { margin-right: 10px; }
+
+  #startBtnRow { display: flex; gap: 12px; justify-content: center; align-items: center; margin-top: 28px; flex-wrap: wrap; }
+  #startBtnRow #startBtn { margin-top: 0; }
+
   #settingsFab {
     position: fixed; top: 20px; right: 20px; z-index: 101;
     width: 52px; height: 52px; border-radius: 50%;
@@ -6618,6 +6660,7 @@
       k.pumpkinBeam.visible = true;
       k.pumpkinPulseT = Math.random() * Math.PI * 2;
       k.mesh.visible = keyboardKeysWanted && k.world === selectedWorld; // same fix as golden keycaps — "without keys" now hides pumpkin ones too, no exceptions
+      if (!activePumpkinKeycaps.includes(k)) activePumpkinKeycaps.push(k); // was missing entirely — nothing ever got added here, only ever removed in the branch below, so the "X Pumpkin Keycaps" count was permanently stuck at 0
     } else {
       k.mesh.material.color.setHex(k.originalColor);
       const isWaterWorld = k.world === 4;
@@ -6694,6 +6737,7 @@
       k.ghostBeam.visible = true;
       k.ghostFlickerT = Math.random() * 20; // random phase so multiple ghosts (across worlds) don't flicker in sync
       k.mesh.visible = keyboardKeysWanted && k.world === selectedWorld; // same fix as golden keycaps — "without keys" now hides ghost ones too, no exceptions
+      if (!activeGhostKeycaps.includes(k)) activeGhostKeycaps.push(k); // was missing entirely — same bug as the pumpkin version above, count was permanently stuck at 0
     } else {
       k.mesh.material.color.setHex(k.originalColor);
       const isWaterWorld = k.world === 4;
