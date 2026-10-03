@@ -8597,6 +8597,43 @@
   // renders as a real character instead of a placeholder shape — but each
   // instance is fully independent, so recoloring one (e.g. via applySkin)
   // never touches anyone else's.
+  // Rounded-box geometry — r128 has no built-in RoundedBoxGeometry (that
+  // arrived in a later version, as an addon that would need loading from a
+  // CDN this project can't reliably reach), so this builds the same shape
+  // from what core three.js already has: a rounded-rectangle Shape extruded
+  // with bevelled edges. Razor-sharp 90° box corners are what make the
+  // character read as "cheap placeholder blocky" — swapping the main body
+  // volumes to this is the single biggest visual-quality jump available
+  // without redoing the character's actual design, since every edge now
+  // catches a highlight instead of just going flat-to-black.
+  const roundedBoxGeoCache = {};
+  function makeRoundedBoxGeometry(width, height, depth, radius, segments){
+    segments = segments || 3;
+    const key = [width,height,depth,radius,segments].join('_');
+    if (roundedBoxGeoCache[key]) return roundedBoxGeoCache[key];
+    const w = width/2, h = height/2;
+    const r = Math.min(radius, w, h) || 0.001;
+    const shape = new THREE.Shape();
+    shape.moveTo(-w+r, -h);
+    shape.lineTo(w-r, -h);
+    shape.quadraticCurveTo(w, -h, w, -h+r);
+    shape.lineTo(w, h-r);
+    shape.quadraticCurveTo(w, h, w-r, h);
+    shape.lineTo(-w+r, h);
+    shape.quadraticCurveTo(-w, h, -w, h-r);
+    shape.lineTo(-w, -h+r);
+    shape.quadraticCurveTo(-w, -h, -w+r, -h);
+    const bevel = Math.min(radius, depth/2 - 0.001) * 0.7;
+    const geo = new THREE.ExtrudeGeometry(shape, {
+      depth: Math.max(depth - bevel*2, 0.001), bevelEnabled: true,
+      bevelThickness: bevel, bevelSize: bevel, bevelSegments: segments, curveSegments: segments,
+    });
+    geo.translate(0, 0, -(depth)/2 + bevel); // center on Z the same way BoxGeometry does
+    geo.computeVertexNormals();
+    roundedBoxGeoCache[key] = geo;
+    return geo;
+  }
+
   function buildCharacterMesh(skinColors){
     skinColors = skinColors || SKIN_DEFS_FALLBACK;
     const playerMesh = new THREE.Group();
@@ -8606,16 +8643,25 @@
     body.position.y = -1;
     playerMesh.add(body);
 
-    const backMat = new THREE.MeshStandardMaterial({color:skinColors.back, roughness:0.4, metalness:0.15});
+    // MeshPhysicalMaterial's clearcoat adds a second, independent specular
+    // layer on top of the base material — like a thin lacquer coat — which
+    // is what actually sells "polished" rather than just "not rough". Used
+    // here on the pieces that should read as hard/finished surfaces (torso,
+    // armor, boots); cloth-like or skin-like materials stay plain Standard
+    // since a clearcoat on those would look like wet plastic instead.
+    const backMat = new THREE.MeshPhysicalMaterial({color:skinColors.back, roughness:0.35, metalness:0.2, clearcoat:0.5, clearcoatRoughness:0.25});
     const frontMat = new THREE.MeshStandardMaterial({color:skinColors.front, roughness:0.55, metalness:0.1});
-    const limbMat = new THREE.MeshStandardMaterial({color:skinColors.limb, roughness:0.4, metalness:0.15});
-    const bootMat = new THREE.MeshStandardMaterial({color:skinColors.boot, roughness:0.5, metalness:0.15});
-    const skinMat = new THREE.MeshStandardMaterial({color:0xe8b48c, roughness:0.7});   // face
-    const hairMat = new THREE.MeshStandardMaterial({color:0x4a3222, roughness:0.75});  // messy brown hair
+    const limbMat = new THREE.MeshPhysicalMaterial({color:skinColors.limb, roughness:0.35, metalness:0.2, clearcoat:0.5, clearcoatRoughness:0.25});
+    const bootMat = new THREE.MeshPhysicalMaterial({color:skinColors.boot, roughness:0.4, metalness:0.2, clearcoat:0.4, clearcoatRoughness:0.3});
+    const skinMat = new THREE.MeshStandardMaterial({color:0xe8b48c, roughness:0.65});   // face
+    const hairMat = new THREE.MeshStandardMaterial({color:0x4a3222, roughness:0.7});  // messy brown hair
     const faceFeatureMat = new THREE.MeshStandardMaterial({color:0x2a1f1a, roughness:0.6});
-    const glowMat = new THREE.MeshStandardMaterial({color:skinColors.glow, emissive:skinColors.glowEm, emissiveIntensity:0.7, roughness:0.3});
-    const armorMat = new THREE.MeshStandardMaterial({color:0x2a3550, roughness:0.3, metalness:0.6});  // dark steel — pauldrons & bracers
-    const goldMat = new THREE.MeshStandardMaterial({color:0xc9a227, roughness:0.35, metalness:0.7});  // gold — straps & buckles
+    // Glow trim bumped up — brighter emissive plus a touch of the glow
+    // color literally in the base so it still reads as lit even head-on to
+    // a camera angle where the emissive bloom contributes less.
+    const glowMat = new THREE.MeshStandardMaterial({color:skinColors.glow, emissive:skinColors.glowEm, emissiveIntensity:1.15, roughness:0.25});
+    const armorMat = new THREE.MeshPhysicalMaterial({color:0x2a3550, roughness:0.22, metalness:0.75, clearcoat:0.6, clearcoatRoughness:0.15});  // dark steel — pauldrons & bracers
+    const goldMat = new THREE.MeshPhysicalMaterial({color:0xc9a227, roughness:0.25, metalness:0.8, clearcoat:0.6, clearcoatRoughness:0.15});  // gold — straps & buckles
 
     // legs — blocky Roblox-style rectangular limbs, each hanging from a hip pivot
     const legPivots = [];
@@ -8623,19 +8669,19 @@
       const hip = new THREE.Group();
       hip.position.set(x, 0.85, 0);
       body.add(hip);
-      const leg = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.85, 0.34), limbMat);
+      const leg = new THREE.Mesh(makeRoundedBoxGeometry(0.34, 0.85, 0.34, 0.045), limbMat);
       leg.position.y = -0.42;
       leg.castShadow = true;
       hip.add(leg);
       // boot cuff with a glowing trim line for a more detailed, armored look
-      const bootCuff = new THREE.Mesh(new THREE.BoxGeometry(0.37, 0.16, 0.37), bootMat);
+      const bootCuff = new THREE.Mesh(makeRoundedBoxGeometry(0.37, 0.16, 0.37, 0.035), bootMat);
       bootCuff.position.set(0, -0.62, 0);
       bootCuff.castShadow = true;
       hip.add(bootCuff);
       const bootTrim = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.03, 0.38), glowMat);
       bootTrim.position.set(0, -0.55, 0);
       hip.add(bootTrim);
-      const foot = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.13, 0.36), bootMat);
+      const foot = new THREE.Mesh(makeRoundedBoxGeometry(0.24, 0.13, 0.36, 0.035), bootMat);
       foot.position.set(0, -0.8, 0.06);
       foot.castShadow = true;
       hip.add(foot);
@@ -8646,7 +8692,7 @@
     const torsoGroup = new THREE.Group();
     torsoGroup.position.y = 0.85;
     body.add(torsoGroup);
-    const torso = new THREE.Mesh(new THREE.BoxGeometry(0.92, 0.8, 0.5), backMat);
+    const torso = new THREE.Mesh(makeRoundedBoxGeometry(0.92, 0.8, 0.5, 0.06), backMat);
     torso.position.y = 0.4;
     torso.castShadow = true;
     torsoGroup.add(torso);
@@ -8671,7 +8717,7 @@
     strapBuckle.position.set(0.14, 0.12, 0.32);
     torsoGroup.add(strapBuckle);
     // waist belt with a centered buckle
-    const belt = new THREE.Mesh(new THREE.BoxGeometry(0.96, 0.14, 0.54), new THREE.MeshStandardMaterial({color:0x241a12, roughness:0.6}));
+    const belt = new THREE.Mesh(makeRoundedBoxGeometry(0.96, 0.14, 0.54, 0.035), new THREE.MeshStandardMaterial({color:0x241a12, roughness:0.6}));
     belt.position.set(0, 0.02, 0);
     belt.castShadow = true;
     torsoGroup.add(belt);
@@ -8717,12 +8763,12 @@
       const shoulder = new THREE.Group();
       shoulder.position.set(side*0.55, 0.75, 0);
       torsoGroup.add(shoulder);
-      const arm = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.72, 0.28), limbMat);
+      const arm = new THREE.Mesh(makeRoundedBoxGeometry(0.28, 0.72, 0.28, 0.04), limbMat);
       arm.position.y = -0.36;
       arm.castShadow = true;
       shoulder.add(arm);
       // pauldron — a steel shoulder plate for a proper armored silhouette
-      const pauldron = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.2, 0.34), armorMat);
+      const pauldron = new THREE.Mesh(makeRoundedBoxGeometry(0.36, 0.2, 0.34, 0.04), armorMat);
       pauldron.position.set(0, 0.02, 0);
       pauldron.castShadow = true;
       shoulder.add(pauldron);
@@ -8730,14 +8776,14 @@
       pauldronTrim.position.set(0, -0.09, 0);
       shoulder.add(pauldronTrim);
       // forearm bracer with a glowing accent line
-      const bracer = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.16, 0.32), armorMat);
+      const bracer = new THREE.Mesh(makeRoundedBoxGeometry(0.32, 0.16, 0.32, 0.035), armorMat);
       bracer.position.set(0, -0.58, 0);
       bracer.castShadow = true;
       shoulder.add(bracer);
       const bracerTrim = new THREE.Mesh(new THREE.BoxGeometry(0.33, 0.025, 0.33), glowMat);
       bracerTrim.position.set(0, -0.51, 0);
       shoulder.add(bracerTrim);
-      const hand = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.16, 0.26), glowMat);
+      const hand = new THREE.Mesh(makeRoundedBoxGeometry(0.26, 0.16, 0.26, 0.04), glowMat);
       hand.position.set(0, -0.72, 0);
       shoulder.add(hand);
       shoulder.rotation.z = side * 0.24;
@@ -8746,7 +8792,7 @@
     });
 
     // head — blocky Roblox-style cube with a simple face
-    const head = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.56, 0.56), skinMat);
+    const head = new THREE.Mesh(makeRoundedBoxGeometry(0.58, 0.56, 0.56, 0.065), skinMat);
     head.position.y = 1.05;
     head.castShadow = true;
     torsoGroup.add(head);
@@ -8787,7 +8833,7 @@
 
     // base dome: a hemisphere (top ~75°, so it can't wrap down over the face),
     // with every vertex nudged in/out a little for an organic, non-perfectly-round look
-    const domeGeo = new THREE.SphereGeometry(0.42, 16, 12, 0, Math.PI*2, 0, 1.3);
+    const domeGeo = new THREE.SphereGeometry(0.46, 16, 12, 0, Math.PI*2, 0, 1.48);
     const dPos = domeGeo.attributes.position;
     for (let i = 0; i < dPos.count; i++){
       const len = Math.sqrt(dPos.getX(i)**2 + dPos.getY(i)**2 + dPos.getZ(i)**2);
@@ -8813,6 +8859,11 @@
       { pos: [0.2, 0.08, -0.24],   scale: [0.18, 0.18, 0.18], rot: [0.2, 0.4, -0.1] },
       { pos: [-0.2, 0.07, -0.23],  scale: [0.18, 0.18, 0.18], rot: [0.2, -0.4, 0.1] },
       { pos: [0, 0.1, -0.3],       scale: [0.22, 0.16, 0.17], rot: [0.15, 0, 0] },
+      // Small patch clumps right at the temples — the rounded head's
+      // front-top corners poke up slightly past the main dome right here,
+      // showing as two small bald spike-shaped gaps without these.
+      { pos: [0.22, 0.22, 0.3],    scale: [0.24, 0.22, 0.2], rot: [0, 0.3, -0.2] },
+      { pos: [-0.22, 0.22, 0.3],   scale: [0.24, 0.22, 0.2], rot: [0, -0.3, 0.2] },
     ];
     accents.forEach(a => {
       const clump = new THREE.Mesh(new THREE.IcosahedronGeometry(0.5, 0), hairMat);
