@@ -5401,6 +5401,15 @@
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.15));
   renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap; // was the default (basic PCF) — this samples several neighboring shadow-map texels per pixel instead of one, so shadow edges come out soft instead of visibly blocky at this map resolution
+  // Tried ACES filmic tone mapping here first — it's the standard choice
+  // for realistic/cinematic scenes, but on this game's flat-shaded, heavily
+  // saturated cartoon palette it did the opposite of what was wanted:
+  // crushed the vivid colors into a washed-out pastel look instead of
+  // adding richness. Left out entirely rather than fighting the curve with
+  // ever-larger intensity/exposure corrections — the existing bright,
+  // candy-colored look already suits this art style better than a
+  // film-realistic one would.
   document.body.appendChild(renderer.domElement);
 
   // WebGL context loss — different from the "couldn't even create WebGL"
@@ -5438,28 +5447,65 @@
   });
 
   // ---------- LIGHTING ----------
-  const hemi = new THREE.HemisphereLight(0x9d7bff, 0x1a0f2e, 0.9);
+  // Intensities bumped up from before — ACES tone mapping compresses highlights
+  // down as part of its curve, so lights that looked right with no tone mapping
+  // at all read as slightly dim once it's applied; this brings the overall
+  // brightness back to matching what it looked like previously, just with
+  // nicer falloff and richer shadow color now.
+  const hemi = new THREE.HemisphereLight(0x9d7bff, 0x1a0f2e, 0.95);
   scene.add(hemi);
-  const sun = new THREE.DirectionalLight(0xffe0b3, 1.1);
+  const sun = new THREE.DirectionalLight(0xffe0b3, 1.15);
   sun.position.set(60, 100, 40);
   sun.castShadow = true;
-  sun.shadow.mapSize.set(768,768);
+  sun.shadow.mapSize.set(1536,1536); // up from 768 — noticeably crisper shadow edges on platforms/characters, still cheap enough for a casual web game
   sun.shadow.camera.left = -150; sun.shadow.camera.right = 150;
   sun.shadow.camera.top = 150; sun.shadow.camera.bottom = -150;
   sun.shadow.camera.far = 400;
+  sun.shadow.bias = -0.0015; // the higher-resolution map above made a faint pre-existing shadow-acne artifact newly visible on flat surfaces; this nudges comparisons just enough to clear it up without introducing peter-panning
   scene.add(sun);
 
-  // Sky gradient dome
+  // Sky gradient dome — was a flat 2-color blend (just top/bottom); real
+  // skies have more going on than that, so this adds a distinct warm "haze"
+  // band near the horizon (a 3rd color stop most of the dome's height
+  // ignores, that only shows up in a band low down — real atmosphere is
+  // thickest near the horizon, which is exactly why sunsets band like
+  // this), plus a soft glow around the actual sun position that brightens
+  // the sky near it the way real sunlight scattering does. Both are cheap,
+  // pure-math additions to the same per-pixel shader — no textures, no
+  // noise functions, nothing that could fail to load or render differently
+  // across GPUs.
   const skyGeo = new THREE.SphereGeometry(900, 32, 32);
   const skyMat = new THREE.ShaderMaterial({
     side: THREE.BackSide,
     uniforms: {
       top: { value: new THREE.Color(0x3a1f5e) },
-      bottom: { value: new THREE.Color(0xff9d7a) }
+      bottom: { value: new THREE.Color(0xff9d7a) },
+      sunDir: { value: new THREE.Vector3(60, 100, 40).normalize() },
+      sunColor: { value: new THREE.Color(0xfff3d6) },
     },
     vertexShader: `varying vec3 vPos; void main(){ vPos = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
-    fragmentShader: `varying vec3 vPos; uniform vec3 top; uniform vec3 bottom;
-      void main(){ float h = normalize(vPos).y * 0.5 + 0.5; gl_FragColor = vec4(mix(bottom, top, h), 1.0); }`
+    fragmentShader: `
+      varying vec3 vPos;
+      uniform vec3 top; uniform vec3 bottom; uniform vec3 sunDir; uniform vec3 sunColor;
+      void main(){
+        vec3 dir = normalize(vPos);
+        float h = dir.y * 0.5 + 0.5;
+        vec3 col = mix(bottom, top, h);
+        // Horizon band: brightened/warmed blend of whatever the current
+        // top+bottom colors actually are (rather than a separately
+        // authored color), so it automatically tracks every world's palette
+        // and the full day/night cycle with no extra keyframe data needed —
+        // peaks right at the horizon and fades out both upward and downward.
+        float band = 1.0 - smoothstep(0.0, 0.3, abs(h - 0.42));
+        vec3 horizonTint = mix(bottom, top, 0.5) * 1.35 + 0.08;
+        col = mix(col, horizonTint, band * 0.5);
+        // Soft sun glow: brighter the closer this direction is to the
+        // actual light direction, falling off sharply so it reads as a
+        // glow around the sun/moon rather than washing out the whole sky.
+        float sunAmount = pow(max(dot(dir, normalize(sunDir)), 0.0), 12.0);
+        col += sunColor * sunAmount * 0.6;
+        gl_FragColor = vec4(col, 1.0);
+      }`
   });
   const skyDome = new THREE.Mesh(skyGeo, skyMat);
   scene.add(skyDome);
@@ -5578,6 +5624,8 @@
       sun.color.setHex(0xaac4ff); // cool pale blue-white "moonlight" instead of the warm sunlight color
       sun.intensity = 0.65;
       sun.position.copy(moonMesh.position); // shadows now fall away from the moon's actual position, instead of the old fixed daylight sun angle
+      skyMat.uniforms.sunDir.value.copy(moonMesh.position).normalize(); // the sky's own glow-around-the-light-source term needs to follow it moving to the moon too, or it'd keep glowing at the old fixed daytime sun angle all night
+      skyMat.uniforms.sunColor.value.setHex(0xaac4ff);
       hemi.color.setHex(0x3a4a8a);
       hemi.groundColor.setHex(0x050308);
       hemi.intensity = 0.5;
@@ -5597,6 +5645,7 @@
     skyMat.uniforms.top.value.copy(lerpKeyColor('skyTop', a, b, f));
     skyMat.uniforms.bottom.value.copy(lerpKeyColor('skyBottom', a, b, f));
     sun.color.copy(lerpKeyColor('sunColor', a, b, f));
+    skyMat.uniforms.sunColor.value.copy(sun.color); // keeps the sky's glow-around-the-sun term matching the sun's actual current color through the whole day/night cycle instead of staying fixed at its initial value
     sun.intensity = THREE.MathUtils.lerp(a.sunI, b.sunI, f);
     hemi.color.copy(lerpKeyColor('hemiSky', a, b, f));
     hemi.groundColor.copy(lerpKeyColor('hemiGround', a, b, f));
@@ -6953,6 +7002,41 @@
   let anyKeyPressedLastFrame = false;
 
 
+  // Shared "fake bloom" glow-sprite helper — same technique as the moon's
+  // halo above (a radial-gradient canvas texture on an additively-blended
+  // sprite), factored out here since several different bright collectibles
+  // below want their own tinted version of it. Real screen-space bloom
+  // needs Three.js's EffectComposer/UnrealBloomPass, which aren't reliably
+  // loadable from an allowed CDN for this project — this reads as "glowing"
+  // at a glance without that dependency, just doesn't bleed across nearby
+  // geometry the way true bloom would.
+  const glowTextureCache = {};
+  function getGlowTexture(hex){
+    if (glowTextureCache[hex]) return glowTextureCache[hex];
+    const c = document.createElement('canvas');
+    c.width = c.height = 128;
+    const ctx = c.getContext('2d');
+    const col = '#' + hex.toString(16).padStart(6, '0');
+    const grad = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+    grad.addColorStop(0, col + 'cc'); // ~80% alpha at the core
+    grad.addColorStop(0.45, col + '55');
+    grad.addColorStop(1, col + '00');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 128, 128);
+    const tex = new THREE.CanvasTexture(c);
+    glowTextureCache[hex] = tex;
+    return tex;
+  }
+  function addGlowSprite(parent, hex, scale){
+    const spr = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: getGlowTexture(hex), transparent: true, depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    }));
+    spr.scale.set(scale, scale, 1);
+    parent.add(spr);
+    return spr;
+  }
+
   // ---------- GRAPPLE ANCHOR POINTS (glowing crystals in the sky) ----------
   const anchors = [];
   const anchorGeo = new THREE.OctahedronGeometry(1.3, 0);
@@ -6961,6 +7045,7 @@
     const m = new THREE.Mesh(anchorGeo, mat);
     m.position.set(x,y,z);
     m.world = world;
+    addGlowSprite(m, 0x7affc4, 4.2);
     scene.add(m);
     anchors.push(m);
   }
@@ -6993,6 +7078,7 @@
   function spawnOrb(x,y,z){
     const m = new THREE.Mesh(orbGeo, orbMat);
     m.position.set(x,y,z);
+    addGlowSprite(m, 0xffe27a, 2.4);
     scene.add(m);
     orbs.push({mesh:m, base:y, phase: Math.random()*Math.PI*2, alive:true});
   }
