@@ -776,20 +776,27 @@
     border-radius: 6px; padding: 3px 8px; font-weight: 700;
     box-shadow: 0 2px 0 rgba(0,0,0,0.3);
   }
-  #musicUnlockHint {
-    position: fixed; inset: 0; z-index: 200;
-    background: rgba(6,3,14,0.72);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    display: none; align-items: center; justify-content: center;
-  }
-  #musicUnlockHint.show { display: flex; }
+  /* Music prompt — used to be a full-screen dark/blurred overlay with a huge
+     centered button, which popped up right as the menu was building itself
+     and covered the whole thing. Now it's a small chip floating just above
+     the 🎵 button (bottom-right) that fades in only AFTER the menu's build-up
+     animation has finished (the 2.6s delay below), and doesn't darken or
+     block anything. Any click/tap/key anywhere on the page still counts as
+     the "unlock audio" gesture and dismisses it, same as before. */
+  /* The big menu box sits in its own column so the music button can live
+     directly UNDER it (in normal flow, so it follows the box if the menu
+     scrolls on a small screen) instead of floating in a screen corner. */
+  #startMainCol { display: flex; flex-direction: column; align-items: center; gap: 18px; }
+  #musicUnlockHint { display: none; }
+  #musicUnlockHint.show { display: block; animation: musicHintIn 0.8s cubic-bezier(.2,.9,.3,1.25) 2.6s backwards; }
+  @keyframes musicHintIn { from { opacity: 0; transform: translateY(-14px) scale(0.85); } to { opacity: 1; transform: none; } }
   #musicUnlockHint span {
-    background: linear-gradient(135deg, rgba(122,255,196,0.25), rgba(122,255,196,0.1));
+    display: block;
+    background: linear-gradient(135deg, rgba(20,64,56,0.93), rgba(14,42,42,0.93));
     border: 3px solid rgba(122,255,196,0.75);
-    color: #fff; padding: 22px 46px; border-radius: 999px; font-size: 26px; font-weight: 800;
+    color: #fff; padding: 18px 44px; border-radius: 999px; font-size: 22px; font-weight: 800; white-space: nowrap;
     cursor: pointer;
-    box-shadow: 0 15px 50px rgba(0,0,0,0.55), 0 0 45px rgba(122,255,196,0.4);
+    box-shadow: 0 12px 34px rgba(0,0,0,0.5), 0 0 34px rgba(122,255,196,0.42);
     animation: statPulse 1.6s ease-in-out infinite;
   }
 
@@ -1387,6 +1394,96 @@
     transform: translateY(-2px) scale(1.02);
     background: linear-gradient(135deg, rgba(122,170,255,0.4), rgba(90,120,220,0.4));
   }
+  /* ============================================================
+     🎬 START SEQUENCE — plays once per page load, right after the loading
+     screen fades: (1) the "Rankmann" title flies in letter by letter over
+     the live 3D world, (2) the title lifts away while a camera swoop shows
+     the character jumping into the scene and landing, (3) the real menu
+     then builds itself up piece by piece. Clicking/tapping or pressing a
+     key at any point skips straight to the menu.
+     ============================================================ */
+  #introOverlay {
+    position: fixed; inset: 0; z-index: 700; display: none;
+    flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; color: #fff; cursor: pointer; user-select: none; -webkit-user-select: none;
+    transition: opacity 0.45s ease;
+  }
+  #introOverlay.show { display: flex; }
+  #introOverlay.fadeOut { opacity: 0; pointer-events: none; }
+  #introVignette {
+    position: absolute; inset: 0; pointer-events: none; transition: opacity 0.9s ease;
+    background: radial-gradient(ellipse at 50% 45%, rgba(10,5,24,0.12) 0%, rgba(10,5,24,0.55) 65%, rgba(10,5,24,0.88) 100%);
+  }
+  #introOverlay.clear #introVignette { opacity: 0; }
+  #introContent { position: relative; display: flex; flex-direction: column; align-items: center; padding: 0 16px; }
+  #introTitle {
+    display: flex; justify-content: center;
+    font-size: clamp(52px, 13vw, 128px); font-weight: 900; line-height: 1; letter-spacing: 1px;
+  }
+  .introLetter {
+    display: inline-block; opacity: 0;
+    transform: translateY(90px) scale(0.3) rotate(-14deg); filter: blur(10px);
+    color: hsl(var(--h) 95% 72%);
+    text-shadow: 0 0 20px hsl(var(--h) 100% 60% / 0.75), 0 8px 24px rgba(0,0,0,0.55);
+    animation: introLetterIn 0.8s cubic-bezier(.2,.9,.3,1.25) forwards;
+    animation-delay: calc(0.35s + var(--i) * 0.085s);
+  }
+  @keyframes introLetterIn {
+    60%  { opacity: 1; transform: translateY(-14px) scale(1.12) rotate(3deg); filter: blur(0); }
+    100% { opacity: 1; transform: none; filter: blur(0); }
+  }
+  #introTagline {
+    margin-top: 16px; font-size: clamp(13px, 2.4vw, 19px); letter-spacing: 0.4px;
+    color: rgba(255,255,255,0.85); text-shadow: 0 2px 12px rgba(0,0,0,0.65);
+    opacity: 0; animation: introFadeUp 0.8s ease forwards; animation-delay: 1.3s;
+  }
+  @keyframes introFadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+  #introSkip {
+    position: absolute; left: 0; right: 0; bottom: calc(26px + env(safe-area-inset-bottom, 0px));
+    font-size: 12px; color: rgba(255,255,255,0.5); letter-spacing: 0.3px;
+    opacity: 0; animation: introFadeUp 0.6s ease forwards; animation-delay: 0.9s;
+  }
+  #introOverlay.titleOut #introContent { animation: introTitleOut 0.75s cubic-bezier(.5,0,.8,.4) forwards; }
+  @keyframes introTitleOut { to { opacity: 0; transform: translateY(-46px) scale(1.5); filter: blur(10px); } }
+
+  /* Menu build-up — "backwards" fill (not "both"/"forwards") on purpose: once
+     each piece has landed, normal styles take over again, so hover effects and
+     the Start button's own pulsing glow work as usual afterward. --mi is a
+     per-element index set from JS to stagger the delays. */
+  @keyframes menuPanelInL { from { opacity: 0; transform: translateX(-70px) scale(0.96); } to { opacity: 1; transform: none; } }
+  @keyframes menuPanelInR { from { opacity: 0; transform: translateX(70px) scale(0.96); } to { opacity: 1; transform: none; } }
+  @keyframes menuPop {
+    from { opacity: 0; transform: translateY(28px) scale(0.7); }
+    60%  { opacity: 1; transform: translateY(-6px) scale(1.07); }
+    to   { opacity: 1; transform: none; }
+  }
+  @keyframes menuTitleDrop { from { opacity: 0; transform: translateY(-50px) scale(1.3); } to { opacity: 1; transform: none; } }
+  #startScreen.menuIntro #startRow > :nth-child(1) { animation: menuPanelInL 0.85s cubic-bezier(.2,.9,.25,1.05) backwards; }
+  #startScreen.menuIntro #startRow > :nth-child(n+2) { animation: menuPanelInR 0.85s cubic-bezier(.2,.9,.25,1.05) 0.12s backwards; }
+  #startScreen.menuIntro .titleRow h1 { animation: menuTitleDrop 0.9s cubic-bezier(.2,.9,.3,1.15) 0.15s backwards; }
+  #startScreen.menuIntro .heroTagline,
+  #startScreen.menuIntro #totalTrophyLine,
+  #startScreen.menuIntro #activeProfileBadge { animation: menuPop 0.6s cubic-bezier(.2,.9,.3,1.2) calc(0.35s + var(--mi, 0) * 0.07s) backwards; }
+  #startScreen.menuIntro .featureCard { animation: menuPop 0.6s cubic-bezier(.2,.9,.3,1.2) calc(0.55s + var(--mi, 0) * 0.08s) backwards; }
+  #startScreen.menuIntro .startControlRow { animation: menuPop 0.5s cubic-bezier(.2,.9,.3,1.2) calc(0.85s + var(--mi, 0) * 0.04s) backwards; }
+  #startScreen.menuIntro #startBtnRow > button { animation: menuPop 0.6s cubic-bezier(.2,.9,.3,1.25) calc(1.0s + var(--mi, 0) * 0.07s) backwards; }
+  /* This one has its own keyframes because #saveCodeHint is centered with
+     left:50% + transform:translateX(-50%) — reusing introFadeUp (which ends
+     in "transform: none") dropped that translateX during the animation, so
+     the line sat half its own width too far right until the animation ended
+     and it snapped back to the correct spot. */
+  @keyframes saveHintIn {
+    from { opacity: 0; transform: translateX(-50%) translateY(14px); }
+    to   { opacity: 1; transform: translateX(-50%); }
+  }
+  #startScreen.menuIntro #saveCodeHint { animation: saveHintIn 0.7s ease 1.7s backwards; }
+
+  /* while the start sequence plays, hide every other piece of UI (HUD pills,
+     settings/music buttons, etc.) so only the 3D scene and the title show */
+  body.introPlaying > *:not(canvas):not(#introOverlay):not(#rankmannLoadingScreen):not(#startScreen) { visibility: hidden !important; }
+  @keyframes menuBgIn { from { opacity: 0; } to { opacity: 1; } }
+  #startScreen.menuIntro { animation: menuBgIn 0.7s ease backwards; }
+
   #pauseFriendsBtn { position: relative; }
   .friendsReqBadge {
     position: absolute; top: -8px; right: -8px;
@@ -2855,11 +2952,20 @@
 </div>
 <button id="emoteHudBtn" class="hidden" title="Emotes (B)" data-i18n-title="emoteHudBtnTitle">🎭</button>
 
-<div id="musicUnlockHint"><span data-i18n="musicUnlockHint">🔊 Musik aktivieren</span></div>
+
+<div id="introOverlay">
+  <div id="introVignette"></div>
+  <div id="introContent">
+    <div id="introTitle"></div>
+    <div id="introTagline" data-i18n="heroTagline">Schwinge dich durch eine schwebende Fantasy-Welt</div>
+  </div>
+  <div id="introSkip" data-i18n="introSkipHint">Klicken zum Überspringen</div>
+</div>
 
 <div id="startScreen" style="display:none;">
   <div id="menuClickCatcher"></div>
   <div id="startRow">
+  <div id="startMainCol">
   <div class="startPanel">
     <div class="titleRow">
       <h1>Rankmann</h1>
@@ -2918,6 +3024,8 @@
       <button id="adminPanelBtn" class="hidden">🛠️ Admin-Zentrale</button>
     </div>
     <div id="saveCodeHint">🔐 Nicht vergessen: Spielstand regelmäßig sichern, damit nichts verloren geht</div>
+  </div>
+  <div id="musicUnlockHint"><span data-i18n="musicUnlockHint">🔊 Musik aktivieren</span></div>
   </div>
 
   
@@ -4871,7 +4979,7 @@
       phoneBlockTitle: 'Only playable on PC &amp; tablet', phoneBlockText: "Rankmann currently doesn't run on phones. Please open the game on a computer or tablet to play.",
       hintBar: '<span class="key">WASD</span> move <span class="sep"></span> <span class="key">Shift</span> sprint <span class="sep"></span> <span class="key">Left click + drag</span> look around <span class="sep"></span> <span class="key">Wheel</span> zoom <span class="sep"></span> <span class="key">E</span> hold vine <span class="sep"></span> <span class="key">Right click</span> attack (in range) <span class="sep"></span> <span class="key">Space</span> jump',
       introUnmuteHint: '🔇 Sound is muted — click to enable',
-      musicUnlockHint: '🔊 Enable music', settingsSaved: '✅ Saved',
+      musicUnlockHint: '🔊 Enable music', settingsSaved: '✅ Saved', introSkipHint: 'Click or tap to skip',
       profileSwitchHint: 'Switch', statsBtn: '📊 Statistics', statsTitle: '📊 Statistics', statsSub: 'Your progress at a glance',
       statsPlaytime: 'Playtime', statsTrophies: 'Trophies collected', statsAchievements: 'Achievements unlocked', statsSkins: 'Skins owned',
       statsEnemies: 'Enemies defeated', statsCrystals: 'Crystals collected', statsWorlds: 'Worlds unlocked', statsPhotos: 'Photos taken', closeBtn5: 'Close', statsBtnTitle: 'Statistics',
@@ -4953,7 +5061,7 @@
       phoneBlockTitle: 'Jouable uniquement sur PC et tablette', phoneBlockText: "Rankmann ne fonctionne actuellement pas sur téléphone. Merci d'ouvrir le jeu sur un ordinateur ou une tablette pour jouer.",
       hintBar: '<span class="key">WASD</span> se déplacer <span class="sep"></span> <span class="key">Shift</span> sprinter <span class="sep"></span> <span class="key">Clic gauche + glisser</span> regarder <span class="sep"></span> <span class="key">Molette</span> zoomer <span class="sep"></span> <span class="key">E</span> tenir la liane <span class="sep"></span> <span class="key">Clic droit</span> attaquer (à portée) <span class="sep"></span> <span class="key">Espace</span> sauter',
       introUnmuteHint: '🔇 Son coupé — cliquer pour activer',
-      musicUnlockHint: '🔊 Activer la musique', settingsSaved: '✅ Enregistré',
+      musicUnlockHint: '🔊 Activer la musique', settingsSaved: '✅ Enregistré', introSkipHint: 'Cliquer ou toucher pour passer',
       profileSwitchHint: 'Changer', statsBtn: '📊 Statistiques', statsTitle: '📊 Statistiques', statsSub: "Ta progression en un coup d'œil",
       statsPlaytime: 'Temps de jeu', statsTrophies: 'Trophées collectés', statsAchievements: 'Succès débloqués', statsSkins: 'Skins possédés',
       statsEnemies: 'Ennemis vaincus', statsCrystals: 'Cristaux collectés', statsWorlds: 'Mondes débloqués', statsPhotos: 'Photos prises', closeBtn5: 'Fermer', statsBtnTitle: 'Statistiques',
@@ -5035,7 +5143,7 @@
       phoneBlockTitle: 'Solo se puede jugar en PC y tablet', phoneBlockText: 'Rankmann actualmente no funciona en móviles. Abre el juego en un ordenador o tablet para jugar.',
       hintBar: '<span class="key">WASD</span> moverse <span class="sep"></span> <span class="key">Shift</span> correr <span class="sep"></span> <span class="key">Clic izq. + arrastrar</span> mirar <span class="sep"></span> <span class="key">Rueda</span> zoom <span class="sep"></span> <span class="key">E</span> sujetar liana <span class="sep"></span> <span class="key">Clic derecho</span> atacar (a distancia) <span class="sep"></span> <span class="key">Espacio</span> saltar',
       introUnmuteHint: '🔇 Sonido silenciado — clic para activar',
-      musicUnlockHint: '🔊 Activar música', settingsSaved: '✅ Guardado',
+      musicUnlockHint: '🔊 Activar música', settingsSaved: '✅ Guardado', introSkipHint: 'Haz clic o toca para saltar',
       profileSwitchHint: 'Cambiar', statsBtn: '📊 Estadísticas', statsTitle: '📊 Estadísticas', statsSub: 'Tu progreso de un vistazo',
       statsPlaytime: 'Tiempo de juego', statsTrophies: 'Trofeos conseguidos', statsAchievements: 'Logros desbloqueados', statsSkins: 'Skins en posesión',
       statsEnemies: 'Enemigos derrotados', statsCrystals: 'Cristales recolectados', statsWorlds: 'Mundos desbloqueados', statsPhotos: 'Fotos tomadas', closeBtn5: 'Cerrar', statsBtnTitle: 'Estadísticas',
@@ -5117,7 +5225,7 @@
       phoneBlockTitle: 'Jogável apenas em PC e tablet', phoneBlockText: 'No momento o Rankmann não funciona em celulares. Abra o jogo em um computador ou tablet para jogar.',
       hintBar: '<span class="key">WASD</span> mover <span class="sep"></span> <span class="key">Shift</span> correr <span class="sep"></span> <span class="key">Clique esq. + arrastar</span> olhar ao redor <span class="sep"></span> <span class="key">Roda</span> zoom <span class="sep"></span> <span class="key">E</span> segurar o cipó <span class="sep"></span> <span class="key">Clique direito</span> atacar (ao alcance) <span class="sep"></span> <span class="key">Espaço</span> pular',
       introUnmuteHint: '🔇 Som mudo — clique para ativar',
-      musicUnlockHint: '🔊 Ativar música', settingsSaved: '✅ Salvo',
+      musicUnlockHint: '🔊 Ativar música', settingsSaved: '✅ Salvo', introSkipHint: 'Clique ou toque para pular',
       profileSwitchHint: 'Trocar', statsBtn: '📊 Estatísticas', statsTitle: '📊 Estatísticas', statsSub: 'Seu progresso em um relance',
       statsPlaytime: 'Tempo de jogo', statsTrophies: 'Troféus coletados', statsAchievements: 'Conquistas desbloqueadas', statsSkins: 'Skins adquiridas',
       statsEnemies: 'Inimigos derrotados', statsCrystals: 'Cristais coletados', statsWorlds: 'Mundos desbloqueados', statsPhotos: 'Fotos tiradas', closeBtn5: 'Fechar', statsBtnTitle: 'Estatísticas',
@@ -6851,8 +6959,20 @@
     });
   }
 
+  // Keycaps are 0.4 tall and sit ON TOP of the platform surface, but the
+  // physics treat the bare platform surface as the ground — so a character
+  // standing "on" the keys actually had its boots ~0.3-0.4 INSIDE them
+  // (measured: boots at 3.71, pressed-key top at 4.05). Moving the ground
+  // itself would touch jumping, landing, checkpoints and the camera, so
+  // instead this is a visual-only lift: the character's mesh is raised by
+  // however far the keycap under its feet currently sticks up above the
+  // platform — including the key sinking down while it's pressed — so the
+  // boots always rest on the key's actual top face. Physics are untouched.
+  let playerKeyLift = 0;
+  const ENEMY_KEY_LIFT = 0.3; // same idea for ground monsters/other players: about the key's height (0.4 rest, 0.25 pressed)
   function updateKeyboardKeys(dt){
     if (!keyboardKeysWanted){
+      playerKeyLift = 0; // no key grid shown → nothing to stand on top of
       // The decorative keycap grid itself is off, but golden/rainbow keycap
       // events should still be playable for everyone — just check the (much
       // smaller) lists of currently-special keys instead of every single one
@@ -6944,11 +7064,16 @@
       return;
     }
     let anyPressedThisFrame = false;
+    let liftBestDist = 1e9, liftTarget = null;
     for (const k of allKeyCaps){
       const dx = player.pos.x - k.mesh.position.x;
       const dz = player.pos.z - k.mesh.position.z;
       const horizDist = Math.sqrt(dx*dx + dz*dz);
       const isStandingOn = player.onGround && horizDist < KEY_PRESS_RADIUS && Math.abs((player.pos.y - player.radius) - k.restY) < 1.2 && k.mesh.visible;
+      if (isStandingOn && horizDist < liftBestDist){
+        liftBestDist = horizDist; // the key closest under the feet is the one the boots visually rest on
+        liftTarget = (k.mesh.position.y + 0.2) - (player.pos.y - player.radius);
+      }
       if (isStandingOn && !k.pressed){
         k.pressed = true;
         sfx.keyPress && sfx.keyPress();
@@ -6992,6 +7117,8 @@
       const targetY = k.pressed ? k.pressedY : k.restY;
       k.mesh.position.y += (targetY - k.mesh.position.y) * Math.min(1, KEY_PRESS_SPEED * dt);
     }
+    if (liftTarget !== null) playerKeyLift += (Math.max(0, Math.min(0.5, liftTarget)) - playerKeyLift) * Math.min(1, dt * 20);
+    else if (player.onGround) playerKeyLift += (0 - playerKeyLift) * Math.min(1, dt * 12); // standing on something without keys (e.g. the boss arena) — settle back down; while airborne the lift is simply held, so a jump doesn't visibly dip
     // The moment nothing is pressed anymore (player stopped walking on keys,
     // jumped off, whatever), cut any still-playing click sound short instead
     // of letting it ring out on its own — the click recording runs several
@@ -8394,6 +8521,58 @@
   // get tagged with a .world number when created. Whichever world isn't
   // selected gets hidden AND physically parked far away (not just invisible)
   // so its geometry can never be collided with or grappled onto by mistake.
+  // The 7 ground critters used to have hard-coded coordinates from an older
+  // island layout, shared by every world: only the first two happened to land
+  // on World 1's start island, the rest hovered in mid-air (up to ~11 units
+  // above the nearest island), and in Worlds 2-4 — whose islands are laid out
+  // completely differently — none of them matched anything. This re-homes
+  // each critter onto an actual island of whichever world is active, every
+  // time the world changes: first two share the hub, the rest spread out
+  // along the course. Their patrol circle is capped to the island's size and
+  // centered inside it, so they stay on the key grid instead of wandering
+  // off the edge.
+  // Pose helpers shared by the normal game loop, rehomeSmallEnemies() below and
+  // the start-sequence camera swoop. The start sequence runs while the game
+  // itself isn't "running", and the monsters' patrol/hop/key-lift code used
+  // to live ONLY inside the running game loop — so in the intro they just
+  // stood frozen at wherever they'd been created (half sunk into the keycaps,
+  // and after the re-homing below, even the wrong spot entirely).
+  function placeSmallEnemy(en, grounded){
+    en.mesh.position.set(
+      en.center.x + Math.cos(en.angle) * en.roamRadius,
+      en.center.y + (grounded ? 0 : Math.abs(Math.sin(en.angle * 2)) * 0.15) + (keyboardKeysWanted ? ENEMY_KEY_LIFT : 0), // raised by about a keycap's height so they scuttle ON TOP of the keys instead of partly inside them; `grounded` = standing still (no hop), used for the static start-sequence pose
+      en.center.z + Math.sin(en.angle) * en.roamRadius
+    );
+    en.mesh.rotation.y = -en.angle - Math.PI/2;
+  }
+  function placeBigEnemy(en){
+    en.mesh.position.set(
+      en.center.x + Math.cos(en.angle) * en.radius,
+      en.center.y + Math.sin(en.angle * 1.3) * 2,
+      en.center.z + Math.sin(en.angle) * en.radius
+    );
+    en.mesh.lookAt(en.center);
+  }
+  const SMALL_ENEMY_ISLAND_SLOTS = [0, 0, 2, 3, 5, 7, 9];
+  const SMALL_ENEMY_BASE_ROAM = smallEnemies.map(e => e.roamRadius);
+  function rehomeSmallEnemies(n){
+    const arr = n === 4 ? islandsW4 : n === 3 ? islandsW3 : n === 2 ? islandsW2 : islandsW1;
+    const occupants = {};
+    smallEnemies.forEach((en, i) => {
+      const slot = Math.min(SMALL_ENEMY_ISLAND_SLOTS[i] !== undefined ? SMALL_ENEMY_ISLAND_SLOTS[i] : arr.length - 1, arr.length - 1);
+      const isl = arr[slot];
+      if (!isl) return;
+      const nth = occupants[slot] = (occupants[slot] || 0) + 1;
+      const off = isl.radius * 0.22;
+      const ox = nth === 1 ? off : -off, oz = nth === 1 ? -off : off;
+      en.roamRadius = Math.min(SMALL_ENEMY_BASE_ROAM[i], Math.max(1.5, isl.radius * 0.4));
+      en.center.set(isl.pos.x + ox, isl.top + 0.52, isl.pos.z + oz); // 0.52 = the same "resting height above the surface" the original hub critters had
+      // Start each one on the OUTER side of its patrol circle (pointing away from the island's middle) — a random starting angle could drop one right where the start sequence's character lands, hiding it behind the character
+      en.angle = Math.atan2(oz, ox);
+      placeSmallEnemy(en, true); // move the actual mesh there right away (standing still, no hop) — it only follows `center` inside the running game loop otherwise, so without this the start sequence would show them at their old creation spots
+    });
+  }
+
   function applyWorldTheme(n){
     islands.forEach(isl => {
       if (isl.rockMat){
@@ -8438,6 +8617,7 @@
     coralGroup.visible = (n === 4);
     fishGroup.visible = (n === 4);
     dust.visible = (n !== 4); // the ambient purple dust motes don't fit underwater — bubbles take over entirely in World 4
+    rehomeSmallEnemies(n); // islands' real heights are only valid for the active world as of the loop above, so this has to come after it
   }
 
   applyWorldTheme(1); // safe default until startGame() applies the actual selected world
@@ -9109,18 +9289,18 @@
   function updateGhostFromRoomData(key, p){
     if (!friendGhosts[key]){
       const built = makeGhostMesh(p.name || 'Freund', p.skin, p.trophies);
-      friendGhosts[key] = { ...built, skinId: p.skin, targetPos: new THREE.Vector3(p.x, p.y, p.z), targetYaw: p.yaw || 0, world: p.world, name: p.name, walkPhase: 0, emoteElapsed: 0 };
+      friendGhosts[key] = { ...built, skinId: p.skin, targetPos: new THREE.Vector3(p.x, p.y + (keyboardKeysWanted ? ENEMY_KEY_LIFT : 0), p.z), targetYaw: p.yaw || 0, world: p.world, name: p.name, walkPhase: 0, emoteElapsed: 0 };
     } else if (friendGhosts[key].skinId !== p.skin){
       // Friend changed their equipped skin mid-session — rebuild the ghost
       // with the new colors rather than trying to live-patch materials.
       const oldPos = friendGhosts[key].mesh.position.clone();
       removeGhost(key);
       const built = makeGhostMesh(p.name || 'Freund', p.skin, p.trophies);
-      friendGhosts[key] = { ...built, skinId: p.skin, targetPos: new THREE.Vector3(p.x, p.y, p.z), targetYaw: p.yaw || 0, world: p.world, name: p.name, walkPhase: 0, emoteElapsed: 0 };
+      friendGhosts[key] = { ...built, skinId: p.skin, targetPos: new THREE.Vector3(p.x, p.y + (keyboardKeysWanted ? ENEMY_KEY_LIFT : 0), p.z), targetYaw: p.yaw || 0, world: p.world, name: p.name, walkPhase: 0, emoteElapsed: 0 };
       friendGhosts[key].mesh.position.copy(oldPos);
     }
     const gh = friendGhosts[key];
-    gh.targetPos.set(p.x, p.y, p.z);
+    gh.targetPos.set(p.x, p.y + (keyboardKeysWanted ? ENEMY_KEY_LIFT : 0), p.z); // same keycap lift as the local character
     gh.targetYaw = p.yaw || 0;
     gh.world = p.world;
     gh.grappling = !!p.grappling;
@@ -10204,7 +10384,9 @@
   // actually starts — a single click that happens before the menu is even
   // shown (e.g. during the intro video) would otherwise "use up" a one-time
   // listener without ever actually starting playback.
+  let menuMusicUnlockAttempted = false; // set on the first click/tap/key — the start sequence checks it so the prompt isn't shown AFTER the click that skipped the intro already unlocked audio (the listeners below are one-shot, so a re-shown prompt could never be dismissed again)
   function menuMusicUnlockAttempt(){
+    menuMusicUnlockAttempted = true;
     // Hide the hint and remove these listeners immediately on the very first
     // tap — this is just feedback that the tap registered.
     window.removeEventListener('keydown', menuMusicUnlockAttempt);
@@ -12811,7 +12993,7 @@
     armPivots[0].rotation.x = p.arms[0]; armPivots[1].rotation.x = p.arms[1];
     armPivots[0].rotation.z = p.armsZ[0]; armPivots[1].rotation.z = p.armsZ[1];
     legPivots[0].rotation.x = p.legs[0]; legPivots[1].rotation.x = p.legs[1];
-    playerMesh.position.y = player.pos.y - (p.drop || 0); // sink toward the ground for a real "sitting down" feel
+    playerMesh.position.y = player.pos.y + playerKeyLift - (p.drop || 0); // sink toward the ground for a real "sitting down" feel (+ the same keycap lift as normal play)
   }
   function enterPhotoMode(){
     if (!running) return;
@@ -13326,6 +13508,11 @@
   function animate(){
     requestAnimationFrame(animate);
     const dt = Math.min(clock.getDelta(), 0.05);
+    if (introCine.active){
+      // the start sequence owns the camera/character until it finishes or is skipped
+      try { updateIntroCinematic(dt); } catch(e){ finishIntroSequence(); }
+      if (introCine.active){ renderer.render(scene, camera); return; }
+    }
     if (running && !paused && !previewMode){
       totalPlaytimeSeconds += dt;
       playtimeSinceSave += dt;
@@ -13600,6 +13787,7 @@
 
     // update player mesh + rope
     playerMesh.position.copy(player.pos);
+    playerMesh.position.y += playerKeyLift; // visual only — boots rest on the key's top face instead of sinking into the keycap
     // The body's visual facing is now decoupled from the mouse-controlled camera
     // yaw — it smoothly turns to face wherever the character is actually moving,
     // while the camera can be freely orbited around them (even to see the front).
@@ -13866,12 +14054,7 @@
     // enemy patrol + collision
     for (const en of enemies){
       en.angle += en.speed*dt;
-      en.mesh.position.set(
-        en.center.x + Math.cos(en.angle)*en.radius,
-        en.center.y + Math.sin(en.angle*1.3)*2,
-        en.center.z + Math.sin(en.angle)*en.radius
-      );
-      en.mesh.lookAt(en.center);
+      placeBigEnemy(en);
       if (!adminGodMode && player.invuln <= 0 && en.mesh.position.distanceTo(player.pos) < 2.0){
         player.lives -= 1;
         player.invuln = 2.0;
@@ -13899,12 +14082,7 @@
     for (const en of smallEnemies){
       if (!en.alive) continue;
       en.angle += en.speed * dt;
-      en.mesh.position.set(
-        en.center.x + Math.cos(en.angle) * en.roamRadius,
-        en.center.y + Math.abs(Math.sin(en.angle * 2)) * 0.15,
-        en.center.z + Math.sin(en.angle) * en.roamRadius
-      );
-      en.mesh.rotation.y = -en.angle - Math.PI/2;
+      placeSmallEnemy(en);
       if (en.hitFlashT > 0){
         en.hitFlashT -= dt;
         en.bodyMat.emissiveIntensity = 0.25 + Math.max(0, en.hitFlashT) * 3;
@@ -14777,15 +14955,178 @@
     if (ctx) loadMenuMusicBuffer();
   })();
 
-  // ---------- MENU REVEAL ----------
-  // Used to be preceded by a fullscreen intro video here — removed
-  // entirely (it pointed at "intro.mp4", a file that was never actually
-  // bundled with this project, so it could only ever fail to load). What's
-  // left is just the actual useful part: showing the start menu and
-  // surfacing the music-unlock button.
-  document.getElementById('startScreen').style.display = 'flex';
-  menuMusicWanted = true;
-  document.getElementById('musicUnlockHint').classList.add('show');
+  // ---------- START SEQUENCE + MENU REVEAL ----------
+  // (The old fullscreen intro video that used to sit here was removed — it
+  // pointed at a file that was never bundled. This replaces it with an
+  // all-in-code sequence that actually works.)
+  // Plays once per page load, kicked off from the very end of this script
+  // (startIntroSequence(), right after the loading screen starts to fade):
+  //   1. the "Rankmann" title flies in letter by letter over the live world
+  //   2. the title lifts away while the camera swoops down and the
+  //      character jumps in from off-screen, lands, and waves
+  //   3. the real menu builds itself up piece by piece (CSS, see .menuIntro)
+  // Click/tap/any key skips straight to step 3. Everything about the
+  // character (pose, scale, position) is saved first and put back exactly as
+  // it was afterward, so the normal menu/game start is completely unaffected.
+  const introCine = { active: false, t: 0, dur: 3.7, base: new THREE.Vector3(), head: new THREE.Vector3(), savedArms: null, savedLegs: null };
+  function introEaseOutCubic(x){ return 1 - Math.pow(1 - x, 3); }
+  function introEaseInOutCubic(x){ return x < 0.5 ? 4*x*x*x : 1 - Math.pow(-2*x + 2, 3) / 2; }
+
+  function showStartMenu(animated){
+    const sc = document.getElementById('startScreen');
+    if (animated){
+      // per-element indices that the CSS uses to stagger each piece's delay
+      ['.heroTagline', '#totalTrophyLine', '#activeProfileBadge'].forEach((sel, i) => {
+        const el = sc.querySelector(sel); if (el) el.style.setProperty('--mi', i);
+      });
+      sc.querySelectorAll('.featureCard').forEach((el, i) => el.style.setProperty('--mi', i));
+      sc.querySelectorAll('.startControlRow').forEach((el, i) => el.style.setProperty('--mi', i));
+      sc.querySelectorAll('#startBtnRow > button').forEach((el, i) => el.style.setProperty('--mi', i));
+      sc.classList.add('menuIntro');
+      setTimeout(() => sc.classList.remove('menuIntro'), 3400);
+    }
+    // The crosshair is only meant for first-person play (the game loop turns it on/off every frame
+    // while running), but until the first game starts nothing hides it — normally that's invisible
+    // behind the menu's blur, but while the menu fades in after the start sequence it was showing.
+    const ch = document.getElementById('crosshair'); if (ch) ch.style.display = 'none';
+    sc.style.display = 'flex';
+    if (!menuMusicUnlockAttempted) document.getElementById('musicUnlockHint').classList.add('show');
+  }
+
+  function finishIntroSequence(){
+    const c = introCine;
+    if (!c.active) return;
+    c.active = false;
+    if (c.savedArms) armPivots.forEach((p, i) => p.rotation.copy(c.savedArms[i]));
+    if (c.savedLegs) legPivots.forEach((p, i) => p.rotation.copy(c.savedLegs[i]));
+    playerMesh.scale.set(1, 1, 1);
+    playerMesh.position.copy(player.pos);
+    playerMesh.rotation.y = player.faceYaw;
+    playerMesh.visible = false; // same as the normal menu state: the character stays hidden behind the menu
+    // Camera stays on the start island, in the same final framing the swoop
+    // ends on (also when skipped mid-swoop). It used to snap back to the old
+    // menu camera here — which looks at empty sky from the player's default
+    // spot — while the overlay was still fading out and the menu hadn't fully
+    // faded in yet, so for a moment you'd see that raw sky view (plus the
+    // crosshair). Starting the game positions the camera itself
+    // (startGame → respawnPlayer + snapCameraToPlayer), so nothing else
+    // depends on where it was left.
+    camera.position.set(
+      c.head.x + Math.sin(player.yaw) * Math.cos(player.pitch) * camZoom,
+      c.head.y + Math.sin(player.pitch) * camZoom,
+      c.head.z + Math.cos(player.yaw) * Math.cos(player.pitch) * camZoom
+    );
+    camera.lookAt(c.head);
+    // Everything else (HUD pills, controls hint, buttons) stays hidden until the menu has fully faded in
+    // over the scene (0.7s) — if it came back right now it would pop in for a moment, uncovered, and
+    // only then get hidden behind the menu's blur.
+    setTimeout(() => document.body.classList.remove('introPlaying'), 800);
+    const overlay = document.getElementById('introOverlay');
+    overlay.classList.add('fadeOut');
+    setTimeout(() => overlay.classList.remove('show', 'fadeOut', 'clear', 'titleOut'), 520);
+    showStartMenu(true);
+  }
+
+  function updateIntroCinematic(dt){
+    const c = introCine;
+    c.t += dt;
+    const t = c.t;
+    const overlay = document.getElementById('introOverlay');
+    if (t > 1.05 && !overlay.classList.contains('clear')) overlay.classList.add('clear');
+    if (t > 1.6 && !overlay.classList.contains('titleOut')) overlay.classList.add('titleOut');
+
+    // camera: starts high and wide off to one side, swoops down and around
+    // into the usual behind-the-character framing
+    const e = introEaseInOutCubic(Math.min(1, t / 3.3));
+    const yaw = player.yaw + (1 - e) * -2.3;
+    const pitch = player.pitch + (1 - e) * 0.5;
+    const dist = camZoom * (1 + (1 - e) * 1.7);
+    camera.position.set(
+      c.head.x + Math.sin(yaw) * Math.cos(pitch) * dist,
+      c.head.y + Math.sin(pitch) * dist,
+      c.head.z + Math.cos(yaw) * Math.cos(pitch) * dist
+    );
+    camera.lookAt(c.head);
+
+    // The monsters stay exactly where they are (standing still, see
+    // rehomeSmallEnemies) but turn on the spot to watch the camera as it
+    // swoops around — their eyes are on the mesh's local +z side, so the
+    // facing that points them at the camera is atan2(dx, dz). Turned with a
+    // short smoothing (and the shortest way around) so it reads as the head
+    // following rather than snapping.
+    for (const en of smallEnemies){
+      if (!en.alive) continue;
+      const m = en.mesh.position;
+      const target = Math.atan2(camera.position.x - m.x, camera.position.z - m.z);
+      let diff = target - en.mesh.rotation.y;
+      diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+      en.mesh.rotation.y += diff * Math.min(1, dt * 8);
+    }
+
+    // character: arcs in from off-screen with arms up, spinning, lands with
+    // a squash, then turns to face the camera and waves
+    const JUMP_START = 1.15, JUMP_LEN = 1.1, LAND = JUMP_START + JUMP_LEN;
+    if (t < JUMP_START){ playerMesh.visible = false; return; }
+    playerMesh.visible = true;
+    const u = Math.min(1, (t - JUMP_START) / JUMP_LEN);
+    const k = introEaseOutCubic(u);
+    playerMesh.position.set(
+      c.base.x + (1 - k) * -15,
+      c.base.y + (1 - u) * (1 - u) * 11 + Math.sin(u * Math.PI) * 3.2,
+      c.base.z + (1 - k) * 7
+    );
+    playerMesh.rotation.y = (player.faceYaw + Math.PI) + (1 - k) * Math.PI * 3;
+    const raise = (1 - u * u) * 2.1;
+    armPivots.forEach((p, i) => { const side = i === 0 ? -1 : 1; p.rotation.z = side * (0.24 + raise); });
+    if (legPivots[0]) legPivots[0].rotation.x = -0.7 * (1 - k);
+    if (legPivots[1]) legPivots[1].rotation.x = 0.7 * (1 - k);
+    let sy = 1;
+    if (t >= LAND){
+      const w = Math.min(1, (t - LAND) / 0.45);
+      const sq = Math.sin(w * Math.PI) * 0.28;
+      sy = 1 - sq;
+      playerMesh.scale.set(1 + sq * 0.5, sy, 1 + sq * 0.5);
+      playerMesh.position.y = c.base.y - (1 - sy); // keeps the feet on the ground while the body squashes
+      const wave = Math.min(1, Math.max(0, (t - LAND - 0.1) / 0.25));
+      if (armPivots[1]) armPivots[1].rotation.z = 0.24 + wave * 2.1 + Math.sin((t - LAND) * 13) * 0.3 * wave;
+    }
+    if (t >= c.dur) finishIntroSequence();
+  }
+
+  function startIntroSequence(){
+    menuMusicWanted = true;
+    const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduceMotion || running){ showStartMenu(false); return; }
+    const overlay = document.getElementById('introOverlay');
+    const title = document.getElementById('introTitle');
+    title.innerHTML = '';
+    'Rankmann'.split('').forEach((ch, i) => {
+      const s = document.createElement('span');
+      s.className = 'introLetter';
+      s.textContent = ch;
+      s.style.setProperty('--i', i);
+      s.style.setProperty('--h', 45 + i * 38); // yellow → green → blue → pink across the word
+      title.appendChild(s);
+    });
+    // World 1 always: that's the only world actually built/active at load
+    // time (applyWorldTheme(1) is the default until Start applies the saved
+    // world) — using the SAVED world's hub here would put the camera down at
+    // y=-900 where inactive worlds' islands are parked, for anyone whose last
+    // session ended in World 2-4.
+    const hub = islandsW1[0];
+    introCine.base.set(hub.pos.x, hub.top + player.radius + (keyboardKeysWanted ? 0.4 : 0), hub.pos.z); // +0.4 = a resting keycap's height, so the landing is ON the keys, not inside them
+    introCine.head.copy(introCine.base).add(new THREE.Vector3(0, 0.95, 0));
+    introCine.savedArms = armPivots.map(p => p.rotation.clone());
+    introCine.savedLegs = legPivots.map(p => p.rotation.clone());
+    introCine.t = 0;
+    introCine.active = true;
+    playerMesh.visible = false;
+    document.body.classList.add('introPlaying');
+    overlay.classList.remove('fadeOut', 'clear', 'titleOut');
+    overlay.classList.add('show');
+  }
+  document.getElementById('introOverlay').addEventListener('pointerdown', e => { e.preventDefault(); finishIntroSequence(); });
+  window.addEventListener('keydown', () => { if (introCine.active) finishIntroSequence(); });
 
   // ---------- DAILY LOGIN REWARD ----------
   // A 7-day cycle of trophy rewards that grows each consecutive day, resets
@@ -14906,6 +15247,7 @@
   });
 
   animate();
+  startIntroSequence(); // title + camera swoop + character jump-in, then the menu builds itself — see START SEQUENCE above
   // Loading screen's job is done — everything above has finished running,
   // meaning the whole 3D world, the keycap grid, and the profile picker
   // are all built and ready to interact with. Faded out rather than
