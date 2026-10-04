@@ -9703,6 +9703,25 @@
   // the cloud copy has meaningfully more progress than what's here right
   // now (comparing trophy counts is a simple, honest proxy for "is this
   // actually ahead", without needing to diff every single stored key).
+  // Gate for pop-up dialogs that must not interrupt the start sequence. The
+  // restore prompt below is a native confirm() — it BLOCKS the page while
+  // it's open — and it fires ~2.5s after load, which lands squarely in the
+  // middle of the title/camera-swoop/character-jump intro (freezing it
+  // mid-scene behind a browser dialog). Anything passed to
+  // whenStartMenuReady() waits until the start menu has been shown AND has
+  // finished building itself (markStartMenuReady is called from
+  // showStartMenu), then runs; if the menu is already ready it runs right away.
+  let startMenuReady = false;
+  const startMenuReadyQueue = [];
+  function whenStartMenuReady(fn){
+    if (startMenuReady) fn(); else startMenuReadyQueue.push(fn);
+  }
+  function markStartMenuReady(delayMs){
+    setTimeout(() => {
+      startMenuReady = true;
+      startMenuReadyQueue.splice(0).forEach(fn => { try { fn(); } catch(e){} });
+    }, delayMs);
+  }
   function checkCloudBackupOnLoad(){
     if (!firebaseReady()) return;
     const ref = cloudBackupRef();
@@ -9713,10 +9732,13 @@
       const cloudTrophies = typeof backup.trophies === 'number' ? backup.trophies : 0;
       if (cloudTrophies <= totalTrophies) return; // local is already equal or ahead — nothing useful to offer
       const savedDate = backup.savedAt ? new Date(backup.savedAt).toLocaleString('de-DE') : 'unbekannt';
-      if (confirm('☁️ Eine automatische Cloud-Sicherung mit mehr Fortschritt wurde gefunden (' + cloudTrophies + ' Pokale, gesichert am ' + savedDate + ').\n\nJetzt hier wiederherstellen? (Dein aktueller lokaler Stand bleibt dabei mit deinen Freunden zusammengeführt, nichts geht verloren.)')){
-        applyProfileData(backup.data);
-        location.reload();
-      }
+      // Deferred until the start menu is up and built (see whenStartMenuReady) so this blocking dialog never lands in the middle of the start animation
+      whenStartMenuReady(() => {
+        if (confirm('☁️ Eine automatische Cloud-Sicherung mit mehr Fortschritt wurde gefunden (' + cloudTrophies + ' Pokale, gesichert am ' + savedDate + ').\n\nJetzt hier wiederherstellen? (Dein aktueller lokaler Stand bleibt dabei mit deinen Freunden zusammengeführt, nichts geht verloren.)')){
+          applyProfileData(backup.data);
+          location.reload();
+        }
+      });
     }).catch(() => {});
   }
 
@@ -14991,6 +15013,9 @@
     const ch = document.getElementById('crosshair'); if (ch) ch.style.display = 'none';
     sc.style.display = 'flex';
     if (!menuMusicUnlockAttempted) document.getElementById('musicUnlockHint').classList.add('show');
+    // Pop-up dialogs held back during the start sequence (e.g. the cloud-backup restore prompt) may run
+    // once the menu has finished building itself (its build-up animation + the class cleanup above is ~3.4s)
+    markStartMenuReady(animated ? 3600 : 500);
   }
 
   function finishIntroSequence(){
