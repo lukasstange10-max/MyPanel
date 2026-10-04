@@ -15299,12 +15299,15 @@
       s.style.setProperty('--h', 45 + i * 38); // yellow → green → blue → pink across the word
       title.appendChild(s);
     });
-    // World 1 always: that's the only world actually built/active at load
-    // time (applyWorldTheme(1) is the default until Start applies the saved
-    // world) — using the SAVED world's hub here would put the camera down at
-    // y=-900 where inactive worlds' islands are parked, for anyone whose last
-    // session ended in World 2-4.
-    const hub = islandsW1[0];
+    // The hub of the world that is ACTUALLY active right now. Load-time
+    // setup ends with applyWorldTheme(selectedWorld) (see the pre-warm pass),
+    // so the saved world is the visible one — its islands sit at their real
+    // heights while every other world's islands are hidden/parked at y=-900.
+    // (An earlier version of this hard-coded World 1 on the wrong assumption
+    // that World 1 was always the active one at load; for anyone whose saved
+    // world is 2-4 that pointed the camera at invisible islands: an empty
+    // scene during the sequence, and an empty menu backdrop afterwards.)
+    const hub = selectedWorld === 4 ? islandsW4[0] : selectedWorld === 3 ? islandsW3[0] : selectedWorld === 2 ? islandsW2[0] : islandsW1[0];
     introCine.base.set(hub.pos.x, hub.top + player.radius + (keyboardKeysWanted ? 0.4 : 0), hub.pos.z); // +0.4 = a resting keycap's height, so the landing is ON the keys, not inside them
     introCine.head.copy(introCine.base).add(new THREE.Vector3(0, 0.95, 0));
     introCine.savedArms = armPivots.map(p => p.rotation.clone());
@@ -15447,6 +15450,10 @@
   });
 
   animate();
+  // On touch devices the on-screen gameplay controls (joystick + jump/attack buttons) are un-hidden
+  // at load (see TOUCH CONTROLS) and nothing re-hid them until some later menu action called this —
+  // so they sat over the start-screen background. Hide them now unless gameplay is actually running.
+  updateTouchControlsVisibility();
   showAudioGate(); // first the full-screen "enable music" button; its tap starts the sequence (title + camera swoop + character jump-in, then the menu builds itself) — see START SEQUENCE above
   // Loading screen's job is done — everything above has finished running,
   // meaning the whole 3D world, the keycap grid, and the profile picker
