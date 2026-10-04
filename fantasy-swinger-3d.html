@@ -783,22 +783,9 @@
      animation has finished (the 2.6s delay below), and doesn't darken or
      block anything. Any click/tap/key anywhere on the page still counts as
      the "unlock audio" gesture and dismisses it, same as before. */
-  /* The big menu box sits in its own column so the music button can live
-     directly UNDER it (in normal flow, so it follows the box if the menu
-     scrolls on a small screen) instead of floating in a screen corner. */
+  /* The big menu box sits in its own column (kept as a wrapper of its own so the
+     two menu columns can be grouped and scaled together, see #startColumns). */
   #startMainCol { display: flex; flex-direction: column; align-items: center; gap: 18px; }
-  #musicUnlockHint { display: none; }
-  #musicUnlockHint.show { display: block; animation: musicHintIn 0.8s cubic-bezier(.2,.9,.3,1.25) 2.6s backwards; }
-  @keyframes musicHintIn { from { opacity: 0; transform: translateY(-14px) scale(0.85); } to { opacity: 1; transform: none; } }
-  #musicUnlockHint span {
-    display: block;
-    background: linear-gradient(135deg, rgba(20,64,56,0.93), rgba(14,42,42,0.93));
-    border: 3px solid rgba(122,255,196,0.75);
-    color: #fff; padding: 18px 44px; border-radius: 999px; font-size: 22px; font-weight: 800; white-space: nowrap;
-    cursor: pointer;
-    box-shadow: 0 12px 34px rgba(0,0,0,0.5), 0 0 34px rgba(122,255,196,0.42);
-    animation: statPulse 1.6s ease-in-out infinite;
-  }
 
   #startScreen {
     position: fixed; inset: 0;
@@ -869,13 +856,6 @@
   /* Touch devices (iPad): the menu is frozen — no swiping it up/down — and is
      scaled down by fitStartMenuToScreen() so all of it is visible at once. */
   body.isTouchDeviceUI #startScreen { overflow: hidden; touch-action: none; overscroll-behavior: none; }
-  /* The "enable music" button's space is reserved from the start on touch
-     (just invisible) so it appearing 2.6s in doesn't change the menu's height
-     and make the fitted menu visibly jump to a new scale. */
-  body.isTouchDeviceUI #musicUnlockHint { display: block; visibility: hidden; }
-  body.isTouchDeviceUI #musicUnlockHint.show { visibility: visible; }
-  body.isTouchDeviceUI #startMainCol { gap: 12px; }
-  body.isTouchDeviceUI #musicUnlockHint span { padding: 11px 30px; font-size: 19px; } /* a bit more compact on touch — its reserved space counts toward how much the whole menu has to shrink to fit */
   #sideColumn {
     display: flex; flex-direction: column; gap: 18px;
     width: 260px; flex-shrink: 0;
@@ -1422,6 +1402,29 @@
      then builds itself up piece by piece. Clicking/tapping or pressing a
      key at any point skips straight to the menu.
      ============================================================ */
+  /* Full-screen "enable music" gate shown first after every reload. Browsers
+     only allow sound after a tap/click, so this one tap does three jobs: it
+     unlocks audio, it's the tap the start-sequence sounds need, and the menu
+     music starts from it (replacing the little hint that used to sit under
+     the menu). Tapping ANYWHERE on it counts, not just the pill. */
+  #audioGate {
+    position: fixed; inset: 0; z-index: 710; display: none;
+    flex-direction: column; align-items: center; justify-content: center; gap: 20px;
+    background: rgba(6,3,14,0.78); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    color: #fff; text-align: center; cursor: pointer; touch-action: none;
+    user-select: none; -webkit-user-select: none; transition: opacity 0.4s ease;
+  }
+  #audioGate.show { display: flex; }
+  #audioGate.fadeOut { opacity: 0; pointer-events: none; }
+  #audioGateBtn {
+    background: linear-gradient(135deg, rgba(122,255,196,0.25), rgba(122,255,196,0.1));
+    border: 3px solid rgba(122,255,196,0.75); border-radius: 999px;
+    padding: 24px 58px; font-size: clamp(22px, 4.4vw, 36px); font-weight: 800; white-space: nowrap;
+    box-shadow: 0 15px 50px rgba(0,0,0,0.55), 0 0 45px rgba(122,255,196,0.4);
+    animation: statPulse 1.6s ease-in-out infinite;
+  }
+  #audioGateSub { font-size: clamp(13px, 2.2vw, 17px); color: rgba(255,255,255,0.62); letter-spacing: 0.3px; }
+
   #introOverlay {
     position: fixed; inset: 0; z-index: 700; display: none;
     flex-direction: column; align-items: center; justify-content: center;
@@ -1500,7 +1503,7 @@
 
   /* while the start sequence plays, hide every other piece of UI (HUD pills,
      settings/music buttons, etc.) so only the 3D scene and the title show */
-  body.introPlaying > *:not(canvas):not(#introOverlay):not(#rankmannLoadingScreen):not(#startScreen) { visibility: hidden !important; }
+  body.introPlaying > *:not(canvas):not(#introOverlay):not(#rankmannLoadingScreen):not(#startScreen):not(#audioGate) { visibility: hidden !important; }
   @keyframes menuBgIn { from { opacity: 0; } to { opacity: 1; } }
   #startScreen.menuIntro { animation: menuBgIn 0.7s ease backwards; }
 
@@ -2631,7 +2634,7 @@
     background: linear-gradient(135deg, rgba(255,140,20,0.35), rgba(255,60,20,0.35)) !important;
     border-color: rgba(255,160,60,0.7) !important;
   }
-  html.halloween-active #musicUnlockHint span {
+  html.halloween-active #audioGateBtn {
     background: linear-gradient(135deg, rgba(255,140,20,0.3), rgba(255,60,20,0.15)) !important;
     border-color: rgba(255,160,60,0.8) !important;
     box-shadow: 0 15px 50px rgba(0,0,0,0.55), 0 0 45px rgba(255,120,20,0.45) !important;
@@ -2677,7 +2680,7 @@
     background: linear-gradient(135deg, rgba(120,190,255,0.35), rgba(60,130,220,0.35)) !important;
     border-color: rgba(160,210,255,0.7) !important;
   }
-  html.christmas-active #musicUnlockHint span {
+  html.christmas-active #audioGateBtn {
     background: linear-gradient(135deg, rgba(120,190,255,0.3), rgba(60,130,220,0.15)) !important;
     border-color: rgba(160,210,255,0.8) !important;
     box-shadow: 0 15px 50px rgba(0,0,0,0.55), 0 0 45px rgba(100,170,255,0.45) !important;
@@ -2973,6 +2976,11 @@
 <button id="emoteHudBtn" class="hidden" title="Emotes (B)" data-i18n-title="emoteHudBtnTitle">🎭</button>
 
 
+<div id="audioGate">
+  <div id="audioGateBtn" data-i18n="musicUnlockHint">🔊 Musik aktivieren</div>
+  <div id="audioGateSub" data-i18n="audioGateSub">Zum Starten tippen oder klicken</div>
+</div>
+
 <div id="introOverlay">
   <div id="introVignette"></div>
   <div id="introContent">
@@ -3046,7 +3054,6 @@
     </div>
     <div id="saveCodeHint">🔐 Nicht vergessen: Spielstand regelmäßig sichern, damit nichts verloren geht</div>
   </div>
-  <div id="musicUnlockHint"><span data-i18n="musicUnlockHint">🔊 Musik aktivieren</span></div>
   </div>
   <div id="sideColumn">
   <div id="updateTeaser" style="cursor:pointer;">
@@ -5002,7 +5009,7 @@
       phoneBlockTitle: 'Only playable on PC &amp; tablet', phoneBlockText: "Rankmann currently doesn't run on phones. Please open the game on a computer or tablet to play.",
       hintBar: '<span class="key">WASD</span> move <span class="sep"></span> <span class="key">Shift</span> sprint <span class="sep"></span> <span class="key">Left click + drag</span> look around <span class="sep"></span> <span class="key">Wheel</span> zoom <span class="sep"></span> <span class="key">E</span> hold vine <span class="sep"></span> <span class="key">Right click</span> attack (in range) <span class="sep"></span> <span class="key">Space</span> jump',
       introUnmuteHint: '🔇 Sound is muted — click to enable',
-      musicUnlockHint: '🔊 Enable music', settingsSaved: '✅ Saved', introSkipHint: 'Click or tap to skip',
+      musicUnlockHint: '🔊 Enable music', settingsSaved: '✅ Saved', introSkipHint: 'Click or tap to skip', audioGateSub: 'Tap or click to start',
       profileSwitchHint: 'Switch', statsBtn: '📊 Statistics', statsTitle: '📊 Statistics', statsSub: 'Your progress at a glance',
       statsPlaytime: 'Playtime', statsTrophies: 'Trophies collected', statsAchievements: 'Achievements unlocked', statsSkins: 'Skins owned',
       statsEnemies: 'Enemies defeated', statsCrystals: 'Crystals collected', statsWorlds: 'Worlds unlocked', statsPhotos: 'Photos taken', closeBtn5: 'Close', statsBtnTitle: 'Statistics',
@@ -5084,7 +5091,7 @@
       phoneBlockTitle: 'Jouable uniquement sur PC et tablette', phoneBlockText: "Rankmann ne fonctionne actuellement pas sur téléphone. Merci d'ouvrir le jeu sur un ordinateur ou une tablette pour jouer.",
       hintBar: '<span class="key">WASD</span> se déplacer <span class="sep"></span> <span class="key">Shift</span> sprinter <span class="sep"></span> <span class="key">Clic gauche + glisser</span> regarder <span class="sep"></span> <span class="key">Molette</span> zoomer <span class="sep"></span> <span class="key">E</span> tenir la liane <span class="sep"></span> <span class="key">Clic droit</span> attaquer (à portée) <span class="sep"></span> <span class="key">Espace</span> sauter',
       introUnmuteHint: '🔇 Son coupé — cliquer pour activer',
-      musicUnlockHint: '🔊 Activer la musique', settingsSaved: '✅ Enregistré', introSkipHint: 'Cliquer ou toucher pour passer',
+      musicUnlockHint: '🔊 Activer la musique', settingsSaved: '✅ Enregistré', introSkipHint: 'Cliquer ou toucher pour passer', audioGateSub: 'Touchez ou cliquez pour démarrer',
       profileSwitchHint: 'Changer', statsBtn: '📊 Statistiques', statsTitle: '📊 Statistiques', statsSub: "Ta progression en un coup d'œil",
       statsPlaytime: 'Temps de jeu', statsTrophies: 'Trophées collectés', statsAchievements: 'Succès débloqués', statsSkins: 'Skins possédés',
       statsEnemies: 'Ennemis vaincus', statsCrystals: 'Cristaux collectés', statsWorlds: 'Mondes débloqués', statsPhotos: 'Photos prises', closeBtn5: 'Fermer', statsBtnTitle: 'Statistiques',
@@ -5166,7 +5173,7 @@
       phoneBlockTitle: 'Solo se puede jugar en PC y tablet', phoneBlockText: 'Rankmann actualmente no funciona en móviles. Abre el juego en un ordenador o tablet para jugar.',
       hintBar: '<span class="key">WASD</span> moverse <span class="sep"></span> <span class="key">Shift</span> correr <span class="sep"></span> <span class="key">Clic izq. + arrastrar</span> mirar <span class="sep"></span> <span class="key">Rueda</span> zoom <span class="sep"></span> <span class="key">E</span> sujetar liana <span class="sep"></span> <span class="key">Clic derecho</span> atacar (a distancia) <span class="sep"></span> <span class="key">Espacio</span> saltar',
       introUnmuteHint: '🔇 Sonido silenciado — clic para activar',
-      musicUnlockHint: '🔊 Activar música', settingsSaved: '✅ Guardado', introSkipHint: 'Haz clic o toca para saltar',
+      musicUnlockHint: '🔊 Activar música', settingsSaved: '✅ Guardado', introSkipHint: 'Haz clic o toca para saltar', audioGateSub: 'Toca o haz clic para empezar',
       profileSwitchHint: 'Cambiar', statsBtn: '📊 Estadísticas', statsTitle: '📊 Estadísticas', statsSub: 'Tu progreso de un vistazo',
       statsPlaytime: 'Tiempo de juego', statsTrophies: 'Trofeos conseguidos', statsAchievements: 'Logros desbloqueados', statsSkins: 'Skins en posesión',
       statsEnemies: 'Enemigos derrotados', statsCrystals: 'Cristales recolectados', statsWorlds: 'Mundos desbloqueados', statsPhotos: 'Fotos tomadas', closeBtn5: 'Cerrar', statsBtnTitle: 'Estadísticas',
@@ -5248,7 +5255,7 @@
       phoneBlockTitle: 'Jogável apenas em PC e tablet', phoneBlockText: 'No momento o Rankmann não funciona em celulares. Abra o jogo em um computador ou tablet para jogar.',
       hintBar: '<span class="key">WASD</span> mover <span class="sep"></span> <span class="key">Shift</span> correr <span class="sep"></span> <span class="key">Clique esq. + arrastar</span> olhar ao redor <span class="sep"></span> <span class="key">Roda</span> zoom <span class="sep"></span> <span class="key">E</span> segurar o cipó <span class="sep"></span> <span class="key">Clique direito</span> atacar (ao alcance) <span class="sep"></span> <span class="key">Espaço</span> pular',
       introUnmuteHint: '🔇 Som mudo — clique para ativar',
-      musicUnlockHint: '🔊 Ativar música', settingsSaved: '✅ Salvo', introSkipHint: 'Clique ou toque para pular',
+      musicUnlockHint: '🔊 Ativar música', settingsSaved: '✅ Salvo', introSkipHint: 'Clique ou toque para pular', audioGateSub: 'Toque ou clique para começar',
       profileSwitchHint: 'Trocar', statsBtn: '📊 Estatísticas', statsTitle: '📊 Estatísticas', statsSub: 'Seu progresso em um relance',
       statsPlaytime: 'Tempo de jogo', statsTrophies: 'Troféus coletados', statsAchievements: 'Conquistas desbloqueadas', statsSkins: 'Skins adquiridas',
       statsEnemies: 'Inimigos derrotados', statsCrystals: 'Cristais coletados', statsWorlds: 'Mundos desbloqueados', statsPhotos: 'Fotos tiradas', closeBtn5: 'Fechar', statsBtnTitle: 'Estatísticas',
@@ -13555,7 +13562,7 @@
     const dt = Math.min(clock.getDelta(), 0.05);
     if (introCine.active){
       // the start sequence owns the camera/character until it finishes or is skipped
-      try { updateIntroCinematic(dt); } catch(e){ finishIntroSequence(); }
+      try { updateIntroCinematic(dt); } catch(e){ finishIntroSequence(true); }
       if (introCine.active){ renderer.render(scene, camera); return; }
     }
     if (running && !paused && !previewMode){
@@ -15013,7 +15020,7 @@
   // Click/tap/any key skips straight to step 3. Everything about the
   // character (pose, scale, position) is saved first and put back exactly as
   // it was afterward, so the normal menu/game start is completely unaffected.
-  const introCine = { active: false, t: 0, dur: 3.7, base: new THREE.Vector3(), head: new THREE.Vector3(), savedArms: null, savedLegs: null };
+  const introCine = { active: false, t: 0, dur: 3.7, fx: {}, startedAt: 0, base: new THREE.Vector3(), head: new THREE.Vector3(), savedArms: null, savedLegs: null };
   function introEaseOutCubic(x){ return 1 - Math.pow(1 - x, 3); }
   function introEaseInOutCubic(x){ return x < 0.5 ? 4*x*x*x : 1 - Math.pow(-2*x + 2, 3) / 2; }
 
@@ -15055,16 +15062,22 @@
     const ch = document.getElementById('crosshair'); if (ch) ch.style.display = 'none';
     sc.style.display = 'flex';
     fitStartMenuToScreen(); // measure + scale right away, before the first painted frame of the menu
-    if (!menuMusicUnlockAttempted) document.getElementById('musicUnlockHint').classList.add('show');
+    // The tap on the full-screen "enable music" gate already unlocked audio, so the menu music
+    // can simply start now (it fades in over ~1.5s) — held back until here so it doesn't drown
+    // out the start-sequence sounds.
+    menuMusicWanted = true;
+    tryStartMenuMusic();
+    if (animated) playMenuBuildSounds();
     // Pop-up dialogs held back during the start sequence (e.g. the cloud-backup restore prompt) may run
     // once the menu has finished building itself (its build-up animation + the class cleanup above is ~3.4s)
     markStartMenuReady(animated ? 3600 : 500);
   }
 
-  function finishIntroSequence(){
+  function finishIntroSequence(skipped){
     const c = introCine;
     if (!c.active) return;
     c.active = false;
+    if (skipped) cutIntroSounds(); // skipped mid-way → silence whatever was still scheduled (a natural finish lets the last tails ring out)
     if (c.savedArms) armPivots.forEach((p, i) => p.rotation.copy(c.savedArms[i]));
     if (c.savedLegs) legPivots.forEach((p, i) => p.rotation.copy(c.savedLegs[i]));
     playerMesh.scale.set(1, 1, 1);
@@ -15102,6 +15115,8 @@
     const overlay = document.getElementById('introOverlay');
     if (t > 1.05 && !overlay.classList.contains('clear')) overlay.classList.add('clear');
     if (t > 1.6 && !overlay.classList.contains('titleOut')) overlay.classList.add('titleOut');
+    const fx = c.fx;
+    if (t > 1.6 && !fx.titleOut){ fx.titleOut = true; sfxSweep(0, 0.7, 300, 3200, 0.11, 1.0); sfxTone(0, 200, 0.6, 'sine', 0.05, 900); } // title lifts away
 
     // camera: starts high and wide off to one side, swoops down and around
     // into the usual behind-the-character framing
@@ -15136,6 +15151,7 @@
     const JUMP_START = 1.15, JUMP_LEN = 1.1, LAND = JUMP_START + JUMP_LEN;
     if (t < JUMP_START){ playerMesh.visible = false; return; }
     playerMesh.visible = true;
+    if (!fx.jump){ fx.jump = true; sfxSweep(0, 0.55, 500, 2400, 0.1, 1.0); sfxTone(0, 260, 0.28, 'triangle', 0.08, 560); } // take-off whoosh + little boing
     const u = Math.min(1, (t - JUMP_START) / JUMP_LEN);
     const k = introEaseOutCubic(u);
     playerMesh.position.set(
@@ -15150,6 +15166,12 @@
     if (legPivots[1]) legPivots[1].rotation.x = 0.7 * (1 - k);
     let sy = 1;
     if (t >= LAND){
+      if (!fx.land){
+        fx.land = true;
+        sfxTone(0, 150, 0.4, 'sine', 0.28, 45);          // landing thud
+        sfxSweep(0, 0.18, 220, 90, 0.12, 0.7);
+        for (let k = 0; k < 5; k++) sfxTone(0.1 + k * 0.25, k % 2 ? 1568 : 1319, 0.45, 'triangle', 0.045); // bright chimes in time with the wave
+      }
       const w = Math.min(1, (t - LAND) / 0.45);
       const sq = Math.sin(w * Math.PI) * 0.28;
       sy = 1 - sq;
@@ -15161,10 +15183,111 @@
     if (t >= c.dur) finishIntroSequence();
   }
 
+  // ---------- START SEQUENCE SOUNDS ----------
+  // All synthesized with WebAudio (no sound files), kept quiet, and following
+  // the SFX volume slider (everything feeds sfxVolumeGain). Title/menu sounds
+  // are scheduled on the audio clock at the moment their CSS animations
+  // start; the ones tied to the 3D part (jump, landing, ...) fire from
+  // updateIntroCinematic when its own timeline reaches them, so they stay in
+  // step with the picture even if frames are slow. Everything goes through
+  // one throw-away "bus" gain so skipping can silence it all at once.
+  let introBus = null;
+  let introNoiseBuf = null;
+  function getIntroBus(){
+    const ctx = ensureAudio();
+    if (!ctx || !sfxVolumeGain) return null;
+    if (!introBus){ introBus = ctx.createGain(); introBus.gain.value = 1; introBus.connect(sfxVolumeGain); }
+    return introBus;
+  }
+  function cutIntroSounds(){
+    if (!introBus || !audioCtx) return;
+    const bus = introBus; introBus = null;
+    try { bus.gain.cancelScheduledValues(audioCtx.currentTime); bus.gain.setTargetAtTime(0, audioCtx.currentTime, 0.03); } catch(e){}
+    setTimeout(() => { try { bus.disconnect(); } catch(e){} }, 500);
+  }
+  function sfxTone(delay, freq, dur, type, peak, glideTo){
+    const ctx = ensureAudio(), bus = getIntroBus();
+    if (!ctx || !bus) return;
+    const t0 = ctx.currentTime + Math.max(0, delay);
+    const osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = type || 'sine';
+    osc.frequency.setValueAtTime(freq, t0);
+    if (glideTo) osc.frequency.exponentialRampToValueAtTime(Math.max(glideTo, 1), t0 + dur);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(Math.max(peak, 0.0002), t0 + 0.015);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    osc.connect(g).connect(bus);
+    osc.start(t0); osc.stop(t0 + dur + 0.03);
+  }
+  // filtered-noise "whoosh": a band-pass whose centre frequency glides f0 → f1
+  function sfxSweep(delay, dur, f0, f1, peak, q){
+    const ctx = ensureAudio(), bus = getIntroBus();
+    if (!ctx || !bus) return;
+    if (!introNoiseBuf){
+      introNoiseBuf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+      const d = introNoiseBuf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    }
+    const t0 = ctx.currentTime + Math.max(0, delay);
+    const src = ctx.createBufferSource(); src.buffer = introNoiseBuf; src.loop = true;
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = q || 1;
+    bp.frequency.setValueAtTime(f0, t0);
+    bp.frequency.exponentialRampToValueAtTime(Math.max(f1, 20), t0 + dur);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(Math.max(peak, 0.0002), t0 + dur * 0.35);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    src.connect(bp).connect(g).connect(bus);
+    src.start(t0); src.stop(t0 + dur + 0.05);
+  }
+  function playIntroTitleSounds(){
+    // one rising "pling" per letter, a little scale (C major pentatonic), timed to each letter landing
+    [523.25, 587.33, 659.25, 783.99, 880, 1046.5, 1174.66, 1318.5].forEach((f, i) => {
+      const d = 0.35 + i * 0.085 + 0.3;
+      sfxTone(d, f, 0.35, 'sine', 0.09);
+      sfxTone(d, f * 2, 0.2, 'sine', 0.025);
+    });
+    [523.25, 659.25, 783.99].forEach(f => sfxTone(1.4, f, 1.1, 'sine', 0.045));                 // soft chord once the word is complete
+    [1568, 1976, 2349, 2637, 3136].forEach((f, i) => sfxTone(1.35 + i * 0.07, f, 0.14, 'sine', 0.03)); // sparkle as the tagline fades in
+    sfxSweep(0, 3.4, 220, 520, 0.05, 0.8);                                                         // quiet wind under the whole camera swoop
+  }
+  function playMenuBuildSounds(){
+    sfxSweep(0, 0.5, 400, 1800, 0.07, 0.8); // the menu sweeping in
+    const sc = document.getElementById('startScreen');
+    Array.from(sc.querySelectorAll('.featureCard')).filter(el => el.offsetParent).forEach((el, i) => sfxTone(0.65 + i * 0.08, 520 + i * 60, 0.1, 'sine', 0.06, 380 + i * 40));
+    Array.from(sc.querySelectorAll('#startBtnRow > button')).filter(el => el.offsetParent).forEach((el, i) => sfxTone(1.15 + i * 0.07, 440 + i * 45, 0.1, 'sine', 0.055, 300 + i * 30));
+    sfxTone(1.8, 1046.5, 0.5, 'sine', 0.03); // gentle note as the last line fades in
+  }
+
+  // ---------- FULL-SCREEN "ENABLE MUSIC" GATE ----------
+  // First thing after every reload: one big full-screen button. Its tap is the
+  // user gesture browsers require before any audio may play, so it unlocks
+  // audio for the start-sequence sounds AND for the menu music, then starts
+  // the sequence.
+  const audioGate = { active: false };
+  function showAudioGate(){
+    audioGate.active = true;
+    document.body.classList.add('introPlaying'); // keep the HUD etc. hidden behind the gate too
+    const g = document.getElementById('audioGate');
+    g.classList.remove('fadeOut');
+    g.classList.add('show');
+  }
+  function onAudioGateTap(){
+    if (!audioGate.active) return;
+    audioGate.active = false;
+    ensureAudio(); // created/resumed inside the tap itself — that's what makes sound allowed
+    const g = document.getElementById('audioGate');
+    g.classList.add('fadeOut');
+    setTimeout(() => g.classList.remove('show', 'fadeOut'), 450);
+    startIntroSequence();
+  }
+  document.getElementById('audioGate').addEventListener('pointerdown', e => { e.preventDefault(); onAudioGateTap(); });
+  // modifier keys alone don't count as a user gesture for audio in browsers, so they must not dismiss the gate
+  window.addEventListener('keydown', e => { if (audioGate.active && !['Shift', 'Control', 'Alt', 'Meta', 'CapsLock', 'Tab'].includes(e.key)) onAudioGateTap(); });
+
   function startIntroSequence(){
-    menuMusicWanted = true;
     const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduceMotion || running){ showStartMenu(false); return; }
+    if (reduceMotion || running){ document.body.classList.remove('introPlaying'); showStartMenu(false); return; }
     const overlay = document.getElementById('introOverlay');
     const title = document.getElementById('introTitle');
     title.innerHTML = '';
@@ -15187,14 +15310,23 @@
     introCine.savedArms = armPivots.map(p => p.rotation.clone());
     introCine.savedLegs = legPivots.map(p => p.rotation.clone());
     introCine.t = 0;
+    introCine.fx = {};
+    introCine.startedAt = performance.now();
     introCine.active = true;
     playerMesh.visible = false;
     document.body.classList.add('introPlaying');
     overlay.classList.remove('fadeOut', 'clear', 'titleOut');
     overlay.classList.add('show');
+    playIntroTitleSounds();
   }
-  document.getElementById('introOverlay').addEventListener('pointerdown', e => { e.preventDefault(); finishIntroSequence(); });
-  window.addEventListener('keydown', () => { if (introCine.active) finishIntroSequence(); });
+  // Skip with a click/tap/key — but not within the first ~0.45s: the very tap/key that dismissed the
+  // audio gate is still "in flight" when the sequence starts and would otherwise skip it instantly.
+  function skipIntro(){
+    if (!introCine.active || performance.now() - introCine.startedAt < 450) return;
+    finishIntroSequence(true);
+  }
+  document.getElementById('introOverlay').addEventListener('pointerdown', e => { e.preventDefault(); skipIntro(); });
+  window.addEventListener('keydown', skipIntro);
 
   // ---------- DAILY LOGIN REWARD ----------
   // A 7-day cycle of trophy rewards that grows each consecutive day, resets
@@ -15315,7 +15447,7 @@
   });
 
   animate();
-  startIntroSequence(); // title + camera swoop + character jump-in, then the menu builds itself — see START SEQUENCE above
+  showAudioGate(); // first the full-screen "enable music" button; its tap starts the sequence (title + camera swoop + character jump-in, then the menu builds itself) — see START SEQUENCE above
   // Loading screen's job is done — everything above has finished running,
   // meaning the whole 3D world, the keycap grid, and the profile picker
   // are all built and ready to interact with. Faded out rather than
