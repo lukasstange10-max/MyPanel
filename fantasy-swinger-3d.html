@@ -856,6 +856,26 @@
     display: flex; flex-direction: row; align-items: flex-start; justify-content: center;
     gap: 22px; flex-wrap: wrap; max-width: 96vw;
   }
+  /* The two visible menu columns (big menu box + side column) live in their own
+     wrapper so the whole menu can be scaled to fit a small touch screen (see
+     fitStartMenuToScreen) WITHOUT touching the position:fixed overlays that sit
+     directly in #startRow (spin wheel, update popup, changelog) — a transform
+     on #startRow itself would turn those into children of a scaled box. */
+  #startColumns {
+    display: flex; flex-direction: row; align-items: flex-start; justify-content: center;
+    gap: 22px; flex-wrap: wrap; max-width: 96vw;
+    transform-origin: center center;
+  }
+  /* Touch devices (iPad): the menu is frozen — no swiping it up/down — and is
+     scaled down by fitStartMenuToScreen() so all of it is visible at once. */
+  body.isTouchDeviceUI #startScreen { overflow: hidden; touch-action: none; overscroll-behavior: none; }
+  /* The "enable music" button's space is reserved from the start on touch
+     (just invisible) so it appearing 2.6s in doesn't change the menu's height
+     and make the fitted menu visibly jump to a new scale. */
+  body.isTouchDeviceUI #musicUnlockHint { display: block; visibility: hidden; }
+  body.isTouchDeviceUI #musicUnlockHint.show { visibility: visible; }
+  body.isTouchDeviceUI #startMainCol { gap: 12px; }
+  body.isTouchDeviceUI #musicUnlockHint span { padding: 11px 30px; font-size: 19px; } /* a bit more compact on touch — its reserved space counts toward how much the whole menu has to shrink to fit */
   #sideColumn {
     display: flex; flex-direction: column; gap: 18px;
     width: 260px; flex-shrink: 0;
@@ -1458,8 +1478,8 @@
     to   { opacity: 1; transform: none; }
   }
   @keyframes menuTitleDrop { from { opacity: 0; transform: translateY(-50px) scale(1.3); } to { opacity: 1; transform: none; } }
-  #startScreen.menuIntro #startRow > :nth-child(1) { animation: menuPanelInL 0.85s cubic-bezier(.2,.9,.25,1.05) backwards; }
-  #startScreen.menuIntro #startRow > :nth-child(n+2) { animation: menuPanelInR 0.85s cubic-bezier(.2,.9,.25,1.05) 0.12s backwards; }
+  #startScreen.menuIntro #startColumns > :nth-child(1) { animation: menuPanelInL 0.85s cubic-bezier(.2,.9,.25,1.05) backwards; }
+  #startScreen.menuIntro #startColumns > :nth-child(n+2) { animation: menuPanelInR 0.85s cubic-bezier(.2,.9,.25,1.05) 0.12s backwards; }
   #startScreen.menuIntro .titleRow h1 { animation: menuTitleDrop 0.9s cubic-bezier(.2,.9,.3,1.15) 0.15s backwards; }
   #startScreen.menuIntro .heroTagline,
   #startScreen.menuIntro #totalTrophyLine,
@@ -2965,6 +2985,7 @@
 <div id="startScreen" style="display:none;">
   <div id="menuClickCatcher"></div>
   <div id="startRow">
+  <div id="startColumns">
   <div id="startMainCol">
   <div class="startPanel">
     <div class="titleRow">
@@ -3026,6 +3047,32 @@
     <div id="saveCodeHint">🔐 Nicht vergessen: Spielstand regelmäßig sichern, damit nichts verloren geht</div>
   </div>
   <div id="musicUnlockHint"><span data-i18n="musicUnlockHint">🔊 Musik aktivieren</span></div>
+  </div>
+  <div id="sideColumn">
+  <div id="updateTeaser" style="cursor:pointer;">
+    <div id="updateTeaserGlow"></div>
+    <span class="updateBadge" data-i18n="updateNewBadge">🆕 Neu</span>
+    <div class="updateFeature">
+      <span class="updateFeatureIcon">📋</span>
+      <div class="updateFeatureText">
+        <span class="updateFeatureTitle" data-i18n="updateNewTitle">Alle Updates ansehen</span>
+        <span class="updateFeatureSub" data-i18n="updateNewSub">Klick hier, um zu sehen, was sich alles getan hat</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="worldSelectBox">
+    <span class="updateBadge" id="worldSelectBadge" data-i18n="worldSelectBadge">🗺️ Welt wählen</span>
+    <div id="worldSelectRow">
+      <button id="worldBtn1" class="worldBtn" data-i18n="world1Btn">Welt 1 · Zauberreich</button>
+      <button id="worldBtn2" class="worldBtn" data-i18n="world2Btn">Welt 2 · Frostreich</button>
+      <button id="worldBtn3" class="worldBtn" data-i18n="world3Btn">Welt 3 · Sternenreich</button>
+      <button id="worldBtn4" class="worldBtn" data-i18n="world4Btn">Welt 4 · Ozeanreich</button>
+    </div>
+    <p id="worldSelectError" data-i18n="worldSelectError">Nicht genug Pokale!</p>
+  </div>
+
+  </div>
   </div>
 
   
@@ -3226,31 +3273,7 @@
     </div>
   </div>
 
-  <div id="sideColumn">
-  <div id="updateTeaser" style="cursor:pointer;">
-    <div id="updateTeaserGlow"></div>
-    <span class="updateBadge" data-i18n="updateNewBadge">🆕 Neu</span>
-    <div class="updateFeature">
-      <span class="updateFeatureIcon">📋</span>
-      <div class="updateFeatureText">
-        <span class="updateFeatureTitle" data-i18n="updateNewTitle">Alle Updates ansehen</span>
-        <span class="updateFeatureSub" data-i18n="updateNewSub">Klick hier, um zu sehen, was sich alles getan hat</span>
-      </div>
-    </div>
-  </div>
-
-  <div id="worldSelectBox">
-    <span class="updateBadge" id="worldSelectBadge" data-i18n="worldSelectBadge">🗺️ Welt wählen</span>
-    <div id="worldSelectRow">
-      <button id="worldBtn1" class="worldBtn" data-i18n="world1Btn">Welt 1 · Zauberreich</button>
-      <button id="worldBtn2" class="worldBtn" data-i18n="world2Btn">Welt 2 · Frostreich</button>
-      <button id="worldBtn3" class="worldBtn" data-i18n="world3Btn">Welt 3 · Sternenreich</button>
-      <button id="worldBtn4" class="worldBtn" data-i18n="world4Btn">Welt 4 · Ozeanreich</button>
-    </div>
-    <p id="worldSelectError" data-i18n="worldSelectError">Nicht genug Pokale!</p>
-  </div>
-
-  </div>
+  
   </div>
 </div>
 
@@ -14994,6 +15017,25 @@
   function introEaseOutCubic(x){ return 1 - Math.pow(1 - x, 3); }
   function introEaseInOutCubic(x){ return x < 0.5 ? 4*x*x*x : 1 - Math.pow(-2*x + 2, 3) / 2; }
 
+  // Scales the whole start menu down just enough to fit the screen — touch
+  // devices only (desktop keeps its normal scrolling layout). The menu's
+  // natural size is measured with offsetWidth/offsetHeight, which ignore
+  // transforms, so re-fitting never feeds back on itself.
+  function fitStartMenuToScreen(){
+    const wrap = document.getElementById('startColumns');
+    const sc = document.getElementById('startScreen');
+    if (!wrap || !sc) return;
+    if (!isTouchDevice || sc.style.display === 'none'){ wrap.style.transform = ''; return; }
+    const w = wrap.offsetWidth, h = wrap.offsetHeight;
+    if (!w || !h) return;
+    const margin = 14;
+    const s = Math.min(1, (window.innerWidth - margin * 2) / w, (window.innerHeight - margin * 2) / h);
+    wrap.style.transform = s < 0.999 ? 'scale(' + s.toFixed(4) + ')' : '';
+  }
+  window.addEventListener('resize', fitStartMenuToScreen);
+  window.addEventListener('orientationchange', () => setTimeout(fitStartMenuToScreen, 250));
+  if (window.ResizeObserver) new ResizeObserver(fitStartMenuToScreen).observe(document.getElementById('startColumns')); // text changes (language switch), the world list, etc.
+
   function showStartMenu(animated){
     const sc = document.getElementById('startScreen');
     if (animated){
@@ -15012,6 +15054,7 @@
     // behind the menu's blur, but while the menu fades in after the start sequence it was showing.
     const ch = document.getElementById('crosshair'); if (ch) ch.style.display = 'none';
     sc.style.display = 'flex';
+    fitStartMenuToScreen(); // measure + scale right away, before the first painted frame of the menu
     if (!menuMusicUnlockAttempted) document.getElementById('musicUnlockHint').classList.add('show');
     // Pop-up dialogs held back during the start sequence (e.g. the cloud-backup restore prompt) may run
     // once the menu has finished building itself (its build-up animation + the class cleanup above is ~3.4s)
