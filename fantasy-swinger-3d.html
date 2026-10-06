@@ -4555,8 +4555,27 @@
     try { const v = localStorage.getItem(scopedStorageKey(key)); return v === null ? fallback : JSON.parse(v); }
     catch(e){ return fallback; }
   }
+  // Keys that make up the player's real PROGRESS: what they have earned and what they own. Whenever one is written, the time
+  // is remembered (rankmann_progressUpdatedAt) — it travels inside the cloud backup, and it's how the game decides whether the
+  // cloud copy or this device's data is genuinely newer. (Deciding by "more trophies" was the bug: buying something SPENDS
+  // trophies, so right after a purchase this device always looked "behind" an older backup that still had the money.)
+  const PROGRESS_KEYS = new Set(['rankmann_totalTrophies', 'rankmann_ownedSkins', 'rankmann_ownedVineSkins', 'rankmann_ownedEmotes',
+    'rankmann_equippedSkin', 'rankmann_equippedVineSkin', 'rankmann_world2Unlocked', 'rankmann_world3Unlocked', 'rankmann_world4Unlocked',
+    'rankmann_unlockedAchievements', 'rankmann_claimedMilestones', 'rankmann_claimedChallenges']);
+  const PURCHASE_KEYS = new Set(['rankmann_ownedSkins', 'rankmann_ownedVineSkins', 'rankmann_ownedEmotes', 'rankmann_equippedSkin',
+    'rankmann_equippedVineSkin', 'rankmann_world2Unlocked', 'rankmann_world3Unlocked', 'rankmann_world4Unlocked']);
   function storageSet(key, value){
-    try { localStorage.setItem(scopedStorageKey(key), JSON.stringify(value)); return true; } catch(e){ return false; }
+    try {
+      localStorage.setItem(scopedStorageKey(key), JSON.stringify(value));
+      if (PROGRESS_KEYS.has(key)){
+        localStorage.setItem(scopedStorageKey('rankmann_progressUpdatedAt'), String(Date.now()));
+        try {
+          if (PURCHASE_KEYS.has(key)) requestCloudBackupSoon(2500);                          // a purchase / unlock: back it up right away, not on the 3-minute play timer
+          else if (key === 'rankmann_totalTrophies' && !running) requestCloudBackupSoon(4000); // trophies spent in the shop or on a spin, i.e. outside normal play
+        } catch(e){ /* the cloud-backup code isn't initialised yet this early in startup — harmless */ }
+      }
+      return true;
+    } catch(e){ return false; }
   }
 
   // ---------- SAVE CODE EXPORT/IMPORT ----------
@@ -9908,17 +9927,77 @@
     if (!meta || !meta.name) return null;
     return firebase.database().ref('cloudBackups/' + friendNameKey(meta.name));
   }
+  // "Net worth" of a save: the trophies in the wallet PLUS the price of everything bought with them. Unlike the wallet alone it
+  // doesn't drop when the player buys something — it only grows when they actually earn. `src(key)` returns a parsed stored
+  // value, either from this device (localSrc) or from a cloud backup's data.
+  const localSrc = k => storageGet(k, undefined);
+  function progressNetWorth(src){
+    const sumCost = (ids, defs) => (Array.isArray(ids) ? ids : []).reduce((acc, id) => { const d = defs.find(x => x.id === id); return acc + (d && typeof d.cost === 'number' ? d.cost : 0); }, 0);
+    let nw = Number(src('rankmann_totalTrophies')) || 0;
+    nw += sumCost(src('rankmann_ownedSkins'), SKIN_DEFS) + sumCost(src('rankmann_ownedVineSkins'), VINE_SKIN_DEFS) + sumCost(src('rankmann_ownedEmotes'), EMOTE_DEFS);
+    if (src('rankmann_world2Unlocked')) nw += WORLD2_COST;
+    if (src('rankmann_world3Unlocked')) nw += WORLD3_COST;
+    if (src('rankmann_world4Unlocked')) nw += WORLD4_COST;
+    return nw;
+  }
+  // Does the cloud copy own something this device doesn't (a skin/emote/world unlocked on another device)?
+  function cloudHasPurchasesMissingHere(cloudSrc){
+    const list = (v) => Array.isArray(v) ? v : [];
+    const miss = (cloudIds, localIds) => list(cloudIds).some(id => !list(localIds).includes(id));
+    return miss(cloudSrc('rankmann_ownedSkins'), ownedSkins) || miss(cloudSrc('rankmann_ownedVineSkins'), ownedVineSkins) || miss(cloudSrc('rankmann_ownedEmotes'), ownedEmotes) ||
+      (!!cloudSrc('rankmann_world2Unlocked') && !storageGet('rankmann_world2Unlocked', false)) || (!!cloudSrc('rankmann_world3Unlocked') && !storageGet('rankmann_world3Unlocked', false)) ||
+      (!!cloudSrc('rankmann_world4Unlocked') && !storageGet('rankmann_world4Unlocked', false));
+  }
+  function uploadCloudBackupNow(){
+    if (!firebaseReady()) return;
+    const ref = cloudBackupRef();
+    if (!ref) return;
+    ref.set({ data: collectProfileData(), trophies: totalTrophies, netWorth: progressNetWorth(localSrc),
+              progressUpdatedAt: storageGet('rankmann_progressUpdatedAt', 0), savedAt: firebase.database.ServerValue.TIMESTAMP }).then(() => {
+      lastCloudBackupAt = Date.now();
+      updateCloudBackupStatusUI();
+    }).catch(() => {});
+  }
+  let cloudBackupSoonTimer = 0;
+  function requestCloudBackupSoon(delayMs){   // debounced: one upload a moment after the last change
+    if (cloudBackupSoonTimer) clearTimeout(cloudBackupSoonTimer);
+    cloudBackupSoonTimer = setTimeout(() => { cloudBackupSoonTimer = 0; uploadCloudBackupNow(); }, delayMs || 2500);
+  }
   function updateCloudBackup(dt){
     if (!firebaseReady() || !running) return;
     cloudBackupTimer += dt;
     if (cloudBackupTimer < 180) return; // every 3 minutes of active play — frequent enough that a lost device rarely costs much, rare enough not to hammer Firebase
     cloudBackupTimer = 0;
-    const ref = cloudBackupRef();
-    if (!ref) return;
-    ref.set({ data: collectProfileData(), trophies: totalTrophies, savedAt: firebase.database.ServerValue.TIMESTAMP }).then(() => {
-      lastCloudBackupAt = Date.now();
-      updateCloudBackupStatusUI();
-    }).catch(() => {});
+    uploadCloudBackupNow();
+  }
+  // Restore from the cloud copy WITHOUT throwing away purchases this device made that the backup doesn't know about: everything
+  // comes from the backup as before, but skins/vines/emotes/worlds bought here since then are kept — and their price is deducted
+  // from the restored trophies, so it's a fair merge rather than a free refund.
+  function smartRestoreFromBackup(backup){
+    const pk = 'rankmann_profile_' + ACTIVE_PROFILE_ID + '_';
+    const here = { skins: ownedSkins.slice(), vines: ownedVineSkins.slice(), emotes: ownedEmotes.slice(),
+                   w2: !!storageGet('rankmann_world2Unlocked', false), w3: !!storageGet('rankmann_world3Unlocked', false), w4: !!storageGet('rankmann_world4Unlocked', false) };
+    applyProfileData(backup.data); // the normal restore (friends list merged, everything else from the cloud copy)
+    const cloud = k => { try { return backup.data[k] === undefined ? undefined : JSON.parse(backup.data[k]); } catch(e){ return undefined; } };
+    const arr = v => Array.isArray(v) ? v : [];
+    const union = (a, b) => { const out = arr(a).slice(); b.forEach(x => { if (!out.includes(x)) out.push(x); }); return out; };
+    const costOf = (id, defs) => { const d = defs.find(x => x.id === id); return d && typeof d.cost === 'number' ? d.cost : 0; };
+    let charge = 0;
+    here.skins.forEach(id => { if (!arr(cloud('rankmann_ownedSkins')).includes(id)) charge += costOf(id, SKIN_DEFS); });
+    here.vines.forEach(id => { if (!arr(cloud('rankmann_ownedVineSkins')).includes(id)) charge += costOf(id, VINE_SKIN_DEFS); });
+    here.emotes.forEach(id => { if (!arr(cloud('rankmann_ownedEmotes')).includes(id)) charge += costOf(id, EMOTE_DEFS); });
+    if (here.w2 && !cloud('rankmann_world2Unlocked')) charge += WORLD2_COST;
+    if (here.w3 && !cloud('rankmann_world3Unlocked')) charge += WORLD3_COST;
+    if (here.w4 && !cloud('rankmann_world4Unlocked')) charge += WORLD4_COST;
+    localStorage.setItem(pk + 'rankmann_ownedSkins', JSON.stringify(union(cloud('rankmann_ownedSkins'), here.skins)));
+    localStorage.setItem(pk + 'rankmann_ownedVineSkins', JSON.stringify(union(cloud('rankmann_ownedVineSkins'), here.vines)));
+    localStorage.setItem(pk + 'rankmann_ownedEmotes', JSON.stringify(union(cloud('rankmann_ownedEmotes'), here.emotes)));
+    if (here.w2) localStorage.setItem(pk + 'rankmann_world2Unlocked', 'true');
+    if (here.w3) localStorage.setItem(pk + 'rankmann_world3Unlocked', 'true');
+    if (here.w4) localStorage.setItem(pk + 'rankmann_world4Unlocked', 'true');
+    if (charge > 0) localStorage.setItem(pk + 'rankmann_totalTrophies', JSON.stringify(Math.max(0, (Number(cloud('rankmann_totalTrophies')) || 0) - charge)));
+    // an older backup has no progress timestamp inside it: stamp the restored data with the backup's own time so it isn't offered again
+    if (cloud('rankmann_progressUpdatedAt') === undefined) localStorage.setItem(pk + 'rankmann_progressUpdatedAt', String(typeof backup.savedAt === 'number' ? backup.savedAt : Date.now()));
   }
   function updateCloudBackupStatusUI(){
     const el = document.getElementById('cloudBackupStatus');
@@ -9956,12 +10035,23 @@
       const backup = snap.val();
       if (!backup || !backup.data) return;
       const cloudTrophies = typeof backup.trophies === 'number' ? backup.trophies : 0;
-      if (cloudTrophies <= totalTrophies) return; // local is already equal or ahead — nothing useful to offer
+      // The decision used to be "cloud has more trophies than here" — which broke as soon as you SPENT trophies: right after buying
+      // a skin this device had fewer trophies than the (older) cloud copy, so the old copy was offered, and accepting it wiped the
+      // purchase. Now both of these must hold: (1) the cloud copy is genuinely NEWER than this device's last progress change
+      // (so anything done here since the last upload — a purchase, a spin — always wins), and (2) it has something to give:
+      // a higher net worth (wallet + value of what's owned — unaffected by spending), or it owns things this device doesn't.
+      const cloudSrc = k => { try { return backup.data[k] === undefined ? undefined : JSON.parse(backup.data[k]); } catch(e){ return undefined; } };
+      const localWorth = progressNetWorth(localSrc), cloudWorth = progressNetWorth(cloudSrc);
+      let localAt = storageGet('rankmann_progressUpdatedAt', 0);
+      // data from before this tracking existed: if this device already has real progress, treat it as current rather than risk overwriting it
+      if (!localAt && localWorth > 0){ localAt = Date.now(); localStorage.setItem('rankmann_profile_' + ACTIVE_PROFILE_ID + '_rankmann_progressUpdatedAt', String(localAt)); }
+      const cloudAt = typeof backup.progressUpdatedAt === 'number' ? backup.progressUpdatedAt : (typeof backup.savedAt === 'number' ? backup.savedAt : 0);
+      if (!(cloudAt > localAt && (cloudWorth > localWorth || cloudHasPurchasesMissingHere(cloudSrc)))) return;
       const savedDate = backup.savedAt ? new Date(backup.savedAt).toLocaleString('de-DE') : 'unbekannt';
       // Deferred until the start menu is up and built (see whenStartMenuReady) so this blocking dialog never lands in the middle of the start animation
       whenStartMenuReady(() => {
-        if (confirm('☁️ Eine automatische Cloud-Sicherung mit mehr Fortschritt wurde gefunden (' + cloudTrophies + ' Pokale, gesichert am ' + savedDate + ').\n\nJetzt hier wiederherstellen? (Dein aktueller lokaler Stand bleibt dabei mit deinen Freunden zusammengeführt, nichts geht verloren.)')){
-          applyProfileData(backup.data);
+        if (confirm('☁️ Eine automatische Cloud-Sicherung mit mehr Fortschritt wurde gefunden (' + cloudTrophies + ' Pokale, gesichert am ' + savedDate + ').\n\nJetzt hier wiederherstellen? (Was du hier schon gekauft hast, bleibt erhalten und wird mit deinen Pokalen verrechnet. Deine Freunde werden zusammengeführt.)')){
+          smartRestoreFromBackup(backup);
           location.reload();
         }
       });
