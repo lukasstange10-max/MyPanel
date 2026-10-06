@@ -1425,6 +1425,173 @@
   }
   #audioGateSub { font-size: clamp(13px, 2.2vw, 17px); color: rgba(255,255,255,0.62); letter-spacing: 0.3px; }
 
+  /* ---------- START SEQUENCE, VARIANT C ("epic movie trailer") ----------
+     Cinemascope bars, a fade up from black, a camera fly-through, the hero
+     swinging in on a rope, a superhero landing with a shockwave, and the
+     title slamming onto the screen in gold with god-rays, a lens streak,
+     embers and a camera shake. */
+  #introOverlayC {
+    position: fixed; inset: 0; z-index: 700; display: none; overflow: hidden; cursor: pointer;
+    user-select: none; -webkit-user-select: none; color: #fff; transition: opacity 0.5s ease;
+  }
+  #introOverlayC.show { display: block; }
+  #introOverlayC.fadeOut { opacity: 0; pointer-events: none; }
+  #introVignetteC {
+    position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(ellipse at 50% 55%, rgba(0,0,0,0) 35%, rgba(0,0,0,0.62) 100%),
+                linear-gradient(to bottom, rgba(20,40,90,0.28), rgba(0,0,0,0) 35%, rgba(255,150,60,0.10) 100%); /* teal-ish top, warm bottom: a movie colour grade */
+  }
+  #introRaysC {
+    position: absolute; left: 50%; top: 46%; width: 190vmax; height: 190vmax; margin: -95vmax 0 0 -95vmax;
+    pointer-events: none; opacity: 0; mix-blend-mode: screen;
+    background: repeating-conic-gradient(from 0deg, rgba(255,214,140,0.30) 0deg 3deg, rgba(255,214,140,0) 3deg 15deg);
+    -webkit-mask-image: radial-gradient(circle, #000 0%, rgba(0,0,0,0.0) 42%);
+            mask-image: radial-gradient(circle, #000 0%, rgba(0,0,0,0.0) 42%);
+  }
+  #introOverlayC.slam #introRaysC { animation: introRays 7s linear forwards, introRaysIn 1.8s ease-out forwards; } /* the god-rays swell in slowly alongside the title */
+  @keyframes introRays { to { transform: rotate(40deg); } }
+  @keyframes introRaysIn { from { opacity: 0; } to { opacity: 0.9; } }
+  #introOverlayC.titleOutC #introRaysC { transition: opacity 0.6s ease; opacity: 0 !important; animation: none; }
+  #introTitleC {
+    position: absolute; left: 0; right: 0; top: 33%; text-align: center; padding: 0 12px;
+    font-size: clamp(46px, 13.5vw, 156px); font-weight: 900; letter-spacing: 0.06em; line-height: 1; white-space: nowrap;
+    background:
+      linear-gradient(110deg, rgba(255,255,255,0) 40%, rgba(255,255,255,0.95) 50%, rgba(255,255,255,0) 60%),
+      linear-gradient(180deg, #fff6d8 0%, #ffd36b 38%, #b8741f 52%, #ffe9a8 60%, #8a4f12 100%);
+    background-size: 250% 100%, 100% 100%; background-position: 160% 0, 0 0;
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent;
+    filter: blur(0px) drop-shadow(0 6px 0 rgba(60,30,0,0.65)) drop-shadow(0 0 28px rgba(255,190,80,0.75));
+    opacity: 0; transform: scale(1.22); pointer-events: none;
+  }
+  /* The title no longer "slams" in (scale 3.2 → 1 with a bounce, fully opaque after ~0.2s — and with a filter list that
+     changed shape mid-animation, so the browser couldn't interpolate it and the blur/shadow visibly popped). It now BLOOMS
+     out of the impact's light: a soft, long ease-out from blurred + a little too big + wide-spaced to sharp, with just two
+     keyframes whose filter lists have exactly the same functions in the same order so every value interpolates smoothly. */
+  #introOverlayC.slam #introTitleC { animation: introTitleBloom 1.1s cubic-bezier(.16,.84,.3,1) forwards, introTitleShine 1.6s ease-in-out 0.9s forwards; }
+  @keyframes introTitleBloom {
+    0%   { opacity: 0; transform: scale(1.22); letter-spacing: 0.16em; filter: blur(16px) drop-shadow(0 6px 0 rgba(60,30,0,0)) drop-shadow(0 0 46px rgba(255,205,120,0.95)); }
+    100% { opacity: 1; transform: scale(1);    letter-spacing: 0.06em; filter: blur(0px) drop-shadow(0 6px 0 rgba(60,30,0,0.65)) drop-shadow(0 0 28px rgba(255,190,80,0.75)); }
+  }
+  @keyframes introTitleShine { from { background-position: 160% 0, 0 0; } to { background-position: -60% 0, 0 0; } }
+  #introOverlayC.titleOutC #introTitleC { animation: none; opacity: 0; transform: scale(1.15); transition: opacity 0.7s ease, transform 0.7s ease; }
+  #introSubC {
+    position: absolute; left: 0; right: 0; top: calc(33% + clamp(64px, 16vw, 180px)); text-align: center; padding: 0 16px;
+    font-size: clamp(11px, 2vw, 17px); font-weight: 700; text-transform: uppercase; letter-spacing: 0.42em; color: #ffe9b8;
+    text-shadow: 0 0 14px rgba(255,170,60,0.7); opacity: 0; pointer-events: none;
+  }
+  #introSubC.on { animation: introSubIn 1.3s ease-out forwards; }
+  @keyframes introSubIn { from { opacity: 0; letter-spacing: 0.7em; } to { opacity: 1; letter-spacing: 0.2em; } }
+  #introOverlayC.titleOutC #introSubC { animation: none; opacity: 0; transition: opacity 0.6s ease; }
+  #introFlareC {
+    position: absolute; left: 50%; top: calc(33% + clamp(23px, 6.7vw, 78px)); width: 80vw; height: 4px; margin-left: -40vw;
+    background: linear-gradient(90deg, transparent, rgba(190,235,255,0.95) 50%, transparent); filter: blur(2px);
+    box-shadow: 0 0 30px 6px rgba(150,210,255,0.6); opacity: 0; transform: scaleX(0); pointer-events: none;
+  }
+  #introFlareC.go { animation: introFlare 1.1s ease-out forwards; }
+  @keyframes introFlare { 0% { opacity: 1; transform: scaleX(0); } 30% { opacity: 1; transform: scaleX(1); } 100% { opacity: 0; transform: scaleX(1.25); } }
+  #introFlashC {
+    position: absolute; inset: 0; opacity: 0; pointer-events: none;
+    background: radial-gradient(circle at 50% 62%, rgba(255,250,230,1), rgba(255,200,110,0.6) 45%, transparent 80%);
+  }
+  #introFlashC.go { animation: introFlashC 0.95s ease-out; }
+  @keyframes introFlashC { 0% { opacity: 0; } 14% { opacity: 0.92; } 100% { opacity: 0; } } /* a softer rise and a longer fade, so the title can come up out of the glow */
+  #introBlackC { position: absolute; inset: 0; background: #000; opacity: 1; transition: opacity 1.2s ease; pointer-events: none; }
+  #introBlackC.in { opacity: 0; }
+  #introBarTopC, #introBarBottomC {
+    position: absolute; left: 0; right: 0; height: 12.5vh; background: #000; z-index: 2;
+    transition: transform 0.9s cubic-bezier(.6,0,.2,1); pointer-events: none;
+  }
+  #introBarTopC { top: 0; transform: translateY(-100%); }
+  #introBarBottomC { bottom: 0; transform: translateY(100%); }
+  #introOverlayC.bars #introBarTopC, #introOverlayC.bars #introBarBottomC { transform: none; }
+  #introOverlayC.barsOut #introBarTopC { transform: translateY(-100%); }
+  #introOverlayC.barsOut #introBarBottomC { transform: translateY(100%); }
+  #introEmbersC { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+  .introEmberC {
+    position: absolute; bottom: -12px; width: 4px; height: 4px; border-radius: 50%; left: var(--x);
+    background: #ffcf7a; box-shadow: 0 0 9px 2px rgba(255,160,50,0.85); opacity: 0;
+    animation: introEmberUp var(--dur) linear var(--del) forwards;
+  }
+  @keyframes introEmberUp {
+    0%   { opacity: 0; transform: translate(0, 0) scale(1); }
+    12%  { opacity: 1; }
+    100% { opacity: 0; transform: translate(var(--dx), -105vh) scale(0.3); }
+  }
+  #introSkipC {
+    position: absolute; left: 0; right: 0; bottom: calc(12.5vh + 10px); text-align: center; z-index: 3;
+    font-size: 12px; color: rgba(255,255,255,0.5); letter-spacing: 0.3px;
+    opacity: 0; animation: introFadeUp 0.6s ease forwards; animation-delay: 1.2s;
+  }
+
+  /* ---------- START SEQUENCE, VARIANT B ("typed on keycaps + beam-in") ----------
+     Alternates with variant A on every reload. Same beats — the title
+     appears, the character appears, the menu builds itself — but a
+     completely different look: the title is typed key by key on keycaps,
+     the character is beamed in from the sky instead of jumping in, and
+     the camera starts just above the keys and cranes up and back. */
+  #introOverlayB {
+    position: fixed; inset: 0; z-index: 700; display: none; cursor: pointer;
+    user-select: none; -webkit-user-select: none; color: #fff; transition: opacity 0.45s ease;
+  }
+  #introOverlayB.show { display: block; }
+  #introOverlayB.fadeOut { opacity: 0; pointer-events: none; }
+  #introVignetteB {
+    position: absolute; inset: 0; pointer-events: none; transition: opacity 0.9s ease;
+    background: radial-gradient(ellipse at 50% 62%, rgba(6,3,14,0) 30%, rgba(6,3,14,0.5) 100%),
+                linear-gradient(to bottom, rgba(6,3,14,0.6), rgba(6,3,14,0) 40%);
+  }
+  #introOverlayB.clear #introVignetteB { opacity: 0.25; }
+  #introKeysRow {
+    position: absolute; top: clamp(24px, 9vh, 90px); left: 0; right: 0;
+    display: flex; justify-content: center; gap: clamp(5px, 1.1vw, 12px);
+    transition: transform 0.7s cubic-bezier(.5,0,.8,.4), opacity 0.6s ease;
+  }
+  .introKeyCap {
+    width: clamp(38px, 8.4vw, 86px); height: clamp(38px, 8.4vw, 86px);
+    display: flex; align-items: center; justify-content: center;
+    font-size: clamp(22px, 5vw, 50px); font-weight: 900; color: #dffcff; border-radius: 16%;
+    background: linear-gradient(160deg, #2a2352, #151030);
+    border: 2px solid rgba(122,255,196,0.55);
+    box-shadow: 0 7px 0 #0a0618, 0 14px 22px rgba(0,0,0,0.5), inset 0 2px 0 rgba(255,255,255,0.18);
+    text-shadow: 0 0 10px rgba(122,255,196,0.7);
+    opacity: 0; transform: translateY(-90px);
+    animation: introKeyType 0.5s cubic-bezier(.3,.9,.3,1) forwards; animation-delay: var(--d, 0s);
+  }
+  /* each key drops in, bottoms out (the 3D "key depth" shadow collapses for a moment) and springs back, like being typed */
+  @keyframes introKeyType {
+    0%   { opacity: 0; transform: translateY(-90px) scale(1.1); }
+    40%  { opacity: 1; transform: translateY(0) scale(1); }
+    58%  { opacity: 1; transform: translateY(6px) scale(0.97);
+           box-shadow: 0 1px 0 #0a0618, 0 6px 12px rgba(0,0,0,0.5), inset 0 2px 0 rgba(255,255,255,0.18); }
+    100% { opacity: 1; transform: none; }
+  }
+  #introKeysRow.lit .introKeyCap {
+    border-color: #9ffff0; color: #fff; background: linear-gradient(160deg, #2f7f84, #173e55);
+    box-shadow: 0 7px 0 #0a2a3a, 0 0 30px rgba(122,255,235,0.75), inset 0 2px 0 rgba(255,255,255,0.35);
+    text-shadow: 0 0 16px #bffff6; transition: all 0.25s ease;
+  }
+  #introKeysRow.out { opacity: 0; transform: translateY(-40px) scale(0.8); }
+  #introTaglineB {
+    position: absolute; left: 0; right: 0; text-align: center; min-height: 1.4em;
+    top: calc(clamp(24px, 9vh, 90px) + clamp(38px, 8.4vw, 86px) + 28px);
+    font-size: clamp(13px, 2.3vw, 19px); letter-spacing: 0.5px; color: #bffff0;
+    text-shadow: 0 0 12px rgba(122,255,196,0.7); transition: opacity 0.6s ease; padding: 0 16px;
+  }
+  #introTaglineB::after { content: '▌'; margin-left: 2px; animation: introCursor 0.6s steps(1) infinite; }
+  @keyframes introCursor { 50% { opacity: 0; } }
+  #introTaglineB.out { opacity: 0; }
+  #introFlashB {
+    position: absolute; inset: 0; opacity: 0; pointer-events: none;
+    background: radial-gradient(circle at 50% 62%, rgba(255,255,255,0.95), rgba(160,255,240,0.55) 40%, transparent 75%);
+  }
+  #introFlashB.go { animation: introFlash 0.55s ease-out; }
+  @keyframes introFlash { 0% { opacity: 0; } 12% { opacity: 1; } 100% { opacity: 0; } }
+  #introSkipB {
+    position: absolute; left: 0; right: 0; bottom: calc(26px + env(safe-area-inset-bottom, 0px)); text-align: center;
+    font-size: 12px; color: rgba(255,255,255,0.5); letter-spacing: 0.3px;
+    opacity: 0; animation: introFadeUp 0.6s ease forwards; animation-delay: 0.9s;
+  }
+
   #introOverlay {
     position: fixed; inset: 0; z-index: 700; display: none;
     flex-direction: column; align-items: center; justify-content: center;
@@ -1503,7 +1670,7 @@
 
   /* while the start sequence plays, hide every other piece of UI (HUD pills,
      settings/music buttons, etc.) so only the 3D scene and the title show */
-  body.introPlaying > *:not(canvas):not(#introOverlay):not(#rankmannLoadingScreen):not(#startScreen):not(#audioGate) { visibility: hidden !important; }
+  body.introPlaying > *:not(canvas):not(#introOverlay):not(#rankmannLoadingScreen):not(#startScreen):not(#audioGate):not(#introOverlayB):not(#introOverlayC) { visibility: hidden !important; }
   @keyframes menuBgIn { from { opacity: 0; } to { opacity: 1; } }
   #startScreen.menuIntro { animation: menuBgIn 0.7s ease backwards; }
 
@@ -2979,6 +3146,28 @@
 <div id="audioGate">
   <div id="audioGateBtn" data-i18n="musicUnlockHint">🔊 Musik aktivieren</div>
   <div id="audioGateSub" data-i18n="audioGateSub">Zum Starten tippen oder klicken</div>
+</div>
+
+<div id="introOverlayC">
+  <div id="introVignetteC"></div>
+  <div id="introRaysC"></div>
+  <div id="introEmbersC"></div>
+  <div id="introTitleC">RANKMANN</div>
+  <div id="introSubC"></div>
+  <div id="introFlareC"></div>
+  <div id="introFlashC"></div>
+  <div id="introBlackC"></div>
+  <div id="introBarTopC"></div>
+  <div id="introBarBottomC"></div>
+  <div id="introSkipC" data-i18n="introSkipHint">Klicken zum Überspringen</div>
+</div>
+
+<div id="introOverlayB">
+  <div id="introVignetteB"></div>
+  <div id="introKeysRow"></div>
+  <div id="introTaglineB"></div>
+  <div id="introFlashB"></div>
+  <div id="introSkipB" data-i18n="introSkipHint">Klicken zum Überspringen</div>
 </div>
 
 <div id="introOverlay">
@@ -15020,7 +15209,7 @@
   // Click/tap/any key skips straight to step 3. Everything about the
   // character (pose, scale, position) is saved first and put back exactly as
   // it was afterward, so the normal menu/game start is completely unaffected.
-  const introCine = { active: false, t: 0, dur: 3.7, fx: {}, startedAt: 0, base: new THREE.Vector3(), head: new THREE.Vector3(), savedArms: null, savedLegs: null };
+  const introCine = { active: false, variant: 'A', hub: null, landT: 3.5, t: 0, dur: 3.7, fx: {}, startedAt: 0, base: new THREE.Vector3(), head: new THREE.Vector3(), savedArms: null, savedLegs: null };
   function introEaseOutCubic(x){ return 1 - Math.pow(1 - x, 3); }
   function introEaseInOutCubic(x){ return x < 0.5 ? 4*x*x*x : 1 - Math.pow(-2*x + 2, 3) / 2; }
 
@@ -15102,13 +15291,18 @@
     // over the scene (0.7s) — if it came back right now it would pop in for a moment, uncovered, and
     // only then get hidden behind the menu's blur.
     setTimeout(() => document.body.classList.remove('introPlaying'), 800);
-    const overlay = document.getElementById('introOverlay');
+    const overlay = document.getElementById((c.variant === 'C' || c.variant === 'D') ? 'introOverlayC' : c.variant === 'B' ? 'introOverlayB' : 'introOverlay');
+    if (c.variant === 'B') cleanupIntroB();
+    if (c.variant === 'C' || c.variant === 'D') cleanupIntroC();
     overlay.classList.add('fadeOut');
-    setTimeout(() => overlay.classList.remove('show', 'fadeOut', 'clear', 'titleOut'), 520);
+    setTimeout(() => overlay.classList.remove('show', 'fadeOut', 'clear', 'titleOut', 'slam', 'bars', 'barsOut', 'titleOutC'), 520);
     showStartMenu(true);
   }
 
   function updateIntroCinematic(dt){
+    if (introCine.variant === 'C' || introCine.variant === 'D') updateIntroCinematicC(dt); else if (introCine.variant === 'B') updateIntroCinematicB(dt); else updateIntroCinematicA(dt);
+  }
+  function updateIntroCinematicA(dt){
     const c = introCine;
     c.t += dt;
     const t = c.t;
@@ -15276,6 +15470,7 @@
     if (!audioGate.active) return;
     audioGate.active = false;
     ensureAudio(); // created/resumed inside the tap itself — that's what makes sound allowed
+    loadSoundBuffer('webshoot'); loadSoundBuffer('land'); // the real web-shot and landing samples, decoded now so the first swing / the impact aren't silent
     const g = document.getElementById('audioGate');
     g.classList.add('fadeOut');
     setTimeout(() => g.classList.remove('show', 'fadeOut'), 450);
@@ -15285,9 +15480,42 @@
   // modifier keys alone don't count as a user gesture for audio in browsers, so they must not dismiss the gate
   window.addEventListener('keydown', e => { if (audioGate.active && !['Shift', 'Control', 'Alt', 'Meta', 'CapsLock', 'Tab'].includes(e.key)) onAudioGateTap(); });
 
+  function pickIntroVariant(){
+    // The start animation is variant D ("web-slinging run + superhero landing"), always. The other variants
+    // (A, B, C) are still in the code and can be previewed with ?intro=A, ?intro=B or ?intro=C in the URL.
+    try { const f = new URLSearchParams(location.search).get('intro'); if (f === 'A' || f === 'B' || f === 'C' || f === 'D') return f; } catch(e){}
+    return 'D';
+  }
   function startIntroSequence(){
     const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reduceMotion || running){ document.body.classList.remove('introPlaying'); showStartMenu(false); return; }
+    // The hub of the world that is ACTUALLY active right now. Load-time
+    // setup ends with applyWorldTheme(selectedWorld) (see the pre-warm pass),
+    // so the saved world is the visible one — its islands sit at their real
+    // heights while every other world's islands are hidden/parked at y=-900.
+    // (An earlier version of this hard-coded World 1 on the wrong assumption
+    // that World 1 was always the active one at load; for anyone whose saved
+    // world is 2-4 that pointed the camera at invisible islands: an empty
+    // scene during the sequence, and an empty menu backdrop afterwards.)
+    const hub = selectedWorld === 4 ? islandsW4[0] : selectedWorld === 3 ? islandsW3[0] : selectedWorld === 2 ? islandsW2[0] : islandsW1[0];
+    const variant = pickIntroVariant();
+    introCine.variant = variant;
+    introCine.hub = hub;
+    introCine.landT = variant === 'D' ? 4.3 : 3.5; // when the hero hits the ground (variants C and D) — D's later start keeps the swings the same length
+    introCine.dur = (variant === 'C' || variant === 'D') ? introCine.landT + 3.2 : variant === 'B' ? 4.9 : 3.7;
+    introCine.base.set(hub.pos.x, hub.top + player.radius + (keyboardKeysWanted ? 0.4 : 0), hub.pos.z); // +0.4 = a resting keycap's height, so the landing is ON the keys, not inside them
+    introCine.head.copy(introCine.base).add(new THREE.Vector3(0, 0.95, 0));
+    introCine.savedArms = armPivots.map(p => p.rotation.clone());
+    introCine.savedLegs = legPivots.map(p => p.rotation.clone());
+    introCine.t = 0;
+    introCine.fx = {};
+    introCine.startedAt = performance.now();
+    introCine.active = true;
+    playerMesh.visible = false;
+    document.body.classList.add('introPlaying');
+    if (variant === 'C' || variant === 'D') startIntroC(); else if (variant === 'B') startIntroB(); else startIntroA();
+  }
+  function startIntroA(){
     const overlay = document.getElementById('introOverlay');
     const title = document.getElementById('introTitle');
     title.innerHTML = '';
@@ -15299,29 +15527,634 @@
       s.style.setProperty('--h', 45 + i * 38); // yellow → green → blue → pink across the word
       title.appendChild(s);
     });
-    // The hub of the world that is ACTUALLY active right now. Load-time
-    // setup ends with applyWorldTheme(selectedWorld) (see the pre-warm pass),
-    // so the saved world is the visible one — its islands sit at their real
-    // heights while every other world's islands are hidden/parked at y=-900.
-    // (An earlier version of this hard-coded World 1 on the wrong assumption
-    // that World 1 was always the active one at load; for anyone whose saved
-    // world is 2-4 that pointed the camera at invisible islands: an empty
-    // scene during the sequence, and an empty menu backdrop afterwards.)
-    const hub = selectedWorld === 4 ? islandsW4[0] : selectedWorld === 3 ? islandsW3[0] : selectedWorld === 2 ? islandsW2[0] : islandsW1[0];
-    introCine.base.set(hub.pos.x, hub.top + player.radius + (keyboardKeysWanted ? 0.4 : 0), hub.pos.z); // +0.4 = a resting keycap's height, so the landing is ON the keys, not inside them
-    introCine.head.copy(introCine.base).add(new THREE.Vector3(0, 0.95, 0));
-    introCine.savedArms = armPivots.map(p => p.rotation.clone());
-    introCine.savedLegs = legPivots.map(p => p.rotation.clone());
-    introCine.t = 0;
-    introCine.fx = {};
-    introCine.startedAt = performance.now();
-    introCine.active = true;
-    playerMesh.visible = false;
-    document.body.classList.add('introPlaying');
     overlay.classList.remove('fadeOut', 'clear', 'titleOut');
     overlay.classList.add('show');
     playIntroTitleSounds();
   }
+
+  // ---------- VARIANT C: epic movie trailer ----------
+  // Timeline (seconds): 0 fade up from black + bars slide in, camera flies in
+  // · 0.35 the hero starts swinging in on a rope from a crystal high in the
+  // sky · ~1.9 hangs at the top of the arc in slow motion, lets go · 3.5 the
+  // superhero landing (shockwave, dust, light pillar, flash, camera shake,
+  // title slams in) · 4.2 rises from the crouch, turns to the camera · 5.45
+  // title and bars leave · 6.0 hand-over to the menu.
+  const introC = { cracks: [], crackMat: null, debris: [], debrisSpawned: false, aura: null, savedTorso: null, savedHead: null, heroGlow: null, anchors: [], anchorGlows: [], ropes: [], rings: [], pillar: null, dust: [], keys: [], fovBase: 60, fovPunched: false, savedOrder: 'XYZ', rippleDone: false, kickIdx: 0, curve: null, lookSm: new THREE.Vector3(), lookInit: false };
+  const INTRO_C_SWING0 = 0.35;
+  // The LANDING pose (variants C and D): the classic three-point "Spider-Man" landing — a deep lunge, front leg forward and
+  // back leg back, one fist planted on the ground beside the front foot, the other arm swung back, torso pitched forward, head
+  // up looking ahead. The numbers come from solving the character's actual skeleton (hip/shoulder heights, leg and arm length)
+  // so that BOTH feet and the planted fist really touch the ground. (Rotation signs on this rig: torso x+ = lean forward,
+  // arm x+ = swing BACK, leg x+ = leg BACK.)
+  const INTRO_LUNGE = {
+    legF: -1.3, legFz: -0.10,         // left leg far forward
+    legB: 1.2, legBz: 0.14,           // right leg far back
+    torsoX: 1.0,                      // pitched forward
+    headX: -0.85, headY: 0.25,        // head lifted back up so he's looking ahead / at the camera
+    plantX: -1.2, plantZ: 0.5,        // right arm reaching forward-and-out: the planted fist
+    backX: 1.5, backZ: 0.3,           // left arm swung back (and a little out) for balance
+    yaw: 0.45,                        // turned 3/4 so the pose reads from the camera
+  };
+  // The finishing pose (variants C and D). A T-pose (both arms straight out) looked flat, so this is a proper hero stance:
+  // body turned 3/4 with the chest twisted back toward the camera, wide stance with the weight on one leg, one arm thrust
+  // up toward the sky, the other hand planted on the hip, chin up, head turned to look into the camera.
+  const INTRO_POSE = {
+    yaw: 0.32,                                     // body turned a little toward 3/4 (a clean silhouette, not a profile)
+    torsoY: -0.2, torsoX: -0.14, torsoZ: 0.10,     // chest turned back toward the camera and puffed out; upper body arcs away from the raised arm (an S-curve)
+    headY: 0.2, headX: -0.18, headZ: -0.10,        // chin up, looking into the camera, head tilted with the curve
+    rArmZ: 2.55, rArmX: 0,                         // right arm thrust almost straight up — fist to the sky
+    lArmZ: 0.55, lArmX: 0.3,                       // left arm relaxed down and a little out/back
+    legX0: 0, legZ0: -0.3,                         // a wide, planted stance
+    legX1: 0, legZ1: 0.3,
+  };
+  function bez3(p0, p1, p2, p3, u, out){
+    const v = 1 - u, a = v * v * v, b = 3 * v * v * u, c = 3 * v * u * u, d = u * u * u;
+    return out.set(a * p0.x + b * p1.x + c * p2.x + d * p3.x, a * p0.y + b * p1.y + c * p2.y + d * p3.y, a * p0.z + b * p1.z + c * p2.z + d * p3.z);
+  }
+  // ---- Variant D ("web-slinging run") shares ALL of variant C's landing, title, sounds and clean-up; only the
+  // approach differs: the hero comes from far away, slinging from crystal to crystal on webs (three swings, each
+  // with the game's real web-shot sound), then lets go for one last long dive into the same superhero landing.
+  const INTRO_D_PATH = [          // spline control points, relative to the landing spot — swing bottoms (R) and apexes (M)
+    [-14, 20, -80], [-12, 12, -66], [-3, 22, -55], [8, 11, -45], [4, 21, -33], [-4, 10, -22], [-2, 20, -11], [0, 0, 0]
+  ];
+  const INTRO_D_T0 = 0.7; // when the hero starts (and the first web is shot) — after the fade up from black, so the first swing is actually visible
+  // Keeps the hero's flight path out of every solid platform. The path is a fixed shape relative to the
+  // landing spot, but where the islands / checkpoint platforms sit differs per world (and the first version
+  // of this simply cut through one of them on the first swing). So at the start of the sequence the path is
+  // sampled against every ACTIVE island and checkpoint platform (they all live in `islands`, each with a
+  // position, radius, top and bottom), and wherever it hits one, the nearest control point is nudged — out
+  // sideways if that's cheap, otherwise up and over — then re-checked, until the whole curve is clear.
+  function introClearPath(pts, hubEntry){
+    const act = islands.filter(isl => isl !== hubEntry && isl.world !== undefined && isl.mesh && isl.mesh.visible && isl.pos.y > -500);
+    const effR = isl => isl.isCheckpoint ? isl.radius + 1.5 : isl.radius * 1.65 + 1.5;               // island rock is wider than its top slab (rock radius ≈ 1.6× the top's)
+    const topOf = isl => isl.isCheckpoint ? isl.top + isl.radius * 1.4 + 1.5 : isl.top + 3;         // checkpoints also carry an upright holo-ring and a number above them
+    const botOf = isl => isl.bottom - 2.5;
+    const probe = P => {
+      for (const isl of act){
+        const dx = P.x - isl.pos.x, dz = P.z - isl.pos.z, d = Math.hypot(dx, dz);
+        if (d < effR(isl) && P.y > botOf(isl) && P.y < topOf(isl)) return { isl, d, dx, dz };
+      }
+      return null;
+    };
+    for (let iter = 0; iter < 80; iter++){
+      const curve = new THREE.CatmullRomCurve3(pts, false, 'centripetal');
+      let moved = false;
+      for (let i = 0; i <= 200 && !moved; i++){
+        const s = i / 200, P = curve.getPoint(s), hit = probe(P);
+        if (!hit) continue;
+        const idx = Math.min(Math.round(s * (pts.length - 1)), pts.length - 2); // the last point is the landing itself — never moved
+        const up = topOf(hit.isl) - P.y + 0.5;
+        const side = effR(hit.isl) - hit.d + 0.5;
+        if (side <= up * 0.9 && side <= 12){ const len = hit.d || 1; pts[idx].x += hit.dx / len * side; pts[idx].z += hit.dz / len * side; }
+        else pts[idx].y += up;
+        moved = true;
+      }
+      if (!moved) break;
+    }
+    return pts;
+  }
+  function playLandSample(){
+    if (soundBuffers.land){ playSoundBuffer('land', 1.0); return true; } // the game's real landing-thud recording
+    loadSoundBuffer('land'); return false;
+  }
+  function playWebShot(rate){
+    if (soundBuffers.webshoot){ playSoundBuffer('webshoot', 0.9, rate); return true; }
+    loadSoundBuffer('webshoot'); return false; // not decoded yet — the caller tries again on the next frames
+  }
+  function startIntroC(){
+    const c = introCine, b = introC, isD = c.variant === 'D';
+    const overlay = document.getElementById('introOverlayC');
+    document.getElementById('introSubC').textContent = (document.getElementById('introTagline').textContent || '').trim(); // already translated by applyLanguage
+    document.getElementById('introSubC').classList.remove('on');
+    ['introFlareC', 'introFlashC'].forEach(id => document.getElementById(id).classList.remove('go'));
+    document.getElementById('introBlackC').classList.remove('in');
+    document.getElementById('introBlackC').style.transitionDuration = isD ? '0.8s' : ''; // D fades up faster (C keeps its slower 1.2s)
+    document.getElementById('introEmbersC').innerHTML = '';
+    overlay.classList.remove('fadeOut', 'slam', 'bars', 'barsOut', 'titleOutC'); overlay.classList.add('show');
+    void overlay.offsetWidth;                               // flush, so the bars/black fade really animate from their start state
+    overlay.classList.add('bars');
+    b.fovBase = camera.fov; b.fovPunched = false; b.rippleDone = false; b.kickIdx = 0; b.lookInit = false;
+    b.savedTorso = torsoGroup.rotation.clone(); b.savedHead = _localChar.head.rotation.clone();
+    b.aura = addGlowSprite(scene, 0xffe39a, 6); b.aura.visible = false; // a warm rim-light glow behind the hero for the finishing pose
+    b.savedOrder = playerMesh.rotation.order; playerMesh.rotation.order = 'YXZ'; // yaw first, then lean — so "lean forward" stays forward whichever way it faces
+    loadSoundBuffer('land'); if (isD) loadSoundBuffer('webshoot'); // decode the real sound samples ahead of time
+
+    // the crystal(s) the hero swings from + their ropes
+    const dPts = isD ? introClearPath(INTRO_D_PATH.map(q => c.base.clone().add(new THREE.Vector3(q[0], q[1], q[2]))), c.hub) : null; // the flight path, steered around every solid platform
+    b.pathPts = dPts;
+    const anchorPos = isD
+      ? [1, 3, 5].map(i => dPts[i].clone().add(new THREE.Vector3(0, 18, 0))) // one above each swing's lowest point
+      : [c.base.clone().add(new THREE.Vector3(-9, 25, -10))];
+    b.anchors = []; b.anchorGlows = []; b.ropes = [];
+    anchorPos.forEach(A => {
+      const m = new THREE.Mesh(new THREE.OctahedronGeometry(1.3, 0), new THREE.MeshStandardMaterial({ color: 0x7affc4, emissive: 0x2fbf8a, emissiveIntensity: 1.1, roughness: 0.2 }));
+      m.position.copy(A); scene.add(m); b.anchors.push(m);
+      const g = addGlowSprite(scene, 0x7affc4, 7); g.position.copy(A); b.anchorGlows.push(g);
+      const r = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1, 6), new THREE.MeshBasicMaterial({ color: 0xcffaff, transparent: true, opacity: 0.95 }));
+      r.visible = false; scene.add(r); b.ropes.push(r);
+    });
+    if (isD){ b.heroGlow = addGlowSprite(scene, 0xaffff4, 3); b.heroGlow.visible = false; } // a bright halo so the hero reads as a "comet" even from far away
+    b.curve = isD ? new THREE.CatmullRomCurve3(dPts, false, 'centripetal') : null;
+
+    // impact visuals (hidden until the landing)
+    const addMat = (hex) => new THREE.MeshBasicMaterial({ color: hex, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+    b.rings = [0xffd27a, 0x9ffff0].map(hex => {
+      const m = new THREE.Mesh(new THREE.RingGeometry(0.5, 1.1, 64), addMat(hex));
+      m.rotation.x = -Math.PI / 2; m.position.set(c.base.x, c.base.y - 0.93, c.base.z); m.visible = false; scene.add(m); return m;
+    });
+    b.pillar = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 1.6, 50, 28, 1, true), addMat(0xffe2a0));
+    b.pillar.position.set(c.base.x, c.base.y - 1 + 25, c.base.z); b.pillar.visible = false; scene.add(b.pillar);
+    b.dust = [];
+    for (let i = 0; i < 16; i++){
+      const spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: getGlowTexture(0xe8cfa6), transparent: true, depthWrite: false, opacity: 0 }));
+      spr.visible = false; scene.add(spr);
+      b.dust.push({ spr, ang: (i / 16) * Math.PI * 2 + Math.random() * 0.3, spd: 5 + Math.random() * 4, rise: 1 + Math.random() * 1.6 });
+    }
+    b.keys = [];
+    allKeyCaps.forEach(k => {
+      const d = Math.hypot(k.mesh.position.x - c.base.x, k.mesh.position.z - c.base.z);
+      if (d < 18 && Math.abs(k.restY - (c.hub.top + 0.2)) < 0.3){
+        const f = Math.max(0, 1 - d / 2.6);   // the crater: keys near the impact get driven down and knocked askew
+        b.keys.push({ k, d, r: 0.7 + Math.random() * 0.6, rot0: k.mesh.rotation.clone(),
+                      crater: { dy: -0.3 * f, rx: (Math.random() - 0.5) * 0.7 * f, rz: (Math.random() - 0.5) * 0.7 * f } });
+      }
+    });
+    // glowing cracks radiating from the impact, and a few chunks of rubble to throw
+    b.cracks = [];
+    b.crackMat = new THREE.MeshBasicMaterial({ color: 0xffa24a, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+    for (let i = 0; i < 11; i++){
+      let a = (i / 11) * Math.PI * 2 + Math.random() * 0.35, x = 0, z = 0;
+      for (let s = 0; s < 3; s++){
+        const len = 1.0 + Math.random() * 1.8; a += (Math.random() - 0.5) * 0.7;
+        const g = new THREE.Group(); g.position.set(c.base.x + x, c.base.y - 1.04 + 0.03, c.base.z + z); g.rotation.y = -a; g.visible = false;
+        const m = new THREE.Mesh(new THREE.PlaneGeometry(len, 0.17 - 0.04 * s), b.crackMat); m.rotation.x = -Math.PI / 2; m.position.x = len / 2; g.add(m);
+        scene.add(g); b.cracks.push(g);
+        x += Math.cos(a) * len; z += Math.sin(a) * len;
+      }
+    }
+    b.debris = []; b.debrisSpawned = false;
+    const palette = [0xff7ab0, 0x7affc4, 0xffe27a, 0x7ab8ff, 0xc89bff, 0xff9a6a];
+    for (let i = 0; i < 20; i++){
+      const sz = 0.16 + Math.random() * 0.18;
+      const m = new THREE.Mesh(new THREE.BoxGeometry(sz, sz * 0.5, sz), new THREE.MeshStandardMaterial({ color: palette[i % palette.length], roughness: 0.5 }));
+      m.visible = false; scene.add(m);
+      b.debris.push({ m, vel: new THREE.Vector3(), spin: new THREE.Vector3((Math.random() - 0.5) * 14, (Math.random() - 0.5) * 14, (Math.random() - 0.5) * 14) });
+    }
+  }
+  function cleanupIntroC(){
+    const b = introC;
+    if (b.heroGlow){ scene.remove(b.heroGlow); b.heroGlow.material.dispose(); b.heroGlow = null; }
+    b.anchors.forEach(m => { scene.remove(m); m.geometry.dispose(); m.material.dispose(); });
+    b.anchorGlows.forEach(g => { scene.remove(g); g.material.dispose(); });
+    b.ropes.forEach(r => { scene.remove(r); r.geometry.dispose(); r.material.dispose(); });
+    b.rings.forEach(m => { scene.remove(m); m.geometry.dispose(); m.material.dispose(); });
+    if (b.pillar){ scene.remove(b.pillar); b.pillar.geometry.dispose(); b.pillar.material.dispose(); }
+    b.dust.forEach(d => { scene.remove(d.spr); d.spr.material.dispose(); });
+    b.anchors = []; b.anchorGlows = []; b.ropes = []; b.pillar = null; b.rings = []; b.dust = []; b.curve = null;
+    b.keys.forEach(o => { o.k.mesh.position.y = o.k.restY; o.k.mesh.rotation.x = o.rot0.x; o.k.mesh.rotation.z = o.rot0.z; }); b.keys = []; // keys back to rest, upright, un-cratered
+    b.cracks.forEach(g => { scene.remove(g); g.children.forEach(m => m.geometry.dispose()); }); b.cracks = [];
+    if (b.crackMat){ b.crackMat.dispose(); b.crackMat = null; }
+    b.debris.forEach(d => { scene.remove(d.m); d.m.geometry.dispose(); d.m.material.dispose(); }); b.debris = [];
+    playerMesh.rotation.x = 0; playerMesh.rotation.z = 0; playerMesh.rotation.order = b.savedOrder;
+    if (b.savedTorso) torsoGroup.rotation.copy(b.savedTorso);
+    if (b.savedHead) _localChar.head.rotation.copy(b.savedHead);
+    if (b.aura){ scene.remove(b.aura); b.aura.material.dispose(); b.aura = null; }
+    if (b.fovPunched){ camera.fov = b.fovBase; camera.updateProjectionMatrix(); b.fovPunched = false; }
+    document.getElementById('introEmbersC').innerHTML = '';
+  }
+  function updateIntroCinematicC(dt){
+    const c = introCine, b = introC, fx = c.fx, isD = c.variant === 'D';
+    // a brief, smooth slow-motion beat around the impact (down to ~40% speed) — the way landing shots are done in the films
+    const kk = c.t - c.landT;
+    const ts = (kk > -0.15 && kk < 0.4) ? 1 - 0.6 * 0.5 * (1 - Math.cos(2 * Math.PI * (kk + 0.15) / 0.55)) : 1;
+    c.t += dt * ts;
+    const dts = dt * ts;
+    const t = c.t, LAND = c.landT;
+    const overlay = document.getElementById('introOverlayC');
+    const ease01 = x => Math.min(1, Math.max(0, x));
+    const base = c.base;
+
+    // when each web is shot (D): at the apexes between swings; the last release is the final dive
+    const SPAN = LAND - INTRO_D_T0;
+    const webAt = [0, 2 / 7, 4 / 7].map(k => INTRO_D_T0 + k * SPAN);           // t of each web shot
+    const releaseAt = [2 / 7, 4 / 7, 6 / 7].map(k => INTRO_D_T0 + k * SPAN);   // t each web is let go
+    const diveAt = isD ? releaseAt[2] : 1.92;
+
+    // ---------- overlay beats ----------
+    if (t > (isD ? 0.05 : 0.12) && !fx.blackIn){ fx.blackIn = true; document.getElementById('introBlackC').classList.add('in'); }
+    if (t >= LAND && !fx.flash){
+      fx.flash = true;                                              // the impact itself: flash + embers right away…
+      document.getElementById('introFlashC').classList.add('go');
+      const box = document.getElementById('introEmbersC');
+      for (let i = 0; i < 30; i++){
+        const e = document.createElement('div'); e.className = 'introEmberC';
+        e.style.setProperty('--x', (Math.random() * 100) + '%'); e.style.setProperty('--dx', ((Math.random() - 0.5) * 120) + 'px');
+        e.style.setProperty('--dur', (2.6 + Math.random() * 2.4) + 's'); e.style.setProperty('--del', (Math.random() * 1.1) + 's');
+        box.appendChild(e);
+      }
+    }
+    if (t >= LAND + 0.2 && !fx.slam){                                // …and the title only after the impact has had a moment, blooming up out of the fading flash
+      fx.slam = true;
+      overlay.classList.add('slam');
+      document.getElementById('introFlareC').classList.add('go');
+    }
+    if (t >= LAND + 1.0 && !fx.sub){ fx.sub = true; document.getElementById('introSubC').classList.add('on'); }
+    if (t >= LAND + 2.15 && !fx.out){ fx.out = true; overlay.classList.add('titleOutC', 'barsOut'); }
+
+    // ---------- sounds that follow the 3D timeline ----------
+    if (!fx.drone){
+      fx.drone = true;
+      // Variant C's bass drone (55 Hz) + noise swell. Variant D leaves them out: the low hum was audible as a "light bass"
+      // under the whole run-up, and the noise swell measured as practically inaudible — so D has no sound under the opening at all.
+      if (!isD){ sfxTone(0, 55, LAND + 1.1, 'sine', 0.14, 64); sfxTone(0, 110, LAND + 0.5, 'triangle', 0.035, 124); sfxSweep(0, LAND - 0.1, 250, 5200, 0.11, 0.9); }
+    }
+    const kicks = isD ? [] : [0.6, 1.2, 1.7, 2.15, 2.55, 2.9, 3.2, 3.35]; // C's heartbeat (low thumps) that speeds up toward the impact; D has none
+    while (b.kickIdx < kicks.length && t >= kicks[b.kickIdx]){ sfxTone(0, 90, 0.18, 'sine', 0.1 + b.kickIdx * 0.025, 45); b.kickIdx++; }
+    if (isD){
+      [1.0, 1.12, 0.94].forEach((rate, i) => {                  // each swing starts with the game's real web-shot sound + a whoosh for the swing itself
+        if (t >= webAt[i] && !fx['web' + i]){ if (playWebShot(rate) || t > webAt[i] + 0.8){ fx['web' + i] = true; sfxSweep(0, 0.9, 300, 1500, 0.06, 0.8); } }
+      });
+    } else if (t >= INTRO_C_SWING0 && !fx.swing){ fx.swing = true; sfxSweep(0, 0.2, 3200, 700, 0.12, 1.4); sfxSweep(0, 1.6, 300, 1600, 0.07, 0.8); }
+    if (t >= diveAt && !fx.release){ fx.release = true; sfxTone(0, 1800, 0.06, 'square', 0.05); sfxSweep(0, LAND - diveAt, 1600, 350, 0.1, 0.9); } // let go, then the dive
+    if (t >= LAND && !fx.landSnd){ if (playLandSample() || t > LAND + 0.5) fx.landSnd = true; } // the real impact sound, layered under the synthesized boom (retries if the sample isn't decoded yet)
+    if (t >= LAND && !fx.impact){
+      fx.impact = true;
+      sfxTone(0, 70, 1.2, 'sine', 0.5, 28);                    // sub boom
+      sfxSweep(0, 0.5, 800, 80, 0.25, 0.8);                    // low crash
+      sfxTone(0, 220, 0.9, 'triangle', 0.08); sfxTone(0, 330, 0.9, 'square', 0.025); // metallic hit
+      sfxSweep(0, 1.6, 6000, 2800, 0.07, 0.6);                 // cymbal shimmer
+      sfxTone(0, 55, 1.5, 'sawtooth', 0.06, 49); sfxTone(0, 110, 1.4, 'sawtooth', 0.03, 98); // a brassy "braam"
+    }
+    if (t >= LAND + 0.4 && !fx.shine){ fx.shine = true; sfxSweep(0, 1.2, 800, 6000, 0.06, 0.8); [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => sfxTone(i * 0.12, f, 0.9, 'triangle', 0.04)); }
+    if (t >= LAND + 0.6 && !fx.choir){ fx.choir = true; [261.63, 392, 523.25, 659.25].forEach(f => sfxTone(0, f, 2.2, 'sine', 0.035)); }
+    if (t >= LAND + 2.35 && !fx.outro){ fx.outro = true; sfxTone(0, 1046.5, 0.8, 'sine', 0.03); }
+
+    // ---------- hero path ----------
+    let heroPos = new THREE.Vector3(), ahead = new THREE.Vector3(), swingS = 0;
+    if (isD){
+      const x = ease01((t - INTRO_D_T0) / SPAN);
+      // s = x except it dawdles at the apexes and rushes through the swing bottoms and the final dive (a real pendulum's rhythm)
+      swingS = x - (0.42 / (7 * Math.PI)) * Math.sin(7 * Math.PI * x);
+      heroPos.copy(b.curve.getPoint(Math.min(1, swingS)));
+      ahead.copy(b.curve.getPoint(Math.min(1, swingS + 0.01)));
+    } else {
+      const P0 = new THREE.Vector3(base.x - 23, base.y + 10, base.z - 18), P1 = new THREE.Vector3(base.x - 14, base.y + 22, base.z - 12);
+      const P2 = new THREE.Vector3(base.x - 5, base.y + 19, base.z - 5), P3 = base.clone();
+      const x = ease01((t - INTRO_C_SWING0) / (LAND - INTRO_C_SWING0));
+      const u = ease01(x + 0.11 * Math.sin(2 * Math.PI * x));    // < 1 slope at x=0.5: the slow-motion "hang" at the top of the arc
+      bez3(P0, P1, P2, P3, u, heroPos); bez3(P0, P1, P2, P3, Math.min(1, u + 0.02), ahead);
+    }
+
+    // ---------- camera ----------
+    const endPos = new THREE.Vector3(
+      c.head.x + Math.sin(player.yaw) * Math.cos(player.pitch) * camZoom,
+      c.head.y + Math.sin(player.pitch) * camZoom,
+      c.head.z + Math.cos(player.yaw) * Math.cos(player.pitch) * camZoom
+    );
+    const K2 = new THREE.Vector3(base.x + 3.5, base.y + 0.2, base.z + 7.5), L2 = new THREE.Vector3(base.x, base.y + 0.2, base.z);
+    const camPos = new THREE.Vector3(), look = new THREE.Vector3();
+    let K1, lookFrom;
+    if (isD){
+      // The camera waits near the landing spot, looking down the run, and eases in lower and closer as the hero
+      // approaches; its aim is smoothed (critically damped) so it follows him like a real operator — no jitter.
+      const K0d = new THREE.Vector3(base.x + 7, base.y + 6, base.z + 22);
+      K1 = new THREE.Vector3(base.x + 6, base.y + 3.2, base.z + 12.5);
+      const target = heroPos.clone();
+      if (!b.lookInit){ b.lookSm.copy(target); b.lookInit = true; }
+      b.lookSm.lerp(target, 1 - Math.exp(-dt * 5));
+      lookFrom = b.lookSm;
+      if (t < LAND - 0.3){ const e = introEaseInOutCubic(ease01(t / (LAND - 0.3))); camPos.lerpVectors(K0d, K1, e); look.copy(b.lookSm); }
+    } else {
+      const K0 = new THREE.Vector3(base.x + 11, base.y + 9, base.z + 24), L0 = new THREE.Vector3(base.x - 6, base.y + 8, base.z - 4);
+      K1 = new THREE.Vector3(base.x + 7, base.y + 4, base.z + 14);
+      lookFrom = heroPos;
+      if (t < LAND - 0.3){
+        const e = introEaseInOutCubic(ease01(t / (LAND - 0.3)));
+        camPos.lerpVectors(K0, K1, e);
+        look.lerpVectors(L0, heroPos, Math.min(1, e * 1.4));      // starts on the sky where the hero will appear, then locks onto the hero
+      }
+    }
+    if (t >= LAND - 0.3 && t < LAND){
+      const e = introEaseOutCubic(ease01((t - (LAND - 0.3)) / 0.3));
+      camPos.lerpVectors(K1, K2, e); look.lerpVectors(lookFrom, L2, e);
+    } else if (t >= LAND){
+      const e = introEaseInOutCubic(ease01((t - LAND) / 2.5));
+      camPos.lerpVectors(K2, endPos, e); look.lerpVectors(L2, c.head, e);
+    }
+    const q = t - LAND;
+    if (q >= 0 && q < 1.4){                                      // camera shake on impact, dying away
+      const amp = 0.55 * Math.exp(-q * 4.2);
+      camPos.x += Math.sin(t * 61) * amp; camPos.y += Math.sin(t * 73 + 1) * amp * 0.8; camPos.z += Math.sin(t * 53 + 2) * amp * 0.5;
+    }
+    camera.position.copy(camPos); camera.lookAt(look);
+    if (q >= 0){                                                  // field-of-view punch on impact
+      const kick = 12 * Math.exp(-q * 5);
+      if (kick > 0.05){ camera.fov = b.fovBase + kick; camera.updateProjectionMatrix(); b.fovPunched = true; }
+      else if (b.fovPunched){ camera.fov = b.fovBase; camera.updateProjectionMatrix(); b.fovPunched = false; }
+    }
+
+    // ---------- the hero's halo (variant D): sized by distance so it stays visible from far, fading out into the landing ----------
+    if (b.heroGlow){
+      const show = t >= INTRO_D_T0 && t < LAND;
+      b.heroGlow.visible = show;
+      if (show){
+        const dist = camera.position.distanceTo(heroPos);
+        const s = Math.max(2.2, Math.min(9, 1.2 + dist * 0.09));
+        let shot = 0; webAt.forEach(w => { const q = t - w; if (q >= 0 && q < 0.6) shot = Math.max(shot, Math.exp(-q * 7)); }); // flares for an instant as each web is fired
+        b.heroGlow.position.set(heroPos.x, heroPos.y + 0.4, heroPos.z); b.heroGlow.scale.set(s * (1 + 1.1 * shot), s * (1 + 1.1 * shot), 1);
+        b.heroGlow.material.opacity = Math.min(1, (t - INTRO_D_T0) / 0.3) * Math.min(1, (LAND - t) / 0.25) * 0.85;
+      }
+    }
+
+    // ---------- crystals + ropes ----------
+    b.anchors.forEach((m, i) => {
+      m.rotation.y += dt * 1.5; b.anchorGlows[i].material.opacity = 0.75 + 0.25 * Math.sin(t * 6 + i);
+      if (isD){ const q = t - webAt[i]; const pulse = q >= 0 && q < 0.6 ? Math.exp(-q * 7) : 0; const s = 7 + 10 * pulse; b.anchorGlows[i].scale.set(s, s, 1); } // the crystal flares at the instant the web hits it
+    });
+    const hand = new THREE.Vector3(heroPos.x + 0.35, heroPos.y + 1.5, heroPos.z);
+    const drawRope = (i, extend, opacity) => {
+      const r = b.ropes[i], A = b.anchors[i].position;
+      const dir = hand.clone().sub(A), len = dir.length();
+      const tip = A.clone().addScaledVector(dir, extend);      // the web shoots out from the anchor end toward the hand
+      // thickness grows with distance so the web is always about 2.5px wide on screen — at the real 0.05 radius it was only 0.5-1px wide
+      // at the moments it's shot (the hero is 50-100 units away), i.e. you heard the web-shot sound without seeing a web
+      const wsc = Math.max(1, camera.position.distanceTo(r.position.copy(A).addScaledVector(dir, 0.5)) * 0.05);
+      r.visible = true; r.position.copy(A).addScaledVector(dir, 0.5 * extend); r.scale.set(wsc, Math.max(0.001, len * extend), wsc);
+      r.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.normalize()); r.material.opacity = opacity;
+    };
+    if (isD){
+      for (let i = 0; i < 3; i++){
+        if (t < webAt[i]) b.ropes[i].visible = false;
+        else if (t < releaseAt[i]) drawRope(i, Math.min(1, (t - webAt[i]) / 0.12), 0.95);
+        else if (t < releaseAt[i] + 0.28) drawRope(i, 1, Math.max(0, 0.95 * (1 - (t - releaseAt[i]) / 0.28))); // whips away after the release
+        else b.ropes[i].visible = false;
+      }
+    } else if (b.ropes[0]){
+      if (t >= INTRO_C_SWING0 && t < 1.92) drawRope(0, 1, 0.95);
+      else if (t >= 1.92 && t < 2.2) drawRope(0, 1, Math.max(0, 0.95 * (1 - (t - 1.92) / 0.28)));
+      else b.ropes[0].visible = false;
+    }
+
+    // ---------- landing effects ----------
+    if (q >= 0){
+      b.rings.forEach((m, i) => { const qq = q - i * 0.15; if (qq < 0){ m.visible = false; return; } m.visible = qq < 1.2; m.scale.setScalar(1 + qq * 20); m.material.opacity = Math.max(0, 0.95 * (1 - qq / 1.2)); });
+      if (b.pillar){ b.pillar.visible = q < 0.6; const s = 1 + q * 1.6; b.pillar.scale.set(s, 1, s); b.pillar.material.opacity = Math.max(0, 0.8 * (1 - q / 0.6)); }
+      b.dust.forEach(d => {
+        d.spr.visible = q < 1.4;
+        d.spr.position.set(base.x + Math.cos(d.ang) * (1.2 + q * d.spd), base.y - 0.6 + q * d.rise, base.z + Math.sin(d.ang) * (1.2 + q * d.spd));
+        const s = 2 + q * 4.5; d.spr.scale.set(s, s, 1); d.spr.material.opacity = Math.max(0, 0.5 * (1 - q / 1.4));
+      });
+      // the keys: a travelling ripple (uneven) PLUS a permanent crater where he landed — driven down and knocked askew
+      const cw = ease01(q / 0.12), rippleOn = q < 1.7, rr = q * 14, rfade = 1 - q / 1.7;
+      b.keys.forEach(o => {
+        const wv = rippleOn ? Math.exp(-((o.d - rr) * (o.d - rr)) / 2.2) * rfade * 0.9 * o.r : 0;
+        o.k.mesh.position.y = o.k.restY + wv + cw * o.crater.dy;
+        o.k.mesh.rotation.x = o.rot0.x + cw * o.crater.rx; o.k.mesh.rotation.z = o.rot0.z + cw * o.crater.rz;
+      });
+      // glowing cracks spreading outward from the impact, then cooling off
+      if (b.crackMat){
+        b.crackMat.opacity = Math.min(1, q / 0.06) * Math.max(0, 1 - q / 2.0) * 0.95;
+        const grow = 0.15 + 0.85 * ease01(q / 0.25);
+        b.cracks.forEach(g => { g.visible = q < 2.0; g.scale.set(grow, 1, grow); });
+      }
+      // rubble thrown up and out, tumbling, falling back down
+      if (!b.debrisSpawned){
+        b.debrisSpawned = true;
+        b.debris.forEach((d, i) => { const a = (i / b.debris.length) * Math.PI * 2 + Math.random(), sp = 2.5 + Math.random() * 4;
+          d.m.visible = true; d.m.position.set(base.x + Math.cos(a) * 0.8, base.y - 0.7, base.z + Math.sin(a) * 0.8); d.vel.set(Math.cos(a) * sp, 5 + Math.random() * 6, Math.sin(a) * sp); });
+      }
+      b.debris.forEach(d => {
+        if (!d.m.visible) return;
+        d.vel.y -= 22 * dts; d.m.position.addScaledVector(d.vel, dts);
+        d.m.rotation.x += d.spin.x * dts; d.m.rotation.y += d.spin.y * dts; d.m.rotation.z += d.spin.z * dts;
+        if (d.m.position.y < base.y - 1.2 || q > 2.2) d.m.visible = false;
+      });
+    }
+
+    // ---------- monsters keep still and watch the camera ----------
+    for (const en of smallEnemies){
+      if (!en.alive) continue;
+      const m = en.mesh.position;
+      const target = Math.atan2(camera.position.x - m.x, camera.position.z - m.z);
+      let diff = target - en.mesh.rotation.y;
+      diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+      en.mesh.rotation.y += diff * Math.min(1, dt * 8);
+    }
+
+    // ---------- the hero ----------
+    const heroStart = isD ? INTRO_D_T0 : INTRO_C_SWING0;
+    if (t < heroStart){ playerMesh.visible = false; return; }
+    playerMesh.visible = true;
+    const setArms = (rz, lz) => { if (armPivots[1]) armPivots[1].rotation.z = 0.24 + rz; if (armPivots[0]) armPivots[0].rotation.z = -(0.24 + lz); };
+    if (t < LAND){
+      const tangent = ahead.clone().sub(heroPos);
+      const falling = t >= diveAt;
+      const targetYaw = Math.atan2(tangent.x, tangent.z);
+      if (isD){
+        // smoothed heading + lean (shortest way round, exponential approach) so the swings read as fluid motion
+        let dy = targetYaw - playerMesh.rotation.y; dy = Math.atan2(Math.sin(dy), Math.cos(dy));
+        playerMesh.rotation.y += dy * Math.min(1, dt * 12);
+        const vy = tangent.y / Math.max(0.0001, tangent.length());
+        const targetLean = falling ? 0.9 : Math.max(-0.4, Math.min(0.8, -vy * 1.0));
+        playerMesh.rotation.x += (targetLean - playerMesh.rotation.x) * Math.min(1, dt * 10);
+      } else {
+        playerMesh.rotation.y = targetYaw;
+        playerMesh.rotation.x = falling ? 0.9 : -0.25;             // dive head-first, or lean back from the rope
+      }
+      fx.lastYaw = playerMesh.rotation.y; // remembered for the landing, where the path's direction is no longer defined (it ends in a point)
+      playerMesh.position.copy(heroPos);
+      if (!falling){ setArms(2.4, 0.5); if (legPivots[0]) legPivots[0].rotation.x = 0.6; if (legPivots[1]) legPivots[1].rotation.x = 0.25; }
+      else { setArms(1.6, 1.6); if (legPivots[0]) legPivots[0].rotation.x = 0.4; if (legPivots[1]) legPivots[1].rotation.x = 0.4; }
+    } else {
+      // THREE-POINT LANDING: lunge (see INTRO_LUNGE) → hold → rise → turn to the camera → hero pose (INTRO_POSE). Every frame the
+      // whole body is lowered/raised until the lowest foot is exactly on the ground, so the feet stay planted through the lunge,
+      // the rise and the pose instead of hovering or sinking.
+      const L = INTRO_LUNGE, P = INTRO_POSE;
+      const hold = LAND + 0.85, riseEnd = LAND + 1.6;
+      const wIn = introEaseOutCubic(ease01(q / 0.14));                       // the lunge snaps on over the impact
+      const rise = introEaseInOutCubic(ease01((t - hold) / (riseEnd - hold)));
+      const w = wIn * (1 - rise);                                             // lunge weight: 1 while held → 0 as he stands up
+      const pp = introEaseOutBack(ease01((t - riseEnd) / 0.55));              // hero-pose weight (a little overshoot = a "snap")
+      const settle = ease01((t - riseEnd) / 1.6);
+      const faceCam = Math.atan2(camera.position.x - base.x, camera.position.z - base.z);
+      const landYaw = fx.lastYaw || 0;
+      let dy = faceCam - landYaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy));
+      playerMesh.rotation.y = landYaw + dy * rise + w * L.yaw + pp * (P.yaw - 0.12 * settle);
+      playerMesh.rotation.x = 0.9 * (1 - wIn);                                // from the head-first dive pitch to upright, over the impact
+      const imp = Math.exp(-q * 12);                                          // a brief squash at the moment of contact
+      playerMesh.scale.set(1 + 0.1 * imp, 1 - 0.14 * imp, 1 + 0.1 * imp);
+      if (legPivots[0]){ legPivots[0].rotation.x = w * L.legF + pp * P.legX0; legPivots[0].rotation.z = w * L.legFz + pp * P.legZ0; }
+      if (legPivots[1]){ legPivots[1].rotation.x = w * L.legB + pp * P.legX1; legPivots[1].rotation.z = w * L.legBz + pp * P.legZ1; }
+      torsoGroup.rotation.set(w * L.torsoX + pp * P.torsoX + 0.012 * Math.sin((t - riseEnd) * 3.4) * pp, pp * P.torsoY, pp * P.torsoZ); // (a faint breath in the pose)
+      _localChar.head.rotation.set(w * L.headX + pp * P.headX, w * L.headY + pp * P.headY, pp * P.headZ);
+      if (armPivots[1]){ armPivots[1].rotation.x = w * L.plantX + pp * P.rArmX; armPivots[1].rotation.z = 0.24 + w * L.plantZ + pp * P.rArmZ; }
+      if (armPivots[0]){ armPivots[0].rotation.x = w * L.backX + pp * P.lArmX; armPivots[0].rotation.z = -(0.24 + w * L.backZ + pp * P.lArmZ); }
+      playerMesh.position.set(base.x, base.y, base.z);
+      playerMesh.updateMatrixWorld(true);
+      const lowest = Math.min(new THREE.Box3().setFromObject(legPivots[0]).min.y, new THREE.Box3().setFromObject(legPivots[1]).min.y);
+      playerMesh.position.y += (base.y - 1.04) - lowest;                      // 1.04 = how far below the mesh origin the soles are when standing
+      if (b.aura){
+        const dirv = playerMesh.position.clone().sub(camera.position).normalize();
+        b.aura.visible = pp > 0.02;
+        b.aura.position.copy(playerMesh.position).addScaledVector(dirv, 0.9); b.aura.position.y += 0.35;
+        const s = 8.5 + 0.6 * Math.sin(t * 4); b.aura.scale.set(s, s, 1);
+        b.aura.material.opacity = Math.min(1, pp) * 1.0;
+      }
+    }
+    if (t >= c.dur) finishIntroSequence();
+  }
+
+  // ---------- VARIANT B: typed on keycaps + beam-in ----------
+  const introB = { beam: null, ring: null, glow: null, keys: [], fovBase: 60, typed: 0, tagFull: '', fovPunched: false, rippleDone: false };
+  const INTRO_B_ARRIVE = 2.55; // seconds into the sequence when the character is beamed in
+  function introEaseOutBack(x){ const s = 1.70158; return 1 + (s + 1) * Math.pow(x - 1, 3) + s * Math.pow(x - 1, 2); }
+  // short mechanical key click: a tiny noise tick + a low "thock" + a faint plastic overtone
+  function sfxClick(delay, peak){
+    sfxSweep(delay, 0.05, 4200, 2200, peak || 0.14, 2.2);
+    sfxTone(delay, 170, 0.07, 'sine', (peak || 0.14) * 0.7, 85);
+    sfxTone(delay + 0.035, 1400, 0.03, 'square', 0.02);
+  }
+  function startIntroB(){
+    const c = introCine, b = introB;
+    const overlay = document.getElementById('introOverlayB');
+    const row = document.getElementById('introKeysRow');
+    row.className = ''; row.innerHTML = '';
+    // irregular, human typing rhythm
+    const times = [0.30, 0.58, 0.78, 1.10, 1.30, 1.55, 1.74, 1.98];
+    'RANKMANN'.split('').forEach((ch, i) => {
+      const k = document.createElement('div');
+      k.className = 'introKeyCap'; k.textContent = ch;
+      k.style.setProperty('--d', times[i] + 's');
+      row.appendChild(k);
+      sfxClick(times[i] + 0.2); // the click lands when the key bottoms out (40% into its 0.5s animation)
+    });
+    const tag = document.getElementById('introTaglineB');
+    b.tagFull = (document.getElementById('introTagline').textContent || '').trim(); // already translated by applyLanguage
+    b.typed = 0; tag.textContent = ''; tag.className = '';
+    document.getElementById('introFlashB').classList.remove('go');
+    overlay.classList.remove('fadeOut', 'clear'); overlay.classList.add('show');
+
+    // keys near the hub, for the ripple the arrival sends through them
+    b.keys = [];
+    allKeyCaps.forEach(k => {
+      const d = Math.hypot(k.mesh.position.x - c.base.x, k.mesh.position.z - c.base.z);
+      if (d < 14 && Math.abs(k.restY - (c.hub.top + 0.2)) < 0.3) b.keys.push({ k, d });
+    });
+    b.rippleDone = false;
+    // beam of light from the sky, ground shock-ring and a glow at the feet — additive, removed again on finish
+    const addMat = (hex) => new THREE.MeshBasicMaterial({ color: hex, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+    b.beam = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 60, 28, 1, true), addMat(0x9ffff0));
+    b.beam.position.set(c.base.x, c.base.y - 1 + 30, c.base.z); b.beam.visible = false; scene.add(b.beam);
+    b.ring = new THREE.Mesh(new THREE.RingGeometry(0.55, 0.95, 56), addMat(0x7affc4));
+    b.ring.rotation.x = -Math.PI / 2; b.ring.position.set(c.base.x, c.base.y - 0.95, c.base.z); b.ring.visible = false; scene.add(b.ring);
+    b.glow = addGlowSprite(scene, 0x9ffff0, 4); b.glow.position.set(c.base.x, c.base.y - 0.7, c.base.z); b.glow.visible = false;
+    b.fovBase = camera.fov; b.fovPunched = false;
+  }
+  function cleanupIntroB(){
+    const b = introB, c = introCine;
+    [b.beam, b.ring].forEach(m => { if (!m) return; scene.remove(m); m.geometry.dispose(); m.material.dispose(); });
+    if (b.glow){ scene.remove(b.glow); b.glow.material.dispose(); }
+    b.beam = b.ring = b.glow = null;
+    b.keys.forEach(o => { o.k.mesh.position.y = o.k.restY; }); // keys back to rest, wherever the ripple left them
+    b.keys = [];
+    if (b.fovPunched){ camera.fov = b.fovBase; camera.updateProjectionMatrix(); b.fovPunched = false; }
+    document.getElementById('introFlashB').classList.remove('go');
+  }
+  function updateIntroCinematicB(dt){
+    const c = introCine, b = introB, fx = c.fx;
+    c.t += dt;
+    const t = c.t, ARRIVE = INTRO_B_ARRIVE;
+    const overlay = document.getElementById('introOverlayB');
+    const row = document.getElementById('introKeysRow');
+    const tag = document.getElementById('introTaglineB');
+
+    // --- title: all keys light up, the tagline is typed out, then everything lifts away ---
+    if (t > 2.05 && !fx.lit){ fx.lit = true; row.classList.add('lit'); sfxSweep(0, 0.6, 200, 1500, 0.08, 1.0); [523.25, 783.99, 1046.5].forEach(f => sfxTone(0.05, f, 0.7, 'sine', 0.04)); }
+    if (t > 2.05){
+      const n = Math.min(b.tagFull.length, Math.floor((t - 2.05) / 0.032));
+      if (n !== b.typed){ b.typed = n; tag.textContent = b.tagFull.slice(0, n); if (n % 3 === 1) sfxClick(0, 0.05); }
+    }
+    if (t > 3.35 && !fx.titleOut){ fx.titleOut = true; row.classList.add('out'); tag.classList.add('out'); overlay.classList.add('clear'); }
+
+    // --- camera: starts just above the key tops, close, looking slightly up — then cranes up and back to the usual framing ---
+    const e = introEaseInOutCubic(Math.min(1, t / 4.2));
+    const endPos = new THREE.Vector3(
+      c.head.x + Math.sin(player.yaw) * Math.cos(player.pitch) * camZoom,
+      c.head.y + Math.sin(player.pitch) * camZoom,
+      c.head.z + Math.cos(player.yaw) * Math.cos(player.pitch) * camZoom
+    );
+    const startPos = new THREE.Vector3(c.head.x, c.head.y - 1.55, c.head.z + 3.6);
+    camera.position.lerpVectors(startPos, endPos, e);
+    camera.position.x += Math.sin(e * Math.PI) * 1.8; // gentle sideways drift mid-move
+    camera.lookAt(c.head.x, c.head.y + (1 - e) * 1.3, c.head.z);
+
+    // --- the beam charges up, then the character is beamed in ---
+    if (t >= 2.0 && !fx.charge){ fx.charge = true; sfxTone(0, 120, 0.55, 'triangle', 0.06, 1100); }
+    if (b.beam){
+      if (t >= 2.0 && t < 3.4){
+        b.beam.visible = true;
+        let s, op;
+        if (t < ARRIVE){ const q = (t - 2.0) / 0.55; s = 0.12 + q * 0.5; op = 0.2 + q * 0.5; }
+        else { const q = (t - ARRIVE) / 0.85; s = 0.62 + q * 1.0; op = 0.7 * (1 - q); }
+        b.beam.scale.set(s, 1, s); b.beam.material.opacity = Math.max(0, op);
+      } else b.beam.visible = false;
+    }
+    if (t >= ARRIVE && !fx.arrive){
+      fx.arrive = true;
+      document.getElementById('introFlashB').classList.add('go');
+      sfxSweep(0, 0.25, 4200, 300, 0.2, 1.0);                    // zap
+      sfxTone(0, 90, 0.7, 'sine', 0.35, 35);                     // bass boom
+      [392, 523.25, 659.25, 784].forEach(f => sfxTone(0.02, f, 0.8, 'triangle', 0.05));
+      sfxSweep(0, 0.9, 200, 1300, 0.07, 0.9);                    // the ring-wave through the keys
+    }
+    if (t >= ARRIVE && b.ring){
+      const q = t - ARRIVE;
+      b.ring.visible = q < 1.0; b.ring.scale.setScalar(1 + q * 14); b.ring.material.opacity = Math.max(0, 0.9 * (1 - q / 1.0));
+      b.glow.visible = q < 0.9; b.glow.scale.set(2 + q * 6, 2 + q * 6, 1); b.glow.material.opacity = Math.max(0, 1 - q / 0.9);
+      // keycap ripple: a travelling bump spreading out from the hub's centre
+      if (q < 1.3){
+        const r = q * 13, fade = 1 - q / 1.3;
+        b.keys.forEach(o => { const w = Math.exp(-((o.d - r) * (o.d - r)) / 1.7) * fade * 0.55; o.k.mesh.position.y = o.k.restY + w; });
+      } else if (!b.rippleDone){ b.rippleDone = true; b.keys.forEach(o => { o.k.mesh.position.y = o.k.restY; }); }
+      // a quick field-of-view "punch" on arrival that settles back
+      const kick = 9 * Math.exp(-q * 4.5);
+      if (kick > 0.05){ camera.fov = b.fovBase + kick; camera.updateProjectionMatrix(); b.fovPunched = true; }
+      else if (b.fovPunched){ camera.fov = b.fovBase; camera.updateProjectionMatrix(); b.fovPunched = false; }
+    }
+
+    // monsters keep still but watch the camera (same as variant A)
+    for (const en of smallEnemies){
+      if (!en.alive) continue;
+      const m = en.mesh.position;
+      const target = Math.atan2(camera.position.x - m.x, camera.position.z - m.z);
+      let diff = target - en.mesh.rotation.y;
+      diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+      en.mesh.rotation.y += diff * Math.min(1, dt * 8);
+    }
+
+    // --- character: materialises tall and thin inside the beam and snaps to size, spins, then strikes a victory pose with a hop ---
+    if (t < ARRIVE){ playerMesh.visible = false; return; }
+    playerMesh.visible = true;
+    const p = Math.min(1, (t - ARRIVE) / 0.5);
+    const eb = introEaseOutBack(p);
+    const sy = 1 + (1 - eb) * 2.0;
+    const sxz = Math.max(0.05, 1 - (1 - eb) * 0.9);
+    const SPIN0 = ARRIVE + 0.25, SPINLEN = 1.0, VSTART = SPIN0 + SPINLEN;
+    const sp = Math.min(1, Math.max(0, (t - SPIN0) / SPINLEN));
+    if (t >= SPIN0 && !fx.spin){ fx.spin = true; sfxSweep(0, 0.7, 400, 1800, 0.08, 1.0); }
+    if (t >= VSTART && !fx.pose){ fx.pose = true; [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => sfxTone(i * 0.09, f, 0.5, 'triangle', 0.05)); }
+    playerMesh.rotation.y = (player.faceYaw + Math.PI) + (1 - introEaseOutCubic(sp)) * Math.PI * 4; // two full turns that slow to a stop facing the camera
+    const outAmt = Math.min(1, Math.max(0, (t - SPIN0) / 0.3));
+    const vAmt = Math.min(1, Math.max(0, (t - VSTART) / 0.25));
+    armPivots.forEach((pv, i) => { const side = i === 0 ? -1 : 1; pv.rotation.z = side * (0.24 + outAmt * 1.3 * (1 - vAmt) + vAmt * 2.4); });
+    if (legPivots[0]) legPivots[0].rotation.z = -0.25 * vAmt;
+    if (legPivots[1]) legPivots[1].rotation.z = 0.25 * vAmt;
+    const hopT = Math.min(1, Math.max(0, (t - VSTART) / 0.5));
+    playerMesh.scale.set(sxz, sy, sxz);
+    playerMesh.position.set(c.base.x, c.base.y + 1.07 * (sy - 1) + Math.sin(hopT * Math.PI) * 0.7, c.base.z); // feet stay on the keys while it stretches
+    if (t >= c.dur) finishIntroSequence();
+  }
+
   // Skip with a click/tap/key — but not within the first ~0.45s: the very tap/key that dismissed the
   // audio gate is still "in flight" when the sequence starts and would otherwise skip it instantly.
   function skipIntro(){
@@ -15329,6 +16162,8 @@
     finishIntroSequence(true);
   }
   document.getElementById('introOverlay').addEventListener('pointerdown', e => { e.preventDefault(); skipIntro(); });
+  document.getElementById('introOverlayB').addEventListener('pointerdown', e => { e.preventDefault(); skipIntro(); });
+  document.getElementById('introOverlayC').addEventListener('pointerdown', e => { e.preventDefault(); skipIntro(); });
   window.addEventListener('keydown', skipIntro);
 
   // ---------- DAILY LOGIN REWARD ----------
