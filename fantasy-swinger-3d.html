@@ -1513,6 +1513,33 @@
   #introOverlayC.bars #introBarTopC, #introOverlayC.bars #introBarBottomC { transform: none; }
   #introOverlayC.barsOut #introBarTopC { transform: translateY(-100%); }
   #introOverlayC.barsOut #introBarBottomC { transform: translateY(100%); }
+  /* variant E: the logo sits on pure black, so it is centred in the frame */
+  #introOverlayC.eMode #introTitleC, #introOverlayC.eMode #introSubC, #introOverlayC.eMode #introFlareC { z-index: 3; } /* above the black cover */
+  /* E: the logo fades up with ONLY opacity + transform (compositor-only, no per-frame repaint of the blurred/outlined text — the old
+     bloom animated blur, letter-spacing and a moving shine across a stack of drop-shadows, which stuttered). */
+  #introOverlayC.eMode #introTitleC { top: 40%; will-change: opacity, transform; }
+  #introOverlayC.eMode.slam #introTitleC { animation: introTitleE 1.9s cubic-bezier(.22,.61,.36,1) forwards; }
+  /* E subtitle, film-trailer style: small, light, very widely tracked caps in cool silver; a hairline above grows out from the
+     centre, then the line of text rises a few pixels and fades up (opacity + transform only = smooth). */
+  #introOverlayC.eMode #introSubC {
+    will-change: opacity, transform; font-weight: 500; letter-spacing: 0.55em; padding-left: 0.55em; color: #d9e6f2;
+    font-size: clamp(10px, 1.7vw, 15px); text-shadow: 0 0 12px rgba(150,200,255,0.35), 0 1px 2px rgba(0,0,0,0.8);
+    top: calc(40% + clamp(78px, 17vw, 190px));
+  }
+  #introOverlayC.eMode #introSubC::before {
+    content: ''; position: absolute; left: 50%; top: -16px; width: min(46vw, 420px); height: 1px; margin-left: calc(min(46vw, 420px) / -2);
+    background: linear-gradient(90deg, transparent, rgba(200,225,255,0.85) 50%, transparent); transform: scaleX(0); will-change: transform;
+  }
+  #introOverlayC.eMode #introSubC.on { animation: introSubE 1.8s cubic-bezier(.22,.61,.36,1) forwards; }
+  #introOverlayC.eMode #introSubC.on::before { animation: introSubLine 1.6s cubic-bezier(.22,.61,.36,1) forwards; }
+  @keyframes introSubLine { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  #introOverlayC.eMode #introFlareC, #introOverlayC.eMode #introRaysC { display: none; }
+  #introOverlayC.eMode.fadeOut { transition: opacity 0.9s ease; }
+  @keyframes introTitleE { from { opacity: 0; transform: scale(1.08); } to { opacity: 1; transform: scale(1); } }
+  @keyframes introSubE { 0% { opacity: 0; transform: translateY(8px); } 35% { opacity: 0; } 100% { opacity: 1; transform: translateY(0); } }
+  #introOverlayC.eMode #introSubC { top: calc(40% + clamp(64px, 16vw, 180px)); }
+  #introOverlayC.eMode #introFlareC { top: calc(40% + clamp(23px, 6.7vw, 78px)); }
+  #introOverlayC.eMode #introVignetteC, #introOverlayC.eMode.blackCut #introVignetteC { background: none; }
   #introEmbersC { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
   .introEmberC {
     position: absolute; bottom: -12px; width: 4px; height: 4px; border-radius: 50%; left: var(--x);
@@ -15388,16 +15415,16 @@
     // over the scene (0.7s) — if it came back right now it would pop in for a moment, uncovered, and
     // only then get hidden behind the menu's blur.
     setTimeout(() => document.body.classList.remove('introPlaying'), 800);
-    const overlay = document.getElementById((c.variant === 'C' || c.variant === 'D') ? 'introOverlayC' : c.variant === 'B' ? 'introOverlayB' : 'introOverlay');
+    const overlay = document.getElementById((c.variant === 'C' || c.variant === 'D' || c.variant === 'E') ? 'introOverlayC' : c.variant === 'B' ? 'introOverlayB' : 'introOverlay');
     if (c.variant === 'B') cleanupIntroB();
-    if (c.variant === 'C' || c.variant === 'D') cleanupIntroC();
+    if (c.variant === 'C' || c.variant === 'D' || c.variant === 'E') cleanupIntroC();
     overlay.classList.add('fadeOut');
-    setTimeout(() => overlay.classList.remove('show', 'fadeOut', 'clear', 'titleOut', 'slam', 'bars', 'barsOut', 'titleOutC'), 520);
+    setTimeout(() => overlay.classList.remove('show', 'fadeOut', 'clear', 'titleOut', 'slam', 'bars', 'barsOut', 'titleOutC', 'eMode'), 520);
     showStartMenu(true);
   }
 
   function updateIntroCinematic(dt){
-    if (introCine.variant === 'C' || introCine.variant === 'D') updateIntroCinematicC(dt); else if (introCine.variant === 'B') updateIntroCinematicB(dt); else updateIntroCinematicA(dt);
+    if (introCine.variant === 'E') updateIntroCinematicE(dt); else if (introCine.variant === 'C' || introCine.variant === 'D') updateIntroCinematicC(dt); else if (introCine.variant === 'B') updateIntroCinematicB(dt); else updateIntroCinematicA(dt);
   }
   function updateIntroCinematicA(dt){
     const c = introCine;
@@ -15578,10 +15605,10 @@
   window.addEventListener('keydown', e => { if (audioGate.active && !['Shift', 'Control', 'Alt', 'Meta', 'CapsLock', 'Tab'].includes(e.key)) onAudioGateTap(); });
 
   function pickIntroVariant(){
-    // The start animation is variant D ("web-slinging run + superhero landing"), always. The other variants
-    // (A, B, C) are still in the code and can be previewed with ?intro=A, ?intro=B or ?intro=C in the URL.
-    try { const f = new URLSearchParams(location.search).get('intro'); if (f === 'A' || f === 'B' || f === 'C' || f === 'D') return f; } catch(e){}
-    return 'D';
+    // The start animation is variant E ("web-slinging run, then straight into the camera → cut to black → logo"), always. The other variants
+    // (A, B, C, D = the superhero landing) are still in the code and can be previewed with ?intro=A, ?intro=B or ?intro=C in the URL.
+    try { const f = new URLSearchParams(location.search).get('intro'); if (f === 'A' || f === 'B' || f === 'C' || f === 'D' || f === 'E') return f; } catch(e){}
+    return 'E';
   }
   function startIntroSequence(){
     const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -15598,8 +15625,8 @@
     const variant = pickIntroVariant();
     introCine.variant = variant;
     introCine.hub = hub;
-    introCine.landT = variant === 'D' ? 4.3 : 3.5; // when the hero hits the ground (variants C and D) — D's later start keeps the swings the same length
-    introCine.dur = (variant === 'C' || variant === 'D') ? introCine.landT + 3.2 : variant === 'B' ? 4.9 : 3.7;
+    introCine.landT = (variant === 'D' || variant === 'E') ? 4.3 : 3.5; // when the hero hits the ground (variants C and D) — D's later start keeps the swings the same length
+    introCine.dur = variant === 'E' ? 99 : (variant === 'C' || variant === 'D') ? introCine.landT + 3.2 : variant === 'B' ? 4.9 : 3.7;
     introCine.base.set(hub.pos.x, hub.top + player.radius + (keyboardKeysWanted ? 0.4 : 0), hub.pos.z); // +0.4 = a resting keycap's height, so the landing is ON the keys, not inside them
     introCine.head.copy(introCine.base).add(new THREE.Vector3(0, 0.95, 0));
     introCine.savedArms = armPivots.map(p => p.rotation.clone());
@@ -15610,7 +15637,7 @@
     introCine.active = true;
     playerMesh.visible = false;
     document.body.classList.add('introPlaying');
-    if (variant === 'C' || variant === 'D') startIntroC(); else if (variant === 'B') startIntroB(); else startIntroA();
+    if (variant === 'C' || variant === 'D' || variant === 'E') startIntroC(); else if (variant === 'B') startIntroB(); else startIntroA();
   }
   function startIntroA(){
     const overlay = document.getElementById('introOverlay');
@@ -15719,15 +15746,19 @@
     loadSoundBuffer('webshoot'); return false; // not decoded yet — the caller tries again on the next frames
   }
   function startIntroC(){
-    const c = introCine, b = introC, isD = c.variant === 'D';
+    const c = introCine, b = introC, isE = c.variant === 'E', isD = c.variant === 'D' || isE;
     const overlay = document.getElementById('introOverlayC');
     document.getElementById('introSubC').textContent = (document.getElementById('introTagline').textContent || '').trim(); // already translated by applyLanguage
     document.getElementById('introSubC').classList.remove('on');
     ['introFlareC', 'introFlashC'].forEach(id => document.getElementById(id).classList.remove('go'));
     document.getElementById('introBlackC').classList.remove('in');
-    document.getElementById('introBlackC').style.transitionDuration = isD ? '0.8s' : ''; // D fades up faster (C keeps its slower 1.2s)
+    document.getElementById('introBlackC').style.transition = '';
+    document.getElementById('introBlackC').style.transitionDuration = isD ? '0.8s' : '';
+    overlay.classList.toggle('eMode', isE); // D fades up faster (C keeps its slower 1.2s)
     document.getElementById('introEmbersC').innerHTML = '';
     overlay.classList.remove('fadeOut', 'slam', 'bars', 'barsOut', 'titleOutC'); overlay.classList.add('show');
+    document.getElementById('introSkipC').style.display = '';
+    overlay.classList.remove('blackCut');
     void overlay.offsetWidth;                               // flush, so the bars/black fade really animate from their start state
     overlay.classList.add('bars');
     b.fovBase = camera.fov; b.fovPunched = false; b.rippleDone = false; b.kickIdx = 0; b.lookInit = false;
@@ -15737,7 +15768,9 @@
     loadSoundBuffer('land'); if (isD) loadSoundBuffer('webshoot'); // decode the real sound samples ahead of time
 
     // the crystal(s) the hero swings from + their ropes
-    const dPts = isD ? introClearPath(INTRO_D_PATH.map(q => c.base.clone().add(new THREE.Vector3(q[0], q[1], q[2]))), c.hub) : null; // the flight path, steered around every solid platform
+    const dRaw = isD ? INTRO_D_PATH.map(q => c.base.clone().add(new THREE.Vector3(q[0], q[1], q[2]))) : null;
+    if (isE) dRaw[dRaw.length - 1].set(c.base.x + 6, c.base.y + 3.0, c.base.z + 12.5); // E: the run ends AT the camera's resting spot instead of on the island
+    const dPts = isD ? introClearPath(dRaw, c.hub) : null; // the flight path, steered around every solid platform
     b.pathPts = dPts;
     const anchorPos = isD
       ? [1, 3, 5].map(i => dPts[i].clone().add(new THREE.Vector3(0, 18, 0))) // one above each swing's lowest point
@@ -16099,6 +16132,130 @@
       }
     }
     if (t >= c.dur) finishIntroSequence();
+  }
+
+  // ---------- VARIANT E: the web-slinging run (as D), but the last dive goes INTO THE CAMERA — the instant the hero
+  // fills the lens the picture cuts hard to black, a beat of silence, then the logo appears with one dull hit.
+  function updateIntroCinematicE(dt){
+    const c = introCine, b = introC, fx = c.fx;
+    c.t += dt;
+    const t = c.t, LAND = c.landT, base = c.base;
+    const overlay = document.getElementById('introOverlayC');
+    const blackEl = document.getElementById('introBlackC');
+    const ease01 = x => Math.min(1, Math.max(0, x));
+    const SPAN = LAND - INTRO_D_T0;
+    const webAt = [0, 2 / 7, 4 / 7].map(k => INTRO_D_T0 + k * SPAN);
+    const releaseAt = [2 / 7, 4 / 7, 6 / 7].map(k => INTRO_D_T0 + k * SPAN);
+    const diveAt = releaseAt[2];
+
+    if (!fx.cut){
+      if (t > 0.05 && !fx.blackIn){ fx.blackIn = true; blackEl.classList.add('in'); }
+      // sounds: the three real web shots, the release, then one rising whoosh that ends exactly where the cut will be
+      [1.0, 1.12, 0.94].forEach((rate, i) => {
+        if (t >= webAt[i] && !fx['web' + i]){ if (playWebShot(rate) || t > webAt[i] + 0.8){ fx['web' + i] = true; sfxSweep(0, 0.9, 300, 1500, 0.06, 0.8); } }
+      });
+      if (t >= diveAt && !fx.release){ fx.release = true; sfxTone(0, 1800, 0.06, 'square', 0.05); sfxSweep(0, LAND - diveAt - 0.02, 500, 4200, 0.12, 1.1); }
+
+      // hero path (same pendulum rhythm as D)
+      const x = ease01((t - INTRO_D_T0) / SPAN);
+      const swingS = x - (0.42 / (7 * Math.PI)) * Math.sin(7 * Math.PI * x);
+      const heroPos = b.curve.getPoint(Math.min(1, swingS)), ahead = b.curve.getPoint(Math.min(1, swingS + 0.01));
+
+      // camera: waits near the landing spot like D, eases in, then stays put — the hero comes to it
+      const K0d = new THREE.Vector3(base.x + 7, base.y + 6, base.z + 22);
+      const K1 = new THREE.Vector3(base.x + 6, base.y + 3.0, base.z + 12.5);
+      const e = introEaseInOutCubic(ease01(t / (LAND - 1.0)));
+      camera.position.lerpVectors(K0d, K1, e);
+      if (!b.lookInit){ b.lookSm.copy(heroPos); b.lookInit = true; }
+      const camDist = camera.position.distanceTo(heroPos);
+      if (camDist > 5) b.lookSm.lerp(heroPos, 1 - Math.exp(-dt * 5));   // very close, the aim is frozen so he can't whip the view around as he passes
+      camera.lookAt(b.lookSm);
+      // speed: the field of view widens over the last second
+      const fw = introEaseInOutCubic(ease01((t - (LAND - 1.1)) / 1.0));
+      camera.fov = b.fovBase + 16 * fw; camera.updateProjectionMatrix(); b.fovPunched = true;
+
+      // halo, crystals, ropes (as D)
+      if (b.heroGlow){
+        const show = t >= INTRO_D_T0 && camDist > 3;
+        b.heroGlow.visible = show;
+        if (show){
+          const s = Math.max(2.2, Math.min(9, 1.2 + camDist * 0.09));
+          let shot = 0; webAt.forEach(w => { const q = t - w; if (q >= 0 && q < 0.6) shot = Math.max(shot, Math.exp(-q * 7)); });
+          b.heroGlow.position.set(heroPos.x, heroPos.y + 0.4, heroPos.z); b.heroGlow.scale.set(s * (1 + 1.1 * shot), s * (1 + 1.1 * shot), 1);
+          b.heroGlow.material.opacity = Math.min(1, (t - INTRO_D_T0) / 0.3) * 0.85;
+        }
+      }
+      b.anchors.forEach((m, i) => {
+        m.rotation.y += dt * 1.5; b.anchorGlows[i].material.opacity = 0.75 + 0.25 * Math.sin(t * 6 + i);
+        const q = t - webAt[i]; const pulse = q >= 0 && q < 0.6 ? Math.exp(-q * 7) : 0; const s = 7 + 10 * pulse; b.anchorGlows[i].scale.set(s, s, 1);
+      });
+      const hand = new THREE.Vector3(heroPos.x + 0.35, heroPos.y + 1.5, heroPos.z);
+      const drawRope = (i, extend, opacity) => {
+        const r = b.ropes[i], A = b.anchors[i].position;
+        const dir = hand.clone().sub(A), len = dir.length();
+        const wsc = Math.max(1, camera.position.distanceTo(r.position.copy(A).addScaledVector(dir, 0.5)) * 0.05);
+        r.visible = true; r.position.copy(A).addScaledVector(dir, 0.5 * extend); r.scale.set(wsc, Math.max(0.001, len * extend), wsc);
+        r.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.normalize()); r.material.opacity = opacity;
+      };
+      for (let i = 0; i < 3; i++){
+        if (t < webAt[i]) b.ropes[i].visible = false;
+        else if (t < releaseAt[i]) drawRope(i, Math.min(1, (t - webAt[i]) / 0.12), 0.95);
+        else if (t < releaseAt[i] + 0.28) drawRope(i, 1, Math.max(0, 0.95 * (1 - (t - releaseAt[i]) / 0.28)));
+        else b.ropes[i].visible = false;
+      }
+
+      // monsters keep still and watch the camera
+      for (const en of smallEnemies){
+        if (!en.alive) continue;
+        const m = en.mesh.position;
+        let diff = Math.atan2(camera.position.x - m.x, camera.position.z - m.z) - en.mesh.rotation.y;
+        diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+        en.mesh.rotation.y += diff * Math.min(1, dt * 8);
+      }
+
+      // the hero
+      if (t < INTRO_D_T0){ playerMesh.visible = false; }
+      else {
+        playerMesh.visible = true;
+        const tangent = ahead.clone().sub(heroPos);
+        const falling = t >= diveAt;
+        let dy = Math.atan2(tangent.x, tangent.z) - playerMesh.rotation.y; dy = Math.atan2(Math.sin(dy), Math.cos(dy));
+        playerMesh.rotation.y += dy * Math.min(1, dt * 12);
+        const vy = tangent.y / Math.max(0.0001, tangent.length());
+        const targetLean = falling ? 0.5 : Math.max(-0.4, Math.min(0.8, -vy * 1.0));
+        playerMesh.rotation.x += (targetLean - playerMesh.rotation.x) * Math.min(1, dt * 10);
+        playerMesh.position.copy(heroPos);
+        const setArms = (rz, lz) => { if (armPivots[1]) armPivots[1].rotation.z = 0.24 + rz; if (armPivots[0]) armPivots[0].rotation.z = -(0.24 + lz); };
+        if (!falling){ setArms(2.4, 0.5); if (legPivots[0]) legPivots[0].rotation.x = 0.6; if (legPivots[1]) legPivots[1].rotation.x = 0.25; }
+        else { setArms(2.6, 2.6); if (legPivots[0]) legPivots[0].rotation.x = 0.2; if (legPivots[1]) legPivots[1].rotation.x = 0.1; } // arms up and out like a leap at the lens
+      }
+
+      // THE CUT: the hero fills the frame → same frame: pure black, everything else gone
+      if (t >= INTRO_D_T0 && (camDist < 1.6 || t >= LAND + 0.15)){
+        fx.cut = true; fx.cutT = t;
+        blackEl.style.transition = 'none'; blackEl.classList.remove('in'); void blackEl.offsetWidth; // opacity back to 1 immediately, no fade
+        overlay.classList.add('blackCut');
+        playerMesh.visible = false;
+        sfxTone(0.3, 62, 1.5, 'sine', 0.3, 34);                          // one soft low swell as the logo fades up (scheduled now, so no work happens later)
+        sfxSweep(1.1, 1.3, 2400, 5200, 0.025, 0.8);                      // a faint rising shimmer as the trailer line appears
+        sfxTone(0.3, 196, 2.0, 'sine', 0.03); sfxTone(0.3, 294, 2.0, 'sine', 0.02);
+        if (b.heroGlow) b.heroGlow.visible = false;
+        b.ropes.forEach(r => r.visible = false);
+        if (b.fovPunched){ camera.fov = b.fovBase; camera.updateProjectionMatrix(); b.fovPunched = false; }
+        document.getElementById('introSkipC').style.display = 'none';
+      }
+      return;
+    }
+
+    // ---------- on black ----------
+    const q = t - fx.cutT;
+    if (q >= 0.3 && !fx.logo){
+      fx.logo = true;
+      overlay.classList.add('slam');                                     // the logo fades up on pure black (sounds were scheduled at the cut, so nothing is created in this frame)
+    }
+    if (q >= 1.1 && !fx.sub){ fx.sub = true; document.getElementById('introSubC').classList.add('on'); }
+    if (q >= 2.6 && !fx.out){ fx.out = true; }
+    if (q >= 3.3) finishIntroSequence();
   }
 
   // ---------- VARIANT B: typed on keycaps + beam-in ----------
