@@ -1980,6 +1980,8 @@
     opacity: 1; transition: opacity 0.25s ease;
   }
   #settingsScreen.hidden { opacity: 0; pointer-events: none; }
+  #box-checkpoints { position: relative; }
+  #fpsMeter { position: absolute; left: 18px; top: calc(100% + 8px); font-size: 15px; font-weight: 600; color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,0.6); font-variant-numeric: tabular-nums; pointer-events: none; white-space: nowrap; }
   #settingsPanel { max-width: 460px; }
   #settingsPanelScroll {
     max-height: 80vh; max-height: 80dvh; overflow-y: auto; overflow-x: hidden;
@@ -2137,6 +2139,8 @@
     0%, 100% { box-shadow: 0 0 0 rgba(255,226,122,0.4); }
     50% { box-shadow: 0 0 16px rgba(255,226,122,0.55); }
   }
+  #adminOnlineBadge { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 4px auto 12px; padding: 8px 18px; width: fit-content; border-radius: 999px; font-size: 15px; font-weight: 700; background: rgba(80,220,140,0.12); border: 1px solid rgba(80,220,140,0.35); color: #eafff1; }
+  #adminOnlineCount { font-size: 18px; font-variant-numeric: tabular-nums; }
   #adminPanelBtn {
     padding: 13px 24px; font-size: 15px; font-weight: 700;
     background: linear-gradient(135deg, rgba(255,200,80,0.22), rgba(255,120,60,0.22));
@@ -2467,13 +2471,13 @@
     background: linear-gradient(135deg, rgba(255,226,122,0.3), rgba(217,167,47,0.3));
     border-color: rgba(255,226,122,0.6); color: #fff;
   }
-  .langBtn {
+  .langBtn, .gfxBtn {
     padding: 9px 18px; font-size: 13px; font-weight: 700;
     background: rgba(255,255,255,0.05); border: 1px solid rgba(180,140,255,0.3);
     border-radius: 999px; color: rgba(255,255,255,0.75); cursor: pointer;
   }
-  .langBtn:hover { background: rgba(255,255,255,0.1); }
-  .langBtn.active {
+  .langBtn:hover, .gfxBtn:hover { background: rgba(255,255,255,0.1); }
+  .langBtn.active, .gfxBtn.active {
     background: linear-gradient(135deg, rgba(122,255,196,0.3), rgba(47,191,138,0.3));
     border-color: rgba(122,255,196,0.6); color: #fff;
   }
@@ -3037,6 +3041,7 @@
     <div class="stat-box" id="box-checkpoints">
       <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M7 4h10v3a5 5 0 0 1-5 5 5 5 0 0 1-5-5V4z" fill="#ffd54f"/><path d="M7 5H4a2 2 0 0 0 2 4h1M17 5h3a2 2 0 0 1-2 4h-1" stroke="#ffd54f" stroke-width="1.6" stroke-linecap="round"/><rect x="10" y="12" width="4" height="3" fill="#ffd54f"/><rect x="8" y="15" width="8" height="2.2" rx="1" fill="#ffd54f"/></svg></div>
       <div class="stat-text"><span class="stat-label" data-i18n="statTrophies">Pokale</span><span class="stat-value" id="checkpoint-val">0</span></div>
+      <div id="fpsMeter" style="display:none"></div>
     </div>
     <div class="stat-box" id="box-lives">
       <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M12 20s-7-4.4-9.5-9C1 7.5 3 4 6.5 4c2 0 3.5 1.2 4.5 2.6C12 5.2 13.5 4 15.5 4 19 4 21 7.5 20.5 11 18 15.6 12 20 12 20z" fill="#ff7a90"/></svg></div>
@@ -4256,6 +4261,7 @@
       <h1 style="font-size:30px;">🛠️ Admin-Zentrale</h1>
     </div>
     <p class="heroTagline">Nur für dich sichtbar, Lukas</p>
+    <div id="adminOnlineBadge"><span class="onlineDot"></span><span>Spieler online:</span> <b id="adminOnlineCount">…</b></div>
 
     <div class="settingsGroup">
       <label class="settingsLabel">👤 Persönlich</label>
@@ -4351,6 +4357,18 @@
       <div class="settingsGroup">
         <label class="settingsLabel"><span data-i18n="settingsSfxVol">🔊 Sound-Lautstärke</span> <span id="sfxVolumeVal">100%</span></label>
         <input type="range" id="sfxVolumeSlider" min="0" max="100" value="100" class="settingsSlider">
+      </div>
+      <div class="settingsGroup" id="gfxGroup">
+        <label class="settingsLabel">🖥️ Grafikqualität</label>
+        <div class="settingsPairRow">
+          <button class="gfxBtn" id="gfxHighBtn" data-gfx="high">Hoch</button>
+          <button class="gfxBtn" id="gfxMedBtn" data-gfx="medium">Mittel</button>
+          <button class="gfxBtn" id="gfxLowBtn" data-gfx="low">Niedrig</button>
+        </div>
+      </div>
+      <div class="settingsToggleRow">
+        <span>⏱️ FPS-Anzeige</span>
+        <button class="settingsToggle" id="toggleShowFps" data-on="false"><span class="settingsToggleDot"></span></button>
       </div>
       <div class="settingsGroup" id="mouseSensGroup">
         <label class="settingsLabel"><span data-i18n="settingsMouseSens">🖱️ Umseh-Empfindlichkeit</span> <span id="mouseSensVal">100%</span></label>
@@ -4933,6 +4951,16 @@
             .catch(err => console.error('[presence] Failed to write presence:', err));
         }
       }, err => console.error('[presence] .info/connected listener error:', err));
+      // Going offline "right away": onDisconnect() only fires once the server notices the dropped connection (instant for a
+      // clean close, but can take up to a minute if the network just vanished). When the page is actually being left, also
+      // write "offline" ourselves so the admin counter drops immediately; if the browser merely froze the page in its
+      // back/forward cache and then restores it, pageshow flips us back to online.
+      window.addEventListener('pagehide', () => {
+        try { presenceRef.set({ online: false, lastSeen: firebase.database.ServerValue.TIMESTAMP, name: myProfileMeta.name }); } catch(e){}
+      });
+      window.addEventListener('pageshow', ev => {
+        if (ev.persisted){ try { presenceRef.set({ online: true, lastSeen: firebase.database.ServerValue.TIMESTAMP, name: myProfileMeta.name }); } catch(e){} }
+      });
 
       // Live position broadcast for the FRIENDS feature — separate from the
       // room-scoped co-op sync above, this is keyed purely by name (not a
@@ -6868,7 +6896,7 @@
     cap.position.set(x, y + 0.2, z); // resting (unpressed) height — box is 0.4 tall, so this puts its BOTTOM face flush with the platform surface instead of floating above it
     cap.visible = keyboardKeysWanted && world === selectedWorld;
     scene.add(cap);
-    const entry = { mesh: cap, restY: y + 0.2, pressedY: y + 0.05, pressed: false, pressT: 0, world, originalColor: color, golden: false, goldBeam: null };
+    const entry = { mesh: cap, letter, restY: y + 0.2, pressedY: y + 0.05, pressed: false, pressT: 0, world, originalColor: color, golden: false, goldBeam: null };
     allKeyCaps.push(entry);
     return entry;
   }
@@ -6892,6 +6920,63 @@
       }
     }
   });
+  // ---------- KEYCAP BATCHING (performance) ----------
+  // Every keycap used to be two separate draw calls (cap + letter plane) — ~1,650 per frame in a single world, which
+  // is what made the game slow on fast PCs (browsers choke on draw-call COUNT long before triangle count). Plain keys
+  // are now drawn through a handful of InstancedMeshes (one for all caps, one for the water world's glassy caps, one per
+  // letter). Every key still has its own real mesh object (k.mesh) that all the game logic keeps moving/hiding exactly
+  // as before — those real meshes of plain keys are just parked on camera layer 1 (never rendered), and their transforms
+  // are copied into the instance buffers right before each render. Special keys (golden/rainbow/pumpkin/ghost) stay
+  // real, individually-rendered meshes on layer 0, because they glow, pulse and carry beams.
+  const keyBatch = { ready: false, capStd: null, capWater: null, letters: {}, m: new THREE.Matrix4(), ml: new THREE.Matrix4(), col: new THREE.Color() };
+  const KEY_LETTER_LOCAL = new THREE.Matrix4().makeRotationX(-Math.PI / 2).setPosition(0, 0.21, 0);
+  function initKeyBatches(){
+    const nStd = allKeyCaps.filter(k => k.world !== 4).length, nWat = allKeyCaps.length - nStd;
+    const stdMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5 });
+    const watMat = new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.15, transparent: true, opacity: 0.68, transmission: 0.35, emissive: 0xffffff, emissiveIntensity: 0.18 });
+    watMat.onBeforeCompile = sh => { sh.fragmentShader = sh.fragmentShader.replace('vec3 totalEmissiveRadiance = emissive;', 'vec3 totalEmissiveRadiance = emissive * vColor;'); }; // the glass keys glow in their own colour, like before
+    const mk = (mat, n, cast) => {
+      const im = new THREE.InstancedMesh(keyCapGeo, mat, Math.max(1, n));
+      im.setColorAt(0, keyBatch.col.set(0xffffff)); im.instanceColor.setUsage(THREE.DynamicDrawUsage); // (must run before count is zeroed — it sizes the colour buffer from count)
+      im.count = 0; im.frustumCulled = false; im.castShadow = cast; im.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+      scene.add(im); return im;
+    };
+    keyBatch.capStd = mk(stdMat, nStd, true);
+    keyBatch.capWater = mk(watMat, nWat, true);
+    const perLetter = {}; allKeyCaps.forEach(k => { perLetter[k.letter] = (perLetter[k.letter] || 0) + 1; });
+    KEY_LETTERS.forEach(L => {
+      const im = new THREE.InstancedMesh(keyLetterGeo, new THREE.MeshBasicMaterial({ map: getKeyLetterTexture(L), transparent: true }), Math.max(1, perLetter[L] || 1));
+      im.count = 0; im.frustumCulled = false; im.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+      scene.add(im); keyBatch.letters[L] = im;
+    });
+    keyBatch.ready = true;
+  }
+  function syncKeyBatches(){
+    if (!keyBatch.ready) return;
+    const { capStd, capWater, letters, m, ml, col } = keyBatch;
+    let nS = 0, nW = 0;
+    const nL = {};
+    for (let i = 0; i < allKeyCaps.length; i++){
+      const k = allKeyCaps[i], cap = k.mesh;
+      const special = k.golden || k.rainbow || k.pumpkin || k.ghost;
+      const layer = special ? 0 : 1;
+      if (cap.userData.keyLayer !== layer){ cap.userData.keyLayer = layer; cap.layers.set(layer); cap.children.forEach(c => { if (!c.userData.isBeam) c.layers.set(layer); }); }
+      if (special || !cap.visible) continue;
+      cap.updateMatrix(); m.copy(cap.matrix);
+      const water = k.world === 4;
+      const im = water ? capWater : capStd, idx = water ? nW++ : nS++;
+      im.setMatrixAt(idx, m); im.setColorAt(idx, col.setHex(k.originalColor));
+      const lim = letters[k.letter], li = nL[k.letter] || 0; nL[k.letter] = li + 1;
+      ml.multiplyMatrices(m, KEY_LETTER_LOCAL); lim.setMatrixAt(li, ml);
+    }
+    capStd.count = nS; capWater.count = nW;
+    capStd.instanceMatrix.needsUpdate = true; capStd.instanceColor.needsUpdate = true;
+    capWater.instanceMatrix.needsUpdate = true; capWater.instanceColor.needsUpdate = true;
+    for (const L in letters){ const lim = letters[L]; lim.count = nL[L] || 0; lim.instanceMatrix.needsUpdate = true; }
+  }
+  initKeyBatches();
+  const _renderOrig = renderer.render.bind(renderer);
+  renderer.render = function(sc, cam){ if (sc === scene) syncKeyBatches(); _renderOrig(sc, cam); };
   function setKeyboardKeysVisible(visible){
     // Used to keep special event keycaps (golden/rainbow/pumpkin/ghost)
     // visible even with the decoration turned off, so the reward events
@@ -11214,6 +11299,8 @@
     vibrationEnabled: true,
     swingTrailEnabled: true,
     chaosModeEnabled: true,
+    gfxQuality: 'high', // 'high' | 'medium' | 'low' — pixel ratio + shadows
+    showFps: false,
   };
   let gameSettings = Object.assign({}, DEFAULT_SETTINGS, storageGet('rankmann_settings', {}));
   function saveSettings(){ storageSet('rankmann_settings', gameSettings); }
@@ -12169,6 +12256,21 @@
   const isAdminUser = checkIsAdminUser();
   let adminGodMode = storageGet('rankmann_adminGodMode', false);
   document.getElementById('adminPanelBtn').classList.toggle('hidden', !isAdminUser);
+  // Live "players online" counter, admin only. A realtime listener on presence/ (not polling): the database pushes every
+  // change the instant it happens — a player connecting adds one, and the server flips them to offline the moment their
+  // connection drops (onDisconnect, plus an immediate write on page close — see the presence code), so the number
+  // moves straight away. The admin's own entry is not counted.
+  if (isAdminUser){
+    try {
+      const adminKeyP = encodeURIComponent(ADMIN_NAME.trim().toLowerCase()).replace(/[.#$\[\]]/g, '_');
+      firebase.database().ref('presence').on('value', snap => {
+        const all = snap.val() || {};
+        let n = 0;
+        for (const k in all){ if (k !== adminKeyP && all[k] && all[k].online === true) n++; }
+        document.getElementById('adminOnlineCount').textContent = String(n);
+      }, () => { document.getElementById('adminOnlineCount').textContent = '–'; });
+    } catch(e){ document.getElementById('adminOnlineCount').textContent = '–'; }
+  }
 
   function showAdminToast(msg){
     const el = document.getElementById('adminToast');
@@ -13872,7 +13974,9 @@
 
   function animate(){
     requestAnimationFrame(animate);
-    const dt = Math.min(clock.getDelta(), 0.05);
+    const rawDt = clock.getDelta();
+    const dt = Math.min(rawDt, 0.05);
+    updateFpsMeter(rawDt);
     if (introCine.active){
       // the start sequence owns the camera/character until it finishes or is skipped
       try { updateIntroCinematic(dt); } catch(e){ finishIntroSequence(true); }
@@ -15000,6 +15104,8 @@
     document.getElementById('toggleWeather').dataset.on = gameSettings.weatherEnabled;
     document.getElementById('toggleAchToasts').dataset.on = gameSettings.achievementToastsEnabled;
     document.getElementById('toggleCamShake').dataset.on = gameSettings.cameraShakeEnabled;
+    document.getElementById('toggleShowFps').dataset.on = gameSettings.showFps;
+    document.querySelectorAll('#gfxGroup .gfxBtn').forEach(b => b.classList.toggle('active', b.dataset.gfx === gameSettings.gfxQuality));
     document.getElementById('toggleTrophyFly').dataset.on = gameSettings.trophyFlyEnabled;
     // Now shown on touch devices too (used to be mouse-only, hidden here) —
     // the same slider now also scales the touch look-zone's drag sensitivity.
@@ -15028,6 +15134,7 @@
     gameSettings = Object.assign({}, settingsSnapshot);
     saveSettings();
     applyVolumeSettings();
+    if (typeof applyGraphicsQuality === 'function'){ applyGraphicsQuality(); applyFpsMeterSetting(); }
     initSettingsUI();
     if (menuMusicWanted) {
       stopMenuMusicSourceOnly();
@@ -15069,6 +15176,53 @@
       settingsDirty = true;
     });
   }
+  // ---- graphics quality + FPS meter ----
+  function applyGraphicsQuality(){
+    // The three levels differ in things you can see AND feel:
+    //  Hoch    sharper picture (rendered at up to 1.5x on desktop), large soft shadows, all particles
+    //  Mittel  normal sharpness, smaller harder-edged shadows, half the particles (stars, dust, bubbles, rain)
+    //  Niedrig clearly softer picture (70% resolution), no shadows at all, only a fifth of the particles
+    const q = gameSettings.gfxQuality || 'high';
+    const dpr = window.devicePixelRatio || 1;
+    const ratio = q === 'low' ? Math.min(dpr, 0.7) : q === 'medium' ? Math.min(dpr, 1) : (isTouchDevice ? Math.min(dpr, 1.15) : Math.min(Math.max(dpr, 1.25), 1.5));
+    renderer.setPixelRatio(ratio);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    const wantShadows = q !== 'low';
+    const size = q === 'medium' ? 1024 : (isTouchDevice ? 1536 : 2048);
+    const changed = renderer.shadowMap.enabled !== wantShadows || sun.shadow.mapSize.x !== size;
+    renderer.shadowMap.enabled = wantShadows;
+    sun.castShadow = wantShadows;
+    renderer.shadowMap.type = q === 'high' ? THREE.PCFSoftShadowMap : THREE.PCFShadowMap;
+    if (changed){
+      sun.shadow.mapSize.set(size, size);
+      if (sun.shadow.map){ sun.shadow.map.dispose(); sun.shadow.map = null; }
+      scene.traverse(o => { const m = o.material; if (m) (Array.isArray(m) ? m : [m]).forEach(x => { x.needsUpdate = true; }); }); // shader variants differ with/without shadows
+    }
+    const pf = q === 'low' ? 0.2 : q === 'medium' ? 0.5 : 1;
+    [dustGeo, starGeo, bubbleGeo, rainGeo].forEach(g => { g.setDrawRange(0, Math.max(1, Math.floor(g.attributes.position.count * pf))); });
+  }
+  function applyFpsMeterSetting(){ document.getElementById('fpsMeter').style.display = gameSettings.showFps ? 'block' : 'none'; }
+  const fpsState = { frames: 0, acc: 0, worst: 0 };
+  function updateFpsMeter(rawDt){
+    if (!gameSettings.showFps) return;
+    fpsState.frames++; fpsState.acc += rawDt; fpsState.worst = Math.max(fpsState.worst, rawDt);
+    if (fpsState.acc >= 0.5){
+      document.getElementById('fpsMeter').textContent = Math.round(fpsState.frames / fpsState.acc) + ' FPS';
+      fpsState.frames = 0; fpsState.acc = 0; fpsState.worst = 0;
+    }
+  }
+  document.querySelectorAll('#gfxGroup .gfxBtn').forEach(b => b.addEventListener('click', () => {
+    gameSettings.gfxQuality = b.dataset.gfx; saveSettings(); settingsDirty = true;
+    document.querySelectorAll('#gfxGroup .gfxBtn').forEach(x => x.classList.toggle('active', x === b));
+    applyGraphicsQuality();
+  }));
+  document.getElementById('toggleShowFps').addEventListener('click', () => {
+    gameSettings.showFps = !gameSettings.showFps;
+    document.getElementById('toggleShowFps').dataset.on = gameSettings.showFps;
+    saveSettings(); settingsDirty = true; applyFpsMeterSetting();
+  });
+  try { if (!('gfxQuality' in storageGet('rankmann_settings', {}))) gameSettings.gfxQuality = isTouchDevice ? 'medium' : 'high'; } catch(e){} // first run: phones/tablets start on Mittel
+  applyGraphicsQuality(); applyFpsMeterSetting();
   bindSettingsToggle('toggleWeather', 'weatherEnabled');
   bindSettingsToggle('toggleAchToasts', 'achievementToastsEnabled');
   bindSettingsToggle('toggleCamShake', 'cameraShakeEnabled');
@@ -16157,7 +16311,7 @@
       if (t >= diveAt && !fx.release){ fx.release = true; sfxTone(0, 1800, 0.06, 'square', 0.05); sfxSweep(0, LAND - diveAt - 0.02, 500, 4200, 0.12, 1.1); }
 
       // hero path (same pendulum rhythm as D)
-      const x = ease01((t - INTRO_D_T0) / SPAN);
+      const x = ease01((t - INTRO_D_T0) / (SPAN - 0.1)); // E: arrives at the lens a hair BEFORE `landT`, so the cut happens with the hero filling the frame (not 8 units short of it)
       const swingS = x - (0.42 / (7 * Math.PI)) * Math.sin(7 * Math.PI * x);
       const heroPos = b.curve.getPoint(Math.min(1, swingS)), ahead = b.curve.getPoint(Math.min(1, swingS + 0.01));
 
@@ -16231,8 +16385,9 @@
       }
 
       // THE CUT: the hero fills the frame → same frame: pure black, everything else gone
-      if (t >= INTRO_D_T0 && (camDist < 1.6 || t >= LAND + 0.15)){
-        fx.cut = true; fx.cutT = t;
+      if (t >= INTRO_D_T0 && !fx.cutPend && (camDist < 1.9 || t >= LAND + 0.15)){ fx.cutPend = true; fx.cutT = t; return; } // the hero is at the lens: show this one frame with him filling the picture…
+      if (fx.cutPend){ // …and cut to black on the very next one
+        fx.cut = true;
         blackEl.style.transition = 'none'; blackEl.classList.remove('in'); void blackEl.offsetWidth; // opacity back to 1 immediately, no fade
         overlay.classList.add('blackCut');
         playerMesh.visible = false;
