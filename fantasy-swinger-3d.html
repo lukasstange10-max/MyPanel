@@ -2733,6 +2733,17 @@
   #profileCheckStatus.ok { color: #7affc4; }
   #profileCreateActions { display: flex; gap: 10px; justify-content: center; margin-top: 16px; }
   #profilePickerFooter { font-size: 10.5px; color: rgba(255,255,255,0.4); margin-top: 16px; }
+  #pickLangRow {
+    display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; align-items: center;
+    margin-top: 18px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.1);
+  }
+  #pickLangIcon { font-size: 16px; margin-right: 2px; }
+  .pickLangBtn {
+    padding: 6px 12px; border-radius: 999px; font-size: 12.5px; cursor: pointer; color: #fff;
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(180,140,255,0.35);
+  }
+  .pickLangBtn:hover { background: rgba(255,255,255,0.14); }
+  .pickLangBtn.active { background: rgba(122,255,196,0.2); border-color: rgba(122,255,196,0.85); font-weight: 700; }
   #forgotPasswordLink {
     display: block; margin: 8px auto 0; background: none; border: none; cursor: pointer;
     font-size: 12px; color: rgba(180,140,255,0.85); text-decoration: underline;
@@ -3670,6 +3681,14 @@
       </div>
     </form>
     <p id="profilePickerFooter">🔒 Jeder Name ist geräteübergreifend mit einem Passwort geschützt.</p>
+    <div id="pickLangRow" aria-label="Language">
+      <span id="pickLangIcon">🌐</span>
+      <button type="button" class="pickLangBtn" data-lang="de">Deutsch</button>
+      <button type="button" class="pickLangBtn" data-lang="en">English</button>
+      <button type="button" class="pickLangBtn" data-lang="fr">Français</button>
+      <button type="button" class="pickLangBtn" data-lang="es">Español</button>
+      <button type="button" class="pickLangBtn" data-lang="pt">Português</button>
+    </div>
   </div>
 </div>
 
@@ -3795,27 +3814,72 @@
       },
     };
     var ppLang = 'de';
-    try { var rawLang = localStorage.getItem('rankmann_lang'); if (rawLang) ppLang = JSON.parse(rawLang); } catch(e){}
+    var ppLangSaved = false;
+    try { var rawLang = localStorage.getItem('rankmann_lang'); if (rawLang){ ppLang = JSON.parse(rawLang); ppLangSaved = true; } } catch(e){}
+    // First visit (nothing saved yet): start in the browser's language when
+    // we support it, instead of always German.
+    if (!ppLangSaved){
+      try {
+        var navL = String((navigator.languages && navigator.languages[0]) || navigator.language || 'de').slice(0, 2).toLowerCase();
+        if (PP_I18N[navL]){
+          ppLang = navL;
+          if (navL !== 'de') localStorage.setItem('rankmann_lang', JSON.stringify(navL));
+        }
+      } catch(e){}
+    }
     if (!PP_I18N[ppLang]) ppLang = 'de';
     function pt(key){ return PP_I18N[ppLang][key]; } // short for "picker translate" — "t" is already taken further down by the deliberately-undefined call this replaces
 
     // One-time static text pass — everything below this is either built
     // dynamically later (already routed through pt()) or was never touched
     // by any translation at all until now.
-    document.getElementById('profileScreenTitle').textContent = pt('whoPlays');
-    document.getElementById('profileScreenSubtitle').textContent = pt('chooseProfile');
-    document.getElementById('profileFormTitle').textContent = pt('chooseAvatar');
-    document.getElementById('profileNameInput').placeholder = pt('nameInput');
-    document.getElementById('profilePasswordInput').placeholder = pt('passwordInput');
-    document.getElementById('forgotPasswordLink').textContent = pt('forgotPassword');
-    document.getElementById('forgotPasswordRecheckBtn').textContent = pt('recheckNow');
-    document.getElementById('newPasswordRevealLabel').textContent = pt('newPwGranted');
-    document.getElementById('newPasswordRevealBtn').textContent = pt('clickToReveal');
-    document.getElementById('profileCreateConfirmBtn').textContent = pt('confirmBtn');
-    document.getElementById('profileCreateCancelBtn').textContent = pt('cancelBtn');
-    document.getElementById('profilePickerFooter').textContent = pt('footerNote');
-    document.getElementById('bannedTitle').textContent = pt('banned');
-    document.getElementById('bannedBody').textContent = pt('bannedBody');
+    function applyPickerStatic(){
+      document.getElementById('profileScreenTitle').textContent = pt('whoPlays');
+      document.getElementById('profileScreenSubtitle').textContent = pt('chooseProfile');
+      document.getElementById('profileFormTitle').textContent = pt('chooseAvatar');
+      document.getElementById('profileNameInput').placeholder = pt('nameInput');
+      document.getElementById('profilePasswordInput').placeholder = pt('passwordInput');
+      document.getElementById('forgotPasswordLink').textContent = pt('forgotPassword');
+      document.getElementById('forgotPasswordRecheckBtn').textContent = pt('recheckNow');
+      document.getElementById('newPasswordRevealLabel').textContent = pt('newPwGranted');
+      document.getElementById('newPasswordRevealBtn').textContent = pt('clickToReveal');
+      document.getElementById('profileCreateConfirmBtn').textContent = pt('confirmBtn');
+      document.getElementById('profileCreateCancelBtn').textContent = pt('cancelBtn');
+      document.getElementById('profilePickerFooter').textContent = pt('footerNote');
+      document.getElementById('bannedTitle').textContent = pt('banned');
+      document.getElementById('bannedBody').textContent = pt('bannedBody');
+      document.querySelectorAll('.pickLangBtn').forEach(function(b){
+        b.classList.toggle('active', b.getAttribute('data-lang') === ppLang);
+      });
+      document.documentElement.lang = ppLang;
+    }
+    applyPickerStatic();
+    // Language buttons under the login box. Switching re-texts the screen in
+    // place (so a half-typed name/password survives) and saves the choice
+    // for the game itself, which reads the same global key after login.
+    document.querySelectorAll('.pickLangBtn').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var lang = btn.getAttribute('data-lang');
+        if (!PP_I18N[lang] || lang === ppLang) return;
+        ppLang = lang;
+        try { localStorage.setItem('rankmann_lang', JSON.stringify(lang)); } catch(e){}
+        applyPickerStatic();
+        var form = document.getElementById('profileCreateForm');
+        if (!form.classList.contains('hidden')){
+          var ni = document.getElementById('profileNameInput');
+          var pi = document.getElementById('profilePasswordInput');
+          if (ni.readOnly){
+            document.getElementById('profileFormTitle').textContent = pt('helloEnterPw')(ni.value);
+            pi.placeholder = pt('passwordInput');
+          } else {
+            pi.placeholder = pt('passwordThinkUp');
+          }
+          document.getElementById('profileCheckStatus').textContent = '';
+        } else if (typeof render === 'function'){
+          render();
+        }
+      });
+    });
 
     function rawGet(key, fallback){
       try { var v = localStorage.getItem(key); return v === null ? fallback : JSON.parse(v); }
