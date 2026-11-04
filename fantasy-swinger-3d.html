@@ -4638,6 +4638,7 @@
         <button class="adminActionBtn hwOnlyAdminBtn" id="adminGhostKeycapsBtn">👻 Geister Keycap</button>
         <button class="adminActionBtn" id="adminHalloweenForceBtn">🎃 Halloween-Version: AN</button>
         <button class="adminActionBtn" id="adminChristmasForceBtn">🎄 Weihnachts-Version: AN</button>
+        <button class="adminActionBtn" id="adminXmasResetBtn">🔄 Weihnachts-Fortschritt zurücksetzen</button>
         <button class="adminActionBtn" id="adminXmasSantaBtn">🎅 Weihnachtsmann rufen</button>
         <button class="adminActionBtn" id="adminXmasRainBtn">🎁 Geschenke-Regen starten</button>
         <button class="adminActionBtn" id="adminXmasFwBtn">🎆 Feuerwerk an/aus</button>
@@ -19913,6 +19914,19 @@
     if (!xmDay || xmDay.d !== t) xmDay = { d: t, gifts: 0, golden: 0, santa: 0, ice: 0, play: 0, door: 0, claimed: [] };
     return xmDay;
   }
+  (function(){
+    const btn = document.getElementById('adminXmasResetBtn'); if (!btn) return;
+    let armed = 0;
+    btn.addEventListener('click', () => {
+      if (!armed){ armed = 1; btn.textContent = '⚠️ Nochmal tippen zum Bestätigen'; setTimeout(() => { armed = 0; btn.textContent = '🔄 Weihnachts-Fortschritt zurücksetzen'; }, 4000); return; }
+      xmGifts = 0; xmClaimed = []; xmDoors = { y: XM.year, d: [] }; xmDay = null;
+      xmStats = { y: XM.year, gifts: 0, golden: 0, santa: 0, ice: 0, boss: 0 };
+      storageSet('rankmann_xmasGifts', 0); storageSet('rankmann_xmasClaimed', []); storageSet('rankmann_xmasDoors', xmDoors);
+      storageSet('rankmann_xmasStats', xmStats); storageSet('rankmann_xmasDay', null);
+      showAdminToast('🔄 Weihnachts-Fortschritt zurückgesetzt (Türchen, Geschenke, Erfolge). Seite lädt neu...');
+      setTimeout(() => location.reload(), 900);
+    });
+  })();
   function xmSave(){
     storageSet('rankmann_xmasDay', xmDay);
     storageSet('rankmann_xmasGifts', xmGifts); storageSet('rankmann_xmasStats', xmStats);
