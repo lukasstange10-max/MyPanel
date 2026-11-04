@@ -1144,6 +1144,7 @@
   .xmDoors { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
   .xmDoor { aspect-ratio: 1; border-radius: 12px; border: 2px solid rgba(255,255,255,0.18); background: linear-gradient(135deg, #7a1620, #3b0f18); color: #fff; font-size: 18px; font-weight: 800; cursor: not-allowed; opacity: 0.55; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0; }
   .xmDoor small { font-size: 10px; line-height: 1; }
+  .xmDoor[data-lock] { cursor: pointer; }
   .xmDoor.can { opacity: 1; cursor: pointer; border-color: #ffe27a; box-shadow: 0 0 14px rgba(255,226,122,0.55); animation: claimablePulse 1.6s ease-in-out infinite; }
   .xmDoor.open { opacity: 0.9; background: linear-gradient(135deg, #1f6b3a, #0f3a22); border-color: rgba(190,255,210,0.5); cursor: default; }
   .xmList { display: flex; flex-direction: column; gap: 8px; text-align: left; }
@@ -6115,11 +6116,11 @@
   Object.assign(XMT.fr, { door_open: 'Porte {n} ouverte !', cont: 'Continuer' });
   Object.assign(XMT.es, { door_open: '¡Puerta {n} abierta!', cont: 'Continuar' });
   Object.assign(XMT.pt, { door_open: 'Portinha {n} aberta!', cont: 'Continuar' });
-  Object.assign(XMT.de, { daily_head: '📅 Tages-Erfolge (neu um Mitternacht)', evt_head: '🏅 Event-Erfolge', d_gifts: 'Sammle heute {n} Geschenke', d_golden: 'Finde heute ein goldenes Geschenk', d_santa: 'Berühre heute den Weihnachtsmann', d_ice: 'Rutsche heute {n} Sekunden auf Eis', d_door: 'Öffne heute ein Türchen', d_play: 'Spiele heute {n} Minuten', shop_tier: 'Stufe {n} von 3', shop_new: '✨ Neue Waren im Shop!', shop_done: '🎉 Du hast alles gekauft! Die komplette Event-Kollektion gehört dir.', shop_packs: 'Pokale-Pakete' });
-  Object.assign(XMT.en, { daily_head: '📅 Daily achievements (new at midnight)', evt_head: '🏅 Event achievements', d_gifts: 'Collect {n} gifts today', d_golden: 'Find a golden gift today', d_santa: 'Touch Santa today', d_ice: 'Slide on ice for {n} seconds today', d_door: 'Open a door today', d_play: 'Play {n} minutes today', shop_tier: 'Tier {n} of 3', shop_new: '✨ New items in the shop!', shop_done: '🎉 You bought everything! The whole event collection is yours.', shop_packs: 'Trophy packs' });
-  Object.assign(XMT.fr, { daily_head: '📅 Succès du jour (nouveaux à minuit)', evt_head: '🏅 Succès de l\'événement', d_gifts: 'Collecte {n} cadeaux aujourd\'hui', d_golden: 'Trouve un cadeau doré aujourd\'hui', d_santa: 'Touche le Père Noël aujourd\'hui', d_ice: 'Glisse {n} secondes sur la glace aujourd\'hui', d_door: 'Ouvre une porte aujourd\'hui', d_play: 'Joue {n} minutes aujourd\'hui', shop_tier: 'Niveau {n} sur 3', shop_new: '✨ Nouveautés dans la boutique !', shop_done: '🎉 Tu as tout acheté ! Toute la collection de l\'événement est à toi.', shop_packs: 'Paquets de trophées' });
-  Object.assign(XMT.es, { daily_head: '📅 Logros diarios (nuevos a medianoche)', evt_head: '🏅 Logros del evento', d_gifts: 'Recoge {n} regalos hoy', d_golden: 'Encuentra un regalo dorado hoy', d_santa: 'Toca a Papá Noel hoy', d_ice: 'Desliza {n} segundos sobre hielo hoy', d_door: 'Abre una puerta hoy', d_play: 'Juega {n} minutos hoy', shop_tier: 'Nivel {n} de 3', shop_new: '✨ ¡Novedades en la tienda!', shop_done: '🎉 ¡Lo has comprado todo! Toda la colección del evento es tuya.', shop_packs: 'Paquetes de trofeos' });
-  Object.assign(XMT.pt, { daily_head: '📅 Conquistas diárias (novas à meia-noite)', evt_head: '🏅 Conquistas do evento', d_gifts: 'Colete {n} presentes hoje', d_golden: 'Encontre um presente dourado hoje', d_santa: 'Toque no Papai Noel hoje', d_ice: 'Deslize {n} segundos no gelo hoje', d_door: 'Abra uma portinha hoje', d_play: 'Jogue {n} minutos hoje', shop_tier: 'Nível {n} de 3', shop_new: '✨ Novidades na loja!', shop_done: '🎉 Você comprou tudo! A coleção completa do evento é sua.', shop_packs: 'Pacotes de troféus' });
+  Object.assign(XMT.de, { door_locked: '🔒 Noch nicht! Türchen {n} kannst du erst am {n}. Dezember öffnen.', daily_head: '📅 Tages-Erfolge (neu um Mitternacht)', evt_head: '🏅 Event-Erfolge', d_gifts: 'Sammle heute {n} Geschenke', d_golden: 'Finde heute ein goldenes Geschenk', d_santa: 'Berühre heute den Weihnachtsmann', d_ice: 'Rutsche heute {n} Sekunden auf Eis', d_door: 'Öffne heute ein Türchen', d_play: 'Spiele heute {n} Minuten', shop_tier: 'Stufe {n} von 3', shop_new: '✨ Neue Waren im Shop!', shop_done: '🎉 Du hast alles gekauft! Die komplette Event-Kollektion gehört dir.', shop_packs: 'Pokale-Pakete' });
+  Object.assign(XMT.en, { door_locked: '🔒 Not yet! Door {n} opens on December {n}.', daily_head: '📅 Daily achievements (new at midnight)', evt_head: '🏅 Event achievements', d_gifts: 'Collect {n} gifts today', d_golden: 'Find a golden gift today', d_santa: 'Touch Santa today', d_ice: 'Slide on ice for {n} seconds today', d_door: 'Open a door today', d_play: 'Play {n} minutes today', shop_tier: 'Tier {n} of 3', shop_new: '✨ New items in the shop!', shop_done: '🎉 You bought everything! The whole event collection is yours.', shop_packs: 'Trophy packs' });
+  Object.assign(XMT.fr, { door_locked: '🔒 Pas encore ! La porte {n} s\'ouvre le {n} décembre.', daily_head: '📅 Succès du jour (nouveaux à minuit)', evt_head: '🏅 Succès de l\'événement', d_gifts: 'Collecte {n} cadeaux aujourd\'hui', d_golden: 'Trouve un cadeau doré aujourd\'hui', d_santa: 'Touche le Père Noël aujourd\'hui', d_ice: 'Glisse {n} secondes sur la glace aujourd\'hui', d_door: 'Ouvre une porte aujourd\'hui', d_play: 'Joue {n} minutes aujourd\'hui', shop_tier: 'Niveau {n} sur 3', shop_new: '✨ Nouveautés dans la boutique !', shop_done: '🎉 Tu as tout acheté ! Toute la collection de l\'événement est à toi.', shop_packs: 'Paquets de trophées' });
+  Object.assign(XMT.es, { door_locked: '🔒 ¡Aún no! La puerta {n} se abre el {n} de diciembre.', daily_head: '📅 Logros diarios (nuevos a medianoche)', evt_head: '🏅 Logros del evento', d_gifts: 'Recoge {n} regalos hoy', d_golden: 'Encuentra un regalo dorado hoy', d_santa: 'Toca a Papá Noel hoy', d_ice: 'Desliza {n} segundos sobre hielo hoy', d_door: 'Abre una puerta hoy', d_play: 'Juega {n} minutos hoy', shop_tier: 'Nivel {n} de 3', shop_new: '✨ ¡Novedades en la tienda!', shop_done: '🎉 ¡Lo has comprado todo! Toda la colección del evento es tuya.', shop_packs: 'Paquetes de trofeos' });
+  Object.assign(XMT.pt, { door_locked: '🔒 Ainda não! A portinha {n} abre em {n} de dezembro.', daily_head: '📅 Conquistas diárias (novas à meia-noite)', evt_head: '🏅 Conquistas do evento', d_gifts: 'Colete {n} presentes hoje', d_golden: 'Encontre um presente dourado hoje', d_santa: 'Toque no Papai Noel hoje', d_ice: 'Deslize {n} segundos no gelo hoje', d_door: 'Abra uma portinha hoje', d_play: 'Jogue {n} minutos hoje', shop_tier: 'Nível {n} de 3', shop_new: '✨ Novidades na loja!', shop_done: '🎉 Você comprou tudo! A coleção completa do evento é sua.', shop_packs: 'Pacotes de troféus' });
   function xt(k, v){
     let s = (XMT[currentLang] || {})[k];
     if (s === undefined) s = XMT.en[k];
@@ -20351,7 +20352,8 @@
   function xmUnlockedDoors(){
     const d = new Date(), m = d.getMonth();
     if (m === 11) return Math.min(24, d.getDate());
-    return 24; // Januar oder per Admin erzwungen: alle Türchen offen
+    if (m === 0) return 24; // Januar: alle Türchen offen
+    return isAdminUser ? 24 : 0; // vor dem 1. Dezember (Event nur erzwungen): nur der Admin darf zum Testen alle öffnen
   }
   const XM_DAILY_POOL = [
     { k: 'gifts', icon: '🎁', tiers: [[8, 25, 0], [15, 40, 2], [25, 60, 3]] },
@@ -20413,10 +20415,13 @@
       const up = xmUnlockedDoors(); let h = msg + '<div class="xmDoors">';
       for (let n = 1; n <= 24; n++){
         const open = xmDoors.d.includes(n), can = n <= up && !open;
-        h += '<button class="xmDoor' + (open ? ' open' : '') + (can ? ' can' : '') + '" data-door="' + n + '"' + (can ? '' : ' disabled') + '>' + (open ? '🎁' : n) + '<small>' + (open ? '' : (n > up ? '🔒' : '')) + '</small></button>';
+        h += '<button class="xmDoor' + (open ? ' open' : '') + (can ? ' can' : '') + '" data-door="' + n + '"' + (can || open ? '' : ' data-lock="1"') + (open ? ' disabled' : '') + '>' + (open ? '🎁' : n) + '<small>' + (open ? '' : (n > up ? '🔒' : '')) + '</small></button>';
       }
       h += '</div><p class="xmHint">' + xt('cal_hint') + '</p>';
       body.innerHTML = h;
+      body.querySelectorAll('.xmDoor[data-lock]').forEach(b => b.addEventListener('click', () => {
+        xmMsg = xt('door_locked', { n: +b.dataset.door }); xmSfx('gift'); xmRender();
+      }));
       body.querySelectorAll('.xmDoor.can').forEach(b => b.addEventListener('click', () => {
         const n = +b.dataset.door, r = XM_DOORS[n]; if (xmDoors.d.includes(n)) return;
         xmDoors.d.push(n); xmDayStat().door += 1; xmGrant(r); xmSfx('golden');
