@@ -4972,16 +4972,18 @@
   // trophies, so right after a purchase this device always looked "behind" an older backup that still had the money.)
   const PROGRESS_KEYS = new Set(['rankmann_totalTrophies', 'rankmann_ownedSkins', 'rankmann_ownedVineSkins', 'rankmann_ownedEmotes',
     'rankmann_equippedSkin', 'rankmann_equippedVineSkin', 'rankmann_world2Unlocked', 'rankmann_world3Unlocked', 'rankmann_world4Unlocked',
-    'rankmann_unlockedAchievements', 'rankmann_claimedMilestones', 'rankmann_claimedChallenges', 'rankmann_xmasGifts', 'rankmann_xmasStats', 'rankmann_xmasDoors', 'rankmann_xmasClaimed']);
+    'rankmann_unlockedAchievements', 'rankmann_claimedMilestones', 'rankmann_claimedChallenges', 'rankmann_xmasGifts', 'rankmann_xmasStats', 'rankmann_xmasDoors', 'rankmann_xmasClaimed', 'rankmann_xmasDay']);
   const PURCHASE_KEYS = new Set(['rankmann_ownedSkins', 'rankmann_ownedVineSkins', 'rankmann_ownedEmotes', 'rankmann_equippedSkin',
     'rankmann_equippedVineSkin', 'rankmann_world2Unlocked', 'rankmann_world3Unlocked', 'rankmann_world4Unlocked']);
   function storageSet(key, value){
     try {
-      localStorage.setItem(scopedStorageKey(key), JSON.stringify(value));
+      const _newStr = JSON.stringify(value), _changed = localStorage.getItem(scopedStorageKey(key)) !== _newStr;
+      localStorage.setItem(scopedStorageKey(key), _newStr);
       if (PROGRESS_KEYS.has(key)){
         localStorage.setItem(scopedStorageKey('rankmann_progressUpdatedAt'), String(Date.now()));
         try {
           if (PURCHASE_KEYS.has(key)) requestCloudBackupSoon(2500);                          // a purchase / unlock: back it up right away, not on the 3-minute play timer
+          else if (_changed && (key === 'rankmann_xmasGifts' || key === 'rankmann_xmasDoors' || key === 'rankmann_xmasClaimed')) requestCloudBackupSoon(8000); // Weihnachts-Fortschritt: kurz nach der Änderung sichern
           else if (key === 'rankmann_totalTrophies' && !running) requestCloudBackupSoon(4000); // trophies spent in the shop or on a spin, i.e. outside normal play
         } catch(e){ /* the cloud-backup code isn't initialised yet this early in startup — harmless */ }
       }
@@ -12490,6 +12492,9 @@
   updateProfileBadge();
   setTimeout(checkCloudBackupOnLoad, 2500);
   setTimeout(() => { try { const r = sessionStorage.getItem('rankmann_cloudRestored'); if (r !== null){ sessionStorage.removeItem('rankmann_cloudRestored'); cloudToast('☁️ Fortschritt aus der Cloud geladen (' + r + ' Pokale)', 6000); } } catch(e){} }, 1200);
+  // Sichern, sobald der Tab verlassen / geschlossen / in den Hintergrund geschoben wird (Handy: App wechseln) — damit beim Gerätewechsel nichts fehlt
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden'){ try { uploadCloudBackupNow(); } catch(e){} } });
+  window.addEventListener('pagehide', () => { try { uploadCloudBackupNow(); } catch(e){} });
   document.getElementById('cloudSaveBtn').addEventListener('click', () => {
     if (!firebaseReady()){ cloudToast('⚠️ Keine Verbindung zur Cloud'); return; }
     if (!cloudChecked && isFreshLocal()){ cloudToast('Prüfe zuerst die Cloud — bitte kurz warten und nochmal tippen'); return; }
