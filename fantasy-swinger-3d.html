@@ -19914,6 +19914,14 @@
     if (!xmDay || xmDay.d !== t) xmDay = { d: t, gifts: 0, golden: 0, santa: 0, ice: 0, play: 0, door: 0, claimed: [] };
     return xmDay;
   }
+  // Einmalige Bereinigung: Test-Fortschritt von Nicht-Admins vor dem echten Event-Start (1. Dez.) wird gelöscht.
+  { const dn = new Date(), inWin = dn.getMonth() === 11 || (dn.getMonth() === 0 && dn.getDate() <= 6);
+    if (!isAdminUser && !inWin && !storageGet('rankmann_xmasCleanV1', false)){
+      xmGifts = 0; xmClaimed = []; xmDoors = { y: XM.year, d: [] }; xmDay = null;
+      xmStats = { y: XM.year, gifts: 0, golden: 0, santa: 0, ice: 0, boss: 0 };
+      storageSet('rankmann_xmasGifts', 0); storageSet('rankmann_xmasClaimed', []); storageSet('rankmann_xmasDoors', xmDoors);
+      storageSet('rankmann_xmasStats', xmStats); storageSet('rankmann_xmasDay', null); storageSet('rankmann_xmasCleanV1', true);
+    } }
   (function(){
     const btn = document.getElementById('adminXmasResetBtn'); if (!btn) return;
     let armed = 0;
