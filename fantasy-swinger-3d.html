@@ -2260,6 +2260,8 @@
     box-shadow: 0 0 0 rgba(255,226,122,0.4);
     animation: saveCodeBtnPulse 2.4s ease-in-out infinite;
   }
+  .cloudBtn { width: 100%; margin-top: 8px; padding: 10px; border-radius: 12px; border: 1px solid rgba(122,255,196,0.45); background: rgba(122,255,196,0.14); color: #d8fff0; font-weight: 700; font-size: 14px; cursor: pointer; font-family: inherit; }
+  .cloudBtn:hover { background: rgba(122,255,196,0.28); }
   #saveCodeOpenBtn:hover { background: linear-gradient(135deg, rgba(255,226,122,0.4), rgba(217,167,47,0.4)); }
   @keyframes saveCodeBtnPulse {
     0%, 100% { box-shadow: 0 0 0 rgba(255,226,122,0.4); }
@@ -4790,6 +4792,8 @@
       <button id="settingsSaveBtn" data-i18n="settingsSaveBtn">💾 Speichern</button>
       <button id="saveCodeOpenBtn">🔐 Spielstand sichern / wiederherstellen</button>
       <p style="font-size:11px; color:rgba(255,226,122,0.75); text-align:center; margin:4px 0 0;">Tipp: Vor jedem Update kurz sichern, falls mal was schiefgeht</p>
+      <button id="cloudLoadBtn" class="cloudBtn">☁️ Fortschritt aus der Cloud laden</button>
+      <button id="cloudSaveBtn" class="cloudBtn">☁️ Jetzt in die Cloud sichern</button>
       <p id="cloudBackupStatus" style="font-size:11px; color:rgba(122,255,196,0.75); text-align:center; margin:6px 0 0;">☁️ Noch keine automatische Sicherung in dieser Sitzung</p>
       <button id="settingsResetBtn" data-i18n="settingsResetBtn">🗑️ Spielstand zurücksetzen</button>
       <button id="settingsCloseBtn" class="menuBtn" style="margin-top:14px;" data-i18n="closeBtn4">Schließen</button>
@@ -10776,15 +10780,26 @@
       (!!cloudSrc('rankmann_world2Unlocked') && !storageGet('rankmann_world2Unlocked', false)) || (!!cloudSrc('rankmann_world3Unlocked') && !storageGet('rankmann_world3Unlocked', false)) ||
       (!!cloudSrc('rankmann_world4Unlocked') && !storageGet('rankmann_world4Unlocked', false));
   }
-  function uploadCloudBackupNow(){
+  let cloudChecked = false;   // has the cloud copy been looked at yet this session? (a fresh/empty device must not overwrite it before that)
+  let cloudStatusNote = '';
+  const isFreshLocal = () => progressNetWorth(localSrc) <= 150;   // basically only the starting trophies — a new device / new browser
+  function cloudToast(msg, ms){
+    let el = document.getElementById('cloudToast');
+    if (!el){ el = document.createElement('div'); el.id = 'cloudToast'; el.style.cssText = 'position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:99999;background:rgba(10,30,24,0.95);color:#d8fff0;border:1px solid rgba(122,255,196,0.6);padding:10px 16px;border-radius:12px;font:600 14px Poppins,Arial,sans-serif;max-width:88vw;text-align:center;pointer-events:none;'; document.body.appendChild(el); }
+    el.textContent = msg; el.style.display = 'block';
+    clearTimeout(el._t); el._t = setTimeout(() => { el.style.display = 'none'; }, ms || 4500);
+  }
+  function uploadCloudBackupNow(force){
     if (!firebaseReady()) return;
+    if (!force && !cloudChecked && isFreshLocal()) return;   // don't replace a possibly richer cloud save with this empty start state
     const ref = cloudBackupRef();
     if (!ref) return;
     ref.set({ data: collectProfileData(), trophies: totalTrophies, netWorth: progressNetWorth(localSrc),
               progressUpdatedAt: storageGet('rankmann_progressUpdatedAt', 0), savedAt: firebase.database.ServerValue.TIMESTAMP }).then(() => {
-      lastCloudBackupAt = Date.now();
+      lastCloudBackupAt = Date.now(); cloudStatusNote = '';
       updateCloudBackupStatusUI();
-    }).catch(() => {});
+      if (force) cloudToast('☁️ In die Cloud gesichert');
+    }).catch(() => { cloudStatusNote = '⚠️ Cloud-Sicherung fehlgeschlagen'; updateCloudBackupStatusUI(); if (force) cloudToast('⚠️ Sichern fehlgeschlagen — keine Verbindung?'); });
   }
   let cloudBackupSoonTimer = 0;
   function requestCloudBackupSoon(delayMs){   // debounced: one upload a moment after the last change
@@ -10830,6 +10845,7 @@
   function updateCloudBackupStatusUI(){
     const el = document.getElementById('cloudBackupStatus');
     if (!el) return;
+    if (cloudStatusNote){ el.textContent = cloudStatusNote; return; }
     el.textContent = lastCloudBackupAt ? ('☁️ Zuletzt automatisch gesichert: ' + new Date(lastCloudBackupAt).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })) : '☁️ Noch keine automatische Sicherung in dieser Sitzung';
   }
   // Checked once, shortly after a profile loads — offers a restore ONLY if
@@ -10855,11 +10871,15 @@
       startMenuReadyQueue.splice(0).forEach(fn => { try { fn(); } catch(e){} });
     }, delayMs);
   }
-  function checkCloudBackupOnLoad(){
-    if (!firebaseReady()) return;
-    const ref = cloudBackupRef();
-    if (!ref) return;
+  function checkCloudBackupOnLoad(tries){
+    tries = tries || 0;
+    const ref = firebaseReady() ? cloudBackupRef() : null;
+    if (!ref){
+      if (tries < 8){ setTimeout(() => checkCloudBackupOnLoad(tries + 1), 2000); return; }   // Firebase / profile not ready yet — try again a few times
+      cloudChecked = true; cloudStatusNote = '⚠️ Cloud nicht erreichbar'; updateCloudBackupStatusUI(); return;
+    }
     ref.once('value').then(snap => {
+      cloudChecked = true;
       const backup = snap.val();
       if (!backup || !backup.data) return;
       const cloudTrophies = typeof backup.trophies === 'number' ? backup.trophies : 0;
@@ -10874,6 +10894,11 @@
       // data from before this tracking existed: if this device already has real progress, treat it as current rather than risk overwriting it
       if (!localAt && localWorth > 0){ localAt = Date.now(); localStorage.setItem('rankmann_profile_' + ACTIVE_PROFILE_ID + '_rankmann_progressUpdatedAt', String(localAt)); }
       const cloudAt = typeof backup.progressUpdatedAt === 'number' ? backup.progressUpdatedAt : (typeof backup.savedAt === 'number' ? backup.savedAt : 0);
+      // A new device / browser (only the starting trophies here): load the cloud progress right away — no timestamp comparison, no pop-up.
+      if (isFreshLocal() && cloudWorth > localWorth){
+        try { sessionStorage.setItem('rankmann_cloudRestored', String(cloudTrophies)); } catch(e){}
+        smartRestoreFromBackup(backup); location.reload(); return;
+      }
       if (!(cloudAt > localAt && (cloudWorth > localWorth || cloudHasPurchasesMissingHere(cloudSrc)))) return;
       const savedDate = backup.savedAt ? new Date(backup.savedAt).toLocaleString('de-DE') : 'unbekannt';
       // Deferred until the start menu is up and built (see whenStartMenuReady) so this blocking dialog never lands in the middle of the start animation
@@ -10883,7 +10908,7 @@
           location.reload();
         }
       });
-    }).catch(() => {});
+    }).catch(() => { cloudChecked = true; cloudStatusNote = '⚠️ Cloud nicht erreichbar'; updateCloudBackupStatusUI(); });
   }
 
   let friendBroadcastTimer = 0;
@@ -12463,7 +12488,28 @@
     if (titleEl) titleEl.textContent = getPlayerTitle(totalTrophies);
   }
   updateProfileBadge();
-  setTimeout(checkCloudBackupOnLoad, 2500); // small delay so Firebase has a moment to actually connect first
+  setTimeout(checkCloudBackupOnLoad, 2500);
+  setTimeout(() => { try { const r = sessionStorage.getItem('rankmann_cloudRestored'); if (r !== null){ sessionStorage.removeItem('rankmann_cloudRestored'); cloudToast('☁️ Fortschritt aus der Cloud geladen (' + r + ' Pokale)', 6000); } } catch(e){} }, 1200);
+  document.getElementById('cloudSaveBtn').addEventListener('click', () => {
+    if (!firebaseReady()){ cloudToast('⚠️ Keine Verbindung zur Cloud'); return; }
+    if (!cloudChecked && isFreshLocal()){ cloudToast('Prüfe zuerst die Cloud — bitte kurz warten und nochmal tippen'); return; }
+    uploadCloudBackupNow(true);
+  });
+  document.getElementById('cloudLoadBtn').addEventListener('click', () => {
+    if (!firebaseReady()){ cloudToast('⚠️ Keine Verbindung zur Cloud'); return; }
+    const ref = cloudBackupRef(); if (!ref){ cloudToast('⚠️ Kein Profil aktiv'); return; }
+    ref.once('value').then(snap => {
+      const backup = snap.val();
+      if (!backup || !backup.data){ cloudToast('Keine Cloud-Sicherung für dieses Profil gefunden (Name/Passwort gleich wie auf dem anderen Gerät?)', 6000); return; }
+      const cs = k => { try { return backup.data[k] === undefined ? undefined : JSON.parse(backup.data[k]); } catch(e){ return undefined; } };
+      const cw = progressNetWorth(cs), lw = progressNetWorth(localSrc);
+      const when = backup.savedAt ? new Date(backup.savedAt).toLocaleString('de-DE') : 'unbekannt';
+      if (confirm('☁️ Cloud-Sicherung gefunden (' + (backup.trophies || 0) + ' Pokale, gesichert am ' + when + ').\nGesamtwert Cloud: ' + cw + ' — hier: ' + lw + '.\n\nJetzt laden? (Käufe, die du hier schon gemacht hast, bleiben erhalten.)')){
+        try { sessionStorage.setItem('rankmann_cloudRestored', String(backup.trophies || 0)); } catch(e){}
+        smartRestoreFromBackup(backup); location.reload();
+      }
+    }).catch(() => cloudToast('⚠️ Cloud konnte nicht gelesen werden'));
+  }); // small delay so Firebase has a moment to actually connect first
   document.getElementById('activeProfileBadge').addEventListener('click', () => {
     // Force the standalone profile-picker script (which runs on the *next*
     // load) to show again, then reload into it — reuses the exact same
