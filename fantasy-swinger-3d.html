@@ -87,6 +87,20 @@
   }
 
 
+  /* Wenn das Silvester-Countdown-Schild oben im Bild steht, rutschen die mittigen Hinweis-Badges darunter */
+  body.xmasSkyOn #stormBadge,
+  body.xmasSkyOn #weatherForecastBadge,
+  body.xmasSkyOn #chaosBadge,
+  body.xmasSkyOn #goldenHourBadge,
+  body.xmasSkyOn #specialRingBadge,
+  body.xmasSkyOn #iceAgeBadge,
+  body.xmasSkyOn #goldenKeycapsBadge,
+  body.xmasSkyOn #rainbowKeycapsBadge,
+  body.xmasSkyOn #pumpkinKeycapsBadge,
+  body.xmasSkyOn #ghostKeycapsBadge,
+  body.xmasSkyOn #broomPickupBadge,
+  body.xmasSkyOn #broomFlightBadge,
+  body.xmasSkyOn #xmasToast { margin-top: max(0px, calc(19vh - 100px)); }
   #hud {
     position: fixed; top: 0; left: 0; width: 100%; pointer-events: none;
     color: #fff;
@@ -3736,7 +3750,7 @@
             <li>🗓️ <strong>Adventskalender</strong> — 24 Türchen mit Pokalen, Geschenken und Spezial-Skins (Dezember)</li>
             <li>🛍️ <strong>Event-Shop &amp; 9 Erfolge</strong> im neuen Weihnachts-Menü</li>
             <li>❄️ <strong>Schnee &amp; Eisflächen</strong> — verschneite Tasten und Plattformen, rutschige Eisplattformen, Winterhimmel</li>
-            <li>🟢 <strong>Grinch-Boss</strong> — der Boss kommt im Event grün mit Weihnachtsmütze</li>
+            <li>🟢 <strong>Frostkönig-Boss</strong> — der Boss kommt im Event als eisblauer Frostkönig mit Eiskrone</li>
             <li>👗 <strong>7 Skins</strong> (u.a. Weihnachtsmann, Elf, Rentier, Schneemann), <strong>4 Netze</strong> (Lichterkette, Zuckerstange, Sternschnuppe, Polarlicht) und zwei Weihnachts-Tracks</li>
             <li>🎆 <strong>Silvester-Feuerwerk</strong> mit sichtbaren Raketen am 1. Januar</li>
             <li>📅 Läuft automatisch vom 1. Dezember bis 6. Januar</li>
@@ -4640,7 +4654,8 @@
         <button class="adminActionBtn hwOnlyAdminBtn" id="adminGhostKeycapsBtn">👻 Geister Keycap</button>
         <button class="adminActionBtn" id="adminHalloweenForceBtn">🎃 Halloween-Version: AN</button>
         <button class="adminActionBtn" id="adminChristmasForceBtn">🎄 Weihnachts-Version: AN</button>
-        <button class="adminActionBtn" id="adminXmasResetBtn">🔄 Weihnachts-Fortschritt zurücksetzen</button>
+        <button class="adminActionBtn" id="adminXmasNyBtn">🎆 Silvester-Countdown testen (30 Sek.)</button>
+        <button class="adminActionBtn" id="adminXmasBossBtn">❄️ Frostkönig testen (nur bei mir)</button>
         <button class="adminActionBtn" id="adminXmasSantaBtn">🎅 Weihnachtsmann rufen</button>
         <button class="adminActionBtn" id="adminXmasRainBtn">🎁 Geschenke-Regen starten</button>
         <button class="adminActionBtn" id="adminXmasFwBtn">🎆 Feuerwerk an/aus</button>
@@ -4972,7 +4987,7 @@
   // trophies, so right after a purchase this device always looked "behind" an older backup that still had the money.)
   const PROGRESS_KEYS = new Set(['rankmann_totalTrophies', 'rankmann_ownedSkins', 'rankmann_ownedVineSkins', 'rankmann_ownedEmotes',
     'rankmann_equippedSkin', 'rankmann_equippedVineSkin', 'rankmann_world2Unlocked', 'rankmann_world3Unlocked', 'rankmann_world4Unlocked',
-    'rankmann_unlockedAchievements', 'rankmann_claimedMilestones', 'rankmann_claimedChallenges', 'rankmann_xmasGifts', 'rankmann_xmasStats', 'rankmann_xmasDoors', 'rankmann_xmasClaimed', 'rankmann_xmasDay']);
+    'rankmann_unlockedAchievements', 'rankmann_claimedMilestones', 'rankmann_claimedChallenges', 'rankmann_xmasGifts', 'rankmann_xmasStats', 'rankmann_xmasDoors', 'rankmann_xmasClaimed', 'rankmann_xmasDay', 'rankmann_xmasNyReward']);
   const PURCHASE_KEYS = new Set(['rankmann_ownedSkins', 'rankmann_ownedVineSkins', 'rankmann_ownedEmotes', 'rankmann_equippedSkin',
     'rankmann_equippedVineSkin', 'rankmann_world2Unlocked', 'rankmann_world3Unlocked', 'rankmann_world4Unlocked']);
   function storageSet(key, value){
@@ -6007,14 +6022,14 @@
       a_g10_n: 'Päckchen-Sammler', a_g10_d: 'Sammle 10 Geschenke', a_g50_n: 'Geschenke-Jäger', a_g50_d: 'Sammle 50 Geschenke', a_g200_n: 'Wichtel-Profi', a_g200_d: 'Sammle 200 Geschenke',
       a_gold_n: 'Goldener Moment', a_gold_d: 'Finde ein goldenes Geschenk', a_santa_n: 'Weihnachtsmann-Fan', a_santa_d: 'Berühre den Weihnachtsmann im Flug',
       a_ice_n: 'Eisläufer', a_ice_d: 'Rutsche insgesamt 30 Sekunden auf Eis', a_adv7_n: 'Adventszeit', a_adv7_d: 'Öffne 7 Türchen',
-      a_adv24_n: 'Alle 24 Türchen', a_adv24_d: 'Öffne den ganzen Adventskalender', a_boss_n: 'Grinch-Bezwinger', a_boss_d: 'Besiege den Grinch-Boss',
+      a_adv24_n: 'Alle 24 Türchen', a_adv24_d: 'Öffne den ganzen Adventskalender', a_boss_n: 'Frostkönig-Bezwinger', a_boss_d: 'Besiege den Frostkönig',
       goldGift: '✨ Goldenes Geschenk! +{n} 🎁', rain: '🎁 Geschenke-Regen! Sammle so viele du kannst!', santa_come: '🎅 Ho ho ho! Der Weihnachtsmann fliegt vorbei — schwing dich hin!',
       santa_touch: '🎅 Ho ho ho! Frohe Weihnachten! +10 🏆', payout: '🏆 Weihnachts-Ranking: Platz {p}! +{r} Pokale', ny: '🎆 Frohes neues Jahr {y}! 🎆',
       timeOnly: '🎄 Zeitexklusiv', trk_xmas: '🎄 Weihnachten', trk_xmas2: '🎅 Weihnachts-Song',
       pop_title: 'Weihnachts-Event!', pop_tag: 'Das ist neu im Winter:',
       pop_1: '🎁 <strong>Geschenke sammeln</strong> — überall in den Welten, vom Weihnachtsmann und im Geschenke-Regen', pop_2: '🗓️ <strong>Adventskalender</strong> — 24 Türchen mit Belohnungen und Spezial-Skins',
       pop_3: '🎅 <strong>Weihnachtsmann</strong> — fliegt Kurven über die Inseln und wirft Geschenke ab', pop_4: '🛍️ <strong>Event-Shop & Erfolge</strong> im neuen Weihnachts-Menü',
-      pop_5: '⛸️ <strong>Eisflächen</strong> zum Rutschen, Schnee überall und ein <strong>Grinch-Boss</strong>', pop_6: '👗 <strong>Neue Skins, Netze & Musik</strong> — nur für die Event-Zeit',
+      pop_5: '⛸️ <strong>Eisflächen</strong> zum Rutschen, Schnee überall und ein <strong>Frostkönig-Boss</strong>', pop_6: '👗 <strong>Neue Skins, Netze & Musik</strong> — nur für die Event-Zeit',
       pop_all: '📋 Alle Updates ansehen', pop_go: 'Los geht\'s! 🚀',
     },
     en: {
@@ -6032,14 +6047,14 @@
       a_g10_n: 'Parcel Collector', a_g10_d: 'Collect 10 gifts', a_g50_n: 'Gift Hunter', a_g50_d: 'Collect 50 gifts', a_g200_n: 'Elf Pro', a_g200_d: 'Collect 200 gifts',
       a_gold_n: 'Golden Moment', a_gold_d: 'Find a golden gift', a_santa_n: 'Santa Fan', a_santa_d: 'Touch Santa while he flies',
       a_ice_n: 'Ice Skater', a_ice_d: 'Slide on ice for 30 seconds in total', a_adv7_n: 'Advent Season', a_adv7_d: 'Open 7 doors',
-      a_adv24_n: 'All 24 Doors', a_adv24_d: 'Open the whole advent calendar', a_boss_n: 'Grinch Slayer', a_boss_d: 'Defeat the Grinch boss',
+      a_adv24_n: 'All 24 Doors', a_adv24_d: 'Open the whole advent calendar', a_boss_n: 'Frost King Slayer', a_boss_d: 'Defeat the Frost King',
       goldGift: '✨ Golden gift! +{n} 🎁', rain: '🎁 Gift rain! Collect as many as you can!', santa_come: '🎅 Ho ho ho! Santa is flying by — swing over to him!',
       santa_touch: '🎅 Ho ho ho! Merry Christmas! +10 🏆', payout: '🏆 Christmas ranking: place {p}! +{r} trophies', ny: '🎆 Happy New Year {y}! 🎆',
       timeOnly: '🎄 Limited time', trk_xmas: '🎄 Christmas', trk_xmas2: '🎅 Christmas Song',
       pop_title: 'Christmas Event!', pop_tag: 'New this winter:',
       pop_1: '🎁 <strong>Collect gifts</strong> — all over the worlds, from Santa and in the gift rain', pop_2: '🗓️ <strong>Advent calendar</strong> — 24 doors with rewards and special skins',
       pop_3: '🎅 <strong>Santa</strong> — swoops over the islands and drops gifts', pop_4: '🛍️ <strong>Event shop & achievements</strong> in the new Christmas menu',
-      pop_5: '⛸️ <strong>Icy platforms</strong> to slide on, snow everywhere and a <strong>Grinch boss</strong>', pop_6: '👗 <strong>New skins, vines & music</strong> — event time only',
+      pop_5: '⛸️ <strong>Icy platforms</strong> to slide on, snow everywhere and a <strong>Frost King boss</strong>', pop_6: '👗 <strong>New skins, vines & music</strong> — event time only',
       pop_all: '📋 See all updates', pop_go: 'Let\'s go! 🚀',
     },
     fr: {
@@ -6057,14 +6072,14 @@
       a_g10_n: 'Collectionneur de paquets', a_g10_d: 'Collecte 10 cadeaux', a_g50_n: 'Chasseur de cadeaux', a_g50_d: 'Collecte 50 cadeaux', a_g200_n: 'Lutin pro', a_g200_d: 'Collecte 200 cadeaux',
       a_gold_n: 'Moment doré', a_gold_d: 'Trouve un cadeau doré', a_santa_n: 'Fan du Père Noël', a_santa_d: 'Touche le Père Noël en vol',
       a_ice_n: 'Patineur', a_ice_d: 'Glisse 30 secondes au total sur la glace', a_adv7_n: 'Temps de l\'Avent', a_adv7_d: 'Ouvre 7 portes',
-      a_adv24_n: 'Les 24 portes', a_adv24_d: 'Ouvre tout le calendrier de l\'Avent', a_boss_n: 'Tombeur du Grinch', a_boss_d: 'Bats le boss Grinch',
+      a_adv24_n: 'Les 24 portes', a_adv24_d: 'Ouvre tout le calendrier de l\'Avent', a_boss_n: 'Vainqueur du Roi du Givre', a_boss_d: 'Bats le Roi du Givre',
       goldGift: '✨ Cadeau doré ! +{n} 🎁', rain: '🎁 Pluie de cadeaux ! Ramasse-en un maximum !', santa_come: '🎅 Ho ho ho ! Le Père Noël passe — balance-toi vers lui !',
       santa_touch: '🎅 Ho ho ho ! Joyeux Noël ! +10 🏆', payout: '🏆 Classement de Noël : place {p} ! +{r} trophées', ny: '🎆 Bonne année {y} ! 🎆',
       timeOnly: '🎄 Temps limité', trk_xmas: '🎄 Noël', trk_xmas2: '🎅 Chanson de Noël',
       pop_title: 'Événement de Noël !', pop_tag: 'Nouveau cet hiver :',
       pop_1: '🎁 <strong>Collecte des cadeaux</strong> — partout dans les mondes, du Père Noël et dans la pluie de cadeaux', pop_2: '🗓️ <strong>Calendrier de l\'Avent</strong> — 24 portes avec récompenses et skins spéciaux',
       pop_3: '🎅 <strong>Père Noël</strong> — survole les îles en virages et lâche des cadeaux', pop_4: '🛍️ <strong>Boutique & succès</strong> dans le nouveau menu de Noël',
-      pop_5: '⛸️ <strong>Plateformes de glace</strong> pour glisser, de la neige partout et un <strong>boss Grinch</strong>', pop_6: '👗 <strong>Nouveaux skins, lianes & musique</strong> — le temps de l\'événement',
+      pop_5: '⛸️ <strong>Plateformes de glace</strong> pour glisser, de la neige partout et un <strong>boss Roi du Givre</strong>', pop_6: '👗 <strong>Nouveaux skins, lianes & musique</strong> — le temps de l\'événement',
       pop_all: '📋 Voir toutes les mises à jour', pop_go: 'C\'est parti ! 🚀',
     },
     es: {
@@ -6082,14 +6097,14 @@
       a_g10_n: 'Coleccionista de paquetes', a_g10_d: 'Recoge 10 regalos', a_g50_n: 'Cazador de regalos', a_g50_d: 'Recoge 50 regalos', a_g200_n: 'Duende profesional', a_g200_d: 'Recoge 200 regalos',
       a_gold_n: 'Momento dorado', a_gold_d: 'Encuentra un regalo dorado', a_santa_n: 'Fan de Papá Noel', a_santa_d: 'Toca a Papá Noel en pleno vuelo',
       a_ice_n: 'Patinador', a_ice_d: 'Desliza 30 segundos en total sobre hielo', a_adv7_n: 'Tiempo de Adviento', a_adv7_d: 'Abre 7 puertas',
-      a_adv24_n: 'Las 24 puertas', a_adv24_d: 'Abre todo el calendario de Adviento', a_boss_n: 'Vencedor del Grinch', a_boss_d: 'Derrota al jefe Grinch',
+      a_adv24_n: 'Las 24 puertas', a_adv24_d: 'Abre todo el calendario de Adviento', a_boss_n: 'Vencedor del Rey de Escarcha', a_boss_d: 'Derrota al Rey de Escarcha',
       goldGift: '✨ ¡Regalo dorado! +{n} 🎁', rain: '🎁 ¡Lluvia de regalos! ¡Recoge todos los que puedas!', santa_come: '🎅 ¡Jo jo jo! Papá Noel pasa volando: ¡balancéate hacia él!',
       santa_touch: '🎅 ¡Jo jo jo! ¡Feliz Navidad! +10 🏆', payout: '🏆 Clasificación navideña: ¡puesto {p}! +{r} trofeos', ny: '🎆 ¡Feliz Año Nuevo {y}! 🎆',
       timeOnly: '🎄 Tiempo limitado', trk_xmas: '🎄 Navidad', trk_xmas2: '🎅 Canción navideña',
       pop_title: '¡Evento de Navidad!', pop_tag: 'Novedades de invierno:',
       pop_1: '🎁 <strong>Recoge regalos</strong> — por todos los mundos, de Papá Noel y en la lluvia de regalos', pop_2: '🗓️ <strong>Calendario de Adviento</strong> — 24 puertas con recompensas y skins especiales',
       pop_3: '🎅 <strong>Papá Noel</strong> — vuela en curvas sobre las islas y suelta regalos', pop_4: '🛍️ <strong>Tienda y logros</strong> en el nuevo menú navideño',
-      pop_5: '⛸️ <strong>Plataformas de hielo</strong> para deslizarse, nieve por todas partes y un <strong>jefe Grinch</strong>', pop_6: '👗 <strong>Nuevos skins, lianas y música</strong> — solo durante el evento',
+      pop_5: '⛸️ <strong>Plataformas de hielo</strong> para deslizarse, nieve por todas partes y un <strong>jefe Rey de Escarcha</strong>', pop_6: '👗 <strong>Nuevos skins, lianas y música</strong> — solo durante el evento',
       pop_all: '📋 Ver todas las novedades', pop_go: '¡Vamos! 🚀',
     },
     pt: {
@@ -6107,14 +6122,14 @@
       a_g10_n: 'Colecionador de pacotes', a_g10_d: 'Colete 10 presentes', a_g50_n: 'Caçador de presentes', a_g50_d: 'Colete 50 presentes', a_g200_n: 'Duende profissional', a_g200_d: 'Colete 200 presentes',
       a_gold_n: 'Momento dourado', a_gold_d: 'Encontre um presente dourado', a_santa_n: 'Fã do Papai Noel', a_santa_d: 'Toque no Papai Noel em pleno voo',
       a_ice_n: 'Patinador', a_ice_d: 'Deslize 30 segundos no total no gelo', a_adv7_n: 'Tempo do Advento', a_adv7_d: 'Abra 7 portinhas',
-      a_adv24_n: 'Todas as 24 portinhas', a_adv24_d: 'Abra o calendário do Advento inteiro', a_boss_n: 'Vencedor do Grinch', a_boss_d: 'Derrote o chefe Grinch',
+      a_adv24_n: 'Todas as 24 portinhas', a_adv24_d: 'Abra o calendário do Advento inteiro', a_boss_n: 'Vencedor do Rei do Gelo', a_boss_d: 'Derrote o Rei do Gelo',
       goldGift: '✨ Presente dourado! +{n} 🎁', rain: '🎁 Chuva de presentes! Colete o máximo que puder!', santa_come: '🎅 Ho ho ho! O Papai Noel está passando — balance até ele!',
       santa_touch: '🎅 Ho ho ho! Feliz Natal! +10 🏆', payout: '🏆 Ranking de Natal: posição {p}! +{r} troféus', ny: '🎆 Feliz Ano Novo {y}! 🎆',
       timeOnly: '🎄 Tempo limitado', trk_xmas: '🎄 Natal', trk_xmas2: '🎅 Canção de Natal',
       pop_title: 'Evento de Natal!', pop_tag: 'Novidades do inverno:',
       pop_1: '🎁 <strong>Colete presentes</strong> — por todos os mundos, do Papai Noel e na chuva de presentes', pop_2: '🗓️ <strong>Calendário do Advento</strong> — 24 portinhas com recompensas e skins especiais',
       pop_3: '🎅 <strong>Papai Noel</strong> — voa em curvas sobre as ilhas e solta presentes', pop_4: '🛍️ <strong>Loja e conquistas</strong> no novo menu de Natal',
-      pop_5: '⛸️ <strong>Plataformas de gelo</strong> para deslizar, neve por todo lado e um <strong>chefe Grinch</strong>', pop_6: '👗 <strong>Novas skins, cipós e música</strong> — só durante o evento',
+      pop_5: '⛸️ <strong>Plataformas de gelo</strong> para deslizar, neve por todo lado e um <strong>chefe Rei do Gelo</strong>', pop_6: '👗 <strong>Novas skins, cipós e música</strong> — só durante o evento',
       pop_all: '📋 Ver todas as atualizações', pop_go: 'Vamos lá! 🚀',
     },
   };
@@ -6123,6 +6138,11 @@
   Object.assign(XMT.fr, { door_open: 'Porte {n} ouverte !', cont: 'Continuer' });
   Object.assign(XMT.es, { door_open: '¡Puerta {n} abierta!', cont: 'Continuar' });
   Object.assign(XMT.pt, { door_open: 'Portinha {n} aberta!', cont: 'Continuar' });
+  Object.assign(XMT.de, { ny_sky: '🎆 Neujahr {y} in', ny_units: 'Tage|Std|Min|Sek', ny_chip: '🎆 Neues Jahr in {t}', ny_happy: '🎆 FROHES NEUES JAHR {y}! 🎆', ny_reward: '🎁 Neujahrs-Geschenk: +100 🏆 und +20 🎁', ny_test: '🧪 Test: Belohnung wird nicht vergeben', ny_btn: '🎆 Silvester-Countdown testen (30 Sek.)' });
+  Object.assign(XMT.en, { ny_sky: '🎆 New Year {y} in', ny_units: 'days|h|min|sec', ny_chip: '🎆 New Year in {t}', ny_happy: '🎆 HAPPY NEW YEAR {y}! 🎆', ny_reward: '🎁 New Year gift: +100 🏆 and +20 🎁', ny_test: '🧪 Test: no reward given' });
+  Object.assign(XMT.fr, { ny_sky: '🎆 Nouvel An {y} dans', ny_units: 'jours|h|min|s', ny_chip: '🎆 Nouvel An dans {t}', ny_happy: '🎆 BONNE ANNÉE {y} ! 🎆', ny_reward: '🎁 Cadeau du Nouvel An : +100 🏆 et +20 🎁', ny_test: '🧪 Test : pas de récompense' });
+  Object.assign(XMT.es, { ny_sky: '🎆 Año Nuevo {y} en', ny_units: 'días|h|min|s', ny_chip: '🎆 Año Nuevo en {t}', ny_happy: '🎆 ¡FELIZ AÑO NUEVO {y}! 🎆', ny_reward: '🎁 Regalo de Año Nuevo: +100 🏆 y +20 🎁', ny_test: '🧪 Prueba: sin recompensa' });
+  Object.assign(XMT.pt, { ny_sky: '🎆 Ano Novo {y} em', ny_units: 'dias|h|min|s', ny_chip: '🎆 Ano Novo em {t}', ny_happy: '🎆 FELIZ ANO NOVO {y}! 🎆', ny_reward: '🎁 Presente de Ano Novo: +100 🏆 e +20 🎁', ny_test: '🧪 Teste: sem recompensa' });
   Object.assign(XMT.de, { door_locked: '🔒 Noch nicht! Türchen {n} kannst du erst am {n}. Dezember öffnen.', daily_head: '📅 Tages-Erfolge (neu um Mitternacht)', evt_head: '🏅 Event-Erfolge', d_gifts: 'Sammle heute {n} Geschenke', d_golden: 'Finde heute ein goldenes Geschenk', d_santa: 'Berühre heute den Weihnachtsmann', d_ice: 'Rutsche heute {n} Sekunden auf Eis', d_door: 'Öffne heute ein Türchen', d_play: 'Spiele heute {n} Minuten', shop_tier: 'Stufe {n} von 3', shop_new: '✨ Neue Waren im Shop!', shop_done: '🎉 Du hast alles gekauft! Die komplette Event-Kollektion gehört dir.', shop_packs: 'Pokale-Pakete' });
   Object.assign(XMT.en, { door_locked: '🔒 Not yet! Door {n} opens on December {n}.', daily_head: '📅 Daily achievements (new at midnight)', evt_head: '🏅 Event achievements', d_gifts: 'Collect {n} gifts today', d_golden: 'Find a golden gift today', d_santa: 'Touch Santa today', d_ice: 'Slide on ice for {n} seconds today', d_door: 'Open a door today', d_play: 'Play {n} minutes today', shop_tier: 'Tier {n} of 3', shop_new: '✨ New items in the shop!', shop_done: '🎉 You bought everything! The whole event collection is yours.', shop_packs: 'Trophy packs' });
   Object.assign(XMT.fr, { door_locked: '🔒 Pas encore ! La porte {n} s\'ouvre le {n} décembre.', daily_head: '📅 Succès du jour (nouveaux à minuit)', evt_head: '🏅 Succès de l\'événement', d_gifts: 'Collecte {n} cadeaux aujourd\'hui', d_golden: 'Trouve un cadeau doré aujourd\'hui', d_santa: 'Touche le Père Noël aujourd\'hui', d_ice: 'Glisse {n} secondes sur la glace aujourd\'hui', d_door: 'Ouvre une porte aujourd\'hui', d_play: 'Joue {n} minutes aujourd\'hui', shop_tier: 'Niveau {n} sur 3', shop_new: '✨ Nouveautés dans la boutique !', shop_done: '🎉 Tu as tout acheté ! Toute la collection de l\'événement est à toi.', shop_packs: 'Paquets de trophées' });
@@ -8393,8 +8413,8 @@
     const bossPlatformRim = new THREE.Mesh(
       new THREE.TorusGeometry(27, 0.6, 8, 40),
       new THREE.MeshStandardMaterial({
-        color: halloweenEventActive ? 0xff8c1a : (christmasEventActive ? 0x3bd95a : 0xff2d55),
-        emissive: halloweenEventActive ? 0xff8c1a : (christmasEventActive ? 0x1f9a3a : 0xff2d55),
+        color: halloweenEventActive ? 0xff8c1a : (christmasEventActive ? 0x7ad0ff : 0xff2d55),
+        emissive: halloweenEventActive ? 0xff8c1a : (christmasEventActive ? 0x2a9ad0 : 0xff2d55),
         emissiveIntensity: 0.6, roughness: 0.4
       })
     );
@@ -8550,7 +8570,7 @@
     } else {
       // Original design, completely untouched for the normal (non-Halloween) fight.
       bossBodyMat = christmasEventActive
-        ? new THREE.MeshStandardMaterial({ color: 0x1f6b2a, emissive: 0x38d94a, emissiveIntensity: 0.4, roughness: 0.55 })
+        ? new THREE.MeshStandardMaterial({ color: 0x4aa8e0, emissive: 0x7ad0ff, emissiveIntensity: 0.4, roughness: 0.3 })
         : new THREE.MeshStandardMaterial({ color: 0x2a0a1a, emissive: 0xff2d55, emissiveIntensity: 0.45, roughness: 0.5 });
       const bossBody = new THREE.Mesh(new THREE.IcosahedronGeometry(9, 1), bossBodyMat);
       bossBody.castShadow = true;
@@ -8576,12 +8596,16 @@
         leg.rotation.x = Math.sin(a) * 0.4;
         bossGroup.add(leg);
       }
-      if (christmasEventActive){ // 🎄 Der Grinch trägt eine gestohlene Weihnachtsmütze
-        const hatMat = new THREE.MeshStandardMaterial({ color: 0xd62828, roughness: 0.7 });
-        const white = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9 });
-        const hat = new THREE.Mesh(new THREE.ConeGeometry(5.2, 9, 12), hatMat); hat.position.set(0, 12.5, 0); hat.rotation.z = 0.25; bossGroup.add(hat);
-        const brim = new THREE.Mesh(new THREE.TorusGeometry(5.2, 1.1, 8, 20), white); brim.rotation.x = Math.PI / 2; brim.position.set(0, 8.6, 0); bossGroup.add(brim);
-        const pom = new THREE.Mesh(new THREE.SphereGeometry(1.4, 10, 10), white); pom.position.set(2.2, 16.6, 0); bossGroup.add(pom);
+      if (christmasEventActive){ // ❄️ Der Frostkönig trägt eine Krone aus Eiszacken
+        const gold = new THREE.MeshStandardMaterial({ color: 0xffd23a, emissive: 0xb88a00, emissiveIntensity: 0.4, roughness: 0.35 });
+        const ice = new THREE.MeshStandardMaterial({ color: 0xdff6ff, emissive: 0x9ae4ff, emissiveIntensity: 0.5, roughness: 0.15 });
+        const band = new THREE.Mesh(new THREE.TorusGeometry(5.4, 0.9, 8, 24), gold); band.rotation.x = Math.PI / 2; band.position.set(0, 9.2, 0); bossGroup.add(band);
+        for (let i = 0; i < 8; i++){
+          const a2 = (i / 8) * Math.PI * 2;
+          const sp = new THREE.Mesh(new THREE.ConeGeometry(1.2, i % 2 ? 4.2 : 6, 6), ice);
+          sp.position.set(Math.cos(a2) * 5.4, 11.8 + (i % 2 ? 0 : 1), Math.sin(a2) * 5.4); bossGroup.add(sp);
+        }
+        const gem = new THREE.Mesh(new THREE.OctahedronGeometry(1.3), new THREE.MeshBasicMaterial({ color: 0xff3b6b })); gem.position.set(0, 9.4, 5.6); bossGroup.add(gem);
       }
     }
     bossGroup.position.set(BOSS_ARENA_POS.x, BOSS_ARENA_POS.y + 12, BOSS_ARENA_POS.z);
@@ -8595,7 +8619,7 @@
     for (let i = 0; i < 3; i++){
       const bomb = new THREE.Mesh(
         new THREE.SphereGeometry(0.9, 8, 7),
-        new THREE.MeshStandardMaterial({ color: 0xff7a1a, emissive: 0xff5500, emissiveIntensity: 0.8 })
+        new THREE.MeshStandardMaterial(christmasEventActive && !halloweenEventActive ? { color: 0xeaf8ff, emissive: 0x7ad0ff, emissiveIntensity: 0.7 } : { color: 0xff7a1a, emissive: 0xff5500, emissiveIntensity: 0.8 })
       );
       bomb.visible = false;
       scene.add(bomb);
@@ -8755,13 +8779,13 @@
     ropeLine.visible = false;
     resetStreak();
     updateBossHpBarUI();
-    showBossFadeText(halloweenEventActive ? '🎃 HALLOWEEN BOSS FIGHT 🎃' : (christmasEventActive ? '🎄 GRINCH BOSS FIGHT 🎄' : '👹 BOSS KAMPF!'), halloweenEventActive ? '#ff8c1a' : (christmasEventActive ? '#7affc4' : undefined));
+    showBossFadeText(halloweenEventActive ? '🎃 HALLOWEEN BOSS FIGHT 🎃' : (christmasEventActive ? '❄️ FROSTKÖNIG BOSS FIGHT ❄️' : '👹 BOSS KAMPF!'), halloweenEventActive ? '#ff8c1a' : (christmasEventActive ? '#9ae4ff' : undefined));
     await new Promise(r => setTimeout(r, 1600));
     // 3-2-1 countdown — still behind the black screen, so it's the very
     // last thing shown right before the arena is actually revealed, rather
     // than counting down over a view of the boss they can't yet act in.
     for (const n of ['3', '2', '1']){
-      showBossFadeText(n, halloweenEventActive ? '#ff8c1a' : (christmasEventActive ? '#7affc4' : undefined));
+      showBossFadeText(n, halloweenEventActive ? '#ff8c1a' : (christmasEventActive ? '#9ae4ff' : undefined));
       await new Promise(r => setTimeout(r, 800));
     }
     fadeFromBlack();
@@ -8782,7 +8806,7 @@
     bossArenaExiting = true;
     if (reason === 'victory'){
       await fadeToBlack();
-      showBossFadeText(halloweenEventActive ? '🎃 KÜRBIS-KÖNIG BESIEGT!' : (christmasEventActive ? '🎄 GRINCH BESIEGT!' : '👹 BOSS BESIEGT!'), '#7affc4');
+      showBossFadeText(halloweenEventActive ? '🎃 KÜRBIS-KÖNIG BESIEGT!' : (christmasEventActive ? '❄️ FROSTKÖNIG BESIEGT!' : '👹 BOSS BESIEGT!'), '#7affc4');
       if (typeof xmasStat === 'function') xmasStat('boss', 1);
       await new Promise(r => setTimeout(r, 1800));
     } else if (reason === 'timeout'){
@@ -8804,6 +8828,8 @@
     if (preBossBg){ scene.background = preBossBg; preBossBg = null; } // restores whatever the sky was before the Halloween fight darkened it
     if (bossBombPool) bossBombPool.forEach(b => { b.active = false; b.mesh.visible = false; });
     if (bossTeleportPuff) bossTeleportPuff.material.opacity = 0;
+    if (typeof frostNovaRing !== 'undefined' && frostNovaRing) frostNovaRing.visible = false;
+    frostBombT = 0; frostNovaT = 0; frostNovaWind = 0;
     document.getElementById('bossHpBarWrap').classList.remove('show');
     if (preBossWorld !== null && preBossWorld !== selectedWorld){
       selectedWorld = preBossWorld;
@@ -9005,6 +9031,58 @@
           updateLivesDisplay();
           respawnPlayer();
         }
+      }
+    }
+    if (christmasEventActive && !halloweenEventActive) updateFrostKing(dt);
+  }
+
+  // ---------- ❄️ FROSTKÖNIG (Weihnachts-Boss): zusätzlich zum Nahkampf Schneebälle + Frost-Nova ----------
+  let frostBombT = 0, frostNovaT = 0, frostNovaWind = 0, frostNovaRing = null;
+  const FROST_NOVA_RADIUS = 17, FROST_NOVA_WINDUP = 1.4;
+  function frostHurtPlayer(fromPos, push){
+    if (adminGodMode || player.invuln > 0) return;
+    player.lives -= 1;
+    player.invuln = 2.2;
+    updateLivesDisplay();
+    pulseBox('box-lives', 'shake');
+    flashDamageVignette();
+    vibrate(80);
+    const away = new THREE.Vector3().subVectors(player.pos, fromPos); away.y = 0;
+    if (away.lengthSq() < 0.001) away.set(1, 0, 0); else away.normalize();
+    player.vel.addScaledVector(away, push);
+    player.vel.y += 8;
+    if (player.lives <= 0){ player.lives = 3; updateLivesDisplay(); respawnPlayer(); }
+  }
+  function updateFrostKing(dt){
+    if (bossCountdownActive){ frostBombT = 0; frostNovaT = 0; frostNovaWind = 0; if (frostNovaRing) frostNovaRing.visible = false; return; }
+    const hpPct = bossHp / BOSS_MAX_HP;
+    // Schneebälle (Wurf wie beim Kürbis-König, nur langsamer, damit es mit dem Nahkampf zusammen fair bleibt)
+    frostBombT += dt;
+    const ballInterval = hpPct > 0.66 ? 4.8 : hpPct > 0.33 ? 3.6 : 2.6;
+    if (frostBombT >= ballInterval){ frostBombT = 0; throwPumpkinBomb(); }
+    updateBossBombs(dt);
+    // Frost-Nova: Ring wächst auf dem Boden -> wer nach der Vorwarnung noch am Boden im Ring steht, wird getroffen. Wegspringen oder Abstand halten.
+    if (frostNovaWind <= 0){
+      frostNovaT += dt;
+      if (frostNovaT >= (hpPct > 0.5 ? 11 : 8)){
+        frostNovaT = 0; frostNovaWind = FROST_NOVA_WINDUP;
+        showBossFadeText('❄️ Frost-Nova! Spring!', '#9ae4ff');
+        if (!frostNovaRing){
+          frostNovaRing = new THREE.Mesh(new THREE.RingGeometry(0.93, 1, 48), new THREE.MeshBasicMaterial({ color: 0x9ae4ff, transparent: true, opacity: 0.9, side: THREE.DoubleSide, depthWrite: false }));
+          frostNovaRing.rotation.x = -Math.PI / 2; scene.add(frostNovaRing);
+        }
+        frostNovaRing.visible = true;
+      }
+    } else {
+      frostNovaWind -= dt;
+      const k = 1 - Math.max(0, frostNovaWind) / FROST_NOVA_WINDUP;
+      frostNovaRing.position.set(bossGroup.position.x, BOSS_ARENA_POS.y + 0.4, bossGroup.position.z);
+      frostNovaRing.scale.setScalar(Math.max(0.1, FROST_NOVA_RADIUS * k));
+      frostNovaRing.material.opacity = 0.35 + 0.5 * k;
+      if (frostNovaWind <= 0){
+        frostNovaRing.visible = false;
+        const dx = player.pos.x - bossGroup.position.x, dz = player.pos.z - bossGroup.position.z;
+        if (Math.hypot(dx, dz) < FROST_NOVA_RADIUS && player.pos.y < BOSS_ARENA_POS.y + 4) frostHurtPlayer(bossGroup.position, 15);
       }
     }
   }
@@ -19973,19 +20051,6 @@
       storageSet('rankmann_xmasGifts', 0); storageSet('rankmann_xmasClaimed', []); storageSet('rankmann_xmasDoors', xmDoors);
       storageSet('rankmann_xmasStats', xmStats); storageSet('rankmann_xmasDay', null); storageSet('rankmann_xmasCleanV1', true);
     } }
-  (function(){
-    const btn = document.getElementById('adminXmasResetBtn'); if (!btn) return;
-    let armed = 0;
-    btn.addEventListener('click', () => {
-      if (!armed){ armed = 1; btn.textContent = '⚠️ Nochmal tippen zum Bestätigen'; setTimeout(() => { armed = 0; btn.textContent = '🔄 Weihnachts-Fortschritt zurücksetzen'; }, 4000); return; }
-      xmGifts = 0; xmClaimed = []; xmDoors = { y: XM.year, d: [] }; xmDay = null;
-      xmStats = { y: XM.year, gifts: 0, golden: 0, santa: 0, ice: 0, boss: 0 };
-      storageSet('rankmann_xmasGifts', 0); storageSet('rankmann_xmasClaimed', []); storageSet('rankmann_xmasDoors', xmDoors);
-      storageSet('rankmann_xmasStats', xmStats); storageSet('rankmann_xmasDay', null);
-      showAdminToast('🔄 Weihnachts-Fortschritt zurückgesetzt (Türchen, Geschenke, Erfolge). Seite lädt neu...');
-      setTimeout(() => location.reload(), 900);
-    });
-  })();
   function xmSave(){
     storageSet('rankmann_xmasDay', xmDay);
     storageSet('rankmann_xmasGifts', xmGifts); storageSet('rankmann_xmasStats', xmStats);
@@ -20133,6 +20198,7 @@
     const a = Math.random() * Math.PI * 2, r = Math.random() * isl.radius * 0.6;
     const golden = Math.random() < 0.06;
     xmSpawnGift(new THREE.Vector3(isl.pos.x + Math.cos(a) * r, isl.top + 1.5, isl.pos.z + Math.sin(a) * r), selectedWorld, 0, golden, 'ground');
+    const gg0 = XM.gifts[XM.gifts.length - 1]; if (gg0){ gg0.isl = isl; gg0.hy = 1.5; }
   }
   function xmStartRain(sec){ XM.rainT = sec; XM.rainSpawnT = 0; xmToast(xt('rain'), 3500); xmSfx('bells'); }
 
@@ -20334,7 +20400,7 @@
 
   // ---------- Haupt-Update ----------
   function updateXmas(dt){
-    xmasSnowTick(dt); xmFireworkTick(dt); xmSparkTick(dt);
+    xmasSnowTick(dt); xmFireworkTick(dt); xmSparkTick(dt); xmNyTick(dt);
     xmUpdateChip();
     if (!running || paused || inBossArena || raceActive || tutorialActive || storyActive){
       XM.gifts.forEach(g => { g.mesh.visible = false; });
@@ -20375,18 +20441,129 @@
         g.vy = g.slow ? -5 : Math.max(-8, g.vy - 9 * dt);
         if (g.vx){ g.pos.x += g.vx * dt; g.pos.z += g.vz * dt; }
         const prevY = g.pos.y; g.pos.y += g.vy * dt;
+        let lowTop = Infinity, landedOn = null;
         for (const isl of islands){
-          if (isl.world !== g.world) continue;
+          if (isl.world !== g.world || isl.isCheckpoint) continue;   // Pokal-Plattformen: dort kann man nicht herumlaufen -> keine Geschenke landen dort
+          if (isl.top < lowTop) lowTop = isl.top;
           const dx = g.pos.x - isl.pos.x, dz = g.pos.z - isl.pos.z;
-          if (dx * dx + dz * dz < isl.radius * isl.radius && prevY >= isl.top + 0.7 && g.pos.y <= isl.top + 0.9){ g.pos.y = isl.top + 0.9; g.vy = 0; g.vx = 0; g.vz = 0; g.landed = true; break; }
+          // Landen, sobald das Geschenk die Oberseite von oben nach unten durchquert (auch bei großen Zeitschritten / seitlichem Reinrutschen)
+          if (!landedOn && dx * dx + dz * dz < isl.radius * isl.radius && prevY >= isl.top - 0.4 && g.pos.y <= isl.top + 0.9) landedOn = isl;
         }
+        if (landedOn){ g.pos.y = landedOn.top + 0.9; g.vy = 0; g.vx = 0; g.vz = 0; g.landed = true; g.isl = landedOn; g.hy = 0.9; }
         g.mesh.rotation.y += dt * 2;
-        if (g.pos.y < -30){ xmRemoveGift(g); continue; }
-      } else { g.mesh.rotation.y += dt * 1.2; g.mesh.position.y += Math.sin(t * 2 + i) * 0.004; }
+        // Unter der tiefsten Plattform der Welt hat ein Geschenk nichts mehr verloren -> weg (statt unter den Plattformen zu schweben)
+        if (g.pos.y < -30 || (!g.landed && lowTop !== Infinity && g.pos.y < lowTop - 3)){ xmRemoveGift(g); continue; }
+      } else {
+        g.mesh.rotation.y += dt * 1.2;
+        if (g.isl){ g.pos.y = g.isl.top + (g.hy || 1.2) + Math.sin(t * 2 + i) * 0.1; g.pos.x += 0; }   // bleibt auf seiner Plattform, auch wenn die sich bewegt
+        else g.mesh.position.y += Math.sin(t * 2 + i) * 0.004;
+      }
       if (g.life <= 0){ xmRemoveGift(g); continue; }
       if (g.mesh.visible && player.pos.distanceTo(g.pos) < 2.7){ const gold = g.golden; xmRemoveGift(g); xmAddGifts(gold ? 5 : 1, gold); }
     }
   }
+  // ---------- 🎆 Silvester-Countdown ----------
+  // Zählt zur Mitternacht des Geräts (jeder Spieler nach seiner eigenen Zeit). Chip ab 6 Std. vorher, große Zahlen in der letzten Minute,
+  // um 0 Uhr: "Frohes neues Jahr", Feuerwerk (2,5 Min.) und einmalig eine Belohnung für alle, die gerade im Spiel sind.
+  XM.nyTest = 0; XM.nyT = 0; XM.nyFired = 0; XM.nyRocketT = 20; XM.nyLastSec = -1; XM.nyBigUntil = 0;
+  function xmNyTarget(){
+    if (XM.nyTest && Date.now() < XM.nyTest + 12000) return XM.nyTest;
+    const d = new Date();
+    return d.getMonth() === 11 ? new Date(d.getFullYear() + 1, 0, 1).getTime() : 0;
+  }
+  function xmNyEl(id, css){
+    let el = document.getElementById(id);
+    if (!el){ el = document.createElement('div'); el.id = id; el.style.cssText = css + ';display:none'; document.body.appendChild(el); }
+    return el;
+  }
+  function xmNyPop(el){ try { el.animate([{ transform: 'translate(-50%,-50%) scale(1.5)', opacity: 1 }, { transform: 'translate(-50%,-50%) scale(1)', opacity: 0.92 }], { duration: 380, easing: 'ease-out' }); } catch(e){} }
+  function xmNyFire(T){
+    XM.nyFired = T; XM.fwT = 0; XM.forceFw = true; XM.forceFwUntil = performance.now() + 150000;
+    xmSfx('bells'); xmSfx('golden');
+    const big = xmNyEl('xmasNyBig', 'position:fixed;left:50%;top:42%;transform:translate(-50%,-50%);z-index:70;pointer-events:none;text-align:center;font:900 9vmin Poppins,Arial,sans-serif;color:#ffe27a;text-shadow:0 0 18px #ff9a1a,0 0 40px #ff5a1a;width:92vw');
+    big.style.cssText = 'position:fixed;left:50%;top:42%;transform:translate(-50%,-50%);z-index:70;pointer-events:none;text-align:center;font:900 9vmin Poppins,Arial,sans-serif;color:#ffe27a;text-shadow:0 0 18px #ff9a1a,0 0 40px #ff5a1a;width:92vw';
+    big.textContent = xt('ny_happy', { y: (XM.nyTest && T === XM.nyTest) ? new Date().getFullYear() + 1 : new Date(T).getFullYear() }); big.style.display = 'block'; xmNyPop(big); XM.nyBigUntil = performance.now() + 7000;
+    if (running && !tutorialActive && !storyActive){
+      if (XM.nyTest && T === XM.nyTest) xmToast(xt('ny_test'), 4500);
+      else {
+        const yr = new Date(T).getFullYear();
+        if (storageGet('rankmann_xmasNyReward', 0) !== yr){ storageSet('rankmann_xmasNyReward', yr); xmGrant({ t: 100, g: 20 }); xmToast(xt('ny_reward'), 6000); }
+      }
+    }
+  }
+  // Countdown-Schild am Himmel (nur im Weihnachts-Modus): "30 Tage 15 Std 07 Min 23 Sek" bis Neujahr, ab 1. Dezember (im Test-Modus auch früher)
+  let xmSkyEl = null, xmSkyLast = '';
+  function xmNySkyTick(){
+    // Als normales Bildschirm-Element (kein 3D-Objekt): bleibt beim Kamera-Drehen absolut ruhig, ohne Nachziehen
+    if (!xmSkyEl){
+      xmSkyEl = document.createElement('div'); xmSkyEl.id = 'xmasSkySign';
+      xmSkyEl.style.cssText = 'position:fixed;top:2.2vh;left:50%;transform:translateX(-50%);z-index:40;pointer-events:none;text-align:center;white-space:nowrap;opacity:0.62;font-family:Poppins,Arial,sans-serif;font-weight:900;color:#ffe27a;text-shadow:0 0 12px rgba(255,150,30,0.9),0 0 26px rgba(255,110,20,0.6);line-height:1.15;display:none;will-change:auto';
+      xmSkyEl.innerHTML = '<div id="xmasSkyHead" style="font-size:clamp(12px,2.2vw,28px);font-weight:800;color:#fff1b8"></div><div id="xmasSkyLine" style="font-size:clamp(16px,3.4vw,44px)"></div>';
+      document.body.appendChild(xmSkyEl);
+    }
+    const d = new Date(), skyT = d.getMonth() === 0 ? 0 : new Date(d.getFullYear() + 1, 0, 1).getTime();
+    const rem = skyT - d.getTime();
+    const show = !!(XM.on && skyT && rem > 60000 && running && !tutorialActive && !storyActive && !inBossArena && !raceActive);
+    document.body.classList.toggle('xmasSkyOn', show);
+    const disp = show ? 'block' : 'none'; if (xmSkyEl.style.display !== disp) xmSkyEl.style.display = disp;
+    if (!show) return;
+    const sec = Math.floor(rem / 1000), dd = Math.floor(sec / 86400), hh = Math.floor(sec % 86400 / 3600), mm = Math.floor(sec % 3600 / 60), ss = sec % 60;
+    const u = xt('ny_units').split('|'), p2 = n => String(n).padStart(2, '0');
+    const line = (dd ? dd + ' ' + u[0] + '  ' : '') + p2(hh) + ' ' + u[1] + '  ' + p2(mm) + ' ' + u[2] + '  ' + p2(ss) + ' ' + u[3];
+    const head = xt('ny_sky', { y: d.getFullYear() + 1 });
+    if (line + head === xmSkyLast) return;
+    xmSkyLast = line + head;
+    document.getElementById('xmasSkyHead').textContent = head;
+    document.getElementById('xmasSkyLine').textContent = line;
+  }
+  function xmNyTick(dt){
+    xmNySkyTick();
+    const chip = xmNyEl('xmasNyChip', 'position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:61;padding:6px 16px;border-radius:999px;background:rgba(40,20,70,0.88);border:1px solid rgba(255,226,122,0.8);color:#ffe27a;font:800 14px Poppins,Arial,sans-serif;pointer-events:none;white-space:nowrap');
+    const big = xmNyEl('xmasNyBig', '');
+    const tgt = xmNyTarget(); if (tgt) XM.nyT = tgt;
+    const T = XM.nyT, visible = running && !paused && !tutorialActive;
+    if (XM.nyBigUntil && performance.now() > XM.nyBigUntil){ XM.nyBigUntil = 0; big.style.display = 'none'; }
+    if (!T){ chip.style.display = 'none'; return; }
+    const rem = T - Date.now();
+    if (rem > 6 * 3600 * 1000){ chip.style.display = 'none'; return; }
+    if (rem <= 0){
+      chip.style.display = 'none';
+      if (XM.nyFired !== T) xmNyFire(T);
+      if (rem < -15000) XM.nyT = 0;
+      return;
+    }
+    const sec = Math.ceil(rem / 1000);
+    const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), ss = sec % 60;
+    chip.textContent = xt('ny_chip', { t: (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(ss).padStart(2, '0') });
+    chip.style.display = visible && sec > 60 ? 'block' : 'none';
+    // letzte Minute: große Zahlen
+    if (sec <= 60 && visible){
+      if (!XM.nyBigUntil){
+        big.style.cssText = 'position:fixed;left:50%;top:42%;transform:translate(-50%,-50%);z-index:70;pointer-events:none;text-align:center;font:900 24vmin Poppins,Arial,sans-serif;color:#ffe27a;text-shadow:0 0 18px #ff9a1a,0 0 40px #ff5a1a;width:92vw;display:block';
+      }
+      if (!XM.nyBigUntil && XM.nyLastSec !== sec){
+        XM.nyLastSec = sec; big.textContent = sec; big.style.display = 'block'; xmNyPop(big);
+        if (sec <= 10) playTone(sec <= 3 ? 1318 : 988, 0.16, 'triangle', 0.16);
+      }
+    } else if (!XM.nyBigUntil) big.style.display = 'none';
+    // Raketen im Hintergrund (stumm), vor allem in den letzten 10 Minuten
+    if (rem <= 600000 && visible && selectedWorld !== 4 && !inBossArena){
+      XM.nyRocketT -= dt;
+      if (XM.nyRocketT <= 0){ xmLaunchRocket(1.4); XM.nyRocketT = sec <= 10 ? 1.2 : sec <= 60 ? 5 : 22 + Math.random() * 14; }
+    }
+  }
+  (function(){
+    const btn = document.getElementById('adminXmasNyBtn'); if (!btn) return;
+    btn.style.display = christmasEventActive ? '' : 'none';
+    btn.addEventListener('click', () => {
+      if (!XM.on) return showAdminToast('Weihnachts-Version ist aus');
+      if (!running){ showAdminToast('Starte zuerst ein Spiel, dann nochmal tippen'); return; }
+      XM.nyTest = Date.now() + 30000; XM.nyT = XM.nyTest; XM.nyFired = 0; XM.nyLastSec = -1; XM.nyRocketT = 2;
+      try { if (typeof closeAdminPanel === 'function') closeAdminPanel(); } catch(e){}
+      showAdminToast('🎆 Countdown startet: 30 Sekunden');
+    });
+  })();
+
   // ---------- Menü-Schnee (2D, nur wenn kein Spiel läuft) ----------
   (function(){
     if (!XM.on) return;
@@ -20461,7 +20638,7 @@
     { id: 'ice', icon: '⛸️', name: 'Eisläufer', desc: 'Rutsche insgesamt 30 Sekunden auf Eis', t: 50, check: () => (xmStats.ice || 0) >= 30 },
     { id: 'adv7', icon: '🕯️', name: 'Adventszeit', desc: 'Öffne 7 Türchen', t: 60, check: () => xmDoors.d.length >= 7 },
     { id: 'adv24', icon: '🎆', name: 'Alle 24 Türchen', desc: 'Öffne den ganzen Adventskalender', t: 300, check: () => xmDoors.d.length >= 24 },
-    { id: 'boss', icon: '🟢', name: 'Grinch-Bezwinger', desc: 'Besiege den Grinch-Boss', t: 250, check: () => (xmStats.boss || 0) >= 1 },
+    { id: 'boss', icon: '👑', name: 'Frostkönig-Bezwinger', desc: 'Besiege den Frostkönig', t: 250, check: () => (xmStats.boss || 0) >= 1 },
   ];
   let xmTab = 'cal', xmMsg = '';
   function xmGrant(r){
@@ -20578,9 +20755,20 @@
   // Admin-Test-Buttons
   (function(){
     const a = document.getElementById('adminXmasSantaBtn'), b = document.getElementById('adminXmasRainBtn'), c = document.getElementById('adminXmasFwBtn');
+    const bossBtn = document.getElementById('adminXmasBossBtn');
+    [a, b, c, bossBtn].forEach(el => { if (el) el.style.display = christmasEventActive ? '' : 'none'; });
+    if (bossBtn) bossBtn.addEventListener('click', () => {
+      if (!XM.on) return showAdminToast('Weihnachts-Version ist aus');
+      if (!running){ showAdminToast('Starte zuerst ein Spiel, dann nochmal tippen'); return; }
+      if (inBossArena || bossArenaEntering){ showAdminToast('Du bist schon im Boss-Kampf'); return; }
+      bossOfflineTestMode = true; bossHp = BOSS_MAX_HP; bossVictoryPending = false; bossEventActive = true;
+      try { if (typeof closeAdminPanel === 'function') closeAdminPanel(); } catch(e){}
+      showAdminToast('❄️ Frostkönig-Test gestartet (nur lokal, ohne Verbindung)');
+      enterBossArena();
+    }); // Test-Knöpfe nur sichtbar, wenn die Weihnachts-Version an ist
     if (a) a.addEventListener('click', () => { if (!XM.on) return showAdminToast('Weihnachts-Version ist aus'); showAdminToast(xmCallSanta() ? '🎅 Weihnachtsmann kommt!' : 'Geht gerade nicht (Welt 4 / nicht im Spiel)'); });
     if (b) b.addEventListener('click', () => { if (!XM.on) return showAdminToast('Weihnachts-Version ist aus'); xmStartRain(25); showAdminToast('🎁 Geschenke-Regen gestartet'); });
-    if (c) c.addEventListener('click', () => { XM.forceFw = !XM.forceFw; XM.forceFwUntil = performance.now() + 120000; showAdminToast('🎆 Feuerwerk ' + (XM.forceFw ? 'AN (schaltet sich nach 2 Min. selbst aus)' : 'AUS')); });
+    if (c) c.addEventListener('click', () => { if (!XM.on) return showAdminToast('Weihnachts-Version ist aus'); XM.forceFw = !XM.forceFw; XM.forceFwUntil = performance.now() + 120000; showAdminToast('🎆 Feuerwerk ' + (XM.forceFw ? 'AN (schaltet sich nach 2 Min. selbst aus)' : 'AUS')); });
   })();
 
   animate();
