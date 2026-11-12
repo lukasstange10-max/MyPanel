@@ -17370,6 +17370,7 @@
       return;
     }
     if (running && !paused && galleryBoothIdx >= 0){ try { galleryBoothFrame(dt); } catch(e){ try { galleryLeaveBooth(); } catch(_){} } renderer.render(scene, camera); return; }
+    if (!running && (galleryAreaOn || galleryBoothIdx >= 0 || galleryArriveT < 2.6)){ try { galleryResetAll(); } catch(e){} }   // zurück im Hauptmenü: Schießstand-Zustand komplett aufräumen
     if (galleryTeleportPending && running && !paused && !introCine.active){ galleryTeleportPending = false; try { galleryTeleportToArea(); } catch(e){} }
     if (running && !paused && galleryBuilt){ try { galleryAreaTick(dt); } catch(e){} }
     if (!running || paused) {
@@ -18187,6 +18188,7 @@
   document.getElementById('resumeBtn').addEventListener('click', closePauseMenu);
   function returnToMainMenu(){
     running = false;
+    try { galleryResetAll(); } catch(e){}
     tutorialAbort();
     document.getElementById('viewerCountBadge').classList.remove('show');
     // Explicitly clear this player's own live-position broadcast — just
@@ -20856,7 +20858,7 @@
 
   let shootingUnlocked = !!storageGet('rankmann_shootingUnlocked', false);
   let galleryHigh = +storageGet('rankmann_galleryHigh', 0) || 0;
-  let galleryFxBusy = false, galleryArriveT = 9, galleryArriveZoom = 8, galleryMap = null, galleryMapItems = [], galleryRings = [], galleryBolts = [], galleryBoothG = [], galleryIntroT = 0, galleryArmsIn = 0, galleryFov0 = 70, galleryTrophies = 0, galleryIntroFrom = new THREE.Vector3(), galleryTeleportPending = false, galleryPrevBg = null, galleryBuilt = false, galleryGroup = null, galleryAreaOn = false, galleryBooths = [], galleryDebugOn = false;
+  let galleryPrevView = null, galleryFxBusy = false, galleryArriveT = 9, galleryArriveZoom = 8, galleryMap = null, galleryMapItems = [], galleryRings = [], galleryBolts = [], galleryBoothG = [], galleryIntroT = 0, galleryArmsIn = 0, galleryFov0 = 70, galleryTrophies = 0, galleryIntroFrom = new THREE.Vector3(), galleryTeleportPending = false, galleryPrevBg = null, galleryBuilt = false, galleryGroup = null, galleryAreaOn = false, galleryBooths = [], galleryDebugOn = false;
   let galleryBoothIdx = -1, galleryState = 'idle', galleryStateT = 0, galleryHadLock = false, galleryFireHeld = false;
   let galleryTimeLeft = 0, galleryElapsed = 0, galleryScore = 0, galleryShots = 0, galleryHits = 0, galleryLastShot = 0, gallerySpawnT = 0, galleryFlashT = 0, galleryGoT = 0;
   let galleryArms = null, galleryTargets = [], galleryParts = [], gallerySavedZoom = 8, pendingGalleryAfterStart = false, galleryNearIdx = -1, galleryLastCountShown = -1;
@@ -21125,9 +21127,21 @@
     if (on){ if (!galleryPrevBg){ galleryPrevBg = scene.background; } scene.background = new THREE.Color(0x1a0d2e); }
     else if (galleryPrevBg){ scene.background = galleryPrevBg; galleryPrevBg = null; }
   }
+  function galleryResetAll(){
+    if (galleryBoothIdx >= 0) galleryLeaveBooth();
+    if (galleryArriveT < 2.6){ camZoom = galleryArriveZoom; camera.fov = galleryFov0; camera.updateProjectionMatrix(); }
+    galleryArriveT = 9; galleryTeleportPending = false; pendingGalleryAfterStart = false;
+    gallerySetArea(false);
+    if (galleryGroup) galleryGroup.visible = false;
+    document.body.classList.remove('galleryArea', 'galleryBooth');
+    const pr = $g('galleryPrompt'); if (pr) pr.classList.remove('show');
+    playerMesh.visible = true;
+    if (galleryPrevView){ player.yaw = galleryPrevView.yaw; player.pitch = galleryPrevView.pitch; player.faceYaw = galleryPrevView.faceYaw; galleryPrevView = null; }
+  }
   function galleryTeleportToArea(){
     if (tutorialActive){ galleryToast(gt('notNow'), 3500); return; }
     ensureGalleryBuilt();
+    if (!galleryPrevView) galleryPrevView = { yaw: player.yaw, pitch: player.pitch, faceYaw: player.faceYaw };      // Blickrichtung merken, damit das Menü-Hintergrundbild danach wieder stimmt
     player.pos.set(GO.x, GO.y + GALLERY_TOP + 1, GO.z + 19); player.vel.set(0, 0, 0); player.yaw = Math.PI; player.faceYaw = 0; player.pitch = 0.3;
     snapCameraToPlayer(); gallerySetArea(true);
     galleryArriveT = 0; galleryArriveZoom = camZoom; galleryFov0 = camera.fov;      // Anflug-Kamerafahrt auf die Insel
