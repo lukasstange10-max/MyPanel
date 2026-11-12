@@ -1489,6 +1489,34 @@
   #spinWheelHint { font-size: 12px; color: rgba(255,255,255,0.65); text-align: center; max-width: 280px; }
   #spinWheelSpinBtn:disabled { opacity: 0.5; cursor: default; }
 
+  #shootingBtn { padding: 13px 24px; font-size: 15px; font-weight: 700; background: linear-gradient(135deg, rgba(255,90,140,0.25), rgba(200,30,80,0.25)); border: 1px solid rgba(255,110,150,0.6); border-radius: 34px; color: #fff; cursor: pointer; transition: transform 0.15s ease, background 0.2s ease; }
+  #shootingBtn:hover { transform: translateY(-2px) scale(1.02); background: linear-gradient(135deg, rgba(255,90,140,0.45), rgba(200,30,80,0.45)); }
+  #shootingBtn.lockedBtn { opacity: 0.6; filter: grayscale(0.5); }
+  #galleryIntroFx { position: fixed; inset: 0; z-index: 9800; display: none; background: #000; transition: opacity .55s ease; cursor: pointer; }
+  #galleryIntroFx canvas { width: 100%; height: 100%; display: block; }
+  #shootToast { position: fixed; top: 90px; left: 50%; transform: translateX(-50%); z-index: 9000; background: rgba(20,10,30,0.9); color: #fff; border: 1px solid rgba(255,110,150,0.6); border-radius: 20px; padding: 10px 20px; font-weight: 800; font-size: 14px; opacity: 0; pointer-events: none; transition: opacity .25s; }
+  #shootToast.show { opacity: 1; }
+  #galleryPrompt { position: fixed; bottom: 22%; left: 50%; transform: translateX(-50%) translateY(10px); z-index: 60; background: rgba(30,10,40,0.88); color: #fff; border: 2px solid #ff5a9a; border-radius: 26px; padding: 11px 24px; font-weight: 800; font-size: 16px; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; }
+  #galleryPrompt.show { opacity: 1; transform: translateX(-50%); pointer-events: auto; cursor: pointer; }
+  #galleryLeaveBtn { position: fixed; top: 14px; right: 14px; z-index: 70; display: none; align-items: center; padding: 10px 18px; background: rgba(30,10,40,0.85); color: #fff; border: 2px solid #ff5a9a; border-radius: 22px; font-weight: 800; font-size: 14px; cursor: pointer; }
+  #galleryHud { position: fixed; top: 14px; left: 50%; transform: translateX(-50%); z-index: 65; display: none; gap: 14px; background: rgba(20,8,30,0.72); color: #fff; border-radius: 18px; padding: 8px 18px; font-weight: 900; font-size: 18px; pointer-events: none; }
+  #galleryShootBtn { position: fixed; right: 26px; bottom: 34px; width: 104px; height: 104px; border-radius: 50%; z-index: 70; display: none; align-items: center; justify-content: center; background: radial-gradient(circle, #ff5a7a, #b0102c); border: 4px solid #fff; color: #fff; font-size: 40px; touch-action: none; user-select: none; box-shadow: 0 0 24px rgba(255,60,100,0.7); }
+  #galleryCount { position: fixed; top: 38%; left: 50%; transform: translate(-50%,-50%) scale(0.6); z-index: 66; font-size: 120px; font-weight: 900; color: #fff; text-shadow: 0 0 30px #ff2d6a, 0 4px 0 #7a0a30; opacity: 0; pointer-events: none; }
+  #galleryCount.show { animation: galCount 0.9s ease-out forwards; }
+  @keyframes galCount { 0% { opacity: 0; transform: translate(-50%,-50%) scale(1.8); } 25% { opacity: 1; transform: translate(-50%,-50%) scale(1); } 80% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%,-50%) scale(0.9); } }
+  #galleryPlus { position: fixed; top: 44%; left: 50%; transform: translate(-50%,-50%); z-index: 66; font-size: 34px; font-weight: 900; color: #ffd86a; text-shadow: 0 2px 10px #000; opacity: 0; pointer-events: none; }
+  #galleryPlus.show { animation: galPlus 0.8s ease-out forwards; }
+  @keyframes galPlus { 0% { opacity: 0; transform: translate(-50%,-30%) scale(0.7); } 20% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%,-140%) scale(1.1); } }
+  #galleryResult { position: fixed; inset: 0; z-index: 80; display: none; align-items: center; justify-content: center; background: rgba(10,4,20,0.7); }
+  #galleryResult.show { display: flex; }
+  #galleryResultBox { background: linear-gradient(160deg, #2a1245, #14081f); border: 2px solid #ff5a9a; border-radius: 22px; padding: 24px 32px; color: #fff; text-align: center; min-width: 260px; max-width: 90vw; }
+  #galleryResultTitle { font-size: 26px; font-weight: 900; margin-bottom: 10px; }
+  #galleryResultBody .gr { font-size: 17px; margin: 6px 0; } #galleryResultBody .gr.big { font-size: 19px; font-weight: 900; color: #ffd86a; }
+  #galleryResultBox button { margin: 14px 6px 0; padding: 10px 22px; border-radius: 22px; border: 2px solid #ff5a9a; background: rgba(255,90,154,0.25); color: #fff; font-weight: 800; font-size: 15px; cursor: pointer; }
+  #galleryDebug { position: fixed; left: 8px; bottom: 8px; z-index: 9500; display: none; background: rgba(0,0,0,0.78); color: #7dffb0; font: 12px/1.4 monospace; padding: 8px 10px; border-radius: 8px; white-space: pre; pointer-events: none; }
+  body.galleryArea #xmasSkySign, body.galleryArea #stormBadge, body.galleryArea #weatherForecastBadge, body.galleryArea #chaosBadge, body.galleryArea #goldenHourBadge { display: none !important; }
+  body.galleryBooth #hint, body.galleryBooth #stormBadge { display: none !important; }
+  body.galleryBooth #touchPauseBtn, body.galleryBooth #touchSprintBtn, body.galleryBooth #touchButtons, body.galleryBooth #touchJoystickBase { display: none !important; }
   #galleryBtn {
     padding: 13px 24px; font-size: 15px; font-weight: 700;
     background: linear-gradient(135deg, rgba(122,255,196,0.22), rgba(47,191,138,0.22));
@@ -3355,6 +3383,14 @@
   </div>
 </div>
 
+<div id="shootToast"></div><div id="galleryPrompt"></div>
+<div id="galleryIntroFx"><canvas id="galleryIntroCv"></canvas></div>
+<button id="galleryLeaveBtn" onclick="">Verlassen</button>
+<div id="galleryHud"><span id="galleryHudTime"></span><span id="galleryHudScore"></span><span id="galleryHudTroph"></span></div>
+<div id="galleryShootBtn">🔫</div>
+<div id="galleryCount"></div><div id="galleryPlus"></div>
+<div id="galleryResult"><div id="galleryResultBox"><div id="galleryResultTitle"></div><div id="galleryResultBody"></div><button id="galleryAgainBtn"></button><button id="galleryLeaveBtn2"></button></div></div>
+<pre id="galleryDebug"></pre>
 <div id="crosshair">
   <div class="tick top"></div><div class="tick bottom"></div><div class="tick left"></div><div class="tick right"></div>
   <div class="ring"></div>
@@ -3494,6 +3530,7 @@
       <button id="spinWheelBtn">🎡 Glücksrad<span id="spinWheelBadge" class="friendsReqBadge"></span></button>
       <button id="achievementsBtn"><span data-i18n="achievementsBtnMenu">🏅 Erfolge</span><span id="achievementsBadge"></span></button>
       <button id="galleryBtn" data-i18n="galleryBtnMenu">🖼️ Galerie</button>
+      <button id="shootingBtn">🎯 Schießstand</button>
       <button id="xmasBtn" style="display:none">🎄 Weihnachten<span id="xmasBtnBadge" style="display:none"></span></button>
       <button id="statsBtn" data-i18n="statsBtn">📊 Statistiken</button>
       <button id="coopBtn">👥 Mit Freunden spielen</button>
@@ -4655,6 +4692,8 @@
         <button class="adminActionBtn" id="adminHalloweenForceBtn">🎃 Halloween-Version: AN</button>
         <button class="adminActionBtn" id="adminChristmasForceBtn">🎄 Weihnachts-Version: AN</button>
         <button class="adminActionBtn" id="adminXmasNyBtn">🎆 Silvester-Countdown testen (30 Sek.)</button>
+        <button class="adminActionBtn" id="adminTrophies250Btn">🎯 +250 Pokale (Test)</button>
+        <button class="adminActionBtn" id="adminGalleryDebugBtn">🐞 Schießstand-Debug an/aus</button>
         <button class="adminActionBtn" id="adminXmasBossBtn">❄️ Frostkönig testen (nur bei mir)</button>
         <button class="adminActionBtn" id="adminXmasSantaBtn">🎅 Weihnachtsmann rufen</button>
         <button class="adminActionBtn" id="adminXmasRainBtn">🎁 Geschenke-Regen starten</button>
@@ -4987,7 +5026,7 @@
   // trophies, so right after a purchase this device always looked "behind" an older backup that still had the money.)
   const PROGRESS_KEYS = new Set(['rankmann_totalTrophies', 'rankmann_ownedSkins', 'rankmann_ownedVineSkins', 'rankmann_ownedEmotes',
     'rankmann_equippedSkin', 'rankmann_equippedVineSkin', 'rankmann_world2Unlocked', 'rankmann_world3Unlocked', 'rankmann_world4Unlocked',
-    'rankmann_unlockedAchievements', 'rankmann_claimedMilestones', 'rankmann_claimedChallenges', 'rankmann_xmasGifts', 'rankmann_xmasStats', 'rankmann_xmasDoors', 'rankmann_xmasClaimed', 'rankmann_xmasDay', 'rankmann_xmasNyReward']);
+    'rankmann_unlockedAchievements', 'rankmann_claimedMilestones', 'rankmann_claimedChallenges', 'rankmann_xmasGifts', 'rankmann_xmasStats', 'rankmann_xmasDoors', 'rankmann_xmasClaimed', 'rankmann_xmasDay', 'rankmann_xmasNyReward', 'rankmann_shootingUnlocked', 'rankmann_galleryHigh']);
   const PURCHASE_KEYS = new Set(['rankmann_ownedSkins', 'rankmann_ownedVineSkins', 'rankmann_ownedEmotes', 'rankmann_equippedSkin',
     'rankmann_equippedVineSkin', 'rankmann_world2Unlocked', 'rankmann_world3Unlocked', 'rankmann_world4Unlocked']);
   function storageSet(key, value){
@@ -6996,7 +7035,7 @@
     // far from any of the normal worlds, so the ambient rain sound (and any
     // leftover rain particles) from wherever the player was standing before
     // getting pulled into the fight would be completely out of place here.
-    if (inBossArena){
+    if (inBossArena || galleryAreaOn){
       muteRainAudio();
       rainMat.opacity = 0;
       document.getElementById('stormBadge').classList.remove('show');
@@ -8734,6 +8773,7 @@
   let bossCountdownActive = false; // true during the 3-2-1 — boss doesn't attack and hits don't land yet, so nobody gets sucker-punched before they even know the fight has started
   async function enterBossArena(){
     if (inBossArena || bossArenaEntering) return;
+    if (galleryAreaOn){ bossEventActive = false; return; }   // Schießstand: keine Events
     if (!running){
       // Not actually playing right now (still on the menu, say) — nothing
       // sensible to fade/teleport. They'll simply miss this particular
@@ -11100,7 +11140,7 @@
     // 'E' held down is a reliable alternative to right-click for the grapple —
     // some embedded/sandboxed browser views swallow the right-click context menu
     // handling before it reaches the page, so right-click may not fire there.
-    if (e.code === 'KeyE' && running && !spectatingKey){ if (duoCandidate && !emoteActive) duoJoin(); else attachGrapple(); } // while a friend invites you to a partner emote, E joins instead of swinging
+    if (e.code === 'KeyE' && running && !spectatingKey && !e.repeat && typeof galleryHandleE === 'function' && galleryHandleE()) { /* Schießstand */ } else if (e.code === 'KeyE' && running && !spectatingKey && galleryBoothIdx < 0){ if (duoCandidate && !emoteActive) duoJoin(); else attachGrapple(); } // while a friend invites you to a partner emote, E joins instead of swinging
     if (e.code === 'KeyF' && running && !spectatingKey) performAttack();
     if (e.code === 'KeyB' && running && !paused && !spectatingKey) toggleEmoteWheel();
     if (e.code === 'Space' && running && !paused && !spectatingKey && !player.onGround && !grapple.active && !emoteActive && !broomActive && !(selectedWorld === 4 && !inBossArena)) startTrick(); // Space is the swim-up control in World 4, held constantly — triggering a flip on every single press there was the annoying nonstop spinning; same reasoning for the broom — Space is "ascend" while flying, not a trick trigger
@@ -13123,6 +13163,7 @@
   let statsOpenedFromGame = false;
   function openLiveStats(){
     if (!running || paused) return;
+    if (galleryBoothIdx >= 0) galleryLeaveBooth();
     paused = true;
     savePlaytime();
     closeEmoteWheel();
@@ -15599,9 +15640,25 @@
       go:'▶ Let’s go', cont:'▶ Continue', fresh:'↺ Start over', close:'Close', exit:'✕', exitAsk:'Really quit?', skipHint:'Space / click = continue',
       soonTitle:'To be continued …', soonText:'You have played all chapters so far. New chapters are coming soon!', replay:'↺ Watch again (no trophies)', diffIs:'Difficulty: ',
       bye:'Your progress is saved.', soon:'Chapter 2 – The Academy of Threads\ncoming soon …', objLeft:'{n} left', pc:'PC', hp:'Life' },
+    fr: { title:'📖 L’Histoire', intro:'De l’enfant trouvé au gardien des quatre royaumes.', pick:'Choisis la difficulté', diff:['Facile','Moyen','Difficile'],
+      diffInfo:['Ennemis plus faibles · trophées ×1','Ennemis normaux · trophées ×1,5','Ennemis plus forts · trophées ×2'],
+      go:'▶ C’est parti', cont:'▶ Continuer', fresh:'↺ Recommencer', close:'Fermer', exit:'✕', exitAsk:'Vraiment quitter ?', skipHint:'Espace / clic = continuer',
+      soonTitle:'À suivre …', soonText:'Tu as joué tous les chapitres actuels. De nouveaux chapitres arrivent bientôt !', replay:'↺ Revoir (sans trophées)', diffIs:'Difficulté : ',
+      bye:'Ta progression est sauvegardée.', soon:'Chapitre 2 – L’Académie des Fils\nbientôt disponible …', objLeft:'encore {n}', pc:'PC', hp:'Vie' },
+    es: { title:'📖 La Historia', intro:'De niño hallado a guardián de los cuatro reinos.', pick:'Elige la dificultad', diff:['Fácil','Medio','Difícil'],
+      diffInfo:['Enemigos más débiles · trofeos ×1','Enemigos normales · trofeos ×1,5','Enemigos más fuertes · trofeos ×2'],
+      go:'▶ ¡Vamos!', cont:'▶ Continuar', fresh:'↺ Empezar de nuevo', close:'Cerrar', exit:'✕', exitAsk:'¿Salir de verdad?', skipHint:'Espacio / clic = continuar',
+      soonTitle:'Continuará …', soonText:'Has jugado todos los capítulos hasta ahora. ¡Pronto llegarán nuevos capítulos!', replay:'↺ Ver de nuevo (sin trofeos)', diffIs:'Dificultad: ',
+      bye:'Tu progreso está guardado.', soon:'Capítulo 2 – La Academia de los Hilos\npróximamente …', objLeft:'quedan {n}', pc:'PC', hp:'Vida' },
+    pt: { title:'📖 A História', intro:'De criança encontrada a guardião dos quatro reinos.', pick:'Escolha a dificuldade', diff:['Fácil','Médio','Difícil'],
+      diffInfo:['Inimigos mais fracos · troféus ×1','Inimigos normais · troféus ×1,5','Inimigos mais fortes · troféus ×2'],
+      go:'▶ Vamos lá', cont:'▶ Continuar', fresh:'↺ Recomeçar', close:'Fechar', exit:'✕', exitAsk:'Sair mesmo?', skipHint:'Espaço / clique = continuar',
+      soonTitle:'Continua …', soonText:'Você jogou todos os capítulos até agora. Novos capítulos chegam em breve!', replay:'↺ Rever (sem troféus)', diffIs:'Dificuldade: ',
+      bye:'Seu progresso está salvo.', soon:'Capítulo 2 – A Academia dos Fios\nem breve …', objLeft:'faltam {n}', pc:'PC', hp:'Vida' },
   };
   const stL = k => { const L = STORY_I18N[currentLang] || STORY_I18N.en; return L[k] !== undefined ? L[k] : STORY_I18N.en[k]; };
-  const sx = (de, en) => (currentLang === 'de' ? de : en);
+  const STORY_TR = {"Chapter 1": {"fr": "Chapitre 1", "es": "Capítulo 1", "pt": "Capítulo 1"}, "The First Swing": {"fr": "Le premier élan", "es": "El primer balanceo", "pt": "O primeiro balanço"}, "On the night the sky burned, a crystal fell into the Realm of Magic.": {"fr": "La nuit où le ciel brûla, un cristal tomba dans le Royaume de la Magie.", "es": "La noche en que el cielo ardió, un cristal cayó en el Reino de la Magia.", "pt": "Na noite em que o céu ardeu, um cristal caiu no Reino da Magia."}, "It left no crater. It landed softly in the grass, like a feather – and it glowed from within.": {"fr": "Il ne laissa aucun cratère. Il se posa doucement dans l’herbe, comme une plume – et il brillait de l’intérieur.", "es": "No dejó ningún cráter. Aterrizó suavemente en la hierba, como una pluma, y brillaba desde dentro.", "pt": "Não abriu nenhuma cratera. Pousou suavemente na grama, como uma pena – e brilhava por dentro."}, "Shooting stars are usually gone faster … Well? What are you?": {"fr": "D’habitude, les étoiles filantes filent plus vite … Alors ? Qu’est-ce que tu es ?", "es": "Las estrellas fugaces suelen desaparecer más rápido … ¿Y bien? ¿Qué eres tú?", "pt": "As estrelas cadentes costumam sumir mais rápido … E então? O que é você?"}, "Inside the crystal slept a child. It opened its eyes, reached out – and grabbed the thread Silva held between her fingers.": {"fr": "Dans le cristal dormait un enfant. Il ouvrit les yeux, tendit la main – et attrapa le fil que Silva tenait entre ses doigts.", "es": "Dentro del cristal dormía un niño. Abrió los ojos, extendió la mano y agarró el hilo que Silva sostenía entre los dedos.", "pt": "Dentro do cristal dormia uma criança. Ela abriu os olhos, estendeu a mão – e agarrou o fio que Silva segurava entre os dedos."}, "Well, hello. You already have the fingers of a weaver.": {"fr": "Eh bien, bonjour. Tu as déjà des doigts de tisserand.", "es": "Vaya, hola. Ya tienes dedos de tejedor.", "pt": "Olá, pequeno. Você já tem dedos de tecelão."}, "I won’t give you a name yet. A name has to be earned. For now you are my little Weaver.": {"fr": "Je ne te donne pas encore de nom. Un nom, ça se mérite. Pour l’instant, tu es mon petit Tisserand.", "es": "Todavía no te daré un nombre. Un nombre hay que ganárselo. Por ahora eres mi pequeño Tejedor.", "pt": "Ainda não vou te dar um nome. Um nome precisa ser conquistado. Por enquanto você é meu pequeno Tecelão."}, "High above the clouds, however, a shadow opened an eye. It had seen the crystal fall.": {"fr": "Très haut au-dessus des nuages, pourtant, une ombre ouvrit un œil. Elle avait vu tomber le cristal.", "es": "Muy por encima de las nubes, sin embargo, una sombra abrió un ojo. Había visto caer el cristal.", "pt": "Bem acima das nuvens, porém, uma sombra abriu um olho. Ela tinha visto o cristal cair."}, "The heart … at last. I am coming for it.": {"fr": "Le cœur … enfin. Je viens le chercher.", "es": "El corazón … por fin. Voy a buscarlo.", "pt": "O coração … finalmente. Estou indo buscá-lo."}, "Five years later. The little Weaver had already turned Silva’s garden upside down three times.": {"fr": "Cinq ans plus tard. Le petit Tisserand avait déjà mis le jardin de Silva sens dessus dessous trois fois.", "es": "Cinco años después. El pequeño Tejedor ya había puesto patas arriba el jardín de Silva tres veces.", "pt": "Cinco anos depois. O pequeno Tecelão já tinha virado o jardim de Silva de cabeça para baixo três vezes."}, "Stop swinging on the washing line!": {"fr": "Arrête de te balancer au fil à linge !", "es": "¡Deja de columpiarte en el tendedero!", "pt": "Pare de se balançar no varal!"}, "… Oh, all right. At least swing on tiptoe.": {"fr": "… Bon, d’accord. Balance-toi au moins sur la pointe des pieds.", "es": "… Bueno, vale. Al menos columpíate de puntillas.", "pt": "… Ah, tudo bem. Pelo menos balance na ponta dos pés."}, "Look at a green crystal and hold the grapple button": {"fr": "Regarde un cristal vert et maintiens le bouton de grappin", "es": "Mira un cristal verde y mantén pulsado el botón del gancho", "pt": "Olhe para um cristal verde e segure o botão do gancho"}, "Look at a green crystal and hold right-click (or E)": {"fr": "Regarde un cristal vert et maintiens le clic droit (ou E)", "es": "Mira un cristal verde y mantén el clic derecho (o E)", "pt": "Olhe para um cristal verde e segure o clique direito (ou E)"}, "Swing over to Kira’s island!": {"fr": "Balance-toi jusqu’à l’île de Kira !", "es": "¡Columpíate hasta la isla de Kira!", "pt": "Balance até a ilha da Kira!"}, "Haha! You swing like a sack of potatoes!": {"fr": "Haha ! Tu te balances comme un sac de patates !", "es": "¡Jaja! ¡Te columpias como un saco de patatas!", "pt": "Haha! Você se balança como um saco de batatas!"}, "The little Weaver": {"fr": "Le petit Tisserand", "es": "El pequeño Tejedor", "pt": "O pequeno Tecelão"}, "Watch out! Dust sprites!": {"fr": "Attention ! Des lutins de poussière !", "es": "¡Cuidado! ¡Duendes del polvo!", "pt": "Cuidado! Duendes de poeira!"}, "Show them what you can do, little Weaver!": {"fr": "Montre-leur ce que tu sais faire, petit Tisserand !", "es": "¡Muéstrales de lo que eres capaz, pequeño Tejedor!", "pt": "Mostre a eles do que você é capaz, pequeno Tecelão!"}, "Tap the attack button near them": {"fr": "Appuie sur le bouton d’attaque près d’eux", "es": "Toca el botón de ataque cerca de ellos", "pt": "Toque no botão de ataque perto deles"}, "Get close and press F or right-click": {"fr": "Approche-toi et appuie sur F ou clic droit", "es": "Acércate y pulsa F o clic derecho", "pt": "Chegue perto e pressione F ou clique direito"}, "Defeat the dust sprites": {"fr": "Vaincs les lutins de poussière", "es": "Derrota a los duendes del polvo", "pt": "Derrote os duendes de poeira"}, "Oh no … Brumm! The big sprite is eating my flower beds!": {"fr": "Oh non … Brumm ! Le gros lutin mange mes plates-bandes !", "es": "¡Oh, no … Brumm! ¡El duende grande se está comiendo mis parterres!", "pt": "Ah, não … Brumm! O duende grande está comendo meus canteiros!"}, "Swing back to the garden and defeat Brumm!": {"fr": "Balance-toi jusqu’au jardin et vaincs Brumm !", "es": "¡Columpíate de vuelta al jardín y derrota a Brumm!", "pt": "Balance de volta ao jardim e derrote Brumm!"}, "Okay … not bad for a sack of potatoes.": {"fr": "D’accord … pas mal pour un sac de patates.", "es": "Vale … nada mal para un saco de patatas.", "pt": "Tá bom … nada mal para um saco de batatas."}, "That was my Weaver.": {"fr": "C’était mon Tisserand.", "es": "Ese era mi Tejedor.", "pt": "Esse era meu Tecelão."}, "That evening the little Weaver fell asleep early. He had no idea that the shadow above the clouds was already whispering his name.": {"fr": "Ce soir-là, le petit Tisserand s’endormit tôt. Il ne se doutait pas que l’ombre au-dessus des nuages murmurait déjà son nom.", "es": "Esa noche el pequeño Tejedor se durmió temprano. No tenía idea de que la sombra sobre las nubes ya susurraba su nombre.", "pt": "Naquela noite o pequeno Tecelão adormeceu cedo. Ele não fazia ideia de que a sombra acima das nuvens já sussurrava seu nome."}};
+  const sx = (de, en) => { if (currentLang === 'de') return de; if (currentLang === 'en') return en; const t = STORY_TR[en]; return (t && t[currentLang]) || en; };   // fr/es/pt über die englischen Texte
   const STORY_BASE = new THREE.Vector3(0, 300, -26000);
   const STORY_CONTENT_VERSION = 1; // raise this when a new chapter is added: players who finished the old content then get a "1" badge on the Story button
   const STORY_DIFF = [
@@ -17312,6 +17369,9 @@
       renderer.render(scene, camera);
       return;
     }
+    if (running && !paused && galleryBoothIdx >= 0){ try { galleryBoothFrame(dt); } catch(e){ try { galleryLeaveBooth(); } catch(_){} } renderer.render(scene, camera); return; }
+    if (galleryTeleportPending && running && !paused && !introCine.active){ galleryTeleportPending = false; try { galleryTeleportToArea(); } catch(e){} }
+    if (running && !paused && galleryBuilt){ try { galleryAreaTick(dt); } catch(e){} }
     if (!running || paused) {
       playerMesh.visible = running; // hides the character behind the blurred start-screen menu (it was showing through, staring at whatever direction it last faced) — still shown normally for an actual mid-game pause, only hidden pre-start
       renderer.render(scene, camera);
@@ -17956,26 +18016,23 @@
       player.onGround = false;
     }
 
-    updateDayNight(dt);
+    if (!galleryAreaOn) updateDayNight(dt);
     updateWeather(dt);
     updateRoomSync(dt);
     updateFriendBroadcast(dt);
     updateCloudBackup(dt);
-    updateBossFight(dt);
-    updateGhosts(dt);
-    updatePhantomSighting(dt);
+    if (!galleryAreaOn){ updateBossFight(dt); updateGhosts(dt); updatePhantomSighting(dt); }
     updateCoopUIExtras();
     updateSwingTrail(dt);
     updateTrick(dt);
-    updateChaosMode(dt);
-    updateGoldenHour();
-    if (!raceActive){ // friend race: no bonus ring, broom, keycaps or keycap events at all
+    if (!galleryAreaOn){ updateChaosMode(dt); updateGoldenHour(); }
+    if (!raceActive && !galleryAreaOn){ // friend race: no bonus ring, broom, keycaps or keycap events at all
       updateSpecialRing(dt);
       updateBroomPickup(dt);
     }
-    updateIceAge(dt);
-    if (christmasEventActive) updateXmas(dt);
-    if (!raceActive){
+    if (!galleryAreaOn) updateIceAge(dt);
+    if (christmasEventActive && !galleryAreaOn) updateXmas(dt);
+    if (!raceActive && !galleryAreaOn){
       updateKeyboardKeys(dt);
       updateGoldenKeycaps(dt);
       updateRainbowKeycaps(dt);
@@ -18021,6 +18078,8 @@
 
   document.getElementById('menuClickCatcher').addEventListener('mousedown', menuMusicUnlockAttempt);
   document.getElementById('startBtn').addEventListener('click', () => {
+    if (!window.__galBtn) pendingGalleryAfterStart = false;   // normaler Start: kein Schießstand
+    window.__galBtn = false;
     document.getElementById('deviceSurvey').classList.remove('hidden');
   });
   let mobileControlsWanted = false;
@@ -18065,6 +18124,7 @@
     try { if (document.activeElement && document.activeElement !== document.body) document.activeElement.blur(); } catch(e){}
     startSurveyDone = true;
     startGame();
+    if (pendingGalleryAfterStart){ pendingGalleryAfterStart = false; galleryTeleportPending = true; }
     if (pendingSpectateAfterStart){
       const { name, key } = pendingSpectateAfterStart;
       pendingSpectateAfterStart = null;
@@ -18087,7 +18147,7 @@
     mobileControlsWanted = false;
     updateTouchControlsVisibility();
     document.getElementById('deviceSurvey').classList.add('hidden');
-    if (storySkipKeys()) return;
+    if (storySkipKeys() || gallerySkipKeys()) return;
     document.getElementById('keysSurvey').classList.remove('hidden');
   });
   document.getElementById('deviceBtnMobile').addEventListener('click', () => {
@@ -18095,7 +18155,7 @@
     updateTouchControlsVisibility();
     document.getElementById('deviceSurvey').classList.add('hidden');
     document.getElementById('hint').style.display = 'none';
-    if (storySkipKeys()) return;
+    if (storySkipKeys() || gallerySkipKeys()) return;
     document.getElementById('keysSurvey').classList.remove('hidden');
   });
   document.getElementById('keysBtnOn').addEventListener('click', () => {
@@ -20770,6 +20830,615 @@
     if (b) b.addEventListener('click', () => { if (!XM.on) return showAdminToast('Weihnachts-Version ist aus'); xmStartRain(25); showAdminToast('🎁 Geschenke-Regen gestartet'); });
     if (c) c.addEventListener('click', () => { if (!XM.on) return showAdminToast('Weihnachts-Version ist aus'); XM.forceFw = !XM.forceFw; XM.forceFwUntil = performance.now() + 120000; showAdminToast('🎆 Feuerwerk ' + (XM.forceFw ? 'AN (schaltet sich nach 2 Min. selbst aus)' : 'AUS')); });
   })();
+
+  // =====================================================================
+  // 🎯 SCHIESSSTAND (Shooting Gallery) — BUILD v3
+  // Eigenständige Plattform weit weg von allen Welten (wie die Boss-Arena). Betreten über den Startmenü-Button.
+  // In der Kabine läuft ein eigener, schlanker Frame (die normale Spiel-Physik pausiert) — nichts davon läuft außerhalb der Kabine.
+  // Leicht gehalten: Geometrien/Materialien/Texturen werden EINMAL gebaut und wiederverwendet; Ziele und Partikel kommen aus festen Pools,
+  // pro Schuss/Spawn entsteht nichts Neues (daher auch nie etwas zum Freigeben — alles lebt so lange wie die Seite).
+  // =====================================================================
+  const GALLERY_BUILD = 'BUILD v3';
+  const GO = new THREE.Vector3(0, 600, -14000);                 // Ursprung der Schießstand-Plattform
+  const GALLERY_TOP = 6.5;                                      // Höhe der Plattformoberfläche (lokal)
+  const GALLERY_BOOTH_X = [-12, -6, 0, 6, 12], GALLERY_BOOTH_Z = 29;   // Kabine 3 steht bei (0, 6.5, 29)
+  const GALLERY_TARGET_ZONE = { x: 0.0, y: 6.5, z: 38.0 };      // Mittelpunkt der Zielzone (lokal)
+  const GALLERY_ZONE = { xMin: -16, xMax: 16, yMin: 8.8, yMax: 16.5, zMin: 33, zMax: 45 };   // Raum, in dem die Wächter fliegen
+  const GALLERY_BOOTH_ORDER = [2, 1, 3, 0, 4], GALLERY_INTRO = 3.5, GALLERY_ROUND_TIME = 60, GALLERY_UNLOCK_AT = 250, GALLERY_MAX_TARGETS = 8, GALLERY_HIT_R = 1.7, GALLERY_POINTS = 100;
+  const GT = {
+    de: { btn: '🎯 Schießstand', btnLocked: '🔒 Schießstand · ab 250 🏆', locked: 'Gesperrt: Du brauchst 250 Pokale.', enterKey: 'E – Schießstand betreten', enterTouch: 'Betreten', leave: 'Verlassen', time: 'Zeit', points: 'Punkte', go: 'LOS!', result: 'Ergebnis', hits: 'Treffer', acc: 'Trefferquote', high: 'Highscore', newHigh: '🏆 Neuer Highscore!', reward: 'Belohnung: +{n} 🏆', again: 'Nochmal', notNow: 'Zum Schießstand geht es nach dem Tutorial.', unlocked: '🎯 Schießstand freigeschaltet!', sign: 'SCHIESSSTAND', tag: 'ZIELEN · TREFFEN · POKALE SAMMELN' },
+    en: { btn: '🎯 Shooting Gallery', btnLocked: '🔒 Shooting Gallery · 250 🏆', locked: 'Locked: you need 250 trophies.', enterKey: 'E – Enter shooting gallery', enterTouch: 'Enter', leave: 'Leave', time: 'Time', points: 'Score', go: 'GO!', result: 'Result', hits: 'Hits', acc: 'Accuracy', high: 'High score', newHigh: '🏆 New high score!', reward: 'Reward: +{n} 🏆', again: 'Again', notNow: 'The gallery opens after the tutorial.', unlocked: '🎯 Shooting Gallery unlocked!', sign: 'SHOOTING RANGE', tag: 'AIM · HIT · COLLECT TROPHIES' },
+    fr: { btn: '🎯 Stand de tir', btnLocked: '🔒 Stand de tir · 250 🏆', locked: 'Verrouillé : il te faut 250 trophées.', enterKey: 'E – Entrer dans le stand de tir', enterTouch: 'Entrer', leave: 'Quitter', time: 'Temps', points: 'Points', go: 'GO !', result: 'Résultat', hits: 'Touches', acc: 'Précision', high: 'Meilleur score', newHigh: '🏆 Nouveau record !', reward: 'Récompense : +{n} 🏆', again: 'Rejouer', notNow: 'Le stand ouvre après le tutoriel.', unlocked: '🎯 Stand de tir débloqué !', sign: 'STAND DE TIR', tag: 'VISER · TOUCHER · GAGNER DES TROPHÉES' },
+    es: { btn: '🎯 Campo de tiro', btnLocked: '🔒 Campo de tiro · 250 🏆', locked: 'Bloqueado: necesitas 250 trofeos.', enterKey: 'E – Entrar al campo de tiro', enterTouch: 'Entrar', leave: 'Salir', time: 'Tiempo', points: 'Puntos', go: '¡YA!', result: 'Resultado', hits: 'Aciertos', acc: 'Precisión', high: 'Récord', newHigh: '🏆 ¡Nuevo récord!', reward: 'Recompensa: +{n} 🏆', again: 'Otra vez', notNow: 'El campo abre después del tutorial.', unlocked: '🎯 ¡Campo de tiro desbloqueado!', sign: 'CAMPO DE TIRO', tag: 'APUNTA · ACIERTA · GANA TROFEOS' },
+    pt: { btn: '🎯 Estande de tiro', btnLocked: '🔒 Estande de tiro · 250 🏆', locked: 'Bloqueado: você precisa de 250 troféus.', enterKey: 'E – Entrar no estande', enterTouch: 'Entrar', leave: 'Sair', time: 'Tempo', points: 'Pontos', go: 'JÁ!', result: 'Resultado', hits: 'Acertos', acc: 'Precisão', high: 'Recorde', newHigh: '🏆 Novo recorde!', reward: 'Recompensa: +{n} 🏆', again: 'De novo', notNow: 'O estande abre depois do tutorial.', unlocked: '🎯 Estande de tiro desbloqueado!', sign: 'ESTANDE DE TIRO', tag: 'MIRE · ACERTE · GANHE TROFÉUS' },
+  };
+  function gt(k, v){ const d = GT[currentLang] || GT.de; let s = (d[k] !== undefined ? d[k] : GT.de[k]) || k; if (v) for (const key in v) s = s.split('{' + key + '}').join(v[key]); return s; }
+
+  let shootingUnlocked = !!storageGet('rankmann_shootingUnlocked', false);
+  let galleryHigh = +storageGet('rankmann_galleryHigh', 0) || 0;
+  let galleryFxBusy = false, galleryArriveT = 9, galleryArriveZoom = 8, galleryMap = null, galleryMapItems = [], galleryRings = [], galleryBolts = [], galleryBoothG = [], galleryIntroT = 0, galleryArmsIn = 0, galleryFov0 = 70, galleryTrophies = 0, galleryIntroFrom = new THREE.Vector3(), galleryTeleportPending = false, galleryPrevBg = null, galleryBuilt = false, galleryGroup = null, galleryAreaOn = false, galleryBooths = [], galleryDebugOn = false;
+  let galleryBoothIdx = -1, galleryState = 'idle', galleryStateT = 0, galleryHadLock = false, galleryFireHeld = false;
+  let galleryTimeLeft = 0, galleryElapsed = 0, galleryScore = 0, galleryShots = 0, galleryHits = 0, galleryLastShot = 0, gallerySpawnT = 0, galleryFlashT = 0, galleryGoT = 0;
+  let galleryArms = null, galleryTargets = [], galleryParts = [], gallerySavedZoom = 8, pendingGalleryAfterStart = false, galleryNearIdx = -1, galleryLastCountShown = -1;
+  const _q3 = new THREE.Vector3(), _gq2 = new THREE.Vector3(), galleryDir = new THREE.Vector3(), galleryOrigin = new THREE.Vector3(), _gv = new THREE.Vector3(), _gq = new THREE.Quaternion(), _gUp = new THREE.Vector3(0, 1, 0);
+  const $g = id => document.getElementById(id);
+
+  function galleryToast(msg, ms){
+    const el = $g('shootToast'); if (!el) return;
+    el.textContent = msg; el.classList.add('show'); clearTimeout(galleryToast._t); galleryToast._t = setTimeout(() => el.classList.remove('show'), ms || 2600);
+  }
+  function updateShootingBtn(){
+    const b = $g('shootingBtn'); if (!b) return;
+    if (!shootingUnlocked && totalTrophies >= GALLERY_UNLOCK_AT){ shootingUnlocked = true; storageSet('rankmann_shootingUnlocked', true); galleryToast(gt('unlocked'), 3500); }
+    const txt = shootingUnlocked ? gt('btn') : gt('btnLocked');
+    if (b.textContent !== txt) b.textContent = txt;
+    b.classList.toggle('lockedBtn', !shootingUnlocked);
+  }
+  setInterval(updateShootingBtn, 800); updateShootingBtn();
+  $g('shootingBtn').addEventListener('click', () => {
+    updateShootingBtn();
+    if (!shootingUnlocked){ galleryToast(gt('locked'), 3000); return; }
+    if (running) return;
+    window.__galBtn = true; pendingGalleryAfterStart = true;
+    $g('startBtn').click();      // erst die Geräte-Abfrage (PC/Mobil), danach die Animation, danach das Spiel
+  });
+
+
+  // Schießstand-Start: keine Keycap-Frage (hier spawnen keine Keycaps) – stattdessen sofort die Animation, danach startet das Spiel
+  function gallerySkipKeys(){
+    if (!pendingGalleryAfterStart) return false;
+    keyboardKeysWanted = false; setKeyboardKeysVisible(false);
+    galleryPlayStartFx(() => finishStartFlow());
+    return true;
+  }
+  // ---------- Start-Animation (nach der Geräte-Abfrage) ----------
+  function galleryPlayStartFx(onDone){
+    if (galleryFxBusy) return; galleryFxBusy = true;
+    ensureAudio(); try { stopMenuMusic(); } catch(e){}      // Menü-Musik aus – egal welcher Titel läuft
+    const box = $g('galleryIntroFx'), cv = $g('galleryIntroCv'), ctx = cv.getContext('2d');
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.5); cv.width = Math.floor(window.innerWidth * dpr); cv.height = Math.floor(window.innerHeight * dpr);
+    const W = cv.width, H = cv.height, cx = W / 2, cy = H / 2, R = Math.hypot(cx, cy), TOT = 3.0, CALL = 2.35;
+    box.style.transition = 'none'; box.style.opacity = '1'; box.style.display = 'block'; void box.offsetWidth; box.style.transition = '';
+    const lines = []; for (let i = 0; i < 110; i++) lines.push({ a: Math.random() * 6.283, s: 0.2 + Math.random() * 0.8, w: 1 + Math.random() * 3, d: Math.random() });
+    const t0 = performance.now(); let done = false, called = false, snd1 = false, snd2 = false, snd3 = false, raf = 0;
+    const finish = () => {
+      if (done) return; done = true; cancelAnimationFrame(raf);
+      if (!called){ called = true; try { onDone(); } catch(e){} }
+      box.style.opacity = '0'; setTimeout(() => { box.style.display = 'none'; galleryFxBusy = false; }, 600);
+    };
+    box.onclick = () => { if (!called){ called = true; try { onDone(); } catch(e){} } finish(); };   // Tippen = überspringen
+    const eo = x => 1 - Math.pow(1 - x, 3), cl = x => Math.max(0, Math.min(1, x));
+    function frame(){
+      const t = (performance.now() - t0) / 1000;
+      if (t > 0 && !snd1){ snd1 = true; try { playNoiseBurst(0.7, 1800, 0.2); playTone(90, 0.9, 'sawtooth', 0.12, 420); } catch(e){} }
+      if (t > 1.05 && !snd2){ snd2 = true; try { playTone(70, 0.5, 'sine', 0.35, 38); playNoiseBurst(0.35, 600, 0.3); playTone(1200, 0.12, 'square', 0.08, 300); } catch(e){} }
+      if (t > 1.8 && !snd3){ snd3 = true; try { playTone(200, 0.55, 'sawtooth', 0.1, 1700); playNoiseBurst(0.55, 5000, 0.14); } catch(e){} }
+      // Hintergrund: schwarz -> tiefes Violett, pulsierend
+      const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, R); const pu = 0.5 + 0.5 * Math.sin(t * 9);
+      g.addColorStop(0, 'rgb(' + (60 + pu * 40 | 0) + ',10,' + (90 + pu * 30 | 0) + ')'); g.addColorStop(0.55, '#1a0a30'); g.addColorStop(1, '#000');
+      ctx.globalCompositeOperation = 'source-over'; ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+      // Speed-Lines vom Zentrum nach außen
+      ctx.lineCap = 'round';
+      for (const L of lines){
+        const p = ((t * (0.9 + L.s) + L.d) % 1), r0 = R * (0.05 + p * 0.9), r1 = r0 + R * (0.08 + L.s * 0.25) * Math.min(1, t * 2);
+        ctx.strokeStyle = 'rgba(255,' + (150 + L.s * 90 | 0) + ',220,' + (0.15 + 0.5 * (1 - p)) * cl(t * 3) + ')'; ctx.lineWidth = L.w * dpr;
+        ctx.beginPath(); ctx.moveTo(cx + Math.cos(L.a) * r0, cy + Math.sin(L.a) * r0); ctx.lineTo(cx + Math.cos(L.a) * r1, cy + Math.sin(L.a) * r1); ctx.stroke();
+      }
+      // Spinnennetz baut sich auf: Speichen schießen raus, Ringe folgen
+      const N = 18, wp = eo(cl((t - 0.2) / 1.0));
+      ctx.strokeStyle = 'rgba(255,255,255,0.85)'; ctx.lineWidth = 2.2 * dpr;
+      for (let k = 0; k < N; k++){ const a = k / N * 6.283 + t * 0.12; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(a) * R * wp, cy + Math.sin(a) * R * wp); ctx.stroke(); }
+      for (let r = 1; r <= 9; r++){
+        const rr = r * R / 9, rp = cl((wp * 9 - r + 1)); if (rp <= 0) continue;
+        ctx.beginPath(); for (let k = 0; k <= N; k++){ const a = k / N * 6.283 + t * 0.12, d = (k % 2 ? 0.9 : 1) * rr * rp; const x = cx + Math.cos(a) * d, y = cy + Math.sin(a) * d; k ? ctx.lineTo(x, y) : ctx.moveTo(x, y); } ctx.stroke();
+      }
+      // Zielscheiben-Ringe rasen auf den Betrachter zu
+      for (let k = 0; k < 4; k++){
+        const q = cl((t - 0.7 - k * 0.22) / 0.9); if (q <= 0 || q >= 1) continue;
+        const rr = R * 0.05 + R * 1.3 * q * q, a = (1 - q) * 0.9;
+        ctx.lineWidth = (10 + 24 * q) * dpr; ctx.strokeStyle = (k % 2 ? 'rgba(255,255,255,' : 'rgba(255,40,80,') + a + ')'; ctx.beginPath(); ctx.arc(cx, cy, rr, 0, 6.283); ctx.stroke();
+      }
+      // Titel: knallt von riesig auf normal, mit Wackeln + Farb-Glitch
+      if (t > 1.0){
+        const q = cl((t - 1.0) / 0.3), sc = 1 + (1 - eo(q)) * 3.2, sh = Math.max(0, 1 - (t - 1.0) / 0.7) * 18 * dpr, ox = (Math.random() - 0.5) * sh, oy = (Math.random() - 0.5) * sh;
+        const SGN = gt('sign'), fs = Math.min(W * 0.115, H * 0.2) * Math.min(1, 12 / SGN.length);
+        ctx.save(); ctx.translate(cx + ox, cy + oy); ctx.scale(sc, sc); ctx.globalAlpha = cl(q * 2.5);
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = '900 ' + fs + 'px Poppins, Arial, sans-serif';
+        const gl = (t < 1.7) ? (Math.random() * 10 + 6) * dpr : 2 * dpr;
+        ctx.fillStyle = 'rgba(0,230,255,0.9)'; ctx.fillText(SGN, -gl, 0);
+        ctx.fillStyle = 'rgba(255,30,90,0.9)'; ctx.fillText(SGN, gl, 0);
+        ctx.shadowColor = '#ff2d6a'; ctx.shadowBlur = 40 * dpr; ctx.fillStyle = '#ffffff'; ctx.fillText(SGN, 0, 0); ctx.shadowBlur = 0;
+        ctx.save(); ctx.translate(0, -fs * 1.05); ctx.rotate(Math.sin(t * 3) * 0.12 + (1 - eo(q)) * 6.283); ctx.font = (fs * 0.95) + 'px Arial, sans-serif'; ctx.fillText('🎯', 0, 0); ctx.restore();
+        ctx.font = '700 ' + (fs * 0.2) + 'px Poppins, Arial, sans-serif'; ctx.fillStyle = 'rgba(255,230,240,' + cl((t - 1.4) / 0.4) + ')'; ctx.fillText(gt('tag'), 0, fs * 0.72);
+        ctx.restore();
+      }
+      // Scanline-/Glitch-Streifen
+      if (t > 0.9 && t < 1.8){ for (let k = 0; k < 4; k++){ const y = Math.random() * H, h = (4 + Math.random() * 22) * dpr; ctx.fillStyle = 'rgba(' + (Math.random() < 0.5 ? '0,230,255' : '255,40,100') + ',0.18)'; ctx.fillRect(0, y, W, h); } }
+      // weißer Blitz zum Schluss
+      const fl = cl((t - 1.95) / 0.4); if (fl > 0){ ctx.fillStyle = 'rgba(255,255,255,' + fl + ')'; ctx.fillRect(0, 0, W, H); }
+      if (t >= CALL && !called){ called = true; try { onDone(); } catch(e){} }
+      if (t >= TOT){ finish(); return; }
+      raf = requestAnimationFrame(frame);
+    }
+    raf = requestAnimationFrame(frame);
+  }
+
+  // ---------- Aufbau (einmalig, beim ersten Besuch) ----------
+  function galleryCanvasTex(w, h, draw){
+    const cv = document.createElement('canvas'); cv.width = w; cv.height = h; draw(cv.getContext('2d'), w, h);
+    const t = new THREE.CanvasTexture(cv); t.anisotropy = 4; return t;
+  }
+  function ensureGalleryBuilt(){
+    if (galleryBuilt) return;
+    galleryBuilt = true;
+    galleryGroup = new THREE.Group(); galleryGroup.position.copy(GO); galleryGroup.visible = false;
+    const pink = new THREE.MeshStandardMaterial({ color: 0xff6ab8, roughness: 0.6 });
+    const rimMat = new THREE.MeshStandardMaterial({ color: 0xff2d95, emissive: 0xff2d95, emissiveIntensity: 0.8, roughness: 0.4 });
+    const purple = new THREE.MeshStandardMaterial({ color: 0x6a2bd0, roughness: 0.55 });
+    const dark = new THREE.MeshStandardMaterial({ color: 0x2b2340, roughness: 0.7 });
+    const glow = new THREE.MeshBasicMaterial({ color: 0xff9ad8 });
+    const redMat = new THREE.MeshStandardMaterial({ color: 0xd8203a, emissive: 0x6a0614, emissiveIntensity: 0.6, roughness: 0.5 });
+    const floorTex = galleryCanvasTex(1024, 1024, (c, w, h) => {
+      const g = c.createRadialGradient(w / 2, h / 2, 40, w / 2, h / 2, w / 2); g.addColorStop(0, '#ff8fd0'); g.addColorStop(0.6, '#ff5aa8'); g.addColorStop(1, '#b0287e');
+      c.fillStyle = g; c.fillRect(0, 0, w, h);
+      c.strokeStyle = 'rgba(255,255,255,0.8)'; c.lineWidth = 3; c.lineCap = 'round';
+      for (let k = 0; k < 20; k++){ const a = k / 20 * 6.283; c.beginPath(); c.moveTo(w / 2, h / 2); c.lineTo(w / 2 + Math.cos(a) * w / 2, h / 2 + Math.sin(a) * h / 2); c.stroke(); }   // Spinnennetz: Speichen
+      for (let r = 1; r <= 7; r++){ const R = r * 68; c.beginPath(); for (let k = 0; k <= 20; k++){ const a = k / 20 * 6.283, rr = k % 2 ? R * 0.93 : R; const x = w / 2 + Math.cos(a) * rr, y = h / 2 + Math.sin(a) * rr; k ? c.lineTo(x, y) : c.moveTo(x, y); } c.stroke(); }   // Ringe (durchhängend)
+      c.strokeStyle = 'rgba(255,255,255,0.95)'; c.lineWidth = 9; c.beginPath(); c.arc(w / 2, h / 2, w / 2 - 14, 0, 6.283); c.stroke();
+      c.fillStyle = 'rgba(255,255,255,0.9)'; c.font = '90px Arial, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('🕷️', w / 2, h / 2 + 4);
+    });
+    const topMat = new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.7 }), sideMat = new THREE.MeshStandardMaterial({ color: 0xc23a90, roughness: 0.6, emissive: 0x3a0a2a, emissiveIntensity: 0.5 });
+    const plat = new THREE.Mesh(new THREE.CylinderGeometry(26, 27, 4, 48), [sideMat, topMat, sideMat]); plat.position.set(0, GALLERY_TOP - 2, 32); galleryGroup.add(plat);
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(26.2, 0.35, 8, 64), rimMat); rim.rotation.x = Math.PI / 2; rim.position.set(0, GALLERY_TOP + 0.05, 32); galleryGroup.add(rim);
+    // Felsen-Unterseite (zackig, wie eine echte schwebende Insel)
+    const rockGeo = new THREE.ConeGeometry(27, 26, 14, 4); { const pa = rockGeo.attributes.position; let rs2 = 11; for (let v = 0; v < pa.count; v++){ rs2 = (rs2 * 16807) % 2147483647; const j = (rs2 / 2147483647 - 0.5); const y = pa.getY(v); if (y > -12){ pa.setX(v, pa.getX(v) * (1 + j * 0.25)); pa.setZ(v, pa.getZ(v) * (1 + j * 0.25)); pa.setY(v, y + j * 2.5); } } rockGeo.computeVertexNormals(); }
+    const rock = new THREE.Mesh(rockGeo, new THREE.MeshStandardMaterial({ color: 0x4a2f7a, roughness: 0.9, flatShading: true, emissive: 0x160a30, emissiveIntensity: 0.6 })); rock.rotation.x = Math.PI; rock.position.set(0, GALLERY_TOP - 4 - 13, 32); galleryGroup.add(rock);
+    // Kristalle am Rand + Rand-Lichter
+    const crysGeo = new THREE.OctahedronGeometry(1, 0), crysMats = [new THREE.MeshStandardMaterial({ color: 0x55e0ff, emissive: 0x1aa0d8, emissiveIntensity: 1.0, roughness: 0.2, flatShading: true }), new THREE.MeshStandardMaterial({ color: 0xff7ad8, emissive: 0xd0309c, emissiveIntensity: 1.0, roughness: 0.2, flatShading: true })];
+    for (let k = 0; k < 14; k++){ const a = k / 14 * 6.283 + 0.2, rr = 23.5 + (k % 3) * 0.8; if (Math.sin(a) < -0.55) continue; const cr = new THREE.Mesh(crysGeo, crysMats[k % 2]); const sc = 0.8 + (k % 4) * 0.35; cr.scale.set(sc * 0.55, sc * 1.9, sc * 0.55); cr.position.set(Math.cos(a) * rr, GALLERY_TOP + sc * 1.8, 32 + Math.sin(a) * rr); cr.rotation.z = (k % 3 - 1) * 0.18; galleryGroup.add(cr); }
+    const bulbGeo = new THREE.SphereGeometry(0.28, 8, 6), bulbMats = [new THREE.MeshBasicMaterial({ color: 0xfff2a0 }), new THREE.MeshBasicMaterial({ color: 0x9af0ff })];
+    for (let k = 0; k < 36; k++){ const a = k / 36 * 6.283; const bl = new THREE.Mesh(bulbGeo, bulbMats[k % 2]); bl.position.set(Math.cos(a) * 26.6, GALLERY_TOP + 0.35, 32 + Math.sin(a) * 26.6); galleryGroup.add(bl); }
+    // kleine schwebende Felsbrocken rund um die Insel
+    const pebGeo = new THREE.IcosahedronGeometry(1, 0), pebMat = new THREE.MeshStandardMaterial({ color: 0x6a4aa8, roughness: 0.85, flatShading: true });
+    for (let k = 0; k < 9; k++){ const a = k / 9 * 6.283 + 0.5, rr = 34 + (k % 3) * 5; const pb = new THREE.Mesh(pebGeo, pebMat); const sc = 1.2 + (k % 4) * 0.9; pb.scale.set(sc, sc * 0.8, sc); pb.position.set(Math.cos(a) * rr, GALLERY_TOP - 6 + (k % 5) * 3.5, 32 + Math.sin(a) * rr); pb.rotation.set(k, k * 2, 0); galleryGroup.add(pb); }
+    // Sternenhimmel
+    { const N = 420, pos = new Float32Array(N * 3); let rs3 = 5; for (let k = 0; k < N; k++){ rs3 = (rs3 * 16807) % 2147483647; const u = rs3 / 2147483647; rs3 = (rs3 * 16807) % 2147483647; const v = rs3 / 2147483647; rs3 = (rs3 * 16807) % 2147483647; const w2 = rs3 / 2147483647; const th = u * 6.283, ph = Math.acos(2 * v - 1), R = 260 + w2 * 60; pos[k * 3] = R * Math.sin(ph) * Math.cos(th); pos[k * 3 + 1] = Math.abs(R * Math.cos(ph)) * 0.8 - 20; pos[k * 3 + 2] = 40 + R * Math.sin(ph) * Math.sin(th); }
+      const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.BufferAttribute(pos, 3)); galleryGroup.add(new THREE.Points(sg, new THREE.PointsMaterial({ color: 0xffffff, size: 2.2, sizeAttenuation: false, fog: false }))); }
+    scene.add(galleryGroup);
+    islands.push({ mesh: plat, pos: new THREE.Vector3(GO.x, GO.y + GALLERY_TOP, GO.z + 32), radius: 26.5, top: GO.y + GALLERY_TOP, bottom: GO.y + GALLERY_TOP - 4, baseHue: 0.9 });   // kein `world` -> Welt-Themes fassen es nicht an (wie die Boss-Arena)
+    // Leuchtendes Schild "SCHIESSSTAND" mit 🎯 – hoch über der Zielzone, damit es die Sicht nicht verdeckt
+    const signTex = galleryCanvasTex(1024, 256, (c, w, h) => {
+      c.clearRect(0, 0, w, h); c.textAlign = 'center'; c.textBaseline = 'middle';
+      c.shadowColor = '#ff2d3d'; c.shadowBlur = 34; c.fillStyle = '#ffd6d6'; c.font = '900 ' + Math.round(92 * Math.min(1, 12 / gt('sign').length)) + 'px Poppins, Arial, sans-serif';
+      c.fillText(gt('sign'), 600, 140);
+      c.shadowBlur = 20; c.font = '120px Arial, sans-serif'; c.fillText('🎯', 100, 136);
+    });
+    const SY = GALLERY_TOP + 25;
+    const board = new THREE.Mesh(new THREE.BoxGeometry(24, 6, 0.6), new THREE.MeshStandardMaterial({ color: 0x23102e, emissive: 0x3a0610, emissiveIntensity: 0.9, roughness: 0.5 }));
+    board.position.set(0, SY, 57); galleryGroup.add(board);
+    const face = new THREE.Mesh(new THREE.PlaneGeometry(23, 5.75), new THREE.MeshBasicMaterial({ map: signTex, transparent: true }));
+    face.position.set(0, SY, 57 - 0.32); face.rotation.y = Math.PI; galleryGroup.add(face);
+    const frame = new THREE.Mesh(new THREE.BoxGeometry(24.6, 6.6, 0.4), rimMat); frame.position.set(0, SY, 57.3); galleryGroup.add(frame);
+    const postGeo = new THREE.CylinderGeometry(0.35, 0.35, 28, 8);
+    [-10, 10].forEach(x => { const q = new THREE.Mesh(postGeo, dark); q.position.set(x, SY - 14 - 3, 57); galleryGroup.add(q); });
+    // 5 Kabinen (jede in einer eigenen Gruppe – im Normalfall steht nur EINE, im Koop so viele wie Spieler im Raum)
+    const pedGeo = new THREE.CylinderGeometry(2.1, 2.3, 0.12, 24), discGeo = new THREE.CylinderGeometry(1.5, 1.5, 0.02, 32), postG2 = new THREE.CylinderGeometry(0.08, 0.08, 3.2, 8),
+          ballGeo = new THREE.SphereGeometry(0.16, 8, 6), ledgeGeo = new THREE.BoxGeometry(3.6, 0.12, 0.9), halfGeo = new THREE.CircleGeometry(0.95, 24, 0, Math.PI), numGeo = new THREE.PlaneGeometry(0.8, 0.8);
+    const bullTex = galleryCanvasTex(256, 256, (c, w, h) => {
+      const cols = ['#d8203a', '#ffffff', '#d8203a', '#ffffff', '#ffd23a'];
+      for (let i = 0; i < 5; i++){ c.fillStyle = cols[i]; c.beginPath(); c.arc(w / 2, h / 2, w / 2 * (1 - i * 0.2), 0, 6.283); c.fill(); }
+    });
+    const bullMat = new THREE.MeshBasicMaterial({ map: bullTex });
+    GALLERY_BOOTH_X.forEach((bx, i) => {
+      const bg = new THREE.Group(); galleryGroup.add(bg);
+      const ped = new THREE.Mesh(pedGeo, purple); ped.position.set(bx, GALLERY_TOP + 0.06, GALLERY_BOOTH_Z); bg.add(ped);
+      const disc = new THREE.Mesh(discGeo, bullMat); disc.position.set(bx, GALLERY_TOP + 0.14, GALLERY_BOOTH_Z); bg.add(disc);
+      [-1.95, 1.95].forEach(dx => {
+        const q = new THREE.Mesh(postG2, dark); q.position.set(bx + dx, GALLERY_TOP + 1.6, GALLERY_BOOTH_Z); bg.add(q);
+        const b = new THREE.Mesh(ballGeo, glow); b.position.set(bx + dx, GALLERY_TOP + 3.3, GALLERY_BOOTH_Z); bg.add(b);
+      });
+      const ledge = new THREE.Mesh(ledgeGeo, purple); ledge.position.set(bx, GALLERY_TOP + 1.0, GALLERY_BOOTH_Z + 1.3); bg.add(ledge);
+      const half = new THREE.Mesh(halfGeo, redMat); half.position.set(bx, GALLERY_TOP + 3.0, GALLERY_BOOTH_Z - 0.05); half.rotation.y = Math.PI; bg.add(half);
+      const numTex = galleryCanvasTex(128, 128, (c, w, h) => { c.clearRect(0, 0, w, h); c.fillStyle = '#fff'; c.font = '900 96px Poppins, Arial, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(String(5 - i), w / 2, h / 2 + 6); });
+      const num = new THREE.Mesh(numGeo, new THREE.MeshBasicMaterial({ map: numTex, transparent: true })); num.position.set(bx, GALLERY_TOP + 3.38, GALLERY_BOOTH_Z - 0.1); num.rotation.y = Math.PI; bg.add(num);
+      galleryBooths.push({ x: GO.x + bx, z: GO.z + GALLERY_BOOTH_Z, on: true, g: bg });
+    });
+    // Die "Map": schwebende Plattform-Inseln (wie in den Spielwelten), die beim Betreten vor dir aus der Tiefe hochfahren
+    galleryMap = new THREE.Group(); galleryMap.visible = false; galleryGroup.add(galleryMap);
+    const isTopG = new THREE.CylinderGeometry(1, 1, 0.3, 20), isRockG = new THREE.ConeGeometry(1, 1.5, 9, 1), isRimG = new THREE.TorusGeometry(1.01, 0.035, 6, 32), isCrysG = new THREE.OctahedronGeometry(0.18, 0);
+    const isRockM = new THREE.MeshStandardMaterial({ color: 0x4a2f7a, roughness: 0.9, flatShading: true, emissive: 0x160a30, emissiveIntensity: 0.6 });
+    const isCols = [0x57e08a, 0x55d0ff, 0xc08cff, 0xffd86a, 0xff7ab8], isTopMs = isCols.map(c => new THREE.MeshStandardMaterial({ color: c, roughness: 0.6, emissive: c, emissiveIntensity: 0.25 })), isRimMs = isCols.map(c => new THREE.MeshBasicMaterial({ color: c }));
+    let rs = 7; const rnd = () => { rs = (rs * 16807) % 2147483647; return rs / 2147483647; };
+    for (let n = 0; n < 22; n++){
+      const side = n < 10 ? (n % 2 ? 1 : -1) : 0;
+      const r = 3 + rnd() * 5;
+      const x = side ? side * (30 + rnd() * 26) : (rnd() - 0.5) * 110, z = side ? 34 + rnd() * 40 : 62 + rnd() * 60, y = GALLERY_TOP - 6 + rnd() * 34;
+      const g = new THREE.Group(); const ci = n % 5;
+      const top = new THREE.Mesh(isTopG, isTopMs[ci]); g.add(top);
+      const rk = new THREE.Mesh(isRockG, isRockM); rk.rotation.x = Math.PI; rk.position.y = -0.15 - 0.75; g.add(rk);
+      const rm = new THREE.Mesh(isRimG, isRimMs[ci]); rm.rotation.x = Math.PI / 2; rm.position.y = 0.16; g.add(rm);
+      if (n % 2 === 0){ const cr = new THREE.Mesh(isCrysG, isRimMs[(ci + 1) % 5]); cr.scale.set(1, 2.4, 1); cr.position.set(0.3, 0.45, 0.2); g.add(cr); }
+      g.position.set(x, y, z); g.scale.setScalar(0.001); galleryMap.add(g);
+      galleryMapItems.push({ m: g, r, y, i: n, ph: rnd() * 6.28 });
+    }
+    // Hologramm-Ringe (Aufbau-Effekt der Zielzone)
+    const ringGeo = new THREE.TorusGeometry(1, 0.05, 6, 56);
+    [0x66e0ff, 0xff7ad0, 0xffffff].forEach(c => {
+      const r = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
+      r.rotation.x = Math.PI / 2; r.position.set(GALLERY_TARGET_ZONE.x, 11, GALLERY_TARGET_ZONE.z); r.visible = false; galleryGroup.add(r); galleryRings.push(r);
+    });
+    // Netz-Fäden (Pool aus 5; Nr. 4 ist der Faden der Einstiegs-Animation)
+    const boltGeo = new THREE.CylinderGeometry(0.035, 0.035, 1, 5); boltGeo.rotateX(Math.PI / 2); boltGeo.translate(0, 0, 0.5);
+    for (let i = 0; i < 5; i++){
+      const m = new THREE.Mesh(boltGeo, new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9 })); m.visible = false; scene.add(m); galleryBolts.push({ m, life: 0 });
+    }
+    // Ziele ("Wächter"): karmesinrote Low-Poly-Monster mit Stacheln (klein = 1 Treffer, groß = 3 Treffer)
+    const bodyGeo = new THREE.IcosahedronGeometry(1, 0), spikeGeo = new THREE.ConeGeometry(0.28, 0.9, 5), eyeGeo = new THREE.SphereGeometry(0.2, 8, 6), pupilGeo = new THREE.SphereGeometry(0.09, 6, 5);
+    const bodyMat = new THREE.MeshStandardMaterial({ color: 0xc0122f, emissive: 0x5a0010, emissiveIntensity: 0.7, roughness: 0.55, flatShading: true });
+    const spikeMat = new THREE.MeshStandardMaterial({ color: 0x7a0a1c, emissive: 0x30000a, emissiveIntensity: 0.6, roughness: 0.5, flatShading: true });
+    const eyeMat = new THREE.MeshBasicMaterial({ color: 0xffffff }), pupilMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
+    const dirs = []; [-1, 1].forEach(a => [-1, 1].forEach(b => [-1, 1].forEach(c => dirs.push(new THREE.Vector3(a, b, c).normalize())))); dirs.push(new THREE.Vector3(0, 1, 0));
+    for (let i = 0; i < GALLERY_MAX_TARGETS; i++){
+      const g = new THREE.Group(); g.visible = false;
+      g.add(new THREE.Mesh(bodyGeo, bodyMat));
+      dirs.forEach(d => { const sp = new THREE.Mesh(spikeGeo, spikeMat); sp.quaternion.setFromUnitVectors(_gUp, d); sp.position.copy(d).multiplyScalar(1.12); g.add(sp); });
+      [-1, 1].forEach(sx => { const e = new THREE.Mesh(eyeGeo, eyeMat); e.position.set(sx * 0.36, 0.2, -0.82); g.add(e); const pu = new THREE.Mesh(pupilGeo, pupilMat); pu.position.set(sx * 0.36, 0.2, -0.99); g.add(pu); });
+      scene.add(g);
+      galleryTargets.push({ g, active: false, p: new THREE.Vector3(), v: new THREE.Vector3(), phase: Math.random() * 6, age: 0, big: false, hp: 1, sc: 1, hurt: 0 });
+    }
+    const partGeo = new THREE.TetrahedronGeometry(0.2), partMats = [new THREE.MeshBasicMaterial({ color: 0xff2d55 }), new THREE.MeshBasicMaterial({ color: 0xffffff }), new THREE.MeshBasicMaterial({ color: 0xffb347 })];
+    for (let i = 0; i < 72; i++){
+      const m = new THREE.Mesh(partGeo, partMats[i % 3]); m.visible = false; galleryGroup.add(m);
+      galleryParts.push({ m, v: new THREE.Vector3(), life: 0 });
+    }
+    // Ich-Perspektive: Spider-Man-Arme – blauer Ärmel, rote Handschuhe, Netzwerfer am Handgelenk
+    galleryArms = new THREE.Group(); galleryArms.visible = false; galleryArms.scale.setScalar(0.85);
+    const sleeve = new THREE.MeshStandardMaterial({ color: 0x1f4fd8, roughness: 0.55, depthTest: false }), glove = new THREE.MeshStandardMaterial({ color: 0xd6192e, roughness: 0.6, depthTest: false }),
+          metal = new THREE.MeshStandardMaterial({ color: 0x9aa4b4, roughness: 0.3, metalness: 0.7, depthTest: false }), tipMat = new THREE.MeshBasicMaterial({ color: 0xffffff, depthTest: false }),
+          flashMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.95, depthTest: false, blending: THREE.AdditiveBlending });
+    const armGeo = new THREE.CylinderGeometry(0.06, 0.08, 0.7, 10), cuffGeo = new THREE.CylinderGeometry(0.075, 0.075, 0.06, 10), palmGeo = new THREE.BoxGeometry(0.11, 0.045, 0.12), fingGeo = new THREE.CylinderGeometry(0.014, 0.018, 0.1, 6),
+          foldGeo = new THREE.SphereGeometry(0.026, 6, 5), thumbGeo = new THREE.CylinderGeometry(0.016, 0.02, 0.07, 6), devGeo = new THREE.BoxGeometry(0.085, 0.05, 0.11), tipGeo = new THREE.CylinderGeometry(0.014, 0.014, 0.03, 6), flashGeo = new THREE.SphereGeometry(0.1, 8, 6);
+    galleryArms.userData.arms = [];
+    [-1, 1].forEach(side => {
+      const a = new THREE.Group(); a.position.set(side * 0.26, -0.3, -0.42);
+      const f = new THREE.Mesh(armGeo, sleeve); f.rotation.x = Math.PI / 2; f.position.set(0, 0, 0.32); a.add(f);
+      const cuff = new THREE.Mesh(cuffGeo, glove); cuff.rotation.x = Math.PI / 2; cuff.position.set(0, 0, -0.04); a.add(cuff);
+      const h = new THREE.Group(); h.position.set(0, 0.005, -0.12); h.rotation.x = 0.35; a.add(h);
+      h.add(new THREE.Mesh(palmGeo, glove));
+      [-0.04, 0.04].forEach(fx => { const fg = new THREE.Mesh(fingGeo, glove); fg.rotation.x = Math.PI / 2; fg.rotation.z = fx * 3; fg.position.set(fx, 0, -0.1); h.add(fg); });      // Zeige- + kleiner Finger gestreckt
+      [-0.014, 0.014].forEach(fx => { const fo = new THREE.Mesh(foldGeo, glove); fo.position.set(fx, -0.012, -0.06); h.add(fo); });                                          // Mittel- + Ringfinger eingeklappt
+      const th = new THREE.Mesh(thumbGeo, glove); th.rotation.z = side * 0.9; th.rotation.x = Math.PI / 2.4; th.position.set(side * -0.07, 0, -0.03); h.add(th);
+      const dev = new THREE.Mesh(devGeo, metal); dev.position.set(0, 0.05, 0.02); a.add(dev);                                                                            // Netzwerfer
+      const tip = new THREE.Mesh(tipGeo, tipMat); tip.rotation.x = Math.PI / 2; tip.position.set(0, 0.05, -0.05); a.add(tip);
+      const fl = new THREE.Mesh(flashGeo, flashMat); fl.position.set(0, 0.05, -0.1); fl.scale.setScalar(0.001); a.add(fl);
+      a.traverse(ch => { ch.renderOrder = 50; });
+      a.userData = { recoil: 0, flash: fl, tip, baseZ: -0.42, baseY: -0.3, flashT: 0 };
+      galleryArms.add(a); galleryArms.userData.arms.push(a);
+    });
+    scene.add(galleryArms);
+  }
+
+  // ---------- Bereich (Plattform) ----------
+  function gallerySetArea(on){
+    galleryAreaOn = on; document.body.classList.toggle('galleryArea', on);
+    if (galleryGroup) galleryGroup.visible = on;
+    if (on){ if (!galleryPrevBg){ galleryPrevBg = scene.background; } scene.background = new THREE.Color(0x1a0d2e); }
+    else if (galleryPrevBg){ scene.background = galleryPrevBg; galleryPrevBg = null; }
+  }
+  function galleryTeleportToArea(){
+    if (tutorialActive){ galleryToast(gt('notNow'), 3500); return; }
+    ensureGalleryBuilt();
+    player.pos.set(GO.x, GO.y + GALLERY_TOP + 1, GO.z + 19); player.vel.set(0, 0, 0); player.yaw = Math.PI; player.faceYaw = 0; player.pitch = 0.3;
+    snapCameraToPlayer(); gallerySetArea(true);
+    galleryArriveT = 0; galleryArriveZoom = camZoom; galleryFov0 = camera.fov;      // Anflug-Kamerafahrt auf die Insel
+  }
+  function galleryNearestBooth(){
+    if (!galleryAreaOn) return -1;
+    if (Math.abs(player.pos.y - (GO.y + GALLERY_TOP + 1)) > 3.5) return -1;
+    for (let i = 0; i < galleryBooths.length; i++){ if (galleryBooths[i].on && Math.hypot(player.pos.x - galleryBooths[i].x, player.pos.z - galleryBooths[i].z) < 2.8) return i; }
+    return -1;
+  }
+  // Normalerweise steht nur EINE Kabine (die mittlere); im Koop so viele, wie Spieler im Raum sind (max. 5).
+  function galleryUpdateBoothCount(){
+    let n = 1; try { if (currentRoomCode && coopRoomPlayerCount > 1) n = Math.min(5, coopRoomPlayerCount); } catch(e){}
+    for (let k = 0; k < 5; k++){ const b = galleryBooths[GALLERY_BOOTH_ORDER[k]]; if (!b) continue; const on = k < n; if (b.on !== on){ b.on = on; b.g.visible = on; } }
+  }
+  function galleryAreaTick(dt){
+    if (!galleryBuilt) return;
+    const near = Math.abs(player.pos.x - GO.x) < 200 && Math.abs(player.pos.z - GO.z) < 200 && Math.abs(player.pos.y - GO.y) < 250;
+    if (near !== galleryAreaOn) gallerySetArea(near);
+    const prompt = $g('galleryPrompt');
+    if (!near || galleryBoothIdx >= 0){ galleryNearIdx = -1; if (prompt.classList.contains('show')) prompt.classList.remove('show'); galleryDebugTick(); return; }
+    if (player.pos.y < GO.y - 25){ player.pos.set(GO.x, GO.y + GALLERY_TOP + 1, GO.z + 19); player.vel.set(0, 0, 0); player.faceYaw = 0; }   // heruntergefallen -> zurück auf die Plattform
+    if (galleryArriveT < 2.6 && galleryBoothIdx < 0){      // Ankunft: Kamera stürzt von weit oben/hinten auf die Insel zu, mit FOV-Whoosh
+      galleryArriveT += dt; const q = Math.min(1, galleryArriveT / 2.6), e = 1 - Math.pow(1 - q, 3);
+      camZoom = galleryArriveZoom + (1 - e) * 55; camera.fov = galleryFov0 + Math.sin(q * Math.PI) * 26; camera.updateProjectionMatrix();
+      if (galleryArriveT >= 2.6){ camZoom = galleryArriveZoom; camera.fov = galleryFov0; camera.updateProjectionMatrix(); }
+    }
+    galleryUpdateBoothCount();
+    galleryNearIdx = galleryNearestBooth();
+    const show = galleryNearIdx >= 0 && !paused;
+    if (show){ const t = mobileControlsWanted ? gt('enterTouch') : gt('enterKey'); if (prompt.textContent !== t) prompt.textContent = t; }
+    prompt.classList.toggle('show', show);
+    galleryDebugTick();
+  }
+  // E-Taste: Kabine betreten / verlassen. Gibt true zurück, wenn die Taste hier verbraucht wurde (dann kein Schwingen).
+  function galleryHandleE(){
+    if (galleryBoothIdx >= 0){ galleryLeaveBooth(); return true; }
+    if (galleryAreaOn && galleryNearIdx >= 0 && !paused){ galleryEnterBooth(galleryNearIdx); return true; }
+    return false;
+  }
+  $g('galleryPrompt').addEventListener('pointerdown', e => { e.preventDefault(); if (galleryNearIdx >= 0) galleryEnterBooth(galleryNearIdx); });
+
+  // ---------- Kabine ----------
+  function galleryEnterBooth(i){
+    if (galleryBoothIdx >= 0 || !galleryBuilt) return;
+    ensureAudio();
+    galleryBoothIdx = i;
+    stopEmote(); closeEmoteWheel(); grapple.active = false; ropeLine.visible = false;
+    galleryIntroFrom.copy(player.pos); galleryFov0 = camera.fov;
+    player.vel.set(0, 0, 0); player.onGround = true; player.yaw = Math.PI; player.faceYaw = 0; player.pitch = 0.12;
+    gallerySavedZoom = camZoom; camZoom = 0.01;
+    galleryArms.visible = true; galleryArmsIn = 0;
+    for (const k in keys) keys[k] = false;
+    document.body.classList.add('galleryBooth');
+    $g('galleryPrompt').classList.remove('show');
+    $g('galleryLeaveBtn').textContent = gt('leave'); $g('galleryLeaveBtn').style.display = 'flex'; $g('galleryHud').style.display = 'flex';
+    $g('galleryShootBtn').style.display = 'none';
+    galleryHadLock = false;
+    if (!mobileControlsWanted){ try { const p = canvas.requestPointerLock && canvas.requestPointerLock(); if (p && p.catch) p.catch(() => {}); } catch(e){} }
+    galleryStartRound();
+    galleryState = 'intro'; galleryIntroT = 0;                 // Einstiegs-Animation, danach 3-2-1
+    galleryMap.visible = true; galleryMapAnim(0);
+    try { playNoiseBurst(0.5, 900, 0.18); playTone(180, 0.7, 'sawtooth', 0.07, 900); } catch(e){}
+  }
+  function galleryStartRound(){
+    galleryState = 'countdown'; galleryStateT = 3.0; galleryLastCountShown = -1;
+    galleryScore = 0; galleryShots = 0; galleryHits = 0; galleryTrophies = 0; galleryTimeLeft = GALLERY_ROUND_TIME; galleryElapsed = 0; gallerySpawnT = 0; galleryGoT = 0;
+    galleryTargets.forEach(t => { t.active = false; t.g.visible = false; });
+    galleryParts.forEach(p => { p.life = 0; p.m.visible = false; });
+    $g('galleryResult').classList.remove('show');
+  }
+  function galleryLeaveBooth(silent){
+    if (galleryBoothIdx < 0) return;
+    const i = galleryBoothIdx;
+    galleryBoothIdx = -1; galleryState = 'idle'; galleryFireHeld = false;
+    galleryArms.visible = false; camZoom = gallerySavedZoom || 8;
+    camera.fov = galleryFov0; camera.updateProjectionMatrix();
+    playerMesh.visible = true;
+    document.body.classList.remove('galleryBooth');
+    ['galleryLeaveBtn', 'galleryHud', 'galleryShootBtn'].forEach(id => { $g(id).style.display = 'none'; });
+    $g('galleryCount').classList.remove('show'); $g('galleryResult').classList.remove('show');
+    galleryTargets.forEach(t => { t.active = false; t.g.visible = false; }); galleryParts.forEach(p => { p.life = 0; p.m.visible = false; });
+    galleryBolts.forEach(b => { b.life = 0; b.m.visible = false; }); galleryRings.forEach(r => { r.visible = false; });
+    galleryMap.visible = false;
+    try { if (document.pointerLockElement) document.exitPointerLock(); } catch(e){}
+    player.pos.set(GO.x + GALLERY_BOOTH_X[i], GO.y + GALLERY_TOP + 1, GO.z + GALLERY_BOOTH_Z - 3.6); player.vel.set(0, 0, 0); player.onGround = true;
+    player.yaw = Math.PI; player.faceYaw = 0; player.pitch = 0.35;
+    for (const k in keys) keys[k] = false;
+    snapCameraToPlayer();
+    updateTouchControlsVisibility();
+  }
+  $g('galleryLeaveBtn').addEventListener('click', () => galleryLeaveBooth());
+  document.addEventListener('pointerlockchange', () => {
+    if (document.pointerLockElement === canvas) galleryHadLock = true;
+    else if (galleryBoothIdx >= 0 && galleryHadLock && galleryState !== 'result'){ galleryHadLock = false; galleryLeaveBooth(); }   // Esc auf dem PC beendet die Runde
+  });
+  // Schießen: Linksklick (PC, auch gehalten) bzw. großer Button (Mobil)
+  canvas.addEventListener('pointerdown', e => { if (galleryBoothIdx >= 0 && e.pointerType === 'mouse' && e.button === 0){ galleryFireHeld = true; galleryShoot(); } });
+  window.addEventListener('pointerup', e => { if (e.pointerType === 'mouse' && e.button === 0) galleryFireHeld = false; });
+  bindTouchBtn('galleryShootBtn', () => { galleryFireHeld = true; galleryShoot(); }, () => { galleryFireHeld = false; });
+
+  function galleryShoot(){
+    if (galleryBoothIdx < 0 || galleryState !== 'playing') return;
+    const now = performance.now(); if (now - galleryLastShot < 170) return; galleryLastShot = now;
+    galleryShots++;
+    const arm = galleryArms.userData.arms[galleryShots % 2]; arm.userData.recoil = 1; arm.userData.flashT = 0.09;
+    try { playNoiseBurst(0.08, 2400, 0.12); playTone(520, 0.1, 'triangle', 0.1, 150); } catch(e){}
+    let best = null, bestD = 1e9;
+    for (const t of galleryTargets){
+      if (!t.active) continue;
+      _gv.copy(t.g.position).sub(galleryOrigin);
+      const proj = _gv.dot(galleryDir); if (proj < 0) continue;
+      const d2 = _gv.lengthSq() - proj * proj, r = GALLERY_HIT_R * t.sc;
+      if (d2 < r * r && proj < bestD){ best = t; bestD = proj; }
+    }
+    galleryArms.updateMatrixWorld(true);
+    arm.userData.tip.getWorldPosition(_gv);
+    const endP = _gq2.copy(galleryOrigin).addScaledVector(galleryDir, best ? bestD : 70);
+    galleryFireBolt(_gv, endP);
+    if (best){
+      best.hp--; vibrate(15);
+      if (best.hp > 0){ best.hurt = 0.25; galleryBurst(best.g.position, 4); try { playTone(300, 0.1, 'square', 0.1, 200); } catch(e){} }
+      else {
+        const r = best.big ? 3 : 1;
+        galleryHits++; galleryScore += best.big ? GALLERY_POINTS * 3 : GALLERY_POINTS; galleryTrophies += r;
+        totalTrophies += r; storageSet('rankmann_totalTrophies', totalTrophies); updateTrophyDisplay();
+        galleryBurst(best.g.position, best.big ? 30 : 16); best.active = false; best.g.visible = false; gallerySpawnT = Math.min(gallerySpawnT, 0.35);
+        try { playTone(700, 0.12, 'triangle', 0.14, 1400); playNoiseBurst(0.16, 1500, 0.16); } catch(e){}
+        const pl = $g('galleryPlus'); pl.textContent = '+' + r + ' 🏆'; pl.classList.remove('show'); void pl.offsetWidth; pl.classList.add('show');
+      }
+    }
+  }
+  function galleryFireBolt(a, b){
+    const bt = galleryBolts.find((x, k) => k < 4 && x.life <= 0) || galleryBolts[0];
+    bt.life = 0.22; bt.m.visible = true; bt.m.position.copy(a); bt.m.lookAt(b); bt.m.scale.set(1, 1, a.distanceTo(b)); bt.m.material.opacity = 0.95;
+  }
+  function galleryBurst(pos, cnt){
+    let n = 0; const max = cnt || 14;
+    for (const p of galleryParts){
+      if (p.life > 0) continue;
+      p.life = 0.55 + Math.random() * 0.25; p.m.visible = true; p.m.position.copy(pos).sub(GO);
+      p.v.set(Math.random() - 0.5, Math.random() - 0.3, Math.random() - 0.5).normalize().multiplyScalar(3 + Math.random() * 6);
+      p.m.scale.setScalar(1);
+      if (++n >= max) break;
+    }
+  }
+  function gallerySpawnTarget(){
+    const t = galleryTargets.find(x => !x.active); if (!t) return;
+    const used = new Set(galleryTargets.filter(x => x.active).map(x => x.isl));
+    const cand = galleryMapItems.filter(b => !used.has(b.i) && b.m.scale.x >= b.r * 0.9);
+    if (!cand.length) return;
+    const isl = cand[Math.floor(Math.random() * cand.length)];
+    const bigN = galleryTargets.filter(x => x.active && x.big).length;
+    t.big = galleryElapsed > 8 && bigN < 2 && Math.random() < 0.3;
+    t.hp = t.big ? 3 : 1; t.hurt = 0; t.isl = isl.i;
+    const dist = Math.hypot(GO.x + isl.m.position.x - galleryOrigin.x, GO.z + isl.m.position.z - galleryOrigin.z);
+    t.sc = (t.big ? 2.1 : 1) * Math.max(1, Math.min(3.2, dist / 20));        // weiter weg = größer, damit man sie noch trifft
+    t.active = true; t.age = 0; t.phase = Math.random() * 6.28; t.life = Math.max(3.5, 7 - galleryElapsed / 15) + Math.random() * 2;
+    t.g.scale.setScalar(0.01); t.g.visible = true; galleryPlaceTarget(t);
+  }
+  function galleryPlaceTarget(t){      // Wächter stehen auf "ihrer" Insel und patrouillieren dort
+    const isl = galleryMapItems[t.isl], r = isl.r * 0.55;
+    t.g.position.set(GO.x + isl.m.position.x + Math.cos(t.phase) * r, GO.y + isl.m.position.y + isl.r * 0.16 + t.sc * 1.1 + Math.sin(t.phase * 2) * 0.25, GO.z + isl.m.position.z + Math.sin(t.phase) * r);
+  }
+  function galleryUpdateTargets(dt){
+    const sp = 0.9 * (1 + Math.min(1.2, galleryElapsed / 45));      // mit der Zeit schneller
+    for (const t of galleryTargets){
+      if (!t.active) continue;
+      t.age += dt; t.phase += dt * sp * (t.big ? 0.6 : 1);
+      t.hurt = Math.max(0, t.hurt - dt);
+      galleryPlaceTarget(t);
+      t.g.rotation.y = Math.sin(t.phase * 1.3) * 0.5; t.g.rotation.z = Math.sin(t.phase * 0.7) * 0.2;
+      const grow = Math.min(1, 0.01 + t.age * 4.5), fade = Math.min(1, (t.life - t.age) * 3);      // wachsen beim Auftauchen, schrumpfen vor dem Verschwinden
+      t.g.scale.setScalar(Math.max(0.001, Math.min(grow, fade)) * t.sc * (1 + t.hurt * 0.5));
+      if (dt > 0 && t.age >= t.life){ t.active = false; t.g.visible = false; gallerySpawnT = Math.min(gallerySpawnT, 0.3); }
+    }
+  }
+  function galleryUpdateParts(dt){
+    for (const p of galleryParts){
+      if (p.life <= 0) continue;
+      p.life -= dt; if (p.life <= 0){ p.m.visible = false; continue; }
+      p.v.y -= 9 * dt; p.m.position.addScaledVector(p.v, dt); p.m.rotation.x += dt * 8; p.m.rotation.y += dt * 6; p.m.scale.setScalar(Math.max(0.05, p.life / 0.7));
+    }
+  }
+  function galleryUpdateArms(dt){
+    camera.updateMatrixWorld();
+    galleryArms.position.copy(camera.position); galleryArms.quaternion.copy(camera.quaternion);   // erst NACH dem Kamera-Update im selben Frame -> kein Nachziehen
+    const t = performance.now() / 1000;
+    for (const a of galleryArms.userData.arms){
+      a.userData.recoil = Math.max(0, a.userData.recoil - dt * 9);
+      a.position.z = a.userData.baseZ + a.userData.recoil * 0.1; a.position.y = a.userData.baseY - (1 - galleryArmsIn) * 0.6 + Math.sin(t * 1.6 + a.position.x * 9) * 0.006;
+      a.rotation.x = a.userData.recoil * 0.2;
+      a.userData.flashT = Math.max(0, a.userData.flashT - dt);
+      a.userData.flash.scale.setScalar(a.userData.flashT > 0 ? 0.5 + a.userData.flashT * 8 : 0.001);   // Netz-Blitz am Handgelenk
+    }
+    for (const b of galleryBolts){ if (b.life <= 0) continue; b.life -= dt; if (b.life <= 0){ b.m.visible = false; continue; } b.m.material.opacity = Math.min(0.95, b.life * 6); }
+  }
+  function galleryBoothFrame(dt){
+    const i = galleryBoothIdx;
+    const bx = GO.x + GALLERY_BOOTH_X[i], bz = GO.z + GALLERY_BOOTH_Z, by = GO.y + GALLERY_TOP + 1;
+    player.vel.set(0, 0, 0); player.onGround = true; player.invuln = Math.max(player.invuln, 0.1);
+    galleryOrigin.set(bx, GO.y + 8.5, bz);                                                          // Kamera bei (x, 8.5, 29)
+    const countEl = $g('galleryCount');
+    if (galleryState === 'intro'){
+      galleryIntroFrame(dt, bx, by, bz);
+    } else {
+      player.pos.set(bx, by, bz);
+      player.yaw = Math.max(Math.PI - 1.35, Math.min(Math.PI + 1.35, player.yaw)); player.pitch = Math.max(-0.35, Math.min(0.95, player.pitch));
+      playerMesh.visible = false;
+      const cp = Math.cos(player.pitch);
+      galleryDir.set(-Math.sin(player.yaw) * cp, Math.sin(player.pitch), -Math.cos(player.yaw) * cp);   // Maus nach oben = nach oben schauen
+      camera.position.copy(galleryOrigin); camera.lookAt(_gv.copy(galleryOrigin).add(galleryDir));
+    }
+    if (galleryState !== 'intro') galleryMapAnim(1, true);
+    galleryUpdateArms(dt);
+    const ch = $g('crosshair'); if (ch) ch.style.display = galleryState === 'intro' ? 'none' : '';
+    if (galleryState === 'countdown'){
+      galleryStateT -= dt;
+      const n = Math.ceil(galleryStateT);
+      if (n !== galleryLastCountShown && n > 0){ galleryLastCountShown = n; countEl.textContent = n; countEl.classList.remove('show'); void countEl.offsetWidth; countEl.classList.add('show'); try { playTone(660, 0.12, 'triangle', 0.12); } catch(e){} }
+      if (galleryStateT <= 0){ galleryState = 'playing'; countEl.textContent = gt('go'); countEl.classList.remove('show'); void countEl.offsetWidth; countEl.classList.add('show'); galleryGoT = 0.8; try { playTone(990, 0.25, 'triangle', 0.14); } catch(e){}
+        $g('galleryShootBtn').style.display = mobileControlsWanted ? 'flex' : 'none'; }
+    } else if (galleryState === 'playing'){
+      if (galleryGoT > 0){ galleryGoT -= dt; if (galleryGoT <= 0) countEl.classList.remove('show'); }
+      galleryTimeLeft -= dt; galleryElapsed += dt;
+      gallerySpawnT -= dt;
+      const maxActive = Math.min(GALLERY_MAX_TARGETS, 3 + Math.floor(galleryElapsed / 12));
+      if (gallerySpawnT <= 0 && galleryTargets.filter(t => t.active).length < maxActive){ gallerySpawnTarget(); gallerySpawnT = 0.5; }
+      galleryUpdateTargets(dt);
+      if (galleryFireHeld) galleryShoot();
+      if (galleryTimeLeft <= 0){ galleryTimeLeft = 0; galleryEndRound(); }
+    } else if (galleryState === 'result'){
+      galleryUpdateTargets(0);
+    }
+    galleryUpdateParts(dt);
+    const secs = Math.ceil(Math.max(0, galleryTimeLeft));
+    $g('galleryHudTime').textContent = gt('time') + ' ' + Math.floor(secs / 60) + ':' + String(secs % 60).padStart(2, '0');
+    $g('galleryHudScore').textContent = gt('points') + ' ' + galleryScore;
+    $g('galleryHudTroph').textContent = '🏆 +' + galleryTrophies;
+    galleryDebugTick();
+  }
+  function galleryMapAnim(k, bob){     // k 0..1 – die Inseln steigen gestaffelt aus der Tiefe auf; danach schweben sie sanft
+    const t = performance.now() / 1000;
+    for (const b of galleryMapItems){ const q = Math.max(0, Math.min(1, (k * 1.6 - b.i * 0.04) / 0.6)), e = 1 - Math.pow(1 - q, 3); b.m.scale.setScalar(Math.max(0.001, b.r * e)); b.m.position.y = b.y - (1 - e) * 30 + (bob ? Math.sin(t * 0.8 + b.ph) * 0.6 : 0); }
+  }
+  // Einstiegs-Animation (~3,5 s): Held schwingt per Netz in die Kabine -> Kamera fliegt in die Ich-Perspektive -> die Map fährt hoch -> Arme kommen ins Bild
+  function galleryIntroFrame(dt, bx, by, bz){
+    galleryIntroT += dt; const T = galleryIntroT, cl = (x) => Math.max(0, Math.min(1, x)), ez = (x) => x * x * (3 - 2 * x);
+    const dir0 = _gv.set(0, Math.sin(0.12), -Math.cos(0.12) * Math.cos(Math.PI)).set(0, Math.sin(0.12), Math.cos(0.12));   // Blick Richtung +z
+    player.yaw = Math.PI; player.pitch = 0.12;
+    galleryDir.set(0, Math.sin(0.12), Math.cos(0.12));
+    const bth = new THREE.Vector3(bx, by, bz);
+    const a = cl(T / 1.5), e = ez(a);
+    // Phase A: der Held schwingt (Bogen) – Kamera folgt von hinten
+    if (T < 1.5){
+      player.pos.lerpVectors(galleryIntroFrom, bth, e); player.pos.y += Math.sin(a * Math.PI) * 4.5;
+      playerMesh.visible = true; playerMesh.position.copy(player.pos); playerMesh.rotation.y = player.faceYaw;
+      camera.position.set(player.pos.x, player.pos.y + 2.6, player.pos.z - 7 + e * 1.5); camera.lookAt(player.pos.x, player.pos.y + 1, player.pos.z + 3);
+      const web = galleryBolts[4]; web.life = 1; web.m.visible = true; web.m.material.opacity = 0.9;
+      _gq2.set(bx, GO.y + GALLERY_TOP + 20, bz + 6); _gv.set(player.pos.x, player.pos.y + 1.2, player.pos.z); web.m.position.copy(_gv); web.m.lookAt(_gq2); web.m.scale.set(1, 1, _gv.distanceTo(_gq2));
+    } else {
+      galleryBolts[4].m.visible = false; playerMesh.visible = false; player.pos.copy(bth);
+      // Phase B: Kamera gleitet in die Ich-Perspektive; FOV-"Whoosh"
+      const b = ez(cl((T - 1.5) / 1.1));
+      _gq2.set(bx, by + 3.6, bz - 5.5); camera.position.lerpVectors(_gq2, galleryOrigin, b);
+      _gv.set(bx, by + 2, bz + 6).lerp(_q3.copy(galleryOrigin).addScaledVector(galleryDir, 10), b); camera.lookAt(_gv);
+    }
+    const w = cl((T - 1.3) / 1.2); camera.fov = galleryFov0 + 24 * Math.sin(w * Math.PI) * (1 - w * 0.2); camera.updateProjectionMatrix();
+    // Map-Aufbau + Hologramm-Ringe
+    const mk = cl((T - 1.2) / 1.6); galleryMapAnim(mk);
+    galleryRings.forEach((r, k) => { const q = cl((T - 1.3 - k * 0.25) / 1.3); r.visible = q > 0 && q < 1; if (r.visible){ r.scale.setScalar(2 + q * 22); r.material.opacity = (1 - q) * 0.9; } });
+    // Phase C: Arme kommen von unten ins Bild
+    galleryArmsIn = ez(cl((T - 2.5) / 0.8));
+    if (T >= GALLERY_INTRO){
+      galleryMapAnim(1, true); galleryRings.forEach(r => { r.visible = false; }); camera.fov = galleryFov0; camera.updateProjectionMatrix(); galleryArmsIn = 1;
+      galleryState = 'countdown'; galleryStateT = 3.0; galleryLastCountShown = -1;
+    }
+  }
+  function galleryEndRound(){
+    galleryState = 'result'; galleryFireHeld = false;
+    galleryTargets.forEach(t => { t.active = false; t.g.visible = false; });
+    $g('galleryCount').classList.remove('show');
+    const acc = galleryShots ? Math.round(galleryHits / galleryShots * 100) : 0, reward = galleryTrophies;
+    const isNew = galleryScore > galleryHigh;
+    if (isNew){ galleryHigh = galleryScore; storageSet('rankmann_galleryHigh', galleryHigh); }
+    $g('galleryResultBody').innerHTML = '<div class="gr">' + gt('points') + ': <b>' + galleryScore + '</b></div><div class="gr">' + gt('hits') + ': <b>' + galleryHits + '</b> / ' + galleryShots + '</div><div class="gr">' + gt('acc') + ': <b>' + acc + '%</b></div><div class="gr">' + gt('high') + ': <b>' + galleryHigh + '</b></div>' + (isNew ? '<div class="gr big">' + gt('newHigh') + '</div>' : '') + '<div class="gr big">' + gt('reward', { n: reward }) + '</div>';
+    $g('galleryResultTitle').textContent = gt('result');
+    $g('galleryAgainBtn').textContent = gt('again'); $g('galleryLeaveBtn2').textContent = gt('leave');
+    $g('galleryResult').classList.add('show');
+    try { if (document.pointerLockElement) document.exitPointerLock(); } catch(e){}
+    try { [523, 659, 784, 1046].forEach((f, k) => setTimeout(() => playTone(f, 0.22, 'triangle', 0.13), k * 110)); } catch(e){}
+  }
+  $g('galleryAgainBtn').addEventListener('click', () => {
+    galleryStartRound();
+    if (!mobileControlsWanted){ try { const p = canvas.requestPointerLock && canvas.requestPointerLock(); if (p && p.catch) p.catch(() => {}); } catch(e){} }
+  });
+  $g('galleryLeaveBtn2').addEventListener('click', () => galleryLeaveBooth());
+
+  // ---------- Debug-Overlay (Admin-Knopf oder F9) ----------
+  function galleryDebugTick(){
+    const el = $g('galleryDebug'); if (!el) return;
+    if (!galleryDebugOn){ if (el.style.display !== 'none') el.style.display = 'none'; return; }
+    el.style.display = 'block';
+    const f = v => v.x.toFixed(1) + ', ' + v.y.toFixed(1) + ', ' + v.z.toFixed(1);
+    const zc = new THREE.Vector3(GO.x + GALLERY_TARGET_ZONE.x, GO.y + GALLERY_TARGET_ZONE.y, GO.z + GALLERY_TARGET_ZONE.z);
+    el.textContent = '=== ' + GALLERY_BUILD + ' ===\n' + 'galleryState: ' + galleryState + (galleryBoothIdx >= 0 ? ' (Kabine ' + (5 - galleryBoothIdx) + ')' : '') + '\n' + 'player: ' + f(player.pos) + '\n' + 'camera: ' + f(camera.position) + ' (zoom ' + camZoom.toFixed(2) + ')\n' + 'Zielzone: ' + f(zc) + '\n' + 'Ziele aktiv: ' + galleryTargets.filter(t => t.active).length + '  Treffer ' + galleryHits + '/' + galleryShots;
+  }
+  window.addEventListener('keydown', e => { if (e.code === 'F9'){ galleryDebugOn = !galleryDebugOn; e.preventDefault(); } });
+  { const b = $g('adminGalleryDebugBtn'); if (b) b.addEventListener('click', () => { galleryDebugOn = !galleryDebugOn; showAdminToast('🐞 Schießstand-Debug ' + (galleryDebugOn ? 'AN' : 'AUS')); }); }
+  { const b = $g('adminTrophies250Btn'); if (b) b.addEventListener('click', () => { totalTrophies += 250; storageSet('rankmann_totalTrophies', totalTrophies); updateTrophyDisplay(); updateShootingBtn(); showAdminToast('+250 Pokale (Test) → jetzt ' + totalTrophies); }); }
+
 
   animate();
   // On touch devices the on-screen gameplay controls (joystick + jump/attack buttons) are un-hidden
